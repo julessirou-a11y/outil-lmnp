@@ -1,0 +1,687 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outil LMNP</title>
+<style>
+:root{
+  --bg:#f6f5f2; --surface:#ffffff; --surface-2:#f0eee9; --text:#1d1d1b; --muted:#6b6a65;
+  --line:#dedbd3; --accent:#2f5d50; --accent-soft:#e3ece8; --warn:#9a5b00; --warn-soft:#fbf0dc;
+  --bad:#a1312a; --bad-soft:#f8e3e1; --ok:#2f6b3a; --ok-soft:#e2f0e4;
+  --radius:10px; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#161715; --surface:#1f201e; --surface-2:#272825; --text:#ecebe6; --muted:#a3a29b;
+    --line:#383934; --accent:#8cc2ad; --accent-soft:#25332d; --warn:#e5b25d; --warn-soft:#3a3020;
+    --bad:#ef8a80; --bad-soft:#3d2422; --ok:#8fd19b; --ok-soft:#21352a;
+  }
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
+header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.bar{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.brand{font-weight:650;letter-spacing:-.01em;margin-right:auto}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+nav{max-width:1100px;margin:0 auto;padding:0 16px;display:flex;gap:2px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;color:var(--muted);font:inherit;cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
+main{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
+h2{font-size:20px;margin:0 0 4px}
+h3{font-size:16px;margin:24px 0 8px}
+p.sub{color:var(--muted);margin:0 0 16px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px}
+.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
+.kpi .l{color:var(--muted);font-size:13px}.kpi .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:inherit;font-weight:550;cursor:pointer}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn{color:#10201a}}
+.btn.sec{background:var(--surface-2);color:var(--text);border:1px solid var(--line)}
+.btn.small{padding:4px 9px;font-size:13px}
+.btn.danger{background:var(--bad-soft);color:var(--bad);border:1px solid transparent}
+.btn:disabled{opacity:.5;cursor:default}
+select,input,textarea{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 8px;max-width:100%}
+label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}
+.form{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:end}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px}
+th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
+th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+tr.tot td{font-weight:650;border-top:2px solid var(--line)}
+tr.muted td{color:var(--muted)}
+.case{font-family:var(--mono);background:var(--accent-soft);color:var(--accent);border-radius:5px;padding:1px 6px;font-size:13px;white-space:nowrap}
+.alert{border-radius:8px;padding:10px 12px;margin:8px 0;font-size:14px}
+.alert.warn{background:var(--warn-soft);color:var(--warn)}
+.alert.info{background:var(--accent-soft);color:var(--accent)}
+.alert.bad{background:var(--bad-soft);color:var(--bad)}
+.alert.ok{background:var(--ok-soft);color:var(--ok)}
+.pill{display:inline-block;font-size:12px;border-radius:99px;padding:1px 8px;background:var(--surface-2);color:var(--muted)}
+.dirty{color:var(--warn);font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hide{display:none!important}
+details summary{cursor:pointer;color:var(--accent)}
+.fiche h3{border-bottom:1px solid var(--line);padding-bottom:4px}
+@media print{
+  header,nav,.noprint{display:none!important}
+  body{background:#fff;color:#000}
+  .card{border:0;padding:0}
+  main{padding:0}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <div class="brand" id="brand">Outil LMNP<small id="fileinfo">Aucun dossier ouvert</small></div>
+    <span class="dirty hide" id="dirty">● Modifications non enregistrées</span>
+    <label class="noprint" style="flex-direction:row;align-items:center;gap:6px">Exercice
+      <select id="yearSel"></select></label>
+    <button class="btn" id="saveBtn" disabled>Enregistrer</button>
+  </div>
+  <nav id="tabs"></nav>
+</header>
+<main id="main"></main>
+<input type="file" id="fileInput" accept=".json,application/json" class="hide">
+
+<script>
+"use strict";
+/* ============ Paramètres ============ */
+const NATURES = {
+  "Loyer":{g:"recette",l:"218"},
+  "Charges refacturées":{g:"recette",l:"218"},
+  "Autre recette":{g:"recette",l:"218"},
+  "Copropriété":{g:"charge",l:"242"},
+  "Assurance":{g:"charge",l:"242"},
+  "Assurance emprunt":{g:"charge",l:"242"},
+  "Eau":{g:"charge",l:"242"},
+  "Électricité / gaz":{g:"charge",l:"242"},
+  "Internet":{g:"charge",l:"242"},
+  "Entretien et réparations":{g:"charge",l:"242"},
+  "Petit équipement (< 500 € HT)":{g:"charge",l:"242"},
+  "Frais de gestion / agence":{g:"charge",l:"242"},
+  "Honoraires":{g:"charge",l:"242"},
+  "Frais bancaires":{g:"charge",l:"242"},
+  "Autre charge":{g:"charge",l:"242"},
+  "Taxe foncière":{g:"charge",l:"244"},
+  "CFE":{g:"charge",l:"244"},
+  "Intérêts emprunt":{g:"charge",l:"294"},
+  "Remboursement emprunt":{g:"bilan",l:""}
+};
+const CATEGORIES = {construction:"Logement (bâti + terrain)", travaux:"Travaux / agencements", mobilier:"Mobilier et équipements"};
+const DUREE_DEFICIT = 10;
+
+/* ============ État ============ */
+const S = {data:null, dirty:false, dir:null, fileName:null, year:null, tab:"accueil", editId:null, editImmo:null, unlocked:{}};
+
+/* ============ Utilitaires ============ */
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
+const eur = n => (n==null||isNaN(n)) ? "–" : n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
+const eur0 = n => (n==null||isNaN(n)) ? "–" : Math.round(n).toLocaleString("fr-FR") + " €";
+const uid = () => Math.random().toString(36).slice(2,10);
+const yearOf = d => parseInt(String(d).slice(0,4),10);
+const monthOf = d => parseInt(String(d).slice(5,7),10);
+const MOIS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+const fmtDate = d => d ? d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4) : "";
+
+function setDirty(v=true){ S.dirty=v; $("#dirty").classList.toggle("hide",!v); $("#saveBtn").disabled = !S.data; }
+window.addEventListener("beforeunload", e => { if(S.dirty){ e.preventDefault(); e.returnValue=""; } });
+
+/* ============ Modèle : migration ============ */
+function normalize(d){
+  d.dossier ??= {}; d.immobilisations ??= []; d.emprunts ??= []; d.exercices ??= {};
+  d.dossier.declarant ??= "1";
+  d.reports ??= {};
+  if(!Array.isArray(d.reports.deficits)) d.reports.deficits = [];
+  d.reports.amortissementsDifferes ??= 0;
+  delete d.reports.deficitsAnterieurs;
+  for(const [y,ex] of Object.entries(d.exercices)){
+    if(ex.ecritures) ex.ecritures.forEach(e => { e.id ??= uid(); });
+  }
+  d.immobilisations.forEach(i => { i.id ??= uid(); i.quotePartTerrain ??= 0; });
+  return d;
+}
+function newDossier(){
+  const y = new Date().getFullYear();
+  return normalize({format:"outil-lmnp",version:1,dossier:{nom:"Mon LMNP",regime:"reel-simplifie",debutLocationMeublee:y+"-01-01"},
+    immobilisations:[],emprunts:[],exercices:{[y]:{statut:"en-cours",ecritures:[]}},reports:{}});
+}
+
+/* ============ Calculs : amortissements ============ */
+function debutLMNP(){ return S.data.dossier.debutLocationMeublee || "1900-01-01"; }
+function baseAmort(i){ return r2(i.valeurOrigine * (1 - (i.quotePartTerrain||0))); }
+function planAmort(i){
+  const base = baseAmort(i), annuite = base / i.dureeAns;
+  const y0 = yearOf(i.miseEnService), m0 = monthOf(i.miseEnService);
+  const plan = []; let cumul = 0, y = y0;
+  while(cumul < base - 0.005 && y < y0 + i.dureeAns + 2){
+    const mois = (y === y0) ? 13 - m0 : 12;
+    let dot = Math.min(annuite * mois / 12, base - cumul);
+    cumul += dot;
+    plan.push({annee:y, dotation:dot, cumul, vnc: base - cumul, avantLMNP: y < yearOf(debutLMNP())});
+    y++;
+  }
+  return plan;
+}
+function amortAnnee(i, y){
+  const plan = planAmort(i);
+  const row = plan.find(p => p.annee === y);
+  const prev = plan.filter(p => p.annee < y);
+  const cumulDebut = prev.length ? prev[prev.length-1].cumul : 0;
+  return {dotation: row ? row.dotation : 0, cumulDebut, cumulFin: cumulDebut + (row ? row.dotation : 0), base: baseAmort(i)};
+}
+function anneeEntreeBilan(i){ return Math.max(yearOf(i.miseEnService), yearOf(debutLMNP())); }
+
+/* ============ Calculs : emprunt ============ */
+function echeancier(l){
+  const r = l.tauxAnnuel / 12;
+  let m = l.mensualite;
+  if(!m) m = r ? l.capital * r / (1 - Math.pow(1+r, -l.dureeMois)) : l.capital / l.dureeMois;
+  const rows = []; let crd = l.capital;
+  const y0 = yearOf(l.premiereEcheance), m0 = monthOf(l.premiereEcheance);
+  for(let k=0;k<l.dureeMois && crd>0.005;k++){
+    const interet = crd * r;
+    let capital = m - interet;
+    if(k === l.dureeMois-1 || capital > crd) capital = crd;
+    crd -= capital;
+    const mm = m0 - 1 + k;
+    rows.push({n:k+1, annee: y0 + Math.floor(mm/12), mois: (mm%12)+1, interet, capital, crd});
+  }
+  return rows;
+}
+function empruntAnnee(l, y){
+  const rows = echeancier(l);
+  const inY = rows.filter(r => r.annee === y);
+  const before = rows.filter(r => r.annee <= y);
+  return {interets: inY.reduce((s,r)=>s+r.interet,0), capital: inY.reduce((s,r)=>s+r.capital,0),
+          crdFin: before.length ? before[before.length-1].crd : (yearOf(l.premiereEcheance) > y ? 0 : l.capital), demarre: yearOf(l.premiereEcheance) <= y};
+}
+
+/* ============ Calculs : exercice ============ */
+function exercice(y){ return S.data.exercices[y]; }
+function isHistorique(y){ const ex = exercice(y); return ex && ex.statut === "historique"; }
+function anneesCalculees(){
+  return Object.keys(S.data.exercices).map(Number).filter(y => !isHistorique(y)).sort((a,b)=>a-b);
+}
+function totauxEcritures(y){
+  const ex = exercice(y) || {}; const t = {parNature:{}, recettes:0, c242:0, c244:0, c294:0, remb:0, inconnues:0};
+  (ex.ecritures||[]).forEach(e => {
+    const nat = NATURES[e.nature] || {g: e.sens === "recette" ? "recette" : "charge", l: e.sens==="recette"?"218":"242", inconnue:true};
+    if(nat.inconnue) t.inconnues++;
+    t.parNature[e.nature] = (t.parNature[e.nature]||0) + e.montant;
+    if(nat.g === "recette") t.recettes += e.montant;
+    else if(nat.g === "bilan") t.remb += e.montant;
+    else if(nat.l === "244") t.c244 += e.montant;
+    else if(nat.l === "294") t.c294 += e.montant;
+    else t.c242 += e.montant;
+  });
+  return t;
+}
+function calculAnnee(y){
+  const t = totauxEcritures(y);
+  const lmnpActif = y >= yearOf(debutLMNP());
+  // Intérêts : réels si saisis, sinon échéancier
+  let interetsEch = 0, capitalEch = 0, crd = 0;
+  S.data.emprunts.forEach(l => { const a = empruntAnnee(l,y); interetsEch += a.interets; capitalEch += a.capital; crd += a.crdFin; });
+  const interetsSaisis = (t.parNature["Intérêts emprunt"]||0) > 0;
+  const interets = interetsSaisis ? t.c294 : t.c294 + interetsEch;
+  const ex = exercice(y) || {};
+  const crdRetenu = (ex.crdBanque != null && ex.crdBanque !== "") ? Number(ex.crdBanque) : crd;
+  // Amortissements
+  const immos = S.data.immobilisations.map(i => ({i, a: amortAnnee(i,y), entree: anneeEntreeBilan(i)}));
+  const dotations = immos.reduce((s,x)=> s + (x.entree <= y ? x.a.dotation : 0), 0);
+  const produits = t.recettes;
+  const resultatAvantAmort = produits - t.c242 - t.c244 - interets;
+  const resultatComptable = resultatAvantAmort - dotations;
+  return {y, t, lmnpActif, produits, c242:t.c242, c244:t.c244, interets, interetsEch, interetsSaisis, capitalEch,
+          crdEch:crd, crd:crdRetenu, dotations, immos, resultatAvantAmort, resultatComptable};
+}
+/* Chaîne fiscale (art. 39 C : les amortissements ne peuvent pas créer ou augmenter un déficit) */
+function fiscalJusqua(yCible){
+  let ard = Number(S.data.reports.amortissementsDifferes)||0;
+  let deficits = (S.data.reports.deficits||[]).map(d => ({...d}));
+  let res = null;
+  for(const y of anneesCalculees()){
+    if(y > yCible) break;
+    const c = calculAnnee(y);
+    const ardDebut = ard, deficitsDebut = deficits.map(d=>({...d}));
+    // déficits périmés
+    const perimes = deficits.filter(d => y - d.annee > DUREE_DEFICIT);
+    deficits = deficits.filter(d => y - d.annee <= DUREE_DEFICIT);
+    let R0 = c.resultatAvantAmort, dotDeductible = 0, ardUtilise = 0, ardNouveau = 0, deficitAnnee = 0;
+    if(R0 <= 0){
+      ardNouveau = c.dotations; deficitAnnee = -R0;
+    } else {
+      dotDeductible = Math.min(c.dotations, R0);
+      ardNouveau = c.dotations - dotDeductible;
+      // priorité aux déficits antérieurs (limités à 10 ans), puis aux amortissements différés (sans limite)
+      const defDispo = deficits.reduce((s,d)=>s+d.montant,0);
+      ardUtilise = Math.min(ard, Math.max(0, R0 - dotDeductible - defDispo));
+    }
+    ard = ard - ardUtilise + ardNouveau;
+    const resultatFiscal = R0 - dotDeductible - ardUtilise; // >= 0 si R0>0, sinon = R0 (déficit)
+    // Imputation des déficits antérieurs sur le bénéfice
+    let deficitsImputes = 0, reste = Math.max(resultatFiscal,0);
+    deficits.sort((a,b)=>a.annee-b.annee).forEach(d => { const u = Math.min(d.montant, reste); d.montant -= u; reste -= u; deficitsImputes += u; });
+    deficits = deficits.filter(d => d.montant > 0.005);
+    if(deficitAnnee > 0) deficits.push({annee:y, montant:deficitAnnee});
+    if(y === yCible) res = {c, R0, dotDeductible, ardUtilise, ardNouveau, ardDebut, ardFin:ard, reintegration:c.dotations - dotDeductible,
+      resultatFiscal, deficitsImputes, deficitsDebut, deficitsFin:deficits.map(d=>({...d})), deficitAnnee, perimes};
+  }
+  return res;
+}
+function bilan(y){
+  if(isHistorique(y)){
+    const h = exercice(y).chiffres || {};
+    return {historique:true, immoNettes:h.immobilisationsNettes, crd:h.capitalRestantDu, capital:h.capitalExploitant, resultat:h.resultat};
+  }
+  const c = calculAnnee(y);
+  let brut = 0, amort = 0;
+  const lignes = {terrain:{}, construction:{}, travaux:{}, mobilier:{}};
+  for(const k in lignes) lignes[k] = {brutDebut:0, aug:0, brutFin:0, amDebut:0, dot:0, amFin:0};
+  S.data.immobilisations.forEach(i => {
+    const entree = anneeEntreeBilan(i); if(entree > y) return;
+    const a = amortAnnee(i,y);
+    const terrain = r2(i.valeurOrigine - baseAmort(i));
+    const cat = i.categorie === "construction" ? "construction" : (i.categorie === "mobilier" ? "mobilier" : "travaux");
+    const add = (L, v, isNew) => { if(isNew) L.aug += v; else L.brutDebut += v; L.brutFin += v; };
+    if(terrain > 0) add(lignes.terrain, terrain, entree === y);
+    add(lignes[cat], baseAmort(i), entree === y);
+    lignes[cat].amDebut += (entree === y ? 0 : a.cumulDebut);
+    lignes[cat].dot += a.dotation + (entree === y ? a.cumulDebut : 0);
+    lignes[cat].amFin += a.cumulFin;
+    brut += i.valeurOrigine; amort += a.cumulFin;
+  });
+  const immoNettes = brut - amort;
+  return {historique:false, brut, amort, immoNettes, crd:c.crd, resultat:c.resultatComptable,
+          capital: immoNettes - c.resultatComptable - c.crd, lignes};
+}
+
+/* ============ Fichiers : ouverture / enregistrement ============ */
+const FS = "showDirectoryPicker" in window;
+const FILE = "lmnp-donnees.json";
+const idb = {
+  db(){ return new Promise((ok,ko)=>{ try{ const r = indexedDB.open("outil-lmnp",1); r.onupgradeneeded=()=>r.result.createObjectStore("k"); r.onsuccess=()=>ok(r.result); r.onerror=()=>ko(r.error);}catch(e){ko(e)} }); },
+  async get(k){ try{ const db=await this.db(); return await new Promise(ok=>{const q=db.transaction("k").objectStore("k").get(k); q.onsuccess=()=>ok(q.result); q.onerror=()=>ok(null);}); }catch(e){return null} },
+  async set(k,v){ try{ const db=await this.db(); db.transaction("k","readwrite").objectStore("k").put(v,k); }catch(e){} }
+};
+function chargerDonnees(obj, nom){
+  if(!obj || obj.format !== "outil-lmnp") throw new Error("Ce fichier n'est pas un dossier de l'outil LMNP.");
+  S.data = normalize(obj); S.fileName = nom;
+  const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
+  S.year = ys.filter(y=>!isHistorique(y)).pop() ?? ys.pop();
+  setDirty(false); renderAll();
+}
+async function ouvrirDossier(){
+  try{
+    const dir = await window.showDirectoryPicker({id:"lmnp", mode:"readwrite"});
+    S.dir = dir; await idb.set("dir", dir);
+    await lireDepuisDossier();
+  }catch(e){ if(e.name !== "AbortError") alert("Impossible d'ouvrir ce dossier : " + e.message + "\n\nSi le dossier est dans iCloud Drive et que le navigateur le refuse, essayez un dossier de « Documents » synchronisé avec iCloud."); }
+}
+async function reprendreDossier(dir){
+  if(await dir.requestPermission({mode:"readwrite"}) !== "granted") return;
+  S.dir = dir; await lireDepuisDossier();
+}
+async function lireDepuisDossier(){
+  try{
+    const fh = await S.dir.getFileHandle(FILE);
+    const txt = await (await fh.getFile()).text();
+    chargerDonnees(JSON.parse(txt), S.dir.name + "/" + FILE);
+  }catch(e){
+    if(e.name === "NotFoundError"){
+      if(confirm("Aucun fichier « "+FILE+" » dans ce dossier. Créer un dossier comptable vide ici ?")){
+        chargerDonnees(newDossier(), S.dir.name + "/" + FILE); await enregistrer();
+      }
+    } else alert("Lecture impossible : " + e.message);
+  }
+}
+function ouvrirFichier(){ $("#fileInput").click(); }
+$("#fileInput").addEventListener("change", async ev => {
+  const f = ev.target.files[0]; if(!f) return;
+  try{ chargerDonnees(JSON.parse(await f.text()), f.name); S.dir = null; }catch(e){ alert(e.message); }
+  ev.target.value = "";
+});
+function horodatage(){ const d=new Date(), p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}h${p(d.getMinutes())}`; }
+async function enregistrer(){
+  if(!S.data) return;
+  S.data.derniereModification = new Date().toISOString();
+  const txt = JSON.stringify(S.data, null, 2);
+  if(S.dir){
+    try{
+      if(await S.dir.queryPermission({mode:"readwrite"}) !== "granted" && await S.dir.requestPermission({mode:"readwrite"}) !== "granted") throw new Error("permission refusée");
+      const fh = await S.dir.getFileHandle(FILE, {create:true});
+      const w = await fh.createWritable(); await w.write(txt); await w.close();
+      const sv = await S.dir.getDirectoryHandle("Sauvegardes", {create:true});
+      const bh = await sv.getFileHandle(`lmnp-donnees_${horodatage()}.json`, {create:true});
+      const bw = await bh.createWritable(); await bw.write(txt); await bw.close();
+      setDirty(false); toast("Enregistré dans « "+S.dir.name+" » (+ copie dans Sauvegardes)");
+      return;
+    }catch(e){ alert("Enregistrement dans le dossier impossible ("+e.message+"). Le fichier va être téléchargé à la place."); }
+  }
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([txt],{type:"application/json"}));
+  a.download = FILE; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
+  setDirty(false); toast("Fichier téléchargé : déplacez-le dans votre dossier iCloud pour remplacer l'ancien.");
+}
+$("#saveBtn").addEventListener("click", enregistrer);
+document.addEventListener("keydown", e => { if((e.metaKey||e.ctrlKey) && e.key === "s"){ e.preventDefault(); enregistrer(); } });
+function toast(msg){ const el = document.createElement("div"); el.className="alert ok noprint"; el.style.cssText="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9;box-shadow:0 4px 16px rgba(0,0,0,.15);max-width:90vw"; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(), 3500); }
+
+/* ============ Rendu ============ */
+const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["dossier","Dossier"]];
+function renderAll(){
+  $("#fileinfo").textContent = S.data ? (S.data.dossier.nom + " · " + (S.fileName||"")) : "Aucun dossier ouvert";
+  const sel = $("#yearSel");
+  if(S.data){
+    const ys = new Set(Object.keys(S.data.exercices).map(Number));
+    sel.innerHTML = [...ys].sort((a,b)=>b-a).map(y => `<option value="${y}" ${y===S.year?"selected":""}>${y}${isHistorique(y)?" (historique)":""}</option>`).join("");
+  } else sel.innerHTML = "";
+  $("#tabs").innerHTML = S.data ? TABS.map(([k,l]) => `<button data-tab="${k}" class="${S.tab===k?"on":""}">${l}</button>`).join("") : "";
+  $("#saveBtn").disabled = !S.data;
+  const m = $("#main");
+  if(!S.data){ m.innerHTML = vueBienvenue(); return; }
+  m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier})[S.tab]();
+}
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; renderAll(); } });
+$("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
+
+function vueBienvenue(){
+  setTimeout(async () => { const d = await idb.get("dir"); if(d && FS){ const b = $("#resume"); if(b){ b.classList.remove("hide"); b.textContent = "Reprendre le dossier « "+d.name+" »"; b.onclick = () => reprendreDossier(d); } } }, 0);
+  return `<div class="card" style="max-width:640px;margin:40px auto">
+    <h2>Bienvenue</h2>
+    <p class="sub">Les données restent dans votre dossier iCloud : rien n'est envoyé sur internet.</p>
+    ${FS ? `<div class="row"><button class="btn hide" id="resume"></button>
+      <button class="btn" onclick="ouvrirDossier()">Ouvrir le dossier LMNP…</button></div>
+      <p class="sub" style="margin-top:10px">Choisissez le dossier iCloud qui contient <code>${FILE}</code>. L'enregistrement s'y fera directement, avec une copie datée dans « Sauvegardes ».</p>`
+    : `<div class="alert info">Ce navigateur (Safari, iPhone) permet de <b>consulter</b> et d'imprimer. Pour modifier et enregistrer directement dans iCloud, utilisez Chrome ou Edge sur Mac.</div>`}
+    <div class="row" style="margin-top:12px">
+      <button class="btn sec" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button>
+      <button class="btn sec" onclick="chargerDonnees(newDossier(),'nouveau dossier');setDirty(true)">Créer un dossier vide</button>
+    </div></div>`;
+}
+
+/* ---- Tableau de bord ---- */
+function vueAccueil(){
+  const y = S.year;
+  if(isHistorique(y)){
+    const h = exercice(y).chiffres||{};
+    return `<h2>Exercice ${y}</h2><p class="sub">Exercice historique repris de l'Excel (chiffres de synthèse uniquement).</p>
+      <div class="card"><table>${Object.entries({loyers:"Loyers",chargesExternes:"Charges externes",impotsTaxes:"Impôts et taxes",dotationsAmortissements:"Dotations aux amortissements",interets:"Intérêts",resultat:"Résultat",immobilisationsNettes:"Immobilisations nettes",capitalRestantDu:"Capital restant dû"}).map(([k,l])=>`<tr><td>${l}</td><td class="n">${eur(h[k])}</td></tr>`).join("")}</table></div>`;
+  }
+  const f = fiscalJusqua(y), c = f.c;
+  const alerts = [];
+  if(!c.lmnpActif) alerts.push(["info", `La location meublée démarre le ${fmtDate(debutLMNP())} : rien à déclarer pour ${y}.`]);
+  if(exercice(y).statut === "cloture") alerts.push(["info","Exercice clôturé. Les écritures sont verrouillées (déverrouillables dans l'onglet Écritures)."]);
+  const loyers = (exercice(y).ecritures||[]).filter(e=>e.nature==="Loyer").map(e=>monthOf(e.date));
+  const manquants = [...Array(12).keys()].map(i=>i+1).filter(m => !loyers.includes(m) && (y < new Date().getFullYear() || m <= new Date().getMonth()+1));
+  if(c.lmnpActif && manquants.length && manquants.length < 12) alerts.push(["warn", `Pas de loyer saisi pour : ${manquants.map(m=>MOIS[m-1]).join(", ")}.`]);
+  if(c.lmnpActif && !c.t.parNature["CFE"] && c.produits > 5000) alerts.push(["warn","Aucune CFE saisie. Au-delà de 5 000 € de recettes, la CFE est en principe due : vérifiez l'avis dans l'espace professionnel impots.gouv.fr (il n'est pas envoyé par courrier)."]);
+  if(S.data.emprunts.length && !c.interetsSaisis) alerts.push(["info", `Intérêts non saisis : l'outil utilise l'échéancier théorique (${eur(c.interetsEch)}). Saisissez les montants réels prélevés par la banque si possible.`]);
+  if(S.data.emprunts.length && c.interetsSaisis && Math.abs(c.interets - c.interetsEch) > 1) alerts.push(["info", `Intérêts saisis ${eur(c.interets)} contre ${eur(c.interetsEch)} selon l'échéancier théorique. C'est le montant saisi (réel) qui est retenu.`]);
+  if(c.t.inconnues) alerts.push(["warn", `${c.t.inconnues} écriture(s) avec une nature inconnue, classée(s) par défaut en charges externes.`]);
+  if(f.reintegration > 0.5) alerts.push(["info", `${eur(f.reintegration)} d'amortissements ne sont pas déductibles cette année (ils ne peuvent pas créer de déficit) : ils sont reportés sans limite de durée.`]);
+  const decl = exercice(y).chiffresDeclares;
+  let comp = "";
+  if(decl){
+    const rows = [["Loyers",decl.loyers,c.produits],["Charges externes",decl.chargesExternes,c.c242],["Impôts et taxes",decl.impotsTaxes,c.c244],["Dotations aux amortissements",decl.dotationsAmortissements,c.dotations],["Intérêts",decl.interets,c.interets],["Résultat",decl.resultat,c.resultatComptable]];
+    comp = `<div class="card"><h3 style="margin-top:0">Contrôle : outil / chiffres de l'Excel</h3><div class="tablewrap"><table><tr><th></th><th class="n">Excel</th><th class="n">Outil</th><th class="n">Écart</th></tr>
+      ${rows.map(([l,a,b])=>`<tr><td>${l}</td><td class="n">${eur(a)}</td><td class="n">${eur(b)}</td><td class="n">${Math.abs(b-a)<0.02?'<span class="pill">=</span>':eur(b-a)}</td></tr>`).join("")}</table></div></div>`;
+  }
+  return `<h2>Exercice ${y}</h2><p class="sub">${esc(S.data.dossier.nom)} · régime réel simplifié</p>
+    <div class="grid" style="margin-bottom:16px">
+      ${kpi("Recettes", c.produits)}${kpi("Charges (hors amort.)", c.c242+c.c244+c.interets)}
+      ${kpi("Amortissements", c.dotations)}${kpi("Résultat fiscal", f.resultatFiscal, true)}
+    </div>
+    ${alerts.map(([k,t])=>`<div class="alert ${k}">${t}</div>`).join("")}
+    ${comp}
+    <div class="card"><h3 style="margin-top:0">Détail par nature</h3><div class="tablewrap"><table>
+      ${Object.entries(c.t.parNature).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<tr><td>${esc(n)} ${NATURES[n]?.l?`<span class="case">${NATURES[n].l}</span>`:'<span class="pill">hors résultat</span>'}</td><td class="n">${eur(v)}</td></tr>`).join("") || '<tr><td class="muted">Aucune écriture</td></tr>'}
+    </table></div></div>`;
+}
+function kpi(l,v,signe){ return `<div class="card kpi" style="margin:0"><div class="l">${l}</div><div class="v" style="${signe&&v<0?'color:var(--bad)':''}">${eur(v)}</div></div>`; }
+
+/* ---- Écritures ---- */
+function verrouille(y){ return exercice(y)?.statut === "cloture" && !S.unlocked[y]; }
+function vueEcritures(){
+  const y = S.year;
+  if(isHistorique(y)) return `<h2>Écritures ${y}</h2><div class="alert info">Exercice historique : pas d'écritures détaillées.</div>`;
+  const ex = exercice(y); ex.ecritures ??= [];
+  const list = [...ex.ecritures].sort((a,b)=> a.date.localeCompare(b.date));
+  const lock = verrouille(y);
+  const ed = S.editId ? ex.ecritures.find(e=>e.id===S.editId) : null;
+  const natOpts = sel => Object.keys(NATURES).map(n=>`<option ${n===sel?"selected":""}>${esc(n)}</option>`).join("");
+  const t = totauxEcritures(y);
+  return `<h2>Écritures ${y}</h2><p class="sub">Une ligne par mouvement : loyer encaissé, facture payée, échéance de prêt (intérêts et capital séparés).</p>
+  ${lock ? `<div class="alert warn row">Exercice clôturé : modifications verrouillées. <button class="btn small sec" onclick="S.unlocked[${y}]=true;renderAll()">Déverrouiller</button></div>` : `
+  <div class="card noprint"><div class="form">
+    <label>Date<input type="date" id="eDate" value="${ed?ed.date:(list.length?list[list.length-1].date:y+"-01-01")}"></label>
+    <label>Tiers<input id="eTiers" list="tiersList" value="${esc(ed?ed.tiers:"")}" placeholder="ex. BNP"></label>
+    <label>Nature<select id="eNat">${natOpts(ed?ed.nature:"Loyer")}</select></label>
+    <label>Montant (€ TTC)<input id="eMont" inputmode="decimal" value="${ed?String(ed.montant).replace(".",","):""}" placeholder="0,00"></label>
+    <label>Commentaire<input id="eCom" value="${esc(ed?.commentaire||"")}"></label>
+    <div class="row"><button class="btn" onclick="saveEcriture()">${ed?"Mettre à jour":"Ajouter"}</button>${ed?`<button class="btn sec" onclick="S.editId=null;renderAll()">Annuler</button>`:""}</div>
+  </div>
+  <datalist id="tiersList">${[...new Set(ex.ecritures.map(e=>e.tiers).filter(Boolean))].map(t=>`<option value="${esc(t)}">`).join("")}</datalist>
+  <div class="row" style="margin-top:10px"><button class="btn small sec" onclick="dupliquerMois()">Recopier les écritures du dernier mois saisi sur le mois suivant</button></div>
+  </div>`}
+  <div class="card"><div class="row" style="justify-content:space-between"><b>${list.length} écritures</b><span class="pill">Recettes ${eur(t.recettes)} · Dépenses ${eur(t.c242+t.c244+t.c294+t.remb)}</span></div>
+  <div class="tablewrap"><table><tr><th>Date</th><th>Tiers</th><th>Nature</th><th class="n">Recette</th><th class="n">Dépense</th><th></th></tr>
+  ${list.map(e=>{ const g = NATURES[e.nature]?.g || (e.sens==="recette"?"recette":"charge");
+    return `<tr><td>${fmtDate(e.date)}</td><td>${esc(e.tiers)}</td><td>${esc(e.nature)}${e.commentaire?`<br><small style="color:var(--muted)">${esc(e.commentaire)}</small>`:""}</td>
+    <td class="n">${g==="recette"?eur(e.montant):""}</td><td class="n">${g!=="recette"?eur(e.montant):""}</td>
+    <td class="n noprint">${lock?"":`<button class="btn small sec" onclick="S.editId='${e.id}';renderAll();scrollTo(0,0)">Modifier</button> <button class="btn small danger" onclick="delEcriture('${e.id}')">×</button>`}</td></tr>`}).join("")}
+  </table></div></div>`;
+}
+function parseMontant(s){ return Number(String(s).replace(/\s/g,"").replace(",", ".")); }
+function saveEcriture(){
+  const ex = exercice(S.year);
+  const e = {date:$("#eDate").value, tiers:$("#eTiers").value.trim(), nature:$("#eNat").value, montant:r2(parseMontant($("#eMont").value)), commentaire:$("#eCom").value.trim()};
+  if(!e.date || isNaN(e.montant) || e.montant <= 0) return alert("Date et montant positif obligatoires.");
+  if(yearOf(e.date) !== S.year) return alert("La date doit être dans l'exercice " + S.year + ".");
+  e.sens = NATURES[e.nature].g === "recette" ? "recette" : "depense";
+  if(!e.commentaire) delete e.commentaire;
+  if(S.editId){ Object.assign(ex.ecritures.find(x=>x.id===S.editId), e); S.editId = null; }
+  else ex.ecritures.push({id:uid(), ...e});
+  setDirty(); renderAll(); setTimeout(()=>$("#eMont")?.focus(),0);
+}
+function delEcriture(id){ if(!confirm("Supprimer cette écriture ?")) return; const ex = exercice(S.year); ex.ecritures = ex.ecritures.filter(e=>e.id!==id); setDirty(); renderAll(); }
+function dupliquerMois(){
+  const ex = exercice(S.year); if(!ex.ecritures.length) return alert("Aucune écriture à recopier.");
+  const last = ex.ecritures.map(e=>monthOf(e.date)).reduce((a,b)=>Math.max(a,b));
+  if(last === 12) return alert("Le dernier mois saisi est décembre.");
+  const src = ex.ecritures.filter(e=>monthOf(e.date)===last);
+  if(!confirm(`Recopier ${src.length} écriture(s) de ${MOIS[last-1]} sur ${MOIS[last]} ? Pensez à ajuster les montants qui changent (intérêts, eau…).`)) return;
+  src.forEach(e => { const d = `${S.year}-${String(last+1).padStart(2,"0")}-${e.date.slice(8,10)}`;
+    const valid = new Date(d).getMonth()+1 === last+1 ? d : `${S.year}-${String(last+1).padStart(2,"0")}-28`;
+    ex.ecritures.push({...e, id:uid(), date:valid}); });
+  setDirty(); renderAll();
+}
+
+/* ---- Immobilisations ---- */
+function vueImmos(){
+  const y = S.year;
+  const ed = S.editImmo === "new" ? {libelle:"",categorie:"mobilier",valeurOrigine:"",quotePartTerrain:0,dureeAns:7,miseEnService:y+"-01-01"} : S.data.immobilisations.find(i=>i.id===S.editImmo);
+  const rows = S.data.immobilisations.map(i => { const a = amortAnnee(i,y); return {i,a}; });
+  const tot = rows.reduce((s,{i,a})=>({brut:s.brut+i.valeurOrigine, dot:s.dot+(anneeEntreeBilan(i)<=y?a.dotation:0), cum:s.cum+a.cumulFin}),{brut:0,dot:0,cum:0});
+  return `<h2>Immobilisations ${y}</h2><p class="sub">Biens amortis : le logement (hors terrain), les travaux et le mobilier. Montants TTC (un LMNP ne récupère pas la TVA).</p>
+  ${ed ? `<div class="card"><div class="form">
+    <label>Libellé<input id="iLib" value="${esc(ed.libelle)}"></label>
+    <label>Catégorie<select id="iCat">${Object.entries(CATEGORIES).map(([k,l])=>`<option value="${k}" ${k===ed.categorie?"selected":""}>${l}</option>`).join("")}</select></label>
+    <label>Valeur d'origine TTC<input id="iVal" inputmode="decimal" value="${String(ed.valeurOrigine).replace(".",",")}"></label>
+    <label>Part terrain (%)<input id="iTer" inputmode="decimal" value="${(ed.quotePartTerrain||0)*100}"></label>
+    <label>Durée (ans)<input id="iDur" type="number" min="1" value="${ed.dureeAns}"></label>
+    <label>Mise en service<input id="iDate" type="date" value="${ed.miseEnService}"></label>
+    <div class="row"><button class="btn" onclick="saveImmo()">Enregistrer</button><button class="btn sec" onclick="S.editImmo=null;renderAll()">Annuler</button>
+    ${S.editImmo!=="new"?`<button class="btn danger" onclick="delImmo()">Supprimer</button>`:""}</div></div>
+    <p class="sub" style="margin:10px 0 0">Durées usuelles : gros œuvre 40–50 ans, logement en un seul bloc 25–30 ans, travaux 10–15 ans, mobilier 5–10 ans. Un achat inférieur à 500 € HT se passe plutôt en charge (« Petit équipement »).</p></div>`
+  : `<div class="noprint" style="margin-bottom:12px"><button class="btn" onclick="S.editImmo='new';renderAll()">+ Ajouter une immobilisation</button></div>`}
+  <div class="card"><div class="tablewrap"><table>
+    <tr><th>Bien</th><th class="n">Valeur</th><th class="n">Base amortissable</th><th class="n">Durée</th><th>Mise en service</th><th class="n">Dotation ${y}</th><th class="n">Cumul fin ${y}</th><th class="n">VNC</th><th></th></tr>
+    ${rows.map(({i,a})=>`<tr><td>${esc(i.libelle)}<br><small style="color:var(--muted)">${CATEGORIES[i.categorie]||i.categorie}</small></td>
+      <td class="n">${eur(i.valeurOrigine)}</td><td class="n">${eur(a.base)}</td><td class="n">${i.dureeAns} ans</td><td>${fmtDate(i.miseEnService)}</td>
+      <td class="n">${eur(a.dotation)}</td><td class="n">${eur(a.cumulFin)}</td><td class="n">${eur(a.base-a.cumulFin)}</td>
+      <td class="noprint"><button class="btn small sec" onclick="S.editImmo='${i.id}';renderAll();scrollTo(0,0)">Modifier</button></td></tr>
+      <tr class="muted"><td colspan="9"><details><summary>Plan d'amortissement</summary><table>${planAmort(i).map(p=>`<tr class="${p.annee===y?"tot":""}"><td>${p.annee}${p.avantLMNP?' <span class="pill">avant LMNP, non déduit</span>':""}</td><td class="n">${eur(p.dotation)}</td><td class="n">cumul ${eur(p.cumul)}</td><td class="n">VNC ${eur(p.vnc)}</td></tr>`).join("")}</table></details></td></tr>`).join("")}
+    <tr class="tot"><td>Total</td><td class="n">${eur(tot.brut)}</td><td></td><td></td><td></td><td class="n">${eur(tot.dot)}</td><td class="n">${eur(tot.cum)}</td><td></td><td></td></tr>
+  </table></div></div>`;
+}
+function saveImmo(){
+  const v = {libelle:$("#iLib").value.trim(), categorie:$("#iCat").value, valeurOrigine:r2(parseMontant($("#iVal").value)),
+    quotePartTerrain: parseMontant($("#iTer").value)/100 || 0, dureeAns: parseInt($("#iDur").value,10), miseEnService:$("#iDate").value};
+  if(!v.libelle || !(v.valeurOrigine>0) || !(v.dureeAns>0) || !v.miseEnService) return alert("Libellé, valeur, durée et date sont obligatoires.");
+  if(S.editImmo === "new") S.data.immobilisations.push({id:uid(), ...v});
+  else Object.assign(S.data.immobilisations.find(i=>i.id===S.editImmo), v);
+  S.editImmo = null; setDirty(); renderAll();
+}
+function delImmo(){ if(!confirm("Supprimer cette immobilisation ?")) return; S.data.immobilisations = S.data.immobilisations.filter(i=>i.id!==S.editImmo); S.editImmo=null; setDirty(); renderAll(); }
+
+/* ---- Emprunt ---- */
+function vueEmprunt(){
+  const y = S.year;
+  if(!S.data.emprunts.length) return `<h2>Emprunt</h2><div class="card"><p>Aucun emprunt.</p><button class="btn" onclick="S.data.emprunts.push({id:uid(),banque:'',capital:0,tauxAnnuel:0,dureeMois:240,premiereEcheance:'${y}-01-01',mensualite:0});setDirty();renderAll()">+ Ajouter un emprunt</button></div>`;
+  return S.data.emprunts.map((l,idx) => {
+    const rows = echeancier(l);
+    const ans = [...new Set(rows.map(r=>r.annee))];
+    const c = !isHistorique(y) ? calculAnnee(y) : null;
+    const ex = exercice(y);
+    return `<h2>Emprunt ${esc(l.banque)}</h2><p class="sub">Les intérêts sont déductibles, le capital remboursé ne l'est pas.</p>
+    <div class="card"><div class="form">
+      <label>Banque<input value="${esc(l.banque)}" onchange="majPret(${idx},'banque',this.value)"></label>
+      <label>Capital emprunté<input inputmode="decimal" value="${l.capital}" onchange="majPret(${idx},'capital',parseMontant(this.value))"></label>
+      <label>Taux annuel (%)<input inputmode="decimal" value="${r2(l.tauxAnnuel*10000)/100}" onchange="majPret(${idx},'tauxAnnuel',parseMontant(this.value)/100)"></label>
+      <label>Durée (mois)<input type="number" value="${l.dureeMois}" onchange="majPret(${idx},'dureeMois',parseInt(this.value,10))"></label>
+      <label>1re échéance<input type="date" value="${l.premiereEcheance}" onchange="majPret(${idx},'premiereEcheance',this.value)"></label>
+      <label>Mensualité hors assurance<input inputmode="decimal" value="${l.mensualite}" onchange="majPret(${idx},'mensualite',parseMontant(this.value))"></label>
+    </div></div>
+    ${c && ex ? `<div class="card"><h3 style="margin-top:0">${y} : théorique ou réel ?</h3><table>
+      <tr><td>Intérêts selon l'échéancier théorique</td><td class="n">${eur(c.interetsEch)}</td></tr>
+      <tr><td>Intérêts saisis dans les écritures (retenus)</td><td class="n">${c.interetsSaisis?eur(c.t.c294):"–"}</td></tr>
+      <tr><td>Capital restant dû au 31/12 selon l'échéancier</td><td class="n">${eur(c.crdEch)}</td></tr>
+      <tr><td>Capital restant dû selon la banque (facultatif)</td><td class="n"><input inputmode="decimal" style="width:130px;text-align:right" value="${ex.crdBanque??""}" placeholder="à saisir" onchange="majCrd(this.value)"></td></tr></table>
+      <p class="sub" style="margin:8px 0 0">Le montant de la banque (relevé annuel ou tableau d'amortissement) prime s'il est saisi : c'est lui qui va au bilan.</p></div>` : ""}
+    <div class="card"><h3 style="margin-top:0">Synthèse annuelle (échéancier théorique)</h3><div class="tablewrap"><table>
+      <tr><th>Année</th><th class="n">Intérêts</th><th class="n">Capital remboursé</th><th class="n">Restant dû au 31/12</th></tr>
+      ${ans.map(a=>{ const s = empruntAnnee(l,a); return `<tr class="${a===y?"tot":""}"><td>${a}</td><td class="n">${eur(s.interets)}</td><td class="n">${eur(s.capital)}</td><td class="n">${eur(s.crdFin)}</td></tr>`;}).join("")}
+    </table></div></div>`;
+  }).join("");
+}
+function majPret(i,k,v){ S.data.emprunts[i][k] = v; setDirty(); renderAll(); }
+function majCrd(v){ const ex = exercice(S.year); if(v.trim()==="") delete ex.crdBanque; else ex.crdBanque = r2(parseMontant(v)); setDirty(); renderAll(); }
+
+/* ---- Déclaration ---- */
+function ligne(cas, lib, v, opts={}){ return `<tr class="${opts.tot?"tot":""}"><td>${cas?`<span class="case">${cas}</span>`:""}</td><td>${lib}</td><td class="n">${opts.brut?eur(v):eur0(v)}</td></tr>`; }
+function vueDeclaration(){
+  const y = S.year;
+  if(isHistorique(y)) return `<h2>Déclaration ${y}</h2><div class="alert info">Exercice historique : déjà déclaré.</div>`;
+  const f = fiscalJusqua(y), c = f.c, R = Math.round;
+  if(!c.lmnpActif) return `<h2>Déclaration ${y}</h2><div class="alert info">Pas de location meublée cette année.</div>`;
+  const b = bilan(y), bp = exercice(y-1) ? bilan(y-1) : null;
+  const cp = exercice(y-1) && !isHistorique(y-1) ? calculAnnee(y-1) : null;
+  // 2033-B (arrondis à l'euro, totaux recalculés sur les arrondis)
+  const p218 = R(c.produits), c242 = R(c.c242), c244 = R(c.c244), c254 = R(c.dotations), c294 = R(c.interets);
+  const c264 = c242 + c244 + c254, rExpl = p218 - c264, r310 = rExpl - c294;
+  const reint = R(f.reintegration), ardUt = R(f.ardUtilise);
+  const rf = r310 + reint - ardUt;
+  // 2033-A
+  const brut = R(b.brut), am = R(b.amort), net = brut - am, crd = R(b.crd), cap = net - r310 - crd;
+  const decl = S.data.dossier.declarant === "2" ? ["5OA","5OY"] : ["5NA","5NY"];
+  const L = b.lignes, lc = (k,lib) => L[k].brutFin ? `<tr><td>${lib}</td><td class="n">${eur0(L[k].brutDebut)}</td><td class="n">${eur0(L[k].aug)}</td><td class="n">${eur0(L[k].brutFin)}</td></tr>` : "";
+  const la = (k,lib) => L[k].brutFin && k!=="terrain" ? `<tr><td>${lib}</td><td class="n">${eur0(L[k].amDebut)}</td><td class="n">${eur0(L[k].dot)}</td><td class="n">${eur0(L[k].amFin)}</td></tr>` : "";
+  return `<div class="fiche"><div class="row" style="justify-content:space-between"><div><h2>Fiche de déclaration ${y} · ${esc(S.data.dossier.nom)}</h2><p class="sub">Montants à recopier dans la liasse en ligne (euros entiers). Revenus ${y}, à déclarer au printemps ${y+1}.</p></div>
+    <button class="btn sec noprint" onclick="print()">Imprimer / PDF</button></div>
+  ${exercice(y).statut!=="cloture" && y >= new Date().getFullYear() ? `<div class="alert warn">Exercice en cours : chiffres provisoires.</div>`:""}
+
+  <div class="card"><h3 style="margin-top:0">2033-B · Compte de résultat simplifié</h3><table>
+    <tr><th>Case</th><th>Libellé</th><th class="n">${y}</th></tr>
+    ${ligne("218","Production vendue – services (loyers)",p218)}
+    ${ligne("232","Total des produits d'exploitation",p218,{tot:1})}
+    ${ligne("242","Autres charges externes",c242)}
+    ${ligne("244","Impôts, taxes et versements assimilés",c244)}
+    ${ligne("254","Dotations aux amortissements",c254)}
+    ${ligne("264","Total des charges d'exploitation",c264,{tot:1})}
+    ${ligne("270","Résultat d'exploitation",rExpl)}
+    ${ligne("294","Charges financières (intérêts d'emprunt)",c294)}
+    ${ligne("310","Bénéfice ou perte comptable",r310,{tot:1})}
+  </table>
+  <h3>Détermination du résultat fiscal (bas de la 2033-B)</h3><table>
+    ${ligne("","Résultat comptable",r310)}
+    ${reint?ligne("","Réintégration : amortissements non déductibles (art. 39 C)",reint):""}
+    ${ardUt?ligne("","Déduction : amortissements différés des années antérieures",-ardUt):""}
+    ${ligne("",rf>=0?"Résultat fiscal : bénéfice":"Résultat fiscal : déficit",Math.abs(rf),{tot:1})}
+  </table>
+  ${(reint||ardUt)?`<p class="sub" style="margin-top:8px">Les intitulés exacts des lignes de réintégration/déduction figurent sur le formulaire : reportez-y ces montants.</p>`:""}</div>
+
+  <div class="card"><h3 style="margin-top:0">2033-A · Bilan simplifié au 31/12/${y}</h3><table>
+    <tr><th>Case</th><th>Libellé</th><th class="n">${y}</th></tr>
+    ${ligne("028","Immobilisations corporelles – brut",brut)}
+    ${ligne("030","Immobilisations corporelles – amortissements",am)}
+    ${ligne("","Immobilisations corporelles – net",net)}
+    ${ligne("110","Total actif (net)",net,{tot:1})}
+    ${ligne("120","Capital individuel (compte de l'exploitant)",cap)}
+    ${ligne("136","Résultat de l'exercice",r310)}
+    ${ligne("156","Emprunts et dettes assimilées",crd)}
+    ${ligne("180","Total passif",cap+r310+crd,{tot:1})}
+  </table>
+  ${bp ? `<p class="sub" style="margin-top:8px">Colonne N-1 (${y-1}) : immobilisations nettes ${eur0(bp.immoNettes)}, emprunts ${eur0(bp.crd)}, capital ${eur0(bp.capital)}, résultat ${eur0(bp.resultat)}.</p>`:""}
+  <p class="sub" style="margin-top:8px">Simplification : la trésorerie n'est pas suivie (disponibilités à 0) ; le capital de l'exploitant équilibre le bilan.</p></div>
+
+  <div class="card"><h3 style="margin-top:0">2033-C · Immobilisations et amortissements</h3>
+  <div class="tablewrap"><table><tr><th>Valeurs brutes</th><th class="n">Début d'exercice</th><th class="n">Augmentations</th><th class="n">Fin d'exercice</th></tr>
+    ${lc("terrain","Terrains")}${lc("construction","Constructions")}${lc("travaux","Installations générales, agencements")}${lc("mobilier","Autres immobilisations corporelles")}
+  </table></div>
+  <div class="tablewrap" style="margin-top:12px"><table><tr><th>Amortissements</th><th class="n">Début d'exercice</th><th class="n">Dotations</th><th class="n">Fin d'exercice</th></tr>
+    ${la("construction","Constructions")}${la("travaux","Installations générales, agencements")}${la("mobilier","Autres immobilisations corporelles")}
+  </table></div></div>
+
+  <div class="card"><h3 style="margin-top:0">2033-D · Déficits et amortissements reportés</h3><table>
+    ${ligne("","Déficits restant à reporter au début de l'exercice",f.deficitsDebut.reduce((s,d)=>s+d.montant,0))}
+    ${ligne("","Déficits imputés sur le résultat de l'exercice",f.deficitsImputes)}
+    ${ligne("","Déficit de l'exercice",f.deficitAnnee)}
+    ${ligne("","Déficits restant à reporter en fin d'exercice",f.deficitsFin.reduce((s,d)=>s+d.montant,0),{tot:1})}
+    ${ligne("","Amortissements différés (art. 39 C) – début",f.ardDebut)}
+    ${ligne("","Amortissements différés – fin",f.ardFin,{tot:1})}
+  </table>${(!f.deficitsDebut.length && !f.ardFin && !f.deficitAnnee)?`<p class="sub" style="margin-top:8px">Rien à reporter : ce tableau peut rester vide.</p>`:""}</div>
+
+  <div class="card"><h3 style="margin-top:0">2031 · Déclaration de résultats</h3><table>
+    ${ligne("",rf>=0?"Résultat fiscal – bénéfice":"Résultat fiscal – déficit",Math.abs(rf),{tot:1})}
+  </table><p class="sub" style="margin-top:8px">Régime réel simplifié, exercice du 01/01/${y} au 31/12/${y}.</p></div>
+
+  <div class="card"><h3 style="margin-top:0">2042-C-PRO · Déclaration de revenus (déclarant ${S.data.dossier.declarant})</h3><table>
+    ${rf>=0 ? ligne(decl[0],"Locations meublées non professionnelles – régime réel – bénéfice",rf-R(f.deficitsImputes),{tot:1}) : ligne(decl[1],"Locations meublées non professionnelles – régime réel – déficit",-rf,{tot:1})}
+  </table>${f.deficitsImputes?`<p class="sub" style="margin-top:8px">Bénéfice après imputation de ${eur0(f.deficitsImputes)} de déficits antérieurs : vérifiez sur la notice si l'imputation se fait dans les cases dédiées aux déficits antérieurs.</p>`:""}</div>
+  <p class="sub">Ces montants sont calculés par l'outil à partir de vos saisies ; vérifiez-les avant envoi. Échéance habituelle de la liasse : début mai (+ 15 jours en télétransmission).</p></div>`;
+}
+
+/* ---- Dossier ---- */
+function vueDossier(){
+  const d = S.data.dossier, rp = S.data.reports;
+  const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
+  return `<h2>Dossier</h2><p class="sub">Paramètres et gestion des exercices.</p>
+  <div class="card"><div class="form">
+    <label>Nom du dossier<input value="${esc(d.nom)}" onchange="S.data.dossier.nom=this.value;setDirty();renderAll()"></label>
+    <label>Début de la location meublée<input type="date" value="${d.debutLocationMeublee}" onchange="S.data.dossier.debutLocationMeublee=this.value;setDirty();renderAll()"></label>
+    <label>Déclarant sur la 2042<select onchange="S.data.dossier.declarant=this.value;setDirty();renderAll()"><option value="1" ${d.declarant==="1"?"selected":""}>Déclarant 1</option><option value="2" ${d.declarant==="2"?"selected":""}>Déclarant 2</option></select></label>
+  </div></div>
+  <div class="card"><h3 style="margin-top:0">Exercices</h3><table>
+    ${ys.map(y=>`<tr><td>${y}</td><td>${esc(S.data.exercices[y].statut||"en-cours")}</td><td class="n">${isHistorique(y)?"":`
+      ${S.data.exercices[y].statut==="cloture"?`<button class="btn small sec" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`:`<button class="btn small sec" onclick="if(confirm('Clôturer ${y} ? Les écritures seront verrouillées.')){S.data.exercices[${y}].statut='cloture';setDirty();renderAll()}">Clôturer</button>`}`}</td></tr>`).join("")}
+  </table><div style="margin-top:10px"><button class="btn" onclick="nouvelExercice()">+ Ouvrir l'exercice ${Math.max(...ys)+1}</button></div></div>
+  <div class="card"><h3 style="margin-top:0">Reports à l'ouverture du premier exercice détaillé</h3>
+    <div class="form"><label>Amortissements différés (art. 39 C)<input inputmode="decimal" value="${rp.amortissementsDifferes}" onchange="S.data.reports.amortissementsDifferes=r2(parseMontant(this.value))||0;setDirty();renderAll()"></label></div>
+    <p class="sub" style="margin:8px 0 0">Déficits antérieurs : ${rp.deficits.length?rp.deficits.map(x=>x.annee+" : "+eur(x.montant)).join(", "):"aucun"}.</p></div>
+  <div class="card"><h3 style="margin-top:0">Fichier</h3>
+    <p class="sub">${S.dir?`Dossier ouvert : « ${esc(S.dir.name)} ». Chaque enregistrement ajoute une copie datée dans « Sauvegardes ».`:`Fichier ouvert en lecture : l'enregistrement télécharge un nouveau fichier.`}</p>
+    <div class="row">${FS?`<button class="btn sec" onclick="ouvrirDossier()">Ouvrir un autre dossier…</button>`:""}<button class="btn sec" onclick="ouvrirFichier()">Ouvrir un fichier…</button></div></div>`;
+}
+function nouvelExercice(){
+  const y = Math.max(...Object.keys(S.data.exercices).map(Number)) + 1;
+  S.data.exercices[y] = {statut:"en-cours", ecritures:[]}; S.year = y; S.tab = "ecritures"; setDirty(); renderAll();
+}
+
+renderAll();
+</script>
+</body>
+</html>
