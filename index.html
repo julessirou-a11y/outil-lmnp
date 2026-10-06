@@ -62,6 +62,12 @@ tr.muted td{color:var(--muted)}
 .hide{display:none!important}
 details summary{cursor:pointer;color:var(--accent)}
 .fiche h3{border-bottom:1px solid var(--line);padding-bottom:4px}
+dialog#viewer{width:min(1000px,96vw);height:92vh;padding:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--text)}
+dialog#viewer::backdrop{background:rgba(0,0,0,.45)}
+#viewer .vbar{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
+#viewer iframe{width:100%;height:calc(92vh - 50px);border:0;background:#fff}
+.badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:99px;background:var(--warn-soft);color:var(--warn);font-size:12px;font-weight:600;text-align:center}
+.pj{font-size:13px;white-space:nowrap}
 @media print{
   header,nav,.noprint{display:none!important}
   body{background:#fff;color:#000}
@@ -83,17 +89,18 @@ details summary{cursor:pointer;color:var(--accent)}
 </header>
 <main id="main"></main>
 <input type="file" id="fileInput" accept=".json,application/json" class="hide">
+<dialog id="viewer"><div class="vbar"><b id="vTitle" style="margin-right:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><a class="btn small sec" id="vOpen" target="_blank">Ouvrir dans un onglet</a><button class="btn small" onclick="fermerPiece()">Fermer</button></div><iframe id="vFrame" title="Justificatif"></iframe></dialog>
 
 <script>
 "use strict";
 /* ============ Paramètres ============ */
 const NATURES = {
-  "Loyer":{g:"recette",l:"218"},
+  "Loyer":{g:"recette",l:"218",piece:false},
   "Charges refacturées":{g:"recette",l:"218"},
   "Autre recette":{g:"recette",l:"218"},
   "Copropriété":{g:"charge",l:"242"},
   "Assurance":{g:"charge",l:"242"},
-  "Assurance emprunt":{g:"charge",l:"242"},
+  "Assurance emprunt":{g:"charge",l:"242",piece:false},
   "Eau":{g:"charge",l:"242"},
   "Électricité / gaz":{g:"charge",l:"242"},
   "Internet":{g:"charge",l:"242"},
@@ -105,8 +112,8 @@ const NATURES = {
   "Autre charge":{g:"charge",l:"242"},
   "Taxe foncière":{g:"charge",l:"244"},
   "CFE":{g:"charge",l:"244"},
-  "Intérêts emprunt":{g:"charge",l:"294"},
-  "Remboursement emprunt":{g:"bilan",l:""}
+  "Intérêts emprunt":{g:"charge",l:"294",piece:false},
+  "Remboursement emprunt":{g:"bilan",l:"",piece:false}
 };
 const CATEGORIES = {construction:"Logement (bâti + terrain)", travaux:"Travaux / agencements", mobilier:"Mobilier et équipements"};
 const DUREE_DEFICIT = 10;
@@ -371,7 +378,7 @@ document.addEventListener("keydown", e => { if((e.metaKey||e.ctrlKey) && e.key =
 function toast(msg){ const el = document.createElement("div"); el.className="alert ok noprint"; el.style.cssText="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9;box-shadow:0 4px 16px rgba(0,0,0,.15);max-width:90vw"; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(), 3500); }
 
 /* ============ Rendu ============ */
-const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["dossier","Dossier"]];
+const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["dossier","Dossier"]];
 function renderAll(){
   $("#fileinfo").textContent = S.data ? (S.data.dossier.nom + " · " + (S.fileName||"")) : "Aucun dossier ouvert";
   const sel = $("#yearSel");
@@ -379,11 +386,12 @@ function renderAll(){
     const ys = new Set(Object.keys(S.data.exercices).map(Number));
     sel.innerHTML = [...ys].sort((a,b)=>b-a).map(y => `<option value="${y}" ${y===S.year?"selected":""}>${y}${isHistorique(y)?" (historique)":""}</option>`).join("");
   } else sel.innerHTML = "";
-  $("#tabs").innerHTML = S.data ? TABS.map(([k,l]) => `<button data-tab="${k}" class="${S.tab===k?"on":""}">${l}</button>`).join("") : "";
+  $("#tabs").innerHTML = S.data ? TABS.map(([k,l]) => { const n = k==="pieces" ? piecesManquantes(S.year).length : 0; return `<button data-tab="${k}" class="${S.tab===k?"on":""}">${l}${n?`<span class="badge">${n}</span>`:""}</button>`; }).join("") : "";
   $("#saveBtn").disabled = !S.data;
   const m = $("#main");
   if(!S.data){ m.innerHTML = vueBienvenue(); return; }
-  m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier})[S.tab]();
+  m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab]();
+  if(S.tab === "pieces") scanNonRattaches(S.year);
 }
 $("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; renderAll(); } });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
@@ -468,10 +476,11 @@ function vueEcritures(){
   <div class="row" style="margin-top:10px"><button class="btn small sec" onclick="dupliquerMois()">Recopier les écritures du dernier mois saisi sur le mois suivant</button></div>
   </div>`}
   <div class="card"><div class="row" style="justify-content:space-between"><b>${list.length} écritures</b><span class="pill">Recettes ${eur(t.recettes)} · Dépenses ${eur(t.c242+t.c244+t.c294+t.remb)}</span></div>
-  <div class="tablewrap"><table><tr><th>Date</th><th>Tiers</th><th>Nature</th><th class="n">Recette</th><th class="n">Dépense</th><th></th></tr>
+  <div class="tablewrap"><table><tr><th>Date</th><th>Tiers</th><th>Nature</th><th class="n">Recette</th><th class="n">Dépense</th><th class="noprint">Pièce</th><th></th></tr>
   ${list.map(e=>{ const g = NATURES[e.nature]?.g || (e.sens==="recette"?"recette":"charge");
     return `<tr><td>${fmtDate(e.date)}</td><td>${esc(e.tiers)}</td><td>${esc(e.nature)}${e.commentaire?`<br><small style="color:var(--muted)">${esc(e.commentaire)}</small>`:""}</td>
     <td class="n">${g==="recette"?eur(e.montant):""}</td><td class="n">${g!=="recette"?eur(e.montant):""}</td>
+    <td class="noprint">${cellPiece(e)}</td>
     <td class="n noprint">${lock?"":`<button class="btn small sec" onclick="S.editId='${e.id}';renderAll();scrollTo(0,0)">Modifier</button> <button class="btn small danger" onclick="delEcriture('${e.id}')">×</button>`}</td></tr>`}).join("")}
   </table></div></div>`;
 }
@@ -676,6 +685,115 @@ function vueDossier(){
     <p class="sub">${S.dir?`Dossier ouvert : « ${esc(S.dir.name)} ». Chaque enregistrement ajoute une copie datée dans « Sauvegardes ».`:`Fichier ouvert en lecture : l'enregistrement télécharge un nouveau fichier.`}</p>
     <div class="row">${FS?`<button class="btn sec" onclick="ouvrirDossier()">Ouvrir un autre dossier…</button>`:""}<button class="btn sec" onclick="ouvrirFichier()">Ouvrir un fichier…</button></div></div>`;
 }
+/* ============ Justificatifs ============ */
+function pieceRequise(e){ return !e.sansPiece && (NATURES[e.nature]?.piece !== false); }
+function piecesManquantes(y){ const ex = S.data && exercice(y); return (ex && ex.ecritures ? ex.ecritures : []).filter(e => pieceRequise(e) && !e.piece); }
+function findEcr(id){ for(const ex of Object.values(S.data.exercices)) { const e = (ex.ecritures||[]).find(x=>x.id===id); if(e) return e; } }
+function cellPiece(e){
+  if(e.piece) return `<button class="btn small sec pj" title="${esc(e.piece)}" style="color:var(--accent)" onclick="ouvrirPiece('${e.id}')">📎 Voir</button>`;
+  if(!pieceRequise(e)) return `<span class="pill" title="${e.sansPiece?"Marquée sans justificatif":"Pas de justificatif nécessaire pour cette nature"}">non requise</span>`;
+  return `<button class="btn small sec pj" onclick="attacherPiece('${e.id}')">Ajouter</button>`;
+}
+const slug = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,30) || "piece";
+async function dossierRequis(){
+  if(!S.dir){ alert("Les justificatifs sont rangés dans le dossier LMNP : ouvrez l'outil dans Chrome via « Ouvrir le dossier LMNP… »."); return false; }
+  if(await S.dir.queryPermission({mode:"readwrite"}) !== "granted" && await S.dir.requestPermission({mode:"readwrite"}) !== "granted") return false;
+  return true;
+}
+async function justifDir(y, create=true){ return (await S.dir.getDirectoryHandle("Justificatifs",{create})).getDirectoryHandle(String(y),{create}); }
+async function handleDepuisChemin(chemin){
+  const parts = chemin.split("/"); let d = S.dir;
+  for(const p of parts.slice(0,-1)) d = await d.getDirectoryHandle(p);
+  return d.getFileHandle(parts[parts.length-1]);
+}
+async function attacherPiece(id){
+  if(!await dossierRequis()) return;
+  const e = findEcr(id);
+  let fh;
+  try{ [fh] = await window.showOpenFilePicker({id:"pieces", types:[{description:"Justificatifs", accept:{"application/pdf":[".pdf"],"image/*":[".jpg",".jpeg",".png",".heic"]}}]}); }
+  catch(err){ return; }
+  const file = await fh.getFile();
+  const y = yearOf(e.date), dir = await justifDir(y);
+  // Fichier déjà dans Justificatifs/<année> ? on le rattache sans copie
+  let dejaLa = false;
+  try{ const ex = await dir.getFileHandle(file.name); dejaLa = await ex.isSameEntry(fh); }catch(_){}
+  let nom = file.name;
+  if(!dejaLa){
+    const ext = (file.name.match(/\.[A-Za-z0-9]+$/)||[".pdf"])[0].toLowerCase();
+    const base = `${e.date}_${slug(e.tiers)}_${slug(e.nature)}`;
+    nom = base + ext; let k = 2;
+    while(true){ try{ await dir.getFileHandle(nom); nom = `${base}-${k++}${ext}`; }catch(_){ break; } }
+    const out = await dir.getFileHandle(nom,{create:true}); const w = await out.createWritable(); await w.write(file); await w.close();
+  }
+  e.piece = `Justificatifs/${y}/${nom}`; delete e.sansPiece;
+  setDirty(); renderAll(); toast(dejaLa ? "Justificatif rattaché." : `Copié dans Justificatifs/${y}/ sous le nom « ${nom} ».`);
+}
+async function ouvrirPiece(id){
+  const e = findEcr(id);
+  if(!await dossierRequis()) return;
+  try{
+    const file = await (await handleDepuisChemin(e.piece)).getFile();
+    const url = urlPiece(file);
+    $("#vTitle").textContent = `${fmtDate(e.date)} · ${e.tiers||""} · ${e.nature} · ${eur(e.montant)}`;
+    $("#vFrame").src = url; $("#vOpen").href = url;
+    S.pieceOuverte = id; $("#viewer").showModal();
+  }catch(err){ alert("Justificatif introuvable : « "+e.piece+" ». A-t-il été déplacé ou renommé ?"); }
+}
+function urlPiece(file){
+  const ext = (file.name.split(".").pop()||"").toLowerCase();
+  const type = file.type || ({pdf:"application/pdf",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",heic:"image/heic"})[ext] || "application/octet-stream";
+  return URL.createObjectURL(new Blob([file],{type}));
+}
+function fermerPiece(){ const f = $("#vFrame"); if(f.src.startsWith("blob:")) URL.revokeObjectURL(f.src); f.src = "about:blank"; $("#viewer").close(); }
+function detacherPiece(id){ const e = findEcr(id); if(!confirm("Détacher ce justificatif de l'écriture ? (le fichier reste dans le dossier)")) return; delete e.piece; setDirty(); renderAll(); }
+function marquerSansPiece(id, v){ const e = findEcr(id); if(v) e.sansPiece = true; else delete e.sansPiece; setDirty(); renderAll(); }
+function vuePieces(){
+  const y = S.year;
+  if(isHistorique(y)) return `<h2>Pièces ${y}</h2><div class="alert info">Exercice historique : pas d'écritures détaillées.</div>`;
+  const ex = exercice(y), all = (ex.ecritures||[]).filter(pieceRequise);
+  const manq = piecesManquantes(y).sort((a,b)=>a.date.localeCompare(b.date));
+  const ok = all.filter(e=>e.piece).sort((a,b)=>a.date.localeCompare(b.date));
+  const ligneE = (e, actions) => `<tr><td>${fmtDate(e.date)}</td><td>${esc(e.tiers)}</td><td>${esc(e.nature)}</td><td class="n">${eur(e.montant)}</td><td class="n noprint">${actions}</td></tr>`;
+  return `<h2>Pièces justificatives ${y}</h2>
+  <p class="sub">Les factures sont rangées dans <code>Justificatifs/${y}/</code> du dossier LMNP. Pas besoin de justificatif pour les loyers et l'emprunt (le bail, le relevé et l'échéancier en tiennent lieu).</p>
+  ${!S.dir ? `<div class="alert warn">Pour ajouter ou consulter les justificatifs, ouvrez l'outil dans Chrome avec « Ouvrir le dossier LMNP… ».</div>` : ""}
+  <div class="grid" style="margin-bottom:16px">${kpiN("Pièces manquantes", manq.length, manq.length?"var(--warn)":"var(--ok)")}${kpiN("Pièces rattachées", ok.length)}${kpiN("Écritures à justifier", all.length)}</div>
+  <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">À fournir</h3>
+    ${manq.length>3?`<button class="btn small sec noprint" onclick="if(confirm('Marquer les ${manq.length} écritures comme ne nécessitant pas de justificatif dans l\\'outil (par ex. pièces archivées ailleurs) ?')){piecesManquantes(${y}).forEach(e=>e.sansPiece=true);setDirty();renderAll()}">Tout marquer « classé ailleurs »</button>`:""}</div>
+  ${manq.length ? `<div class="tablewrap"><table><tr><th>Date</th><th>Tiers</th><th>Nature</th><th class="n">Montant</th><th></th></tr>
+    ${manq.map(e=>ligneE(e, `<button class="btn small" onclick="attacherPiece('${e.id}')">Ajouter</button> <button class="btn small sec" title="Cette écriture n'a pas besoin de justificatif dans l'outil" onclick="marquerSansPiece('${e.id}',true)">Non requis</button>`)).join("")}</table></div>`
+    : `<div class="alert ok">Toutes les pièces sont là.</div>`}</div>
+  <div class="card" id="nonRattaches"><h3 style="margin-top:0">Fichiers déposés non rattachés</h3><p class="sub" style="margin:0">${S.dir?"Recherche dans Justificatifs/"+y+"/…":"Disponible quand le dossier LMNP est ouvert."}</p></div>
+  ${ok.length?`<div class="card"><h3 style="margin-top:0">Pièces rattachées</h3><div class="tablewrap"><table><tr><th>Date</th><th>Tiers</th><th>Nature</th><th class="n">Montant</th><th></th></tr>
+    ${ok.map(e=>ligneE(e, `<button class="btn small sec" onclick="ouvrirPiece('${e.id}')">📎 Voir</button> <button class="btn small danger" title="Détacher" onclick="detacherPiece('${e.id}')">×</button>`)).join("")}</table></div></div>`:""}`;
+}
+function kpiN(l,v,col){ return `<div class="card kpi" style="margin:0"><div class="l">${l}</div><div class="v" style="${col?"color:"+col:""}">${v}</div></div>`; }
+async function scanNonRattaches(y){
+  const box = $("#nonRattaches"); if(!box || !S.dir) return;
+  try{
+    if(await S.dir.queryPermission({mode:"read"}) !== "granted") { box.querySelector("p").textContent = "Cliquez sur « Enregistrer » ou « Ajouter » pour autoriser l'accès au dossier, puis revenez ici."; return; }
+    let dir; try{ dir = await justifDir(y,false); }catch(_){ box.querySelector("p").textContent = `Aucun dossier Justificatifs/${y}/ pour l'instant. Ta sœur peut y déposer ses factures depuis son iPhone (app Fichiers) : elles apparaîtront ici.`; return; }
+    const lies = new Set(Object.values(S.data.exercices).flatMap(ex=>(ex.ecritures||[]).map(e=>e.piece)).filter(Boolean));
+    const libres = [];
+    for await (const [nom, h] of dir.entries()) if(h.kind === "file" && !nom.startsWith(".") && !lies.has(`Justificatifs/${y}/${nom}`)) libres.push(nom);
+    libres.sort();
+    S.libres = libres;
+    const manq = piecesManquantes(y);
+    box.innerHTML = `<h3 style="margin-top:0">Fichiers déposés non rattachés</h3>` + (libres.length ? `<p class="sub">Fichiers présents dans Justificatifs/${y}/ mais liés à aucune écriture : rattachez-les.</p><div class="tablewrap"><table>
+      ${libres.map((n,i)=>`<tr><td>${esc(n)}</td><td class="n noprint"><button class="btn small sec" onclick="voirLibre(${y},${i})">Voir</button>
+      <select id="lib${i}" style="max-width:280px"><option value="">Rattacher à…</option>${manq.map(e=>`<option value="${e.id}">${fmtDate(e.date)} · ${esc(e.tiers)} · ${eur(e.montant)}</option>`).join("")}</select>
+      <button class="btn small" onclick="rattacherLibre(${y},${i})">OK</button></td></tr>`).join("")}</table></div>` : `<p class="sub" style="margin:0">Aucun fichier en attente dans Justificatifs/${y}/.</p>`);
+  }catch(err){ box.querySelector("p").textContent = "Lecture du dossier impossible : " + err.message; }
+}
+async function voirLibre(y,i){
+  const nom = S.libres[i]; const file = await (await (await justifDir(y,false)).getFileHandle(nom)).getFile();
+  const url = urlPiece(file); $("#vTitle").textContent = nom; $("#vFrame").src = url; $("#vOpen").href = url; $("#viewer").showModal();
+}
+function rattacherLibre(y,i){
+  const id = $("#lib"+i).value; if(!id) return alert("Choisissez l'écriture correspondante.");
+  const e = findEcr(id); e.piece = `Justificatifs/${y}/${S.libres[i]}`; delete e.sansPiece; setDirty(); renderAll();
+}
+
 function nouvelExercice(){
   const y = Math.max(...Object.keys(S.data.exercices).map(Number)) + 1;
   S.data.exercices[y] = {statut:"en-cours", ecritures:[]}; S.year = y; S.tab = "ecritures"; setDirty(); renderAll();
