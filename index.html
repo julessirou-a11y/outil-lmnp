@@ -60,7 +60,7 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .theme button{flex:1;border:0;background:none;color:var(--muted);font:inherit;font-size:12.5px;padding:4px 0;border-radius:7px;cursor:pointer}
 .theme button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(15,25,40,.12)}
 .topbar{display:none}
-main{padding:36px 44px 80px;max-width:1080px;width:100%}
+main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
 
 @media (max-width: 860px){
   .app{grid-template-columns:1fr;background:var(--bg)}
@@ -177,6 +177,23 @@ dialog#viewer::backdrop{background:rgba(10,15,25,.5)}
 #viewer .vbar{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
 #viewer iframe{width:100%;height:calc(92vh - 56px);border:0;background:#fff}
 
+/* ---------- Banque : opérations à trier ---------- */
+.op{display:grid;grid-template-columns:44px minmax(0,1fr) 120px;gap:6px 12px;align-items:center;padding:12px 14px;border-top:1px solid var(--line)}
+.op:first-of-type{border-top:0}
+.op .d{font-size:13px;color:var(--faint);text-align:center;line-height:1.1}
+.op .d b{display:block;font-size:17px;color:var(--text);font-weight:500}
+.op .d small{display:block;font-size:11.5px}
+.op .t{font-size:13.5px;overflow-wrap:anywhere}
+.op .t small{display:block;color:var(--muted);font-size:12.5px;margin-top:2px}
+.op .m{font-weight:500;text-align:right;white-space:nowrap}
+.op .m.recette{color:var(--pos)}
+.op .f{grid-column:2 / -1;display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.op .f select{min-width:200px}
+.op .f input{flex:1;min-width:150px}
+.op.classe{background:var(--surface-2)}
+.op .dbl{grid-column:2 / -1;margin:0}
+@media (max-width:600px){ .op{grid-template-columns:38px minmax(0,1fr) auto} .op .f select{min-width:0;flex:1} }
+
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:50;box-shadow:0 8px 24px rgba(10,15,25,.18);max-width:90vw}
 .fiche .card h3{padding-bottom:8px;border-bottom:1px solid var(--line)}
 
@@ -216,6 +233,7 @@ dialog#viewer::backdrop{background:rgba(10,15,25,.5)}
 </div>
 
 <input type="file" id="fileInput" accept=".json,application/json" class="hide">
+<input type="file" id="csvInput" accept=".csv,.txt,text/csv" class="hide">
 <dialog id="viewer"><div class="vbar"><b id="vTitle" style="margin-right:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><a class="btn small sec" id="vOpen" target="_blank">Ouvrir dans un onglet</a><button class="btn small" onclick="fermerPiece()">Fermer</button></div><iframe id="vFrame" title="Justificatif"></iframe></dialog>
 
 <script>
@@ -303,6 +321,8 @@ function normalize(d){
     if(ex.ecritures) ex.ecritures.forEach(e => { e.id ??= uid(); });
   }
   d.immobilisations.forEach(i => { i.id ??= uid(); i.quotePartTerrain ??= 0; });
+  d.banque ??= {};
+  d.banque.regles ??= []; d.banque.aTrier ??= []; d.banque.ignorees ??= [];
   return d;
 }
 function newDossier(){
@@ -533,6 +553,7 @@ function toast(msg){ const el = document.createElement("div"); el.className="ale
 const IC = {
   accueil:'<path d="M4 13h4v7H4zM10 8h4v12h-4zM16 4h4v16h-4z"/>',
   ecritures:'<path d="M6 4h12v16H6zM9 9h6M9 13h6M9 17h3"/>',
+  banque:'<path d="M4 9l8-5 8 5zM6 9v8M10 9v8M14 9v8M18 9v8M4 20h16"/>',
   pieces:'<path d="M14 4H7v16h10V7zM14 4v3h3M10 12h4M10 16h4"/>',
   immos:'<path d="M4 11l8-6 8 6v9H4zM10 20v-5h4v5"/>',
   emprunt:'<path d="M4 7h16v10H4zM4 11h16M8 15h3"/>',
@@ -540,7 +561,7 @@ const IC = {
   dossier:'<path d="M4 7h6l2 2h8v10H4z"/>'
 };
 const icon = k => `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${IC[k]}</svg>`;
-const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["sep"],["dossier","Dossier"]];
+const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["banque","Banque"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["sep"],["dossier","Dossier"]];
 function renderAll(){
   $("#fileinfo").textContent = S.data ? S.data.dossier.nom : "Aucun dossier ouvert";
   $("#fileinfo").title = S.fileName || "";
@@ -552,13 +573,14 @@ function renderAll(){
   } else sel.innerHTML = "";
   $("#tabs").innerHTML = S.data ? TABS.map(([k,l]) => {
     if(k==="sep") return '<div class="sep"></div>';
-    const n = k==="pieces" ? piecesManquantes(S.year).length : 0;
-    return `<button data-tab="${k}" class="${S.tab===k?"on":""}" ${S.tab===k?'aria-current="page"':""}>${icon(k)}<span>${l}</span>${n?`<span class="badge" title="Pièces manquantes">${n}</span>`:""}</button>`; }).join("") : "";
+    const n = k==="pieces" ? piecesManquantes(S.year).length : k==="banque" ? S.data.banque.aTrier.length : 0;
+    const bt = k==="banque" ? "Opérations bancaires à trier" : "Pièces manquantes";
+    return `<button data-tab="${k}" class="${S.tab===k?"on":""}" ${S.tab===k?'aria-current="page"':""}>${icon(k)}<span>${l}</span>${n?`<span class="badge" title="${bt}">${n}</span>`:""}</button>`; }).join("") : "";
   $("#saveBtn").disabled = !S.data;
   document.querySelectorAll("#themeSw button").forEach(b => b.classList.toggle("on", b.dataset.t === themeActuel()));
   const m = $("#main");
   if(!S.data){ m.innerHTML = vueBienvenue(); return; }
-  m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab]();
+  m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab]();
   if(S.tab === "pieces") scanNonRattaches(S.year);
 }
 $("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; S.composer=false; document.body.classList.remove("menu-open"); renderAll(); window.scrollTo(0,0); } });
@@ -682,7 +704,7 @@ function vueEcritures(){
     return `<section class="card month"><header><h3>${MOIS_LONG[m-1]} ${y}</h3><span>${rec?`+${eur(rec)}`:""}${rec&&dep?" / ":""}${dep?`−${eur(dep)}`:""}</span></header>
     ${es.map(e => { const g = groupe(e); return `<div class="ecr ${S.editId===e.id?"editing":""}">
       <div class="d"><b>${e.date.slice(8,10)}</b>${MOIS[monthOf(e.date)-1]}</div>
-      <div class="t"><b>${esc(e.tiers)||"Sans tiers"}</b><small><i class="${g}"></i>${esc(e.nature)}</small></div>
+      <div class="t" ${e.libelleBanque?`title="Relevé bancaire : ${esc(e.libelleBanque)}"`:""}><b>${esc(e.tiers)||"Sans tiers"}</b><small><i class="${g}"></i>${esc(e.nature)}</small></div>
       <div class="m ${g}">${g==="recette"?"+":"−"}${eur(e.montant)}</div>
       <div class="a noprint">${piecesLigne(e)}${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();scrollTo(0,0)">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</div>
       ${e.commentaire?`<div class="c">${esc(e.commentaire)}</div>`:""}
@@ -998,6 +1020,276 @@ async function voirLibre(y,i){
 function rattacherLibre(y,i){
   const id = $("#lib"+i).value; if(!id) return alert("Choisissez l'écriture correspondante.");
   const e = findEcr(id); e.piece = `Justificatifs/${y}/${S.libres[i]}`; delete e.sansPiece; setDirty(); renderAll();
+}
+
+/* ============ Banque : import du relevé CSV et tri ============ */
+const IGNORER = "__ignorer";
+const norm = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase().replace(/\s+/g," ").trim();
+/* Lecture CSV : guillemets, séparateur ; , ou tabulation, retours à la ligne entre guillemets */
+function parseCSV(txt, sep){
+  const rows = []; let row = [], f = "", q = false;
+  for(let i=0;i<txt.length;i++){
+    const c = txt[i];
+    if(q){ if(c === '"'){ if(txt[i+1] === '"'){ f += '"'; i++; } else q = false; } else f += c; }
+    else if(c === '"' && f.trim() === ""){ q = true; f = ""; }
+    else if(c === sep){ row.push(f); f = ""; }
+    else if(c === "\n" || c === "\r"){ if(c === "\r" && txt[i+1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+    else f += c;
+  }
+  if(f !== "" || row.length){ row.push(f); rows.push(row); }
+  return rows.map(r => r.map(x => x.trim())).filter(r => r.some(x => x !== ""));
+}
+function lireDate(s){
+  s = String(s||"").trim(); let m, d;
+  if((m = s.match(/^(\d{4})-(\d{2})-(\d{2})/))) d = `${m[1]}-${m[2]}-${m[3]}`;
+  else if((m = s.match(/^(\d{1,2})[\/.\-](\d{1,2})[\/.\-](\d{4}|\d{2})$/))) d = `${m[3].length===2?"20"+m[3]:m[3]}-${m[2].padStart(2,"0")}-${m[1].padStart(2,"0")}`;
+  else return null;
+  const t = new Date(d+"T12:00:00");
+  return !isNaN(t) && t.toISOString().slice(0,10) === d ? d : null;
+}
+function lireMontant(s){
+  let t = String(s||"").replace(/[\s  €"']/g,"").replace(/EUR$/i,"");
+  if(!t) return null;
+  let neg = false;
+  if(/^\(.*\)$/.test(t)){ neg = true; t = t.slice(1,-1); }
+  if(/-$/.test(t)){ neg = true; t = t.slice(0,-1); }
+  const c = t.lastIndexOf(","), p = t.lastIndexOf(".");
+  if(c > -1 && p > -1) t = c > p ? t.replace(/\./g,"").replace(",",".") : t.replace(/,/g,"");
+  else if(c > -1) t = t.replace(",",".");
+  if(!/^[+-]?\d+(\.\d+)?$/.test(t)) return null;
+  return neg ? -Number(t) : Number(t);
+}
+async function lireTexte(file){
+  const buf = await file.arrayBuffer();
+  try{ return new TextDecoder("utf-8",{fatal:true}).decode(buf); }
+  catch(_){ return new TextDecoder("windows-1252").decode(buf); } // exports des banques françaises souvent en Latin-1
+}
+function analyserCSV(txt, nom){
+  txt = txt.replace(/^﻿/,"");
+  let best = null;
+  for(const sep of [";","\t",","]){
+    const rows = parseCSV(txt, sep), cnt = {};
+    rows.forEach(r => { if(r.length >= 3) cnt[r.length] = (cnt[r.length]||0) + 1; });
+    const top = Object.entries(cnt).sort((a,b)=>b[1]-a[1])[0];
+    if(top && (!best || top[1] > best.f)) best = {sep, rows, n:Number(top[0]), f:top[1]};
+  }
+  if(!best) throw new Error("Aucun tableau reconnu dans ce fichier. Vérifiez qu'il s'agit bien d'un export CSV du compte.");
+  // Les banques ajoutent souvent des lignes d'en-tête (n° de compte, période) : on part de la première ligne datée
+  const iD = best.rows.findIndex(r => r.length === best.n && r.some(lireDate));
+  if(iD < 0) throw new Error("Aucune date reconnue dans ce fichier. Vérifiez qu'il s'agit bien d'un export CSV du compte.");
+  const prec = best.rows[iD-1];
+  const header = prec && prec.length === best.n && prec.filter(Boolean).length >= 2 ? prec : null;
+  const data = best.rows.slice(iD).filter(r => r.length === best.n);
+  const cols = header || data[0].map((_,i)=>"Colonne "+(i+1));
+  const signature = header ? header.map(norm).join("|") : "sans-entete-"+best.n;
+  const sv = S.data.banque.formatCsv;
+  const map = sv && sv.signature === signature ? {...sv.map} : devinerColonnes(header, data);
+  return {nom, sep:best.sep, cols, data, signature, map};
+}
+function devinerColonnes(header, data){
+  const part = (i, fn) => data.slice(0,30).filter(r => fn(r[i])).length / Math.min(data.length,30);
+  const idx = [...Array((header||data[0]).length).keys()];
+  const h = re => header ? idx.find(i => re.test(norm(header[i]))) ?? -1 : -1;
+  const m = {date:-1, lib:-1, lib2:-1, montant:-1, debit:-1, credit:-1, mode:"m"};
+  m.date = h(/date.*op/); if(m.date < 0) m.date = h(/date/);
+  if(m.date < 0) m.date = idx.find(i => part(i, lireDate) > .8) ?? -1;
+  for(const re of [/libell/, /label|intitul|description/, /operation$/]){ m.lib = h(re); if(m.lib >= 0 && m.lib !== m.date) break; m.lib = -1; }
+  m.montant = h(/montant|amount|somme/); m.debit = h(/debit/); m.credit = h(/credit/);
+  if(m.debit >= 0 && m.credit >= 0 && m.montant < 0) m.mode = "dc";
+  if(m.mode === "m" && m.montant < 0) m.montant = [...idx].reverse().find(i => i !== m.date && part(i, v => lireMontant(v) != null) > .8) ?? -1;
+  if(m.lib < 0){ const lg = i => data.slice(0,30).reduce((s,r)=>s+(lireMontant(r[i])==null && !lireDate(r[i]) ? r[i].length : 0),0); m.lib = idx.filter(i=>i!==m.date).sort((a,b)=>lg(b)-lg(a))[0] ?? -1; }
+  return m;
+}
+function operationsImport(imp){
+  const m = imp.map, ops = []; let rejets = 0;
+  imp.data.forEach(r => {
+    const date = lireDate(r[m.date]);
+    const mt = m.mode === "m" ? lireMontant(r[m.montant]) : (lireMontant(r[m.credit])||0) - Math.abs(lireMontant(r[m.debit])||0);
+    const libelle = [r[m.lib], m.lib2 >= 0 ? r[m.lib2] : ""].filter(Boolean).join(" ").replace(/\s+/g," ").trim();
+    if(!date || mt == null || isNaN(mt) || Math.abs(mt) < 0.005){ rejets++; return; }
+    ops.push({date, libelle, montant:r2(mt)});
+  });
+  // Clé stable : deux opérations identiques le même jour restent distinctes (n° d'occurrence)
+  const occ = {};
+  ops.forEach(o => { const b = `${o.date}|${o.montant.toFixed(2)}|${norm(o.libelle)}`; occ[b] = (occ[b]||0) + 1; o.cle = b + "#" + occ[b]; });
+  return {ops, rejets};
+}
+function clesConnues(){
+  const B = S.data.banque, k = new Set();
+  Object.values(S.data.exercices).forEach(ex => (ex.ecritures||[]).forEach(e => { if(e.banque) k.add(e.banque); }));
+  B.aTrier.forEach(o => k.add(o.cle)); B.ignorees.forEach(o => k.add(o.cle));
+  return k;
+}
+const MOTS_VIDES = new Set(["prlv","prelevement","prelev","sepa","vir","virement","recu","emis","inst","instantane","cb","carte","paiement","par","de","du","des","fav","faveur","en","votre","m","mr","mme","mlle","tip"]);
+function motsUtiles(lib){ return norm(lib).replace(/[^a-z0-9 ]/g," ").split(" ").filter(w => w && !MOTS_VIDES.has(w) && !/^\d/.test(w) && !/^x+\d*$/.test(w)); }
+const motCleSuggere = lib => motsUtiles(lib).slice(0,2).join(" ").toUpperCase();
+const tiersSuggere = lib => motsUtiles(lib).slice(0,2).map(w => w[0].toUpperCase()+w.slice(1)).join(" ");
+const sensOp = o => o.montant > 0 ? "credit" : "debit";
+function appliquerRegles(o){
+  const l = norm(o.libelle);
+  const r = [...S.data.banque.regles].sort((a,b)=>b.motCle.length-a.motCle.length).find(r => r.sens === sensOp(o) && l.includes(norm(r.motCle)));
+  if(r){ o.nature = r.nature; if(r.tiers) o.tiers = r.tiers; o.regle = r.motCle; }
+  return o;
+}
+/* Écriture déjà saisie à la main : même montant, même sens, à 6 jours près */
+function chercherDoublon(o){
+  const ex = exercice(yearOf(o.date)); if(!ex || !ex.ecritures) return;
+  const pris = new Set(S.data.banque.aTrier.filter(x => x !== o && x.doublon).map(x => x.doublon));
+  const t = Date.parse(o.date), credit = o.montant > 0;
+  const e = ex.ecritures.find(e => !e.banque && !pris.has(e.id) && Math.abs(e.montant - Math.abs(o.montant)) < 0.005
+    && ((NATURES[e.nature]?.g === "recette") === credit) && Math.abs(Date.parse(e.date) - t) <= 6*864e5);
+  if(e) o.doublon = e.id; else delete o.doublon;
+}
+function importerCSV(){ $("#csvInput").click(); }
+$("#csvInput").addEventListener("change", async ev => {
+  const f = ev.target.files[0]; ev.target.value = ""; if(!f) return;
+  try{ S.imp = analyserCSV(await lireTexte(f), f.name); S.tab = "banque"; renderAll(); window.scrollTo(0,0); }
+  catch(e){ alert(e.message); }
+});
+function majImport(k, v){ S.imp.map[k] = k === "mode" ? v : Number(v); renderAll(); }
+function validerImport(){
+  const imp = S.imp, m = imp.map;
+  if(m.date < 0 || m.lib < 0 || (m.mode === "m" ? m.montant < 0 : m.debit < 0 || m.credit < 0)) return alert("Indiquez les colonnes de date, de libellé et de montant.");
+  const {ops, rejets} = operationsImport(imp);
+  if(!ops.length) return alert("Aucune opération lisible avec ces colonnes. Vérifiez la colonne des dates et celle des montants.");
+  const B = S.data.banque, connues = clesConnues();
+  const nouvelles = ops.filter(o => !connues.has(o.cle));
+  let auto = 0;
+  nouvelles.forEach(o => {
+    const item = appliquerRegles({id:uid(), cle:o.cle, date:o.date, libelle:o.libelle, montant:o.montant, nature:"", tiers:tiersSuggere(o.libelle)});
+    if(item.regle) auto++;
+    if(item.nature !== IGNORER) chercherDoublon(item);
+    B.aTrier.push(item);
+  });
+  B.formatCsv = {signature:imp.signature, map:{...m}};
+  S.imp = null; setDirty(); renderAll();
+  toast(`${nouvelles.length} opération(s) ajoutée(s) à trier${auto?`, dont ${auto} classée(s) par vos règles`:""}. ${ops.length-nouvelles.length} déjà connue(s)${rejets?`, ${rejets} ligne(s) illisible(s) ignorée(s)`:""}.`);
+}
+function trouverOp(id){ return S.data.banque.aTrier.find(o => o.id === id); }
+function majOp(id, k, v){
+  const o = trouverOp(id); o[k] = v; if(k === "nature"){ delete o.regle; if(v === IGNORER) delete o.doublon; else if(!o.pasDoublon) chercherDoublon(o); }
+  setDirty(); if(k === "nature") renderAll();
+}
+function memoriserRegle(id){
+  const o = trouverOp(id), B = S.data.banque;
+  if(!o.nature) return alert("Choisissez d'abord la nature de cette opération, ou « Ignorer ».");
+  const mc = prompt("Mot-clé à reconnaître dans le libellé bancaire. Les prochaines opérations qui le contiennent seront classées pareil :", motCleSuggere(o.libelle) || o.libelle.slice(0,20));
+  if(!mc || !mc.trim()) return;
+  if(!norm(o.libelle).includes(norm(mc))) return alert("Ce mot-clé n'apparaît pas dans le libellé de cette opération.");
+  B.regles = B.regles.filter(r => !(norm(r.motCle) === norm(mc) && r.sens === sensOp(o)));
+  B.regles.push({id:uid(), motCle:mc.trim(), sens:sensOp(o), nature:o.nature, tiers:o.nature === IGNORER ? "" : (o.tiers||"")});
+  o.regle = mc.trim();
+  let n = 0;
+  B.aTrier.forEach(x => { if(!x.nature && !x.parent){ appliquerRegles(x); if(x.nature){ n++; if(x.nature === IGNORER) delete x.doublon; } } });
+  setDirty(); renderAll(); toast(`Règle « ${mc.trim()} » mémorisée${n?`, ${n} autre(s) opération(s) classée(s)`:""}.`);
+}
+function scinderOp(id){
+  const o = trouverOp(id), tot = Math.abs(o.montant);
+  const v = prompt(`Ventiler ${eur(tot)} en deux lignes (par exemple une échéance de prêt : intérêts, capital, assurance).\nMontant de la première ligne :`);
+  if(v == null) return;
+  const a = r2(parseMontant(v));
+  if(!(a > 0 && a < tot)) return alert("Le montant doit être compris entre 0 et " + eur(tot) + ".");
+  const s = Math.sign(o.montant), B = S.data.banque, i = B.aTrier.indexOf(o);
+  const p1 = {...o, id:uid(), montant:r2(s*a), parent:true}, p2 = {...o, id:uid(), montant:r2(s*(tot-a)), parent:true, nature:"", tiers:o.tiers};
+  [p1,p2].forEach(p => { delete p.regle; delete p.doublon; });
+  B.aTrier.splice(i, 1, p1, p2);
+  [p1,p2].forEach(p => { if(p.nature !== IGNORER) chercherDoublon(p); });
+  setDirty(); renderAll();
+}
+function confirmerDoublon(id, oui){
+  const o = trouverOp(id), B = S.data.banque;
+  if(oui){ const e = findEcr(o.doublon); e.banque = o.cle; e.libelleBanque = o.libelle; B.aTrier = B.aTrier.filter(x => x !== o); toast("Opération rapprochée de l'écriture déjà saisie."); }
+  else { delete o.doublon; o.pasDoublon = true; }
+  setDirty(); renderAll();
+}
+function validerTri(){
+  const B = S.data.banque, prets = B.aTrier.filter(o => o.nature);
+  if(!prets.length) return alert("Aucune opération classée pour l'instant.");
+  const derniere = Math.max(...Object.keys(S.data.exercices).map(Number));
+  let n = 0, ign = 0; const bloques = new Set(), faites = new Set();
+  for(const o of prets){
+    if(o.nature === IGNORER){ B.ignorees.push({cle:o.cle, date:o.date, libelle:o.libelle, montant:o.montant}); ign++; faites.add(o); continue; }
+    const y = yearOf(o.date);
+    if(!exercice(y) && y > derniere) S.data.exercices[y] = {statut:"en-cours", ecritures:[]};
+    if(!exercice(y) || isHistorique(y) || verrouille(y)){ bloques.add(y); continue; }
+    const ex = exercice(y); ex.ecritures ??= [];
+    ex.ecritures.push({id:uid(), date:o.date, tiers:o.tiers||"", nature:o.nature, montant:r2(Math.abs(o.montant)),
+      sens: NATURES[o.nature].g === "recette" ? "recette" : "depense", banque:o.cle, libelleBanque:o.libelle});
+    n++; faites.add(o);
+  }
+  B.aTrier = B.aTrier.filter(o => !faites.has(o));
+  setDirty(); renderAll();
+  toast(`${n} écriture(s) créée(s), ${ign} opération(s) ignorée(s).`);
+  if(bloques.size) alert(`Certaines opérations restent à trier : l'exercice ${[...bloques].sort().join(", ")} est clôturé, repris de l'Excel ou n'existe pas. Rouvrez-le ou ignorez ces opérations.`);
+}
+function supprimerRegle(id){ const B = S.data.banque; B.regles = B.regles.filter(r => r.id !== id); setDirty(); renderAll(); }
+function majRegle(id, k, v){ const r = S.data.banque.regles.find(r => r.id === id); r[k] = v.trim(); setDirty(); }
+function remettreATrier(i){
+  const B = S.data.banque, o = B.ignorees[i];
+  B.ignorees = B.ignorees.filter(x => x !== o);
+  B.aTrier.push({id:uid(), ...o, nature:"", tiers:tiersSuggere(o.libelle)});
+  setDirty(); renderAll();
+}
+function optionsNature(o){
+  const credit = o.montant > 0;
+  const nats = Object.keys(NATURES).filter(n => (NATURES[n].g === "recette") === credit);
+  return `<option value="">À classer…</option>${nats.map(n=>`<option ${n===o.nature?"selected":""}>${esc(n)}</option>`).join("")}<option value="${IGNORER}" ${o.nature===IGNORER?"selected":""}>Ignorer (hors location)</option>`;
+}
+function vueImport(){
+  const imp = S.imp, m = imp.map;
+  const sel = (k, vide) => `<select onchange="majImport('${k}',this.value)">${vide?`<option value="-1">${vide}</option>`:""}${imp.cols.map((c,i)=>`<option value="${i}" ${m[k]===i?"selected":""}>${esc(c)}</option>`).join("")}</select>`;
+  const {ops, rejets} = operationsImport(imp);
+  const connues = clesConnues(), nouv = ops.filter(o => !connues.has(o.cle)).length;
+  return entete("Importer un relevé", `Fichier « ${esc(imp.nom)} » : ${imp.data.length} lignes. Indiquez les colonnes à utiliser ; l'outil s'en souviendra pour les prochains relevés de cette banque.`) + `
+  <div class="card"><div class="form">
+    <label>Date de l'opération${sel("date")}</label>
+    <label>Libellé${sel("lib")}</label>
+    <label>Détail (facultatif)${sel("lib2","Aucun")}</label>
+    <label>Montants<select onchange="majImport('mode',this.value)"><option value="m" ${m.mode==="m"?"selected":""}>Une colonne (négatif = débit)</option><option value="dc" ${m.mode==="dc"?"selected":""}>Deux colonnes Débit / Crédit</option></select></label>
+    ${m.mode==="m" ? `<label>Montant${sel("montant")}</label>` : `<label>Débit${sel("debit")}</label><label>Crédit${sel("credit")}</label>`}
+  </div></div>
+  <div class="card"><h3>Aperçu</h3><div class="tablewrap"><table><tr><th>Date</th><th>Libellé</th><th class="n">Montant</th></tr>
+    ${ops.slice(0,8).map(o=>`<tr><td>${fmtDate(o.date)}</td><td>${esc(o.libelle)}</td><td class="n" style="color:${o.montant>0?"var(--pos)":"inherit"}">${o.montant>0?"+":"−"}${eur(Math.abs(o.montant))}</td></tr>`).join("") || `<tr><td colspan="3" class="muted">Aucune ligne lisible avec ces colonnes.</td></tr>`}
+  </table></div>
+  <p class="sub" style="margin:12px 0 0">${ops.length} opération(s) lisible(s), dont ${nouv} nouvelle(s)${ops.length-nouv?` et ${ops.length-nouv} déjà importée(s) ou saisie(s)`:""}${rejets?`. ${rejets} ligne(s) sans date ou sans montant seront ignorées`:""}.</p></div>
+  <div class="row"><button class="btn" onclick="validerImport()" ${nouv?"":"disabled"}>Ajouter ${nouv} opération(s) à trier</button><button class="btn ghost" onclick="S.imp=null;renderAll()">Annuler</button></div>`;
+}
+function vueBanque(){
+  if(S.imp) return vueImport();
+  const B = S.data.banque, list = [...B.aTrier].sort((a,b)=>a.date.localeCompare(b.date));
+  const classes = list.filter(o => o.nature).length;
+  const ligneOp = o => {
+    const credit = o.montant > 0, e = o.doublon && findEcr(o.doublon);
+    return `<div class="op ${o.nature?"classe":""}">
+      <div class="d"><b>${o.date.slice(8,10)}</b>${MOIS[monthOf(o.date)-1]}<small>${yearOf(o.date)}</small></div>
+      <div class="t">${esc(o.libelle)}${o.regle?`<small>Classée par la règle « ${esc(o.regle)} »</small>`:""}${o.parent?`<small>Partie d'une opération ventilée</small>`:""}</div>
+      <div class="m ${credit?"recette":""}">${credit?"+":"−"}${eur(Math.abs(o.montant))}</div>
+      ${e?`<div class="alert warn dbl" style="align-items:center;flex-wrap:wrap">Déjà saisie à la main le ${fmtDate(e.date)} (${esc(e.tiers||e.nature)}) ?
+        <span style="margin-left:auto;display:flex;gap:6px"><button class="btn small sec" onclick="confirmerDoublon('${o.id}',true)">Oui, c'est la même</button><button class="btn small ghost" onclick="confirmerDoublon('${o.id}',false)">Non</button></span></div>`:""}
+      <div class="f noprint">
+        <select aria-label="Nature" onchange="majOp('${o.id}','nature',this.value)">${optionsNature(o)}</select>
+        ${o.nature===IGNORER?"":`<input aria-label="Tiers" value="${esc(o.tiers)}" placeholder="Tiers" onchange="majOp('${o.id}','tiers',this.value.trim())">`}
+        <button class="btn small ghost" title="Classer automatiquement les prochaines opérations au libellé semblable" onclick="memoriserRegle('${o.id}')">Mémoriser</button>
+        <button class="btn small ghost" title="Couper le montant en deux lignes de natures différentes" onclick="scinderOp('${o.id}')">Ventiler</button>
+      </div></div>`; };
+  const libNat = n => n === IGNORER ? "Ignorer" : esc(n);
+  return entete("Banque", "Importez le relevé CSV du compte, puis classez chaque opération : une nature LMNP, ou « Ignorer » pour ce qui ne concerne pas la location. Les opérations déjà importées ne reviennent pas.") + `
+  <div class="row noprint" style="margin-bottom:18px">
+    <button class="btn" onclick="importerCSV()">Importer un relevé CSV…</button>
+    ${list.length?`<button class="btn sec" onclick="validerTri()" ${classes?"":"disabled"}>Valider les ${classes} opération(s) classée(s)</button>`:""}
+    <span style="margin-left:auto;color:var(--muted);font-size:14px">${list.length} à trier</span>
+  </div>
+  ${list.length ? `<section class="card month">${list.map(ligneOp).join("")}</section>`
+    : `<div class="card"><p class="sub" style="margin:0">Rien à trier. Téléchargez le relevé du compte au format CSV depuis le site de la banque, puis cliquez sur « Importer un relevé CSV… ».</p></div>`}
+  <div class="card"><h3>Règles mémorisées</h3>
+  ${B.regles.length ? `<div class="tablewrap"><table><tr><th>Si le libellé contient</th><th>Sens</th><th>Nature</th><th>Tiers</th><th></th></tr>
+    ${B.regles.map(r=>`<tr><td><input value="${esc(r.motCle)}" style="width:100%;min-width:120px" onchange="majRegle('${r.id}','motCle',this.value)"></td><td>${r.sens==="credit"?"Crédit":"Débit"}</td><td>${libNat(r.nature)}</td>
+      <td>${r.nature===IGNORER?"":`<input value="${esc(r.tiers)}" style="width:100%;min-width:110px" onchange="majRegle('${r.id}','tiers',this.value)">`}</td>
+      <td class="n"><button class="btn ghost small" aria-label="Supprimer la règle" title="Supprimer la règle" onclick="supprimerRegle('${r.id}')">${I_DEL}</button></td></tr>`).join("")}</table></div>`
+    : `<p class="sub" style="margin:0">Aucune règle. Après avoir classé une opération, « Mémoriser » crée une règle à partir d'un mot-clé de son libellé (par exemple le nom du locataire ou du syndic).</p>`}</div>
+  ${B.ignorees.length ? `<div class="card"><details><summary>${B.ignorees.length} opération(s) ignorée(s)</summary><div class="tablewrap" style="margin-top:10px"><table>
+    ${B.ignorees.map((o,i)=>[o,i]).sort((a,b)=>b[0].date.localeCompare(a[0].date)).slice(0,200).map(([o,i])=>`<tr><td>${fmtDate(o.date)}</td><td>${esc(o.libelle)}</td><td class="n">${eur(o.montant)}</td><td class="n"><button class="btn small ghost" onclick="remettreATrier(${i})">Remettre à trier</button></td></tr>`).join("")}
+  </table></div></details></div>` : ""}`;
 }
 
 function nouvelExercice(){
