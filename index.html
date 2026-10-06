@@ -3,93 +3,218 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Outil LMNP</title>
+<title>Carnet LMNP</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%232F4BB8'/%3E%3Cpath d='M9 22V13l7-5 7 5v9h-5v-5h-4v5z' fill='white'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 :root{
-  --bg:#f6f5f2; --surface:#ffffff; --surface-2:#f0eee9; --text:#1d1d1b; --muted:#6b6a65;
-  --line:#dedbd3; --accent:#2f5d50; --accent-soft:#e3ece8; --warn:#9a5b00; --warn-soft:#fbf0dc;
-  --bad:#a1312a; --bad-soft:#f8e3e1; --ok:#2f6b3a; --ok-soft:#e2f0e4;
-  --radius:10px; --mono:ui-monospace,SFMono-Regular,Menlo,monospace;
+  --bg:#F3F5F7; --surface:#FFFFFF; --surface-2:#F7F8FA; --text:#1B2430; --muted:#5F6B7A; --faint:#8C96A3;
+  --line:#E3E7EC; --accent:#2F4BB8; --accent-ink:#FFFFFF; --accent-soft:#E9EDFA;
+  --pos:#157A57; --pos-soft:#E3F3EC; --neg:#B83A2B; --neg-soft:#FBE9E6; --warn:#8F5B00; --warn-soft:#FFF3DA;
+  --seg-1:#AEB8C6; --seg-2:#C9D1DB; --seg-3:#8592A3;
+  --r-lg:14px; --r-md:9px; --r-sm:6px;
+  --font:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  color-scheme:light;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#161715; --surface:#1f201e; --surface-2:#272825; --text:#ecebe6; --muted:#a3a29b;
-    --line:#383934; --accent:#8cc2ad; --accent-soft:#25332d; --warn:#e5b25d; --warn-soft:#3a3020;
-    --bad:#ef8a80; --bad-soft:#3d2422; --ok:#8fd19b; --ok-soft:#21352a;
+    --bg:#101318; --surface:#181C23; --surface-2:#1E232B; --text:#E7EAF0; --muted:#A0A9B6; --faint:#77808D;
+    --line:#2A303A; --accent:#93A6FF; --accent-ink:#0F1530; --accent-soft:#232B48;
+    --pos:#5FD0A0; --pos-soft:#17302A; --neg:#F08A7C; --neg-soft:#3A201D; --warn:#E9B65C; --warn-soft:#33291A;
+    --seg-1:#4A5463; --seg-2:#394150; --seg-3:#5E6979; color-scheme:dark;
   }
 }
+:root[data-theme="dark"]{
+  --bg:#101318; --surface:#181C23; --surface-2:#1E232B; --text:#E7EAF0; --muted:#A0A9B6; --faint:#77808D;
+  --line:#2A303A; --accent:#93A6FF; --accent-ink:#0F1530; --accent-soft:#232B48;
+  --pos:#5FD0A0; --pos-soft:#17302A; --neg:#F08A7C; --neg-soft:#3A201D; --warn:#E9B65C; --warn-soft:#33291A;
+  --seg-1:#4A5463; --seg-2:#394150; --seg-3:#5E6979; color-scheme:dark;
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}
-header{background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
-.bar{max-width:1100px;margin:0 auto;padding:10px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
-.brand{font-weight:650;letter-spacing:-.01em;margin-right:auto}
-.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
-nav{max-width:1100px;margin:0 auto;padding:0 16px;display:flex;gap:2px;overflow-x:auto}
-nav button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;color:var(--muted);font:inherit;cursor:pointer;white-space:nowrap}
-nav button.on{color:var(--text);border-bottom-color:var(--accent);font-weight:600}
-main{max-width:1100px;margin:0 auto;padding:20px 16px 60px}
-h2{font-size:20px;margin:0 0 4px}
-h3{font-size:16px;margin:24px 0 8px}
-p.sub{color:var(--muted);margin:0 0 16px}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px}
-.grid{display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr))}
-.kpi .l{color:var(--muted);font-size:13px}.kpi .v{font-size:22px;font-weight:650;font-variant-numeric:tabular-nums}
-.btn{background:var(--accent);color:#fff;border:0;border-radius:8px;padding:8px 14px;font:inherit;font-weight:550;cursor:pointer}
-@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .btn{color:#10201a}}
-.btn.sec{background:var(--surface-2);color:var(--text);border:1px solid var(--line)}
-.btn.small{padding:4px 9px;font-size:13px}
-.btn.danger{background:var(--bad-soft);color:var(--bad);border:1px solid transparent}
-.btn:disabled{opacity:.5;cursor:default}
-select,input,textarea{font:inherit;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:6px 8px;max-width:100%}
-label{display:flex;flex-direction:column;gap:3px;font-size:13px;color:var(--muted)}
-.form{display:grid;gap:10px;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:end}
-.tablewrap{overflow-x:auto}
-table{border-collapse:collapse;width:100%;font-size:14px}
-th,td{padding:6px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}
-th{font-size:12px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.03em}
-td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
-tr.tot td{font-weight:650;border-top:2px solid var(--line)}
+html,body{margin:0;background:var(--bg);color:var(--text)}
+body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-smoothing:antialiased}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- Mise en page : menu latéral ---------- */
+.app{display:grid;grid-template-columns:248px 1fr;min-height:100vh;background:linear-gradient(90deg,var(--surface) 247px,var(--line) 247px 248px,var(--bg) 248px)}
+.side{position:sticky;top:0;height:100vh;display:flex;flex-direction:column;gap:18px;padding:20px 14px;background:var(--surface);border-right:1px solid var(--line);overflow-y:auto}
+.brand{display:flex;gap:10px;align-items:center;padding:0 6px}
+.brand svg{flex:none}
+.brand b{display:block;font-size:16px;font-weight:600;letter-spacing:-.01em}
+.brand small{display:block;color:var(--muted);font-size:12.5px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
+.yearbox{padding:0 6px}
+.yearbox select{width:100%;font-weight:600}
+.menu{display:flex;flex-direction:column;gap:2px}
+.menu button{display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;border:0;border-radius:var(--r-md);background:none;color:var(--muted);font:inherit;font-size:14.5px;text-align:left;cursor:pointer}
+.menu button svg{flex:none;opacity:.85}
+.menu button:hover{background:var(--surface-2);color:var(--text)}
+.menu button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.menu .sep{height:1px;background:var(--line);margin:8px 10px}
+.badge{margin-left:auto;min-width:22px;padding:0 7px;border-radius:99px;background:var(--warn-soft);color:var(--warn);font-size:12px;font-weight:600;text-align:center;line-height:20px}
+.sidefoot{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:0 6px}
+.status{font-size:12.5px;color:var(--muted);min-height:18px}
+.status.warn{color:var(--warn)}
+.theme{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:2px}
+.theme button{flex:1;border:0;background:none;color:var(--muted);font:inherit;font-size:12.5px;padding:4px 0;border-radius:7px;cursor:pointer}
+.theme button.on{background:var(--surface);color:var(--text);box-shadow:0 1px 2px rgba(15,25,40,.12)}
+.topbar{display:none}
+main{padding:36px 44px 80px;max-width:1080px;width:100%}
+
+@media (max-width: 860px){
+  .app{grid-template-columns:1fr;background:var(--bg)}
+  .topbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
+  .topbar .brand{padding:0;margin-right:auto}
+  .side{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:30;transform:translateX(-100%);transition:transform .22s ease;box-shadow:0 0 40px rgba(0,0,0,.25)}
+  body.menu-open .side{transform:none}
+  body.menu-open .scrim{display:block}
+  .scrim{display:none;position:fixed;inset:0;background:rgba(10,15,25,.4);z-index:25}
+  main{padding:22px 16px 60px}
+}
+@media (prefers-reduced-motion: reduce){ .side{transition:none} }
+
+/* ---------- Typographie ---------- */
+.pagehead{margin-bottom:26px}
+.pagehead h1{font-size:28px;line-height:1.2;font-weight:600;letter-spacing:-.02em;margin:0}
+.pagehead p{color:var(--muted);margin:6px 0 0;max-width:64ch}
+h2{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}
+h3{font-size:16px;font-weight:600;margin:0 0 12px}
+p.sub{color:var(--muted);margin:0 0 16px;max-width:70ch}
+code{font-size:.92em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+
+/* ---------- Blocs ---------- */
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:22px 24px;margin-bottom:20px}
+.card > h3:first-child{margin-top:0}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(170px,1fr))}
+.kpi{padding:16px 18px;margin:0}
+.kpi .l{color:var(--muted);font-size:13px}
+.kpi .v{font-size:22px;font-weight:600;letter-spacing:-.01em;margin-top:2px}
+
+/* ---------- Boutons et champs ---------- */
+.btn{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:var(--accent-ink);border:1px solid transparent;border-radius:var(--r-md);padding:8px 15px;font:inherit;font-size:14.5px;font-weight:500;cursor:pointer;text-decoration:none;white-space:nowrap}
+.btn:hover{filter:brightness(1.07)}
+.btn.sec{background:var(--surface);color:var(--text);border-color:var(--line)}
+.btn.sec:hover{background:var(--surface-2);filter:none}
+.btn.ghost{background:none;color:var(--muted);border-color:transparent;padding:6px 8px}
+.btn.ghost:hover{background:var(--surface-2);color:var(--text);filter:none}
+.btn.small{padding:5px 11px;font-size:13px}
+.btn.danger{background:var(--neg-soft);color:var(--neg)}
+.btn:disabled{opacity:.45;cursor:default;filter:none}
+.btn.wide{width:100%;justify-content:center}
+select,input,textarea{font:inherit;font-size:14.5px;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:8px 10px;max-width:100%}
+input:focus,select:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
+label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
+.form{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end}
+
+/* ---------- Tableaux allégés ---------- */
+.tablewrap{overflow-x:auto;margin:0 -4px}
+table{border-collapse:collapse;width:100%;font-size:14.5px}
+th,td{padding:11px 10px;border-bottom:1px solid var(--line);text-align:left;vertical-align:middle}
+th{font-size:13px;color:var(--faint);font-weight:500;border-bottom-color:var(--line)}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right;white-space:nowrap}
+tr.tot td{font-weight:600;border-top:1px solid var(--text);border-bottom:0}
 tr.muted td{color:var(--muted)}
-.case{font-family:var(--mono);background:var(--accent-soft);color:var(--accent);border-radius:5px;padding:1px 6px;font-size:13px;white-space:nowrap}
-.alert{border-radius:8px;padding:10px 12px;margin:8px 0;font-size:14px}
+.case{display:inline-block;min-width:38px;text-align:center;background:var(--accent-soft);color:var(--accent);border-radius:var(--r-sm);padding:1px 7px;font-size:12.5px;font-weight:600;white-space:nowrap}
+.pill{display:inline-block;font-size:12.5px;border-radius:99px;padding:2px 9px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.hide{display:none!important}
+details summary{cursor:pointer;color:var(--accent);font-size:13.5px}
+
+/* ---------- Alertes ---------- */
+.alerts{display:flex;flex-direction:column;gap:8px;margin-bottom:20px}
+.alert{display:flex;gap:10px;align-items:flex-start;border-radius:var(--r-md);padding:11px 14px;font-size:14px;margin:0}
+.alert::before{content:"";flex:none;width:7px;height:7px;border-radius:50%;margin-top:7px;background:currentColor}
+.alert{margin-bottom:14px}
+.alerts .alert{margin-bottom:0}
+.card table + h3,.card .tablewrap + h3{margin-top:26px}
 .alert.warn{background:var(--warn-soft);color:var(--warn)}
 .alert.info{background:var(--accent-soft);color:var(--accent)}
-.alert.bad{background:var(--bad-soft);color:var(--bad)}
-.alert.ok{background:var(--ok-soft);color:var(--ok)}
-.pill{display:inline-block;font-size:12px;border-radius:99px;padding:1px 8px;background:var(--surface-2);color:var(--muted)}
-.dirty{color:var(--warn);font-size:13px}
-.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.hide{display:none!important}
-details summary{cursor:pointer;color:var(--accent)}
-.fiche h3{border-bottom:1px solid var(--line);padding-bottom:4px}
-dialog#viewer{width:min(1000px,96vw);height:92vh;padding:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--text)}
-dialog#viewer{overscroll-behavior:contain}
+.alert.bad{background:var(--neg-soft);color:var(--neg)}
+.alert.ok{background:var(--pos-soft);color:var(--pos)}
+
+/* ---------- Tableau de bord : des loyers au résultat ---------- */
+.flow{padding:26px 28px}
+.flow .lead{font-size:17px;color:var(--muted);margin:0 0 4px}
+.flow .big{font-size:44px;font-weight:600;letter-spacing:-.03em;line-height:1.1;margin:0}
+.flow .big.neg{color:var(--neg)}
+.flow .phrase{margin:10px 0 22px;color:var(--muted);max-width:62ch}
+.bar{display:flex;height:30px;border-radius:8px;overflow:hidden;background:var(--surface-2)}
+.bar span{display:block;height:100%;min-width:2px}
+.bar span + span{border-left:2px solid var(--surface)}
+.legend{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:14px 18px;margin-top:16px}
+.legend div{font-size:13px;color:var(--muted)}
+.legend b{display:block;font-size:16px;font-weight:600;color:var(--text);margin-top:2px}
+.legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
+
+/* ---------- Écritures groupées par mois ---------- */
+.month{margin-bottom:14px;padding:6px 8px 4px}
+.month header{display:flex;align-items:baseline;gap:12px;padding:12px 14px 8px}
+.month header h3{margin:0;font-size:15.5px;text-transform:capitalize}
+.month header span{margin-left:auto;font-size:13px;color:var(--muted)}
+.ecr{display:grid;grid-template-columns:44px minmax(0,1fr) 120px 236px;gap:4px 12px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.ecr .d{font-size:13px;color:var(--faint);text-align:center;line-height:1.1}
+.ecr .d b{display:block;font-size:17px;color:var(--text);font-weight:500}
+.ecr .t b{font-weight:500}
+.ecr .t small{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:13px}
+.ecr .t small i{width:7px;height:7px;border-radius:50%;background:var(--seg-3);flex:none}
+.ecr .t small i.recette{background:var(--pos)}
+.ecr .t small i.bilan{background:transparent;border:1.5px solid var(--faint)}
+.ecr .m{font-weight:500;text-align:right;white-space:nowrap}
+.ecr .m.recette{color:var(--pos)}
+.ecr .a{display:flex;gap:2px;justify-content:flex-end;align-items:center}
+.ecr.editing{background:var(--accent-soft)}
+.ecr .c{grid-column:2 / -1;font-size:13px;color:var(--muted)}
+@media (max-width:600px){ .ecr{grid-template-columns:38px minmax(0,1fr) auto} .ecr .a{grid-column:2 / -1;justify-content:flex-start} }
+.composer{border:1px dashed var(--line);background:var(--surface-2)}
+.pj{white-space:nowrap}
+
+/* ---------- Visionneuse ---------- */
+dialog#viewer{width:min(1000px,96vw);height:92vh;padding:0;border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);color:var(--text);overscroll-behavior:contain}
 html.modal-open,html.modal-open body{overflow:hidden}
-dialog#viewer::backdrop{background:rgba(0,0,0,.45)}
-#viewer .vbar{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
-#viewer iframe{width:100%;height:calc(92vh - 50px);border:0;background:#fff}
-.badge{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:99px;background:var(--warn-soft);color:var(--warn);font-size:12px;font-weight:600;text-align:center}
-.pj{font-size:13px;white-space:nowrap}
+dialog#viewer::backdrop{background:rgba(10,15,25,.5)}
+#viewer .vbar{display:flex;gap:8px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+#viewer iframe{width:100%;height:calc(92vh - 56px);border:0;background:#fff}
+
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:50;box-shadow:0 8px 24px rgba(10,15,25,.18);max-width:90vw}
+.fiche .card h3{padding-bottom:8px;border-bottom:1px solid var(--line)}
+
 @media print{
-  header,nav,.noprint{display:none!important}
+  .side,.topbar,.scrim,.noprint{display:none!important}
+  .app{display:block}
   body{background:#fff;color:#000}
-  .card{border:0;padding:0}
-  main{padding:0}
+  main{padding:0;max-width:none}
+  .card{border:0;padding:0;margin-bottom:18px}
 }
 </style>
 </head>
 <body>
-<header>
-  <div class="bar">
-    <div class="brand" id="brand">Outil LMNP<small id="fileinfo">Aucun dossier ouvert</small></div>
-    <span class="dirty hide" id="dirty">● Modifications non enregistrées</span>
-    <label class="noprint" style="flex-direction:row;align-items:center;gap:6px">Exercice
-      <select id="yearSel"></select></label>
-    <button class="btn" id="saveBtn" disabled>Enregistrer</button>
-  </div>
-  <nav id="tabs"></nav>
-</header>
-<main id="main"></main>
+<div class="topbar noprint">
+  <button class="btn ghost" aria-label="Ouvrir le menu" onclick="document.body.classList.add('menu-open')"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+  <div class="brand"><b>Carnet LMNP</b></div>
+  <span class="status" id="statusTop"></span>
+</div>
+<div class="scrim" onclick="document.body.classList.remove('menu-open')"></div>
+<div class="app">
+  <aside class="side noprint">
+    <div class="brand">
+      <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M9 22.5V13.2L16 8l7 5.2v9.3h-5.2v-5.1h-3.6v5.1z" fill="var(--accent-ink)"/></svg>
+      <div><b>Carnet LMNP</b><small id="fileinfo">Aucun dossier ouvert</small></div>
+    </div>
+    <div class="yearbox" id="yearbox"><label>Exercice<select id="yearSel"></select></label></div>
+    <nav class="menu" id="tabs" aria-label="Sections"></nav>
+    <div class="sidefoot">
+      <div class="status" id="dirty"></div>
+      <button class="btn wide" id="saveBtn" disabled>Enregistrer</button>
+      <div class="theme" id="themeSw" role="group" aria-label="Thème">
+        <button data-t="auto">Auto</button><button data-t="light">Clair</button><button data-t="dark">Sombre</button>
+      </div>
+    </div>
+  </aside>
+  <main id="main"></main>
+</div>
+
 <input type="file" id="fileInput" accept=".json,application/json" class="hide">
 <dialog id="viewer"><div class="vbar"><b id="vTitle" style="margin-right:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><a class="btn small sec" id="vOpen" target="_blank">Ouvrir dans un onglet</a><button class="btn small" onclick="fermerPiece()">Fermer</button></div><iframe id="vFrame" title="Justificatif"></iframe></dialog>
 
@@ -137,21 +262,20 @@ const fmtDate = d => d ? d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4) : "";
 
 function setDirty(v=true){
   S.dirty=v; if(v) S.version = (S.version||0) + 1;
-  const el = $("#dirty"); el.classList.toggle("hide", !v && !S.autoMsg);
-  el.textContent = v ? (S.dir ? "● Enregistrement…" : "● Modifications non enregistrées") : (S.autoMsg||"");
-  el.style.color = v ? "var(--warn)" : "var(--muted)";
+  statut(v ? (S.dir ? "Enregistrement…" : "Modifications non enregistrées") : (S.autoMsg||""), v && !S.dir);
   $("#saveBtn").disabled = !S.data;
   if(v && S.dir){ clearTimeout(S.autoT); S.autoT = setTimeout(autoSave, 1200); }
 }
+function statut(txt, alerte){ for(const id of ["#dirty","#statusTop"]){ const el = $(id); if(el){ el.textContent = txt; el.classList.toggle("warn", !!alerte); } } }
 /* Enregistrement automatique dans le dossier (sans demander d'autorisation) */
 async function autoSave(){
   if(!S.dir || !S.dirty) return;
   try{
-    if(await S.dir.queryPermission({mode:"readwrite"}) !== "granted"){ S.autoMsg=""; $("#dirty").textContent = "● Non enregistré : cliquez sur Enregistrer"; return; }
+    if(await S.dir.queryPermission({mode:"readwrite"}) !== "granted"){ S.autoMsg=""; statut("Non enregistré : cliquez sur Enregistrer", true); return; }
     const v = S.version;
     await ecrireDossier(!S.sauvegardeSession);
     if(S.version === v){ const d = new Date(); S.autoMsg = "✓ Enregistré à " + d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}); setDirty(false); }
-  }catch(e){ $("#dirty").textContent = "● Échec de l'enregistrement automatique : cliquez sur Enregistrer"; }
+  }catch(e){ statut("Échec de l'enregistrement automatique : cliquez sur Enregistrer", true); }
 }
 async function ecrireDossier(avecCopie){
   S.data.derniereModification = new Date().toISOString();
@@ -403,40 +527,61 @@ async function enregistrer(){
 }
 $("#saveBtn").addEventListener("click", enregistrer);
 document.addEventListener("keydown", e => { if((e.metaKey||e.ctrlKey) && e.key === "s"){ e.preventDefault(); enregistrer(); } });
-function toast(msg){ const el = document.createElement("div"); el.className="alert ok noprint"; el.style.cssText="position:fixed;bottom:16px;left:50%;transform:translateX(-50%);z-index:9;box-shadow:0 4px 16px rgba(0,0,0,.15);max-width:90vw"; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(), 3500); }
+function toast(msg){ const el = document.createElement("div"); el.className="alert ok toast noprint"; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(), 3500); }
 
 /* ============ Rendu ============ */
-const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["dossier","Dossier"]];
+const IC = {
+  accueil:'<path d="M4 13h4v7H4zM10 8h4v12h-4zM16 4h4v16h-4z"/>',
+  ecritures:'<path d="M6 4h12v16H6zM9 9h6M9 13h6M9 17h3"/>',
+  pieces:'<path d="M14 4H7v16h10V7zM14 4v3h3M10 12h4M10 16h4"/>',
+  immos:'<path d="M4 11l8-6 8 6v9H4zM10 20v-5h4v5"/>',
+  emprunt:'<path d="M4 7h16v10H4zM4 11h16M8 15h3"/>',
+  declaration:'<path d="M7 4h10v16H7zM10 8h4M10 12h4M10 16l1.5 1.5L14 15"/>',
+  dossier:'<path d="M4 7h6l2 2h8v10H4z"/>'
+};
+const icon = k => `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${IC[k]}</svg>`;
+const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["sep"],["dossier","Dossier"]];
 function renderAll(){
-  $("#fileinfo").textContent = S.data ? (S.data.dossier.nom + " · " + (S.fileName||"")) : "Aucun dossier ouvert";
+  $("#fileinfo").textContent = S.data ? S.data.dossier.nom : "Aucun dossier ouvert";
+  $("#fileinfo").title = S.fileName || "";
   const sel = $("#yearSel");
+  $("#yearbox").classList.toggle("hide", !S.data);
   if(S.data){
     const ys = new Set(Object.keys(S.data.exercices).map(Number));
     sel.innerHTML = [...ys].sort((a,b)=>b-a).map(y => `<option value="${y}" ${y===S.year?"selected":""}>${y}${isHistorique(y)?" (historique)":""}</option>`).join("");
   } else sel.innerHTML = "";
-  $("#tabs").innerHTML = S.data ? TABS.map(([k,l]) => { const n = k==="pieces" ? piecesManquantes(S.year).length : 0; return `<button data-tab="${k}" class="${S.tab===k?"on":""}">${l}${n?`<span class="badge">${n}</span>`:""}</button>`; }).join("") : "";
+  $("#tabs").innerHTML = S.data ? TABS.map(([k,l]) => {
+    if(k==="sep") return '<div class="sep"></div>';
+    const n = k==="pieces" ? piecesManquantes(S.year).length : 0;
+    return `<button data-tab="${k}" class="${S.tab===k?"on":""}" ${S.tab===k?'aria-current="page"':""}>${icon(k)}<span>${l}</span>${n?`<span class="badge" title="Pièces manquantes">${n}</span>`:""}</button>`; }).join("") : "";
   $("#saveBtn").disabled = !S.data;
+  document.querySelectorAll("#themeSw button").forEach(b => b.classList.toggle("on", b.dataset.t === themeActuel()));
   const m = $("#main");
   if(!S.data){ m.innerHTML = vueBienvenue(); return; }
   m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab]();
   if(S.tab === "pieces") scanNonRattaches(S.year);
 }
-$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; renderAll(); } });
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; S.composer=false; document.body.classList.remove("menu-open"); renderAll(); window.scrollTo(0,0); } });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
+/* Thème : automatique, clair ou sombre (mémorisé sur cet appareil) */
+function themeActuel(){ try{ return localStorage.getItem("theme") || "auto"; }catch(_){ return "auto"; } }
+function appliquerTheme(t){ if(t === "auto") document.documentElement.removeAttribute("data-theme"); else document.documentElement.dataset.theme = t; }
+appliquerTheme(themeActuel());
+$("#themeSw").addEventListener("click", e => { const b = e.target.closest("button[data-t]"); if(!b) return; try{ localStorage.setItem("theme", b.dataset.t); }catch(_){} appliquerTheme(b.dataset.t); renderAll(); });
+function entete(titre, sous){ return `<div class="pagehead"><h1>${titre}</h1>${sous?`<p>${sous}</p>`:""}</div>`; }
 
 function vueBienvenue(){
-  setTimeout(async () => { const d = await idb.get("dir"); if(d && FS){ const b = $("#resume"); if(b){ b.classList.remove("hide"); b.textContent = "Reprendre le dossier « "+d.name+" »"; b.onclick = () => reprendreDossier(d); } } }, 0);
-  return `<div class="card" style="max-width:640px;margin:40px auto">
-    <h2>Bienvenue</h2>
-    <p class="sub">Les données restent dans votre dossier iCloud : rien n'est envoyé sur internet.</p>
+  setTimeout(async () => { const d = await idb.get("dir"); if(d && FS){ const b = $("#resume"); if(b){ b.classList.remove("hide"); b.textContent = "Reprendre « "+d.name+" »"; b.onclick = () => reprendreDossier(d); } } }, 0);
+  return `<div style="max-width:620px;margin:6vh auto 0">
+    ${entete("Bienvenue dans votre carnet", "La comptabilité de la location meublée, tenue à deux. Les données restent dans votre dossier iCloud : rien n'est envoyé sur internet.")}
+    <div class="card">
     ${FS ? `<div class="row"><button class="btn hide" id="resume"></button>
       <button class="btn" onclick="ouvrirDossier()">Ouvrir le dossier LMNP…</button></div>
-      <p class="sub" style="margin-top:10px">Choisissez le dossier iCloud qui contient <code>${FILE}</code>. L'enregistrement s'y fera directement, avec une copie datée dans « Sauvegardes ».</p>`
-    : `<div class="alert info">Ce navigateur (Safari, iPhone) permet de <b>consulter</b> et d'imprimer. Pour modifier et enregistrer directement dans iCloud, utilisez Chrome ou Edge sur Mac.</div>`}
-    <div class="row" style="margin-top:12px">
-      <button class="btn sec" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button>
-      <button class="btn sec" onclick="chargerDonnees(newDossier(),'nouveau dossier');setDirty(true)">Créer un dossier vide</button>
-    </div></div>`;
+      <p class="sub" style="margin:14px 0 0">Choisissez le dossier qui contient <code>${FILE}</code>. Les modifications y sont enregistrées automatiquement, avec une copie datée dans « Sauvegardes ».</p>`
+    : `<div class="alert info">Ce navigateur permet de consulter et d'imprimer. Pour modifier et enregistrer dans iCloud, ouvrez l'outil dans Chrome ou Edge sur Mac.</div>`}
+    </div>
+    <div class="row"><button class="btn ghost" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button>
+      <button class="btn ghost" onclick="chargerDonnees(newDossier(),'nouveau dossier');setDirty(true)">Créer un dossier vide</button></div></div>`;
 }
 
 /* ---- Tableau de bord ---- */
@@ -444,73 +589,105 @@ function vueAccueil(){
   const y = S.year;
   if(isHistorique(y)){
     const h = exercice(y).chiffres||{};
-    return `<h2>Exercice ${y}</h2><p class="sub">Exercice historique repris de l'Excel (chiffres de synthèse uniquement).</p>
-      <div class="card"><table>${Object.entries({loyers:"Loyers",chargesExternes:"Charges externes",impotsTaxes:"Impôts et taxes",dotationsAmortissements:"Dotations aux amortissements",interets:"Intérêts",resultat:"Résultat",immobilisationsNettes:"Immobilisations nettes",capitalRestantDu:"Capital restant dû"}).map(([k,l])=>`<tr><td>${l}</td><td class="n">${eur(h[k])}</td></tr>`).join("")}</table></div>`;
+    return entete(`Exercice ${y}`, "Exercice repris de l'ancien fichier Excel : seuls les chiffres de synthèse sont disponibles.") +
+      `<div class="card"><table>${Object.entries({loyers:"Loyers",chargesExternes:"Charges externes",impotsTaxes:"Impôts et taxes",dotationsAmortissements:"Dotations aux amortissements",interets:"Intérêts",resultat:"Résultat",immobilisationsNettes:"Immobilisations nettes",capitalRestantDu:"Capital restant dû"}).map(([k,l])=>`<tr><td>${l}</td><td class="n">${eur(h[k])}</td></tr>`).join("")}</table></div>`;
   }
   const f = fiscalJusqua(y), c = f.c;
   const alerts = [];
   if(!c.lmnpActif) alerts.push(["info", `La location meublée démarre le ${fmtDate(debutLMNP())} : rien à déclarer pour ${y}.`]);
-  if(exercice(y).statut === "cloture") alerts.push(["info","Exercice clôturé. Les écritures sont verrouillées (déverrouillables dans l'onglet Écritures)."]);
+  if(exercice(y).statut === "cloture") alerts.push(["info","Exercice clôturé : les écritures sont verrouillées. Vous pouvez les déverrouiller depuis la page Écritures."]);
   const loyers = (exercice(y).ecritures||[]).filter(e=>e.nature==="Loyer").map(e=>monthOf(e.date));
   const manquants = [...Array(12).keys()].map(i=>i+1).filter(m => !loyers.includes(m) && (y < new Date().getFullYear() || m <= new Date().getMonth()+1));
-  if(c.lmnpActif && manquants.length && manquants.length < 12) alerts.push(["warn", `Pas de loyer saisi pour : ${manquants.map(m=>MOIS[m-1]).join(", ")}.`]);
-  if(c.lmnpActif && !c.t.parNature["CFE"] && c.produits > 5000) alerts.push(["warn","Aucune CFE saisie. Au-delà de 5 000 € de recettes, la CFE est en principe due : vérifiez l'avis dans l'espace professionnel impots.gouv.fr (il n'est pas envoyé par courrier)."]);
-  if(S.data.emprunts.length && !c.interetsSaisis) alerts.push(["info", `Intérêts non saisis : l'outil utilise l'échéancier théorique (${eur(c.interetsEch)}). Saisissez les montants réels prélevés par la banque si possible.`]);
-  if(S.data.emprunts.length && c.interetsSaisis && Math.abs(c.interets - c.interetsEch) > 1) alerts.push(["info", `Intérêts saisis ${eur(c.interets)} contre ${eur(c.interetsEch)} selon l'échéancier théorique. C'est le montant saisi (réel) qui est retenu.`]);
-  if(c.t.inconnues) alerts.push(["warn", `${c.t.inconnues} écriture(s) avec une nature inconnue, classée(s) par défaut en charges externes.`]);
-  if(f.reintegration > 0.5) alerts.push(["info", `${eur(f.reintegration)} d'amortissements ne sont pas déductibles cette année (ils ne peuvent pas créer de déficit) : ils sont reportés sans limite de durée.`]);
+  if(c.lmnpActif && manquants.length && manquants.length < 12) alerts.push(["warn", `Aucun loyer saisi pour : ${manquants.map(m=>MOIS[m-1]).join(", ")}.`]);
+  if(c.lmnpActif && !c.t.parNature["CFE"] && c.produits > 5000) alerts.push(["warn","Aucune CFE saisie. Au-delà de 5 000 € de recettes, elle est en principe due : l'avis se consulte dans l'espace professionnel impots.gouv.fr (il n'est pas envoyé par courrier)."]);
+  if(S.data.emprunts.length && !c.interetsSaisis) alerts.push(["info", `Intérêts non saisis : l'échéancier théorique est utilisé (${eur(c.interetsEch)}).`]);
+  if(S.data.emprunts.length && c.interetsSaisis && Math.abs(c.interets - c.interetsEch) > 1) alerts.push(["info", `Intérêts réellement prélevés : ${eur(c.interets)}, contre ${eur(c.interetsEch)} selon l'échéancier théorique. Le montant réel est retenu.`]);
+  if(c.t.inconnues) alerts.push(["warn", `${c.t.inconnues} écriture(s) ont une nature inconnue : elles sont classées en charges externes.`]);
+  if(f.reintegration > 0.5) alerts.push(["info", `${eur(f.reintegration)} d'amortissements ne sont pas déductibles cette année car ils créeraient un déficit : ils sont reportés, sans limite de durée.`]);
+
+  // Des loyers au résultat
+  const amortDeduits = f.dotDeductible + f.ardUtilise;
+  const segs = [["Charges externes", c.c242, "var(--seg-1)"],["Impôts et taxes", c.c244, "var(--seg-2)"],["Intérêts d'emprunt", c.interets, "var(--seg-3)"],["Amortissements déduits", amortDeduits, "var(--accent)"],["Résultat imposable", Math.max(f.resultatFiscal,0), "var(--pos)"]];
+  const base = Math.max(c.produits, c.c242 + c.c244 + c.interets + amortDeduits, 1);
+  const rf = f.resultatFiscal;
+  const phrase = rf > 0
+    ? `Sur ${eur0(c.produits)} de loyers, ${eur0(rf)} seront imposés : les charges en absorbent ${eur0(c.c242+c.c244+c.interets)} et les amortissements ${eur0(amortDeduits)}.`
+    : rf === 0 ? `Les ${eur0(c.produits)} de loyers sont entièrement couverts par les charges et les amortissements : rien n'est imposé.${f.ardFin>0.5?` ${eur0(f.ardFin)} d'amortissements restent en réserve pour les années suivantes.`:""}`
+    : `Les charges dépassent les loyers de ${eur0(-rf)} : ce déficit pourra être déduit des bénéfices de location meublée des dix prochaines années.`;
   const decl = exercice(y).chiffresDeclares;
   let comp = "";
   if(decl){
     const rows = [["Loyers",decl.loyers,c.produits],["Charges externes",decl.chargesExternes,c.c242],["Impôts et taxes",decl.impotsTaxes,c.c244],["Dotations aux amortissements",decl.dotationsAmortissements,c.dotations],["Intérêts",decl.interets,c.interets],["Résultat",decl.resultat,c.resultatComptable]];
-    comp = `<div class="card"><h3 style="margin-top:0">Contrôle : outil / chiffres de l'Excel</h3><div class="tablewrap"><table><tr><th></th><th class="n">Excel</th><th class="n">Outil</th><th class="n">Écart</th></tr>
-      ${rows.map(([l,a,b])=>`<tr><td>${l}</td><td class="n">${eur(a)}</td><td class="n">${eur(b)}</td><td class="n">${Math.abs(b-a)<0.02?'<span class="pill">=</span>':eur(b-a)}</td></tr>`).join("")}</table></div></div>`;
+    comp = `<div class="card"><h3>Comparaison avec l'ancien fichier Excel</h3><div class="tablewrap"><table><tr><th></th><th class="n">Excel</th><th class="n">Carnet</th><th class="n">Écart</th></tr>
+      ${rows.map(([l,a,b])=>`<tr><td>${l}</td><td class="n">${eur(a)}</td><td class="n">${eur(b)}</td><td class="n">${Math.abs(b-a)<0.02?'<span class="pill">identique</span>':eur(b-a)}</td></tr>`).join("")}</table></div></div>`;
   }
-  return `<h2>Exercice ${y}</h2><p class="sub">${esc(S.data.dossier.nom)} · régime réel simplifié</p>
-    <div class="grid" style="margin-bottom:16px">
-      ${kpi("Recettes", c.produits)}${kpi("Charges (hors amort.)", c.c242+c.c244+c.interets)}
-      ${kpi("Amortissements", c.dotations)}${kpi("Résultat fiscal", f.resultatFiscal, true)}
-    </div>
-    ${alerts.map(([k,t])=>`<div class="alert ${k}">${t}</div>`).join("")}
+  const nat = Object.entries(c.t.parNature).sort((a,b)=>b[1]-a[1]);
+  return entete(`Exercice ${y}`, `${esc(S.data.dossier.nom)}, régime réel simplifié. Revenus à déclarer au printemps ${y+1}.`) + `
+    <section class="card flow" aria-label="Des loyers au résultat">
+      <p class="lead">Résultat fiscal ${y}</p>
+      <p class="big ${rf<0?"neg":""}">${eur0(rf)}</p>
+      <p class="phrase">${phrase}</p>
+      <div class="bar" role="img" aria-label="Répartition des loyers entre charges, amortissements et résultat">${segs.filter(x=>x[1]>0.5).map(([l,v,col])=>`<span style="width:${(v/base*100).toFixed(2)}%;background:${col}" title="${l} : ${eur0(v)}"></span>`).join("")}</div>
+      <div class="legend"><div><i style="background:transparent;border:1.5px solid var(--faint)"></i>Loyers encaissés<b>${eur0(c.produits)}</b></div>${segs.map(([l,v,col])=>`<div><i style="background:${col}"></i>${l}<b>${eur0(v)}</b></div>`).join("")}</div>
+    </section>
+    ${alerts.length?`<div class="alerts">${alerts.map(([k,t])=>`<div class="alert ${k}">${t}</div>`).join("")}</div>`:""}
     ${comp}
-    <div class="card"><h3 style="margin-top:0">Détail par nature</h3><div class="tablewrap"><table>
-      ${Object.entries(c.t.parNature).sort((a,b)=>b[1]-a[1]).map(([n,v])=>`<tr><td>${esc(n)} ${NATURES[n]?.l?`<span class="case">${NATURES[n].l}</span>`:'<span class="pill">hors résultat</span>'}</td><td class="n">${eur(v)}</td></tr>`).join("") || '<tr><td class="muted">Aucune écriture</td></tr>'}
+    <div class="card"><h3>Par nature</h3><div class="tablewrap"><table>
+      ${nat.map(([n,v])=>`<tr><td>${esc(n)}</td><td>${NATURES[n]?.l?`<span class="case" title="Ligne de la 2033-B">${NATURES[n].l}</span>`:'<span class="pill">hors résultat</span>'}</td><td class="n">${eur(v)}</td></tr>`).join("") || '<tr><td class="muted">Aucune écriture pour l\'instant.</td></tr>'}
     </table></div></div>`;
 }
-function kpi(l,v,signe){ return `<div class="card kpi" style="margin:0"><div class="l">${l}</div><div class="v" style="${signe&&v<0?'color:var(--bad)':''}">${eur(v)}</div></div>`; }
+function kpi(l,v,signe){ return `<div class="card kpi"><div class="l">${l}</div><div class="v" style="${signe&&v<0?'color:var(--neg)':''}">${eur(v)}</div></div>`; }
 
 /* ---- Écritures ---- */
 function verrouille(y){ return exercice(y)?.statut === "cloture" && !S.unlocked[y]; }
+const MOIS_LONG = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
+const svgI = d => `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const I_EDIT = svgI('<path d="M5 19h3l10-10-3-3L5 16zM13 7l3 3"/>'), I_DEL = svgI('<path d="M6 7h12M10 7V5h4v2M8 7l1 12h6l1-12"/>'), I_CLIP = svgI('<path d="M16 8l-6.5 6.5a2 2 0 0 0 3 3L19 11a4 4 0 0 0-6-6l-7 7a6 6 0 0 0 9 9l5-5"/>');
+function piecesLigne(e){
+  if(e.piece) return `<button class="btn ghost small pj" style="color:var(--accent)" title="${esc(e.piece)}" onclick="ouvrirPiece('${e.id}')">${I_CLIP}Voir</button>`;
+  if(!pieceRequise(e)) return "";
+  return `<button class="btn ghost small pj" style="color:var(--warn)" onclick="attacherPiece('${e.id}')">${I_CLIP}Ajouter la pièce</button>`;
+}
 function vueEcritures(){
   const y = S.year;
-  if(isHistorique(y)) return `<h2>Écritures ${y}</h2><div class="alert info">Exercice historique : pas d'écritures détaillées.</div>`;
+  if(isHistorique(y)) return entete(`Écritures ${y}`) + `<div class="alert info">Exercice repris de l'Excel : pas d'écritures détaillées.</div>`;
   const ex = exercice(y); ex.ecritures ??= [];
   const list = [...ex.ecritures].sort((a,b)=> a.date.localeCompare(b.date));
   const lock = verrouille(y);
   const ed = S.editId ? ex.ecritures.find(e=>e.id===S.editId) : null;
+  const ouvert = !lock && (S.composer || ed);
   const natOpts = sel => Object.keys(NATURES).map(n=>`<option ${n===sel?"selected":""}>${esc(n)}</option>`).join("");
   const t = totauxEcritures(y);
-  return `<h2>Écritures ${y}</h2><p class="sub">Une ligne par mouvement : loyer encaissé, facture payée, échéance de prêt (intérêts et capital séparés).</p>
-  ${lock ? `<div class="alert warn row">Exercice clôturé : modifications verrouillées. <button class="btn small sec" onclick="S.unlocked[${y}]=true;renderAll()">Déverrouiller</button></div>` : `
-  <div class="card noprint"><div class="form">
-    <label>Date<input type="date" id="eDate" value="${ed?ed.date:(list.length?list[list.length-1].date:y+"-01-01")}"></label>
-    <label>Tiers<input id="eTiers" list="tiersList" value="${esc(ed?ed.tiers:"")}" placeholder="ex. BNP"></label>
-    <label>Nature<select id="eNat">${natOpts(ed?ed.nature:"Loyer")}</select></label>
-    <label>Montant (€ TTC)<input id="eMont" inputmode="decimal" value="${ed?String(ed.montant).replace(".",","):""}" placeholder="0,00"></label>
-    <label>Commentaire<input id="eCom" value="${esc(ed?.commentaire||"")}"></label>
-    <div class="row"><button class="btn" onclick="saveEcriture()">${ed?"Mettre à jour":"Ajouter"}</button>${ed?`<button class="btn sec" onclick="S.editId=null;renderAll()">Annuler</button>`:""}</div>
+  const parMois = {};
+  list.forEach(e => (parMois[monthOf(e.date)] ??= []).push(e));
+  const groupe = g => NATURES[g.nature]?.g || (g.sens==="recette"?"recette":"charge");
+  return entete(`Écritures ${y}`, "Chaque mouvement d'argent lié à la location : loyers encaissés, factures payées, échéances de prêt.") + `
+  ${lock ? `<div class="alerts"><div class="alert warn" style="align-items:center">Exercice clôturé : les écritures sont verrouillées.<button class="btn small sec" style="margin-left:auto" onclick="S.unlocked[${y}]=true;renderAll()">Déverrouiller</button></div></div>` : ""}
+  <div class="row noprint" style="margin-bottom:18px">
+    ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"Nouvelle écriture"}</button>
+    <button class="btn sec" onclick="dupliquerMois()">Recopier le dernier mois</button>`}
+    <span style="margin-left:auto;color:var(--muted);font-size:14px">${list.length} écritures, ${eur(t.recettes)} encaissés, ${eur(t.c242+t.c244+t.c294+t.remb)} payés</span>
   </div>
-  <datalist id="tiersList">${[...new Set(ex.ecritures.map(e=>e.tiers).filter(Boolean))].map(t=>`<option value="${esc(t)}">`).join("")}</datalist>
-  <div class="row" style="margin-top:10px"><button class="btn small sec" onclick="dupliquerMois()">Recopier les écritures du dernier mois saisi sur le mois suivant</button></div>
-  </div>`}
-  <div class="card"><div class="row" style="justify-content:space-between"><b>${list.length} écritures</b><span class="pill">Recettes ${eur(t.recettes)} · Dépenses ${eur(t.c242+t.c244+t.c294+t.remb)}</span></div>
-  <div class="tablewrap"><table><tr><th>Date</th><th>Tiers</th><th>Nature</th><th class="n">Recette</th><th class="n">Dépense</th><th class="noprint">Pièce</th><th></th></tr>
-  ${list.map(e=>{ const g = NATURES[e.nature]?.g || (e.sens==="recette"?"recette":"charge");
-    return `<tr><td>${fmtDate(e.date)}</td><td>${esc(e.tiers)}</td><td>${esc(e.nature)}${e.commentaire?`<br><small style="color:var(--muted)">${esc(e.commentaire)}</small>`:""}</td>
-    <td class="n">${g==="recette"?eur(e.montant):""}</td><td class="n">${g!=="recette"?eur(e.montant):""}</td>
-    <td class="noprint">${cellPiece(e)}</td>
-    <td class="n noprint">${lock?"":`<button class="btn small sec" onclick="S.editId='${e.id}';renderAll();scrollTo(0,0)">Modifier</button> <button class="btn small danger" onclick="delEcriture('${e.id}')">×</button>`}</td></tr>`}).join("")}
-  </table></div></div>`;
+  ${ouvert ? `<div class="card composer noprint"><h3>${ed?"Modifier l'écriture":"Nouvelle écriture"}</h3><div class="form">
+    <label>Date<input type="date" id="eDate" value="${ed?ed.date:(list.length?list[list.length-1].date:y+"-01-01")}"></label>
+    <label>Tiers<input id="eTiers" list="tiersList" value="${esc(ed?ed.tiers:"")}" placeholder="Ex. syndic, banque"></label>
+    <label>Nature<select id="eNat">${natOpts(ed?ed.nature:"Loyer")}</select></label>
+    <label>Montant TTC<input id="eMont" inputmode="decimal" value="${ed?String(ed.montant).replace(".",","):""}" placeholder="0,00"></label>
+    <label style="grid-column:span 2">Commentaire<input id="eCom" value="${esc(ed?.commentaire||"")}" placeholder="Facultatif"></label>
+    <div class="row"><button class="btn" onclick="saveEcriture()">${ed?"Enregistrer la modification":"Ajouter"}</button><button class="btn ghost" onclick="S.editId=null;S.composer=false;renderAll()">Annuler</button></div>
+  </div>
+  <datalist id="tiersList">${[...new Set(ex.ecritures.map(e=>e.tiers).filter(Boolean))].map(t=>`<option value="${esc(t)}">`).join("")}</datalist></div>` : ""}
+  ${list.length ? Object.entries(parMois).map(([m,es]) => {
+    const rec = es.filter(e=>groupe(e)==="recette").reduce((s,e)=>s+e.montant,0), dep = es.filter(e=>groupe(e)!=="recette").reduce((s,e)=>s+e.montant,0);
+    return `<section class="card month"><header><h3>${MOIS_LONG[m-1]} ${y}</h3><span>${rec?`+${eur(rec)}`:""}${rec&&dep?" / ":""}${dep?`−${eur(dep)}`:""}</span></header>
+    ${es.map(e => { const g = groupe(e); return `<div class="ecr ${S.editId===e.id?"editing":""}">
+      <div class="d"><b>${e.date.slice(8,10)}</b>${MOIS[monthOf(e.date)-1]}</div>
+      <div class="t"><b>${esc(e.tiers)||"Sans tiers"}</b><small><i class="${g}"></i>${esc(e.nature)}</small></div>
+      <div class="m ${g}">${g==="recette"?"+":"−"}${eur(e.montant)}</div>
+      <div class="a noprint">${piecesLigne(e)}${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();scrollTo(0,0)">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</div>
+      ${e.commentaire?`<div class="c">${esc(e.commentaire)}</div>`:""}
+    </div>`; }).join("")}</section>`; }).join("")
+  : `<div class="card"><p class="sub" style="margin:0">Aucune écriture pour ${y}. Commencez par le premier loyer encaissé avec « Nouvelle écriture ».</p></div>`}`;
 }
 function parseMontant(s){ return Number(String(s).replace(/\s/g,"").replace(",", ".")); }
 function saveEcriture(){
@@ -543,7 +720,7 @@ function vueImmos(){
   const ed = S.editImmo === "new" ? {libelle:"",categorie:"mobilier",valeurOrigine:"",quotePartTerrain:0,dureeAns:7,miseEnService:y+"-01-01"} : S.data.immobilisations.find(i=>i.id===S.editImmo);
   const rows = S.data.immobilisations.map(i => { const a = amortAnnee(i,y); return {i,a}; });
   const tot = rows.reduce((s,{i,a})=>({brut:s.brut+i.valeurOrigine, dot:s.dot+(anneeEntreeBilan(i)<=y?a.dotation:0), cum:s.cum+a.cumulFin}),{brut:0,dot:0,cum:0});
-  return `<h2>Immobilisations ${y}</h2><p class="sub">Biens amortis : le logement (hors terrain), les travaux et le mobilier. Montants TTC (un LMNP ne récupère pas la TVA).</p>
+  return entete(`Immobilisations ${y}`, "Ce qui s'amortit : le logement hors terrain, les travaux et le mobilier. Montants TTC, puisqu'un LMNP ne récupère pas la TVA.") + `
   ${ed ? `<div class="card"><div class="form">
     <label>Libellé<input id="iLib" value="${esc(ed.libelle)}"></label>
     <label>Catégorie<select id="iCat">${Object.entries(CATEGORIES).map(([k,l])=>`<option value="${k}" ${k===ed.categorie?"selected":""}>${l}</option>`).join("")}</select></label>
@@ -578,13 +755,13 @@ function delImmo(){ if(!confirm("Supprimer cette immobilisation ?")) return; S.d
 /* ---- Emprunt ---- */
 function vueEmprunt(){
   const y = S.year;
-  if(!S.data.emprunts.length) return `<h2>Emprunt</h2><div class="card"><p>Aucun emprunt.</p><button class="btn" onclick="S.data.emprunts.push({id:uid(),banque:'',capital:0,tauxAnnuel:0,dureeMois:240,premiereEcheance:'${y}-01-01',mensualite:0});setDirty();renderAll()">+ Ajouter un emprunt</button></div>`;
+  if(!S.data.emprunts.length) return entete("Emprunt") + `<div class="card"><p>Aucun emprunt.</p><button class="btn" onclick="S.data.emprunts.push({id:uid(),banque:'',capital:0,tauxAnnuel:0,dureeMois:240,premiereEcheance:'${y}-01-01',mensualite:0});setDirty();renderAll()">+ Ajouter un emprunt</button></div>`;
   return S.data.emprunts.map((l,idx) => {
     const rows = echeancier(l);
     const ans = [...new Set(rows.map(r=>r.annee))];
     const c = !isHistorique(y) ? calculAnnee(y) : null;
     const ex = exercice(y);
-    return `<h2>Emprunt ${esc(l.banque)}</h2><p class="sub">Les intérêts sont déductibles, le capital remboursé ne l'est pas.</p>
+    return entete(`Emprunt ${esc(l.banque)}`, "Les intérêts sont déductibles du résultat ; le capital remboursé ne l'est pas.") + `
     <div class="card"><div class="form">
       <label>Banque<input value="${esc(l.banque)}" onchange="majPret(${idx},'banque',this.value)"></label>
       <label>Capital emprunté<input inputmode="decimal" value="${l.capital}" onchange="majPret(${idx},'capital',parseMontant(this.value))"></label>
@@ -612,9 +789,9 @@ function majCrd(v){ const ex = exercice(S.year); if(v.trim()==="") delete ex.crd
 function ligne(cas, lib, v, opts={}){ return `<tr class="${opts.tot?"tot":""}"><td>${cas?`<span class="case">${cas}</span>`:""}</td><td>${lib}</td><td class="n">${opts.brut?eur(v):eur0(v)}</td></tr>`; }
 function vueDeclaration(){
   const y = S.year;
-  if(isHistorique(y)) return `<h2>Déclaration ${y}</h2><div class="alert info">Exercice historique : déjà déclaré.</div>`;
+  if(isHistorique(y)) return entete(`Déclaration ${y}`) + `<div class="alert info">Exercice déjà déclaré avec l'ancien fichier Excel.</div>`;
   const f = fiscalJusqua(y), c = f.c, R = Math.round;
-  if(!c.lmnpActif) return `<h2>Déclaration ${y}</h2><div class="alert info">Pas de location meublée cette année.</div>`;
+  if(!c.lmnpActif) return entete(`Déclaration ${y}`) + `<div class="alert info">Pas de location meublée cette année.</div>`;
   const b = bilan(y), bp = exercice(y-1) ? bilan(y-1) : null;
   const cp = exercice(y-1) && !isHistorique(y-1) ? calculAnnee(y-1) : null;
   // 2033-B (arrondis à l'euro, totaux recalculés sur les arrondis)
@@ -627,8 +804,8 @@ function vueDeclaration(){
   const decl = S.data.dossier.declarant === "2" ? ["5OA","5OY"] : ["5NA","5NY"];
   const L = b.lignes, lc = (k,lib) => L[k].brutFin ? `<tr><td>${lib}</td><td class="n">${eur0(L[k].brutDebut)}</td><td class="n">${eur0(L[k].aug)}</td><td class="n">${eur0(L[k].brutFin)}</td></tr>` : "";
   const la = (k,lib) => L[k].brutFin && k!=="terrain" ? `<tr><td>${lib}</td><td class="n">${eur0(L[k].amDebut)}</td><td class="n">${eur0(L[k].dot)}</td><td class="n">${eur0(L[k].amFin)}</td></tr>` : "";
-  return `<div class="fiche"><div class="row" style="justify-content:space-between"><div><h2>Fiche de déclaration ${y} · ${esc(S.data.dossier.nom)}</h2><p class="sub">Montants à recopier dans la liasse en ligne (euros entiers). Revenus ${y}, à déclarer au printemps ${y+1}.</p></div>
-    <button class="btn sec noprint" onclick="print()">Imprimer / PDF</button></div>
+  return `<div class="fiche"><div class="row" style="justify-content:space-between;align-items:flex-start">${entete(`Déclaration ${y}`, `Montants à recopier dans la liasse en ligne, en euros entiers. Revenus ${y} de ${esc(S.data.dossier.nom)}, à déclarer au printemps ${y+1}.`)}
+    <button class="btn sec noprint" onclick="print()">Imprimer ou enregistrer en PDF</button></div>
   ${exercice(y).statut!=="cloture" && y >= new Date().getFullYear() ? `<div class="alert warn">Exercice en cours : chiffres provisoires.</div>`:""}
 
   <div class="card"><h3 style="margin-top:0">2033-B · Compte de résultat simplifié</h3><table>
@@ -696,7 +873,7 @@ function vueDeclaration(){
 function vueDossier(){
   const d = S.data.dossier, rp = S.data.reports;
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
-  return `<h2>Dossier</h2><p class="sub">Paramètres et gestion des exercices.</p>
+  return entete("Dossier", "Paramètres du dossier, exercices et fichier de données.") + `
   <div class="card"><div class="form">
     <label>Nom du dossier<input value="${esc(d.nom)}" onchange="S.data.dossier.nom=this.value;setDirty();renderAll()"></label>
     <label>Début de la location meublée<input type="date" value="${d.debutLocationMeublee}" onchange="S.data.dossier.debutLocationMeublee=this.value;setDirty();renderAll()"></label>
@@ -779,25 +956,24 @@ function detacherPiece(id){ const e = findEcr(id); if(!confirm("Détacher ce jus
 function marquerSansPiece(id, v){ const e = findEcr(id); if(v) e.sansPiece = true; else delete e.sansPiece; setDirty(); renderAll(); }
 function vuePieces(){
   const y = S.year;
-  if(isHistorique(y)) return `<h2>Pièces ${y}</h2><div class="alert info">Exercice historique : pas d'écritures détaillées.</div>`;
+  if(isHistorique(y)) return entete(`Pièces ${y}`) + `<div class="alert info">Exercice repris de l'Excel : pas d'écritures détaillées.</div>`;
   const ex = exercice(y), all = (ex.ecritures||[]).filter(pieceRequise);
   const manq = piecesManquantes(y).sort((a,b)=>a.date.localeCompare(b.date));
   const ok = all.filter(e=>e.piece).sort((a,b)=>a.date.localeCompare(b.date));
   const ligneE = (e, actions) => `<tr><td>${fmtDate(e.date)}</td><td>${esc(e.tiers)}</td><td>${esc(e.nature)}</td><td class="n">${eur(e.montant)}</td><td class="n noprint">${actions}</td></tr>`;
-  return `<h2>Pièces justificatives ${y}</h2>
-  <p class="sub">Les factures sont rangées dans <code>Justificatifs/${y}/</code> du dossier LMNP. Pas besoin de justificatif pour les loyers et l'emprunt (le bail, le relevé et l'échéancier en tiennent lieu).</p>
+  return entete(`Pièces ${y}`, `Les factures sont rangées dans <code>Justificatifs/${y}/</code> du dossier LMNP. Les loyers et l'emprunt n'en demandent pas : le bail, le relevé et l'échéancier en tiennent lieu.`) + `
   ${!S.dir ? `<div class="alert warn">Pour ajouter ou consulter les justificatifs, ouvrez l'outil dans Chrome avec « Ouvrir le dossier LMNP… ».</div>` : ""}
-  <div class="grid" style="margin-bottom:16px">${kpiN("Pièces manquantes", manq.length, manq.length?"var(--warn)":"var(--ok)")}${kpiN("Pièces rattachées", ok.length)}${kpiN("Écritures à justifier", all.length)}</div>
+  <div class="grid" style="margin-bottom:20px">${kpiN("Pièces manquantes", manq.length, manq.length?"var(--warn)":"var(--ok)")}${kpiN("Pièces rattachées", ok.length)}${kpiN("Écritures à justifier", all.length)}</div>
   <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">À fournir</h3>
     ${manq.length>3?`<button class="btn small sec noprint" onclick="if(confirm('Marquer les ${manq.length} écritures comme ne nécessitant pas de justificatif dans l\\'outil (par ex. pièces archivées ailleurs) ?')){piecesManquantes(${y}).forEach(e=>e.sansPiece=true);setDirty();renderAll()}">Tout marquer « classé ailleurs »</button>`:""}</div>
   ${manq.length ? `<div class="tablewrap"><table><tr><th>Date</th><th>Tiers</th><th>Nature</th><th class="n">Montant</th><th></th></tr>
-    ${manq.map(e=>ligneE(e, `<button class="btn small" onclick="attacherPiece('${e.id}')">Ajouter</button> <button class="btn small sec" title="Cette écriture n'a pas besoin de justificatif dans l'outil" onclick="marquerSansPiece('${e.id}',true)">Non requis</button>`)).join("")}</table></div>`
+    ${manq.map(e=>ligneE(e, `<button class="btn small sec" onclick="attacherPiece('${e.id}')">Ajouter</button> <button class="btn small ghost" title="Cette écriture n'a pas besoin de justificatif dans l'outil" onclick="marquerSansPiece('${e.id}',true)">Non requis</button>`)).join("")}</table></div>`
     : `<div class="alert ok">Toutes les pièces sont là.</div>`}</div>
   <div class="card" id="nonRattaches"><h3 style="margin-top:0">Fichiers déposés non rattachés</h3><p class="sub" style="margin:0">${S.dir?"Recherche dans Justificatifs/"+y+"/…":"Disponible quand le dossier LMNP est ouvert."}</p></div>
   ${ok.length?`<div class="card"><h3 style="margin-top:0">Pièces rattachées</h3><div class="tablewrap"><table><tr><th>Date</th><th>Tiers</th><th>Nature</th><th class="n">Montant</th><th></th></tr>
     ${ok.map(e=>ligneE(e, `<button class="btn small sec" onclick="ouvrirPiece('${e.id}')">📎 Voir</button> <button class="btn small danger" title="Détacher" onclick="detacherPiece('${e.id}')">×</button>`)).join("")}</table></div></div>`:""}`;
 }
-function kpiN(l,v,col){ return `<div class="card kpi" style="margin:0"><div class="l">${l}</div><div class="v" style="${col?"color:"+col:""}">${v}</div></div>`; }
+function kpiN(l,v,col){ return `<div class="card kpi"><div class="l">${l}</div><div class="v" style="${col?"color:"+col:""}">${v}</div></div>`; }
 async function scanNonRattaches(y){
   const box = $("#nonRattaches"); if(!box || !S.dir) return;
   try{
