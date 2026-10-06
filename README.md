@@ -3,6 +3,7 @@
 Petit outil web pour tenir la comptabilité d'une location meublée non professionnelle (LMNP) au régime réel simplifié :
 
 - saisie des recettes et dépenses ;
+- import du relevé bancaire CSV, avec tri des opérations, règles mémorisées par mot-clé et détection des doublons ;
 - amortissements par composant (logement hors terrain, travaux, mobilier) ;
 - échéancier d'emprunt ;
 - calcul du résultat fiscal, avec report des amortissements non déductibles (art. 39 C du CGI) et des déficits ;
