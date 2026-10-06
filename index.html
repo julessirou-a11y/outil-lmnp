@@ -63,6 +63,8 @@ tr.muted td{color:var(--muted)}
 details summary{cursor:pointer;color:var(--accent)}
 .fiche h3{border-bottom:1px solid var(--line);padding-bottom:4px}
 dialog#viewer{width:min(1000px,96vw);height:92vh;padding:0;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface);color:var(--text)}
+dialog#viewer{overscroll-behavior:contain}
+html.modal-open,html.modal-open body{overflow:hidden}
 dialog#viewer::backdrop{background:rgba(0,0,0,.45)}
 #viewer .vbar{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px solid var(--line)}
 #viewer iframe{width:100%;height:calc(92vh - 50px);border:0;background:#fff}
@@ -133,7 +135,36 @@ const monthOf = d => parseInt(String(d).slice(5,7),10);
 const MOIS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
 const fmtDate = d => d ? d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4) : "";
 
-function setDirty(v=true){ S.dirty=v; $("#dirty").classList.toggle("hide",!v); $("#saveBtn").disabled = !S.data; }
+function setDirty(v=true){
+  S.dirty=v; if(v) S.version = (S.version||0) + 1;
+  const el = $("#dirty"); el.classList.toggle("hide", !v && !S.autoMsg);
+  el.textContent = v ? (S.dir ? "● Enregistrement…" : "● Modifications non enregistrées") : (S.autoMsg||"");
+  el.style.color = v ? "var(--warn)" : "var(--muted)";
+  $("#saveBtn").disabled = !S.data;
+  if(v && S.dir){ clearTimeout(S.autoT); S.autoT = setTimeout(autoSave, 1200); }
+}
+/* Enregistrement automatique dans le dossier (sans demander d'autorisation) */
+async function autoSave(){
+  if(!S.dir || !S.dirty) return;
+  try{
+    if(await S.dir.queryPermission({mode:"readwrite"}) !== "granted"){ S.autoMsg=""; $("#dirty").textContent = "● Non enregistré : cliquez sur Enregistrer"; return; }
+    const v = S.version;
+    await ecrireDossier(!S.sauvegardeSession);
+    if(S.version === v){ const d = new Date(); S.autoMsg = "✓ Enregistré à " + d.toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"}); setDirty(false); }
+  }catch(e){ $("#dirty").textContent = "● Échec de l'enregistrement automatique : cliquez sur Enregistrer"; }
+}
+async function ecrireDossier(avecCopie){
+  S.data.derniereModification = new Date().toISOString();
+  const txt = JSON.stringify(S.data, null, 2);
+  const fh = await S.dir.getFileHandle(FILE, {create:true});
+  const w = await fh.createWritable(); await w.write(txt); await w.close();
+  if(avecCopie){
+    const sv = await S.dir.getDirectoryHandle("Sauvegardes", {create:true});
+    const bh = await sv.getFileHandle(`lmnp-donnees_${horodatage()}.json`, {create:true});
+    const bw = await bh.createWritable(); await bw.write(txt); await bw.close();
+    S.sauvegardeSession = true;
+  }
+}
 window.addEventListener("beforeunload", e => { if(S.dirty){ e.preventDefault(); e.returnValue=""; } });
 
 /* ============ Modèle : migration ============ */
@@ -316,7 +347,7 @@ const idb = {
 };
 function chargerDonnees(obj, nom){
   if(!obj || obj.format !== "outil-lmnp") throw new Error("Ce fichier n'est pas un dossier de l'outil LMNP.");
-  S.data = normalize(obj); S.fileName = nom;
+  S.data = normalize(obj); S.fileName = nom; S.autoMsg = ""; S.sauvegardeSession = false;
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
   S.year = ys.filter(y=>!isHistorique(y)).pop() ?? ys.pop();
   setDirty(false); renderAll();
@@ -359,11 +390,8 @@ async function enregistrer(){
   if(S.dir){
     try{
       if(await S.dir.queryPermission({mode:"readwrite"}) !== "granted" && await S.dir.requestPermission({mode:"readwrite"}) !== "granted") throw new Error("permission refusée");
-      const fh = await S.dir.getFileHandle(FILE, {create:true});
-      const w = await fh.createWritable(); await w.write(txt); await w.close();
-      const sv = await S.dir.getDirectoryHandle("Sauvegardes", {create:true});
-      const bh = await sv.getFileHandle(`lmnp-donnees_${horodatage()}.json`, {create:true});
-      const bw = await bh.createWritable(); await bw.write(txt); await bw.close();
+      clearTimeout(S.autoT); await ecrireDossier(true);
+      S.autoMsg = "✓ Enregistré à " + new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
       setDirty(false); toast("Enregistré dans « "+S.dir.name+" » (+ copie dans Sauvegardes)");
       return;
     }catch(e){ alert("Enregistrement dans le dossier impossible ("+e.message+"). Le fichier va être téléchargé à la place."); }
@@ -736,7 +764,7 @@ async function ouvrirPiece(id){
     const url = urlPiece(file);
     $("#vTitle").textContent = `${fmtDate(e.date)} · ${e.tiers||""} · ${e.nature} · ${eur(e.montant)}`;
     $("#vFrame").src = url; $("#vOpen").href = url;
-    S.pieceOuverte = id; $("#viewer").showModal();
+    S.pieceOuverte = id; ouvrirViewer();
   }catch(err){ alert("Justificatif introuvable : « "+e.piece+" ». A-t-il été déplacé ou renommé ?"); }
 }
 function urlPiece(file){
@@ -744,7 +772,9 @@ function urlPiece(file){
   const type = file.type || ({pdf:"application/pdf",jpg:"image/jpeg",jpeg:"image/jpeg",png:"image/png",heic:"image/heic"})[ext] || "application/octet-stream";
   return URL.createObjectURL(new Blob([file],{type}));
 }
-function fermerPiece(){ const f = $("#vFrame"); if(f.src.startsWith("blob:")) URL.revokeObjectURL(f.src); f.src = "about:blank"; $("#viewer").close(); }
+function ouvrirViewer(){ document.documentElement.classList.add("modal-open"); $("#viewer").showModal(); }
+function fermerPiece(){ $("#viewer").close(); }
+$("#viewer").addEventListener("close", () => { document.documentElement.classList.remove("modal-open"); const f = $("#vFrame"); if(f.src.startsWith("blob:")) URL.revokeObjectURL(f.src); f.src = "about:blank"; });
 function detacherPiece(id){ const e = findEcr(id); if(!confirm("Détacher ce justificatif de l'écriture ? (le fichier reste dans le dossier)")) return; delete e.piece; setDirty(); renderAll(); }
 function marquerSansPiece(id, v){ const e = findEcr(id); if(v) e.sansPiece = true; else delete e.sansPiece; setDirty(); renderAll(); }
 function vuePieces(){
@@ -787,7 +817,7 @@ async function scanNonRattaches(y){
 }
 async function voirLibre(y,i){
   const nom = S.libres[i]; const file = await (await (await justifDir(y,false)).getFileHandle(nom)).getFile();
-  const url = urlPiece(file); $("#vTitle").textContent = nom; $("#vFrame").src = url; $("#vOpen").href = url; $("#viewer").showModal();
+  const url = urlPiece(file); $("#vTitle").textContent = nom; $("#vFrame").src = url; $("#vOpen").href = url; ouvrirViewer();
 }
 function rattacherLibre(y,i){
   const id = $("#lib"+i).value; if(!id) return alert("Choisissez l'écriture correspondante.");
