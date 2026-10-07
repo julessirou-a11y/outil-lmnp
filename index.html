@@ -885,6 +885,7 @@ function vueDeclaration(){
   return `<div class="fiche"><div class="row" style="justify-content:space-between;align-items:flex-start">${entete(`Déclaration ${y}`, `Montants à recopier dans la liasse en ligne, en euros entiers. Revenus ${y} de ${esc(S.data.dossier.nom)}, à déclarer au printemps ${y+1}.`)}
     <div class="row noprint"><button class="btn sec" onclick="exporterFEC(${y})" title="Fichier des écritures comptables, à remettre en cas de contrôle fiscal">Exporter le FEC</button><button class="btn sec" onclick="print()">Imprimer ou enregistrer en PDF</button></div></div>
   ${exercice(y).statut!=="cloture" && y >= new Date().getFullYear() ? `<div class="alert warn">Exercice en cours : chiffres provisoires.</div>`:""}
+  ${vueControles(y)}
 
   <div class="card"><h3 style="margin-top:0">2033-B · Compte de résultat simplifié</h3><table>
     <tr><th>Case</th><th>Libellé</th><th class="n">${y}</th></tr>
@@ -1012,6 +1013,54 @@ function exporterFEC(y){
   a.href = URL.createObjectURL(new Blob([bytes], {type:"text/plain;charset=iso-8859-15"}));
   a.download = `${siren}FEC${y}1231.txt`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
   toast(`FEC ${y} téléchargé : ${lignes.length-1} lignes.`);
+}
+
+/* ---- Contrôles avant déclaration ---- */
+/* Chaque contrôle : [niveau, texte] avec niveau "ok" (vérifié), "warn" (à regarder) ou "bad" (à corriger) */
+function controles(y){
+  const ex = exercice(y), es = ex.ecritures || [], c = calculAnnee(y), out = [];
+  const chk = (cond, okTxt, niveau, koTxt) => out.push(cond ? ["ok", okTxt] : [niveau, koTxt]);
+  const hors = es.filter(e => yearOf(e.date) !== y);
+  chk(!hors.length, "Toutes les écritures sont datées de l'exercice.", "bad", `${hors.length} écriture(s) datée(s) hors de ${y} : corrigez leur date.`);
+  const nuls = es.filter(e => !(e.montant > 0));
+  chk(!nuls.length, "Aucun montant nul ou négatif.", "bad", `${nuls.length} écriture(s) à montant nul ou négatif.`);
+  chk(!c.t.inconnues, "Toutes les natures sont reconnues.", "bad", `${c.t.inconnues} écriture(s) à nature inconnue, classées par défaut en charges externes.`);
+  const moisLoyer = new Set(es.filter(e => e.nature === "Loyer").map(e => monthOf(e.date)));
+  const debut = y === yearOf(debutLMNP()) ? monthOf(debutLMNP()) : 1;
+  const attendus = [...Array(13 - debut).keys()].map(i => i + debut).filter(m => y < new Date().getFullYear() || m <= new Date().getMonth()+1);
+  const manq = attendus.filter(m => !moisLoyer.has(m));
+  chk(!manq.length, `Un loyer saisi pour chacun des ${attendus.length} mois.`, "warn", `Loyer manquant : ${manq.map(m=>MOIS[m-1]).join(", ")}.`);
+  if(c.produits > 5000) chk(!!c.t.parNature["CFE"], "CFE saisie.", "warn", "Aucune CFE saisie alors que les recettes dépassent 5 000 € : vérifiez l'avis dans l'espace professionnel impots.gouv.");
+  const pm = piecesManquantes(y).length;
+  chk(!pm, "Toutes les pièces justificatives sont rattachées.", "warn", `${pm} pièce(s) justificative(s) manquante(s) (page Pièces).`);
+  const aTrier = (S.data.banque?.aTrier || []).filter(o => yearOf(o.date) === y).length;
+  chk(!aTrier, "Aucune opération bancaire de l'année en attente de tri.", "warn", `${aTrier} opération(s) bancaire(s) de ${y} encore à trier (page Banque).`);
+  const vus = {}, dbl = [];
+  es.forEach(e => { const k = `${e.date}|${e.nature}|${e.montant}`; if(vus[k]) dbl.push(e); vus[k] = true; });
+  chk(!dbl.length, "Aucun doublon apparent.", "warn", `${dbl.length} écriture(s) en double apparent (même date, nature et montant) : vérifiez qu'il ne s'agit pas d'une saisie répétée.`);
+  const gros = es.filter(e => e.nature === "Petit équipement (< 500 € HT)" && e.montant > 600);
+  chk(!gros.length, "Aucun petit équipement au-dessus du seuil.", "warn", `${gros.length} « petit équipement » de plus de 600 € TTC : au-delà de 500 € HT par élément, il faut l'amortir (page Immobilisations).`);
+  if(S.data.emprunts.length){
+    chk(c.interetsSaisis, "Intérêts d'emprunt saisis d'après la banque.", "warn", `Intérêts non saisis : l'échéancier théorique (${eur(c.interetsEch)}) est utilisé. Saisissez les montants réellement prélevés.`);
+    const crdB = ex.crdBanque != null && ex.crdBanque !== "";
+    chk(crdB, "Capital restant dû au 31/12 saisi d'après la banque.", "warn", "Capital restant dû au 31/12 non saisi : le bilan utilise l'échéancier théorique (page Emprunt).");
+    if(crdB && Math.abs(Number(ex.crdBanque) - c.crdEch) > 50) out.push(["warn", `Écart de ${eur(Math.abs(Number(ex.crdBanque) - c.crdEch))} entre le capital restant dû de la banque et l'échéancier : vérifiez les paramètres de l'emprunt.`]);
+  }
+  const prec = exercice(y-1);
+  if(y > yearOf(debutLMNP())) chk(!!prec && (!isHistorique(y-1) || prec.chiffres?.immobilisationsNettes != null), `Colonne N-1 (${y-1}) disponible pour la 2033-A.`, "warn", `Chiffres ${y-1} incomplets : la colonne N-1 de la 2033-A sera à remplir à la main.`);
+  const f = fiscalJusqua(y);
+  if(f.perimes?.length) out.push(["warn", `Déficit(s) de plus de 10 ans perdu(s) cette année : ${f.perimes.map(d=>d.annee+" ("+eur(d.montant)+")").join(", ")}.`]);
+  return out;
+}
+function vueControles(y){
+  const l = controles(y), nb = k => l.filter(x => x[0] === k).length;
+  const bad = nb("bad"), warn = nb("warn");
+  const tete = bad ? `${bad} point(s) à corriger${warn?` et ${warn} à vérifier`:""}` : warn ? `${warn} point(s) à vérifier avant de déclarer` : "Prêt à déclarer";
+  const sym = {ok:"✓", warn:"!", bad:"✕"}, col = {ok:"var(--pos)", warn:"var(--warn)", bad:"var(--neg)"};
+  return `<div class="card noprint"><details ${bad||warn?"open":""}><summary style="font-size:16px;font-weight:600;color:${bad?col.bad:warn?col.warn:col.ok}">${tete} · ${nb("ok")}/${l.length} contrôles validés</summary>
+    <ul style="list-style:none;padding:0;margin:12px 0 0;display:flex;flex-direction:column;gap:6px">
+    ${[...l].sort((a,b)=>"bwo".indexOf(a[0][0])-"bwo".indexOf(b[0][0])).map(([k,t])=>`<li style="display:flex;gap:10px"><b style="color:${col[k]};width:14px;flex:none;text-align:center">${sym[k]}</b><span style="${k==="ok"?"color:var(--muted)":""}">${t}</span></li>`).join("")}
+    </ul></details></div>`;
 }
 
 /* ---- Dossier ---- */
