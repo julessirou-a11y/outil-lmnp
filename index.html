@@ -278,6 +278,24 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 .cbars.serre{gap:3px} .cbars.serre .cb:nth-child(even) span{visibility:hidden}
 .okc{position:absolute;right:12px;top:12px;color:var(--pos);font-style:normal;font-weight:700}
 
+/* ---------- Paramètres du dossier ---------- */
+.idcard{display:flex;align-items:center;gap:18px}
+.avatar{width:58px;height:58px;border-radius:50%;background:var(--accent);color:#fff;display:grid;place-items:center;font-size:21px;font-weight:600;flex:none}
+.idtxt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.idtxt span{color:var(--muted);font-size:13.5px} .idtxt .idmeta{font-size:12.5px;color:var(--faint)}
+.nomdos{font-size:20px;font-weight:600;border:1px solid transparent!important;background:transparent!important;padding:2px 6px!important;margin-left:-7px;width:100%}
+.nomdos:hover,.nomdos:focus{border-color:var(--line)!important;background:var(--surface)!important}
+.idcomp{display:flex;flex-direction:column;align-items:center;gap:2px} .idcomp small{color:var(--faint);font-size:11.5px}
+.dosgrid{display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:0 18px}
+.ich{display:flex;align-items:center;gap:8px} .ich svg{color:var(--accent)}
+.form.f2{grid-template-columns:1fr 1fr} .form .large{grid-column:1/-1}
+.annees{display:flex;flex-wrap:wrap;gap:10px}
+.an{display:flex;flex-direction:column;align-items:flex-start;gap:4px;padding:12px 14px;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:var(--r-md);min-width:120px;background:var(--surface)}
+.an b{font-size:18px} .an span{font-size:12.5px;color:var(--muted)}
+.an.plus{border:1.5px dashed var(--line);cursor:pointer;color:var(--accent);font:inherit;justify-content:center;align-items:center}
+.an.plus:hover{border-color:var(--accent);background:var(--accent-soft)} .an.plus b{font-size:22px;font-weight:500}
+@media (max-width:700px){ .dosgrid{grid-template-columns:1fr} .form.f2{grid-template-columns:1fr} .idcard{flex-wrap:wrap} .idcomp{flex-direction:row;gap:8px} .an{min-width:0;flex:1 1 130px} }
+
 /* ---------- Écritures groupées par mois ---------- */
 .month{margin-bottom:14px;padding:6px 8px 4px}
 .month header{display:flex;align-items:baseline;gap:12px;padding:12px 14px 8px}
@@ -1485,32 +1503,69 @@ function vueControles(y){
 }
 
 /* ---- Dossier ---- */
+/* Champs du dossier : tous optionnels dans le fichier, servent à l'en-tête des déclarations et des états financiers */
+const CHAMPS_DOSSIER = {
+  exploitant: ["Exploitant", "M3 21v-1a6 6 0 0 1 6-6h6a6 6 0 0 1 6 6v1M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z", [
+    ["nomExploitant","Nom et prénom", "large"], ["adresseExploitant","Adresse personnelle", "large"], ["numeroFiscal","Numéro fiscal", "", "13 chiffres"], ["declarant","Déclarant sur la 2042", "select", [["1","Déclarant 1"],["2","Déclarant 2"]]] ]],
+  activite: ["Activité", "M4 7h16v13H4zM9 7V4h6v3M4 12h16", [
+    ["siren","SIREN", "", "9 chiffres"], ["siret","SIRET", "", "14 chiffres"], ["ape","Code APE", "", "68.20A"], ["debutLocationMeublee","Début de la location meublée", "date"],
+    ["sie","Service des impôts (SIE)", "large"] ]],
+  bien: ["Logement loué", "M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6", [
+    ["adresseBien","Adresse du logement", "large"], ["typeBien","Type", "select", [["","–"],["appartement","Appartement"],["maison","Maison"],["studio","Studio"],["parking","Parking / annexe"]]],
+    ["surface","Surface (m²)", "num"], ["typeLocation","Location", "select", [["","–"],["longue","Longue durée"],["etudiant","Étudiant / bail mobilité"],["saisonnier","Saisonnière"]]] ]],
+  conseil: ["Accompagnement", "M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z", [
+    ["comptable","Comptable (facultatif)", "large"], ["oga","Organisme de gestion agréé", "large"] ]],
+};
+function champDossier([k, lib, type, opt]){
+  const d = S.data.dossier, v = d[k] ?? "", on = `majDossier('${k}',this.value)`;
+  const cls = type==="large" ? ' class="large"' : "";
+  if(type==="select") return `<label${cls}>${lib}<select onchange="${on}">${opt.map(([o,l])=>`<option value="${o}" ${String(v)===o?"selected":""}>${l}</option>`).join("")}</select></label>`;
+  return `<label${cls}>${lib}<input ${type==="date"?'type="date"':type==="num"?'inputmode="decimal"':""} value="${esc(v)}" ${typeof opt==="string"?`placeholder="${esc(opt)}"`:""} onchange="${on}"></label>`;
+}
+function majDossier(k, v){
+  v = String(v).trim();
+  if(k==="siren"||k==="siret"||k==="numeroFiscal") v = v.replace(/\D/g,"");
+  if(k==="surface") v = parseMontant(v) || "";
+  if(k==="siret" && v.length===14 && !S.data.dossier.siren) S.data.dossier.siren = v.slice(0,9);
+  if(v === "") delete S.data.dossier[k]; else S.data.dossier[k] = v;
+  setDirty(); renderAll();
+}
+function completudeDossier(){
+  const cles = ["nomExploitant","adresseExploitant","siret","debutLocationMeublee","adresseBien","typeBien","surface"];
+  return cles.filter(k => S.data.dossier[k]).length / cles.length;
+}
 function vueDossier(){
   const d = S.data.dossier, rp = S.data.reports;
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
   if(S.cloture && exercice(S.cloture) && !isHistorique(S.cloture)) return vueCloture(S.cloture);
-  return entete("Paramètres", "Informations du dossier, années et fichier de données. À régler une fois, puis rarement.") + `
-  <div class="card"><div class="form">
-    <label>Nom du dossier<input value="${esc(d.nom)}" onchange="S.data.dossier.nom=this.value;setDirty();renderAll()"></label>
-    <label>Début de la location meublée<input type="date" value="${d.debutLocationMeublee}" onchange="S.data.dossier.debutLocationMeublee=this.value;setDirty();renderAll()"></label>
-    <label>Déclarant sur la 2042<select onchange="S.data.dossier.declarant=this.value;setDirty();renderAll()"><option value="1" ${d.declarant==="1"?"selected":""}>Déclarant 1</option><option value="2" ${d.declarant==="2"?"selected":""}>Déclarant 2</option></select></label>
-    <label>SIREN (pour le nom du fichier FEC)<input inputmode="numeric" maxlength="9" value="${esc(d.siren||"")}" placeholder="9 chiffres" onchange="S.data.dossier.siren=this.value.replace(/\D/g,'');setDirty();renderAll()"></label>
+  const comp = completudeDossier(), ini = (d.nomExploitant||d.nom||"?").split(/\s+/).map(m=>m[0]).slice(0,2).join("").toUpperCase();
+  const STAT = {historique:["Reprise Excel","var(--seg-2)"], "en-cours":["En cours","var(--warn)"], cloture:["Clôturée","var(--pos)"]};
+  return `<div class="pagehead"><h1>Paramètres du dossier</h1></div>
+  <div class="card idcard">
+    <div class="avatar">${esc(ini)}</div>
+    <div class="idtxt"><input class="nomdos" value="${esc(d.nom)}" aria-label="Nom du dossier" onchange="S.data.dossier.nom=this.value;setDirty();renderAll()">
+      <span>${esc(d.adresseBien||"Adresse du logement à renseigner")}</span>
+      <span class="idmeta">${d.siret?`SIRET ${esc(d.siret.replace(/(\d{3})(\d{3})(\d{3})(\d{5})/,"$1 $2 $3 $4"))}`:d.siren?`SIREN ${esc(d.siren)}`:"SIRET à renseigner"} · Réel simplifié · depuis le ${d.debutLocationMeublee?fmtDate(d.debutLocationMeublee):"–"}</span></div>
+    <div class="idcomp">${anneau(comp, pctTxt(comp), comp>=1?"var(--pos)":"var(--accent)", 76)}<small>complet</small></div>
+  </div>
+  <div class="dosgrid">${Object.values(CHAMPS_DOSSIER).map(([titre, ic, champs]) => `<div class="card"><h3 class="ich"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${ic}"/></svg>${titre}</h3><div class="form f2">${champs.map(champDossier).join("")}</div></div>`).join("")}</div>
+  <div class="card"><h3>Années</h3><div class="annees">
+    ${ys.map(y=>{ const st = S.data.exercices[y].statut||"en-cours", [lib,col] = STAT[st]||[st,"var(--line)"];
+      return `<div class="an" style="--c:${col}"><b>${y}</b><span>${lib}</span>${isHistorique(y)?"":st==="cloture"
+        ?`<button class="btn small ghost" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`
+        :`<button class="btn small sec" onclick="S.cloture=${y};renderAll();scrollTo(0,0)">Clôturer…</button>`}</div>`; }).join("")}
+    <button class="an plus" onclick="nouvelExercice()"><b>+</b><span>Ouvrir ${Math.max(...ys)+1}</span></button>
   </div></div>
-  <div class="card"><h3 style="margin-top:0">Années</h3><table>
-    ${ys.map(y=>`<tr><td>${y}</td><td>${({historique:"reprise de l'Excel","en-cours":"en cours",cloture:"clôturée"})[S.data.exercices[y].statut||"en-cours"]||esc(S.data.exercices[y].statut)}</td><td class="n">${isHistorique(y)?"":`
-      ${S.data.exercices[y].statut==="cloture"?`<button class="btn small sec" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`:`<button class="btn small sec" onclick="S.cloture=${y};renderAll();scrollTo(0,0)">Clôturer…</button>`}`}</td></tr>`).join("")}
-  </table><div style="margin-top:10px"><button class="btn" onclick="nouvelExercice()">+ Ouvrir l'année ${Math.max(...ys)+1}</button></div></div>
-  <div class="card"><h3 style="margin-top:0">Reports à l'ouverture du premier exercice détaillé</h3>
-    <div class="form"><label>Amortissements différés (art. 39 C)<input inputmode="decimal" value="${rp.amortissementsDifferes}" onchange="S.data.reports.amortissementsDifferes=r2(parseMontant(this.value))||0;setDirty();renderAll()"></label></div>
-    <p class="sub" style="margin:8px 0 0">Déficits antérieurs : ${rp.deficits.length?rp.deficits.map(x=>x.annee+" : "+eur(x.montant)).join(", "):"aucun"}.</p></div>
-  <div class="card"><details><summary>Plan de comptes utilisé</summary>
-    <p class="sub" style="margin:10px 0">Chaque nature est rattachée à un compte du plan comptable général. Ces comptes servent à la balance et à l'export FEC ; le bouton « Vue comptable » du menu les affiche partout.</p>
-    <div class="tablewrap"><table><tr><th>Compte</th><th>Libellé</th><th>Nature de l'outil</th></tr>
+  <div class="dosgrid">
+    <div class="card"><h3>Reports d'ouverture</h3><div class="form"><label>Amortissements en réserve (art. 39 C)<input inputmode="decimal" value="${rp.amortissementsDifferes}" onchange="S.data.reports.amortissementsDifferes=r2(parseMontant(this.value))||0;setDirty();renderAll()"></label></div>
+      <p class="sub" style="margin:8px 0 0">Déficits antérieurs : ${rp.deficits.length?rp.deficits.map(x=>x.annee+" : "+eur(x.montant)).join(", "):"aucun"}</p></div>
+    <div class="card"><h3>Fichier</h3><p class="sub" style="margin:0 0 10px">${S.dir?`Dossier « ${esc(S.dir.name)} » · copie datée dans « Sauvegardes » à chaque enregistrement`:`Lecture seule : l'enregistrement télécharge un fichier`}</p>
+      <div class="row">${FS?`<button class="btn sec" onclick="ouvrirDossier()">Autre dossier…</button>`:""}<button class="btn sec" onclick="ouvrirFichier()">Ouvrir un fichier…</button></div></div>
+  </div>
+  <div class="card"><details><summary>Plan de comptes</summary>
+    <div class="tablewrap" style="margin-top:10px"><table><tr><th>Compte</th><th>Libellé</th><th>Natures</th></tr>
     ${Object.entries(COMPTES).map(([c,l])=>`<tr><td>${c}</td><td>${esc(l)}</td><td>${Object.keys(NATURES).filter(n=>NATURES[n].c===c).map(esc).join(", ")}</td></tr>`).join("")}
-    </table></div></details></div>
-  <div class="card"><h3 style="margin-top:0">Fichier</h3>
-    <p class="sub">${S.dir?`Dossier ouvert : « ${esc(S.dir.name)} ». Chaque enregistrement ajoute une copie datée dans « Sauvegardes ».`:`Fichier ouvert en lecture : l'enregistrement télécharge un nouveau fichier.`}</p>
-    <div class="row">${FS?`<button class="btn sec" onclick="ouvrirDossier()">Ouvrir un autre dossier…</button>`:""}<button class="btn sec" onclick="ouvrirFichier()">Ouvrir un fichier…</button></div></div>`;
+    </table></div></details></div>`;
 }
 /* ============ Justificatifs ============ */
 function pieceRequise(e){ return !e.sansPiece && (NATURES[e.nature]?.piece !== false); }
