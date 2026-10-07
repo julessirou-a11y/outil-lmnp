@@ -262,12 +262,21 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 .muted-s{color:var(--faint);font-size:12px}
 .conso{display:grid;grid-template-columns:240px 1fr;gap:24px;align-items:center}
 .cbars{display:flex;gap:10px;align-items:flex-end;height:170px;padding-top:6px}
-.cb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;max-width:60px}
+.cb{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;max-width:60px}
 .cbs{flex:1;width:100%;display:flex;flex-direction:column-reverse;border-radius:6px 6px 0 0;overflow:hidden}
 .cbs i{display:block;width:100%}
 .cb span{font-size:11.5px;color:var(--faint)}
 .immos + .card{margin-top:20px}
 @media (max-width:700px){ .conso{grid-template-columns:1fr} .fn{width:96px} .frise .axe{margin-left:96px} .today{display:none} .immos{grid-template-columns:1fr} .iv{grid-template-columns:repeat(2,1fr)} }
+
+/* ---------- Emprunt ---------- */
+.cbs.sel{outline:2px solid var(--accent);outline-offset:1px}
+.cmp{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px}
+.cmp div{background:var(--surface-2);border-radius:var(--r-md);padding:12px 14px;position:relative}
+.cmp span{display:block;font-size:12.5px;color:var(--muted)} .cmp b{font-size:17px;font-weight:600}
+.cmp input{width:100%;margin-top:4px}
+.cbars.serre{gap:3px} .cbars.serre .cb:nth-child(even) span{visibility:hidden}
+.okc{position:absolute;right:12px;top:12px;color:var(--pos);font-style:normal;font-weight:700}
 
 /* ---------- Écritures groupées par mois ---------- */
 .month{margin-bottom:14px;padding:6px 8px 4px}
@@ -1073,34 +1082,69 @@ function saveImmo(){
 function delImmo(){ if(!confirm("Supprimer cette immobilisation ?")) return; S.data.immobilisations = S.data.immobilisations.filter(i=>i.id!==S.editImmo); S.editImmo=null; setDirty(); renderAll(); }
 
 /* ---- Emprunt ---- */
+/* Courbe du capital restant dû, avec l'année affichée mise en évidence */
+function courbeCRD(l, y){
+  const rows = echeancier(l), ans = [...new Set(rows.map(r=>r.annee))], W = 640, H = 200, px = 34, py = 16;
+  const pts = [[yearOf(l.premiereEcheance) - 0.001, l.capital], ...ans.map(a => [a + 1, empruntAnnee(l,a).crdFin])];
+  const x0 = pts[0][0], x1 = pts[pts.length-1][0], X = a => px + (a - x0) / (x1 - x0 || 1) * (W - px - 8), Y = v => py + (1 - v / (l.capital||1)) * (H - py - 24);
+  const d = pts.map((p,k)=>`${k?"L":"M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
+  const yc = Math.min(Math.max(y+1, x0), x1), vc = empruntAnnee(l, y).crdFin;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Capital restant dû">
+    <path d="${d} L${X(x1)},${H-24} L${X(x0)},${H-24}Z" fill="var(--accent-soft)"/><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
+    <line x1="${X(x0)}" x2="${X(x1)}" y1="${H-24}" y2="${H-24}" stroke="var(--line)"/>
+    ${ans.filter((a,k)=>ans.length<=12||k%3===0||a===y).map(a=>`<text x="${X(a+0.5).toFixed(1)}" y="${H-7}" text-anchor="middle" font-size="11" fill="var(--faint)">${a}</text>`).join("")}
+    <circle cx="${X(yc).toFixed(1)}" cy="${Y(vc).toFixed(1)}" r="6" fill="var(--accent)" stroke="var(--surface)" stroke-width="2.5"/>
+    <text x="${Math.min(X(yc)+10, W-90).toFixed(1)}" y="${(Y(vc)-10).toFixed(1)}" font-size="12.5" font-weight="600" fill="var(--text)">${eur0(vc)}</text>
+  </svg>`;
+}
 function vueEmprunt(){
   const y = S.year;
-  if(!S.data.emprunts.length) return entete("Prêt immobilier") + `<div class="card"><p>Aucun prêt.</p><button class="btn" onclick="S.data.emprunts.push({id:uid(),banque:'',capital:0,tauxAnnuel:0,dureeMois:240,premiereEcheance:'${y}-01-01',mensualite:0});setDirty();renderAll()">+ Ajouter un prêt</button></div>`;
+  if(!S.data.emprunts.length) return `<div class="pagehead"><h1>Emprunt</h1></div><div class="card"><button class="btn" onclick="S.data.emprunts.push({id:uid(),banque:'',capital:0,tauxAnnuel:0,dureeMois:240,premiereEcheance:'${y}-01-01',mensualite:0});S.vuePret='param';setDirty();renderAll()">+ Ajouter un emprunt</button></div>`;
+  const vue = S.vuePret || "vue";
   return S.data.emprunts.map((l,idx) => {
-    const rows = echeancier(l);
-    const ans = [...new Set(rows.map(r=>r.annee))];
-    const c = !isHistorique(y) ? calculAnnee(y) : null;
-    const ex = exercice(y);
-    return entete(`Prêt ${esc(l.banque)}`, "Seuls les intérêts réduisent l'impôt ; le capital remboursé, non. L'outil calcule les intérêts de chaque année à partir des caractéristiques du prêt.") + `
-    <div class="card"><details ${l.capital?"":"open"}><summary>Caractéristiques du prêt</summary><div class="form" style="margin-top:12px">
+    const rows = echeancier(l), ans = [...new Set(rows.map(r=>r.annee))], der = rows[rows.length-1];
+    const c = !isHistorique(y) ? calculAnnee(y) : null, ex = exercice(y), a = empruntAnnee(l, y);
+    const crd = c ? c.crd : a.crdFin, rembourse = 1 - crd / (l.capital||1);
+    const totInt = rows.reduce((s,r)=>s+r.interet,0), intPayes = rows.filter(r=>r.annee<=y).reduce((s,r)=>s+r.interet,0);
+    const doc = l.echeancierDoc && docs().find(d=>d.id===l.echeancierDoc);
+    const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Emprunt ${esc(l.banque)}</h1></div>
+      ${segments("vuePret", [["vue","Vue d'ensemble"],["param","Paramètres de l'emprunt"]], vue)}</div>`;
+    if(vue === "param") return tete + `<div class="card"><h3>Caractéristiques</h3><div class="form">
       <label>Banque<input value="${esc(l.banque)}" onchange="majPret(${idx},'banque',this.value)"></label>
       <label>Capital emprunté<input inputmode="decimal" value="${l.capital}" onchange="majPret(${idx},'capital',parseMontant(this.value))"></label>
       <label>Taux annuel (%)<input inputmode="decimal" value="${r2(l.tauxAnnuel*10000)/100}" onchange="majPret(${idx},'tauxAnnuel',parseMontant(this.value)/100)"></label>
       <label>Durée (mois)<input type="number" value="${l.dureeMois}" onchange="majPret(${idx},'dureeMois',parseInt(this.value,10))"></label>
       <label>1re échéance<input type="date" value="${l.premiereEcheance}" onchange="majPret(${idx},'premiereEcheance',this.value)"></label>
       <label>Mensualité hors assurance<input inputmode="decimal" value="${l.mensualite}" onchange="majPret(${idx},'mensualite',parseMontant(this.value))"></label>
-    </div></details></div>
-    ${c && ex ? `<div class="card"><h3 style="margin-top:0">${y} : comparer avec la banque</h3><table>
-      <tr><td>Intérêts calculés par l'outil</td><td class="n">${eur(c.interetsEch)}</td></tr>
-      <tr><td>Intérêts saisis dans les dépenses (ceux retenus)</td><td class="n">${c.interetsSaisis?eur(c.t.c294):"–"}</td></tr>
-      <tr><td>Capital restant dû au 31/12 calculé par l'outil</td><td class="n">${eur(c.crdEch)}</td></tr>
-      <tr><td>Capital restant dû selon la banque<br><small style="color:var(--muted)">Relevé annuel de prêt, reçu en début d'année</small></td><td class="n"><input inputmode="decimal" style="width:130px;text-align:right" value="${ex.crdBanque??""}" placeholder="à saisir" onchange="majCrd(this.value)"></td></tr></table>
-      <p class="sub" style="margin:8px 0 0">S'il est saisi, le montant de la banque remplace le calcul de l'outil dans la déclaration.</p></div>` : ""}
-    <div class="card"><details><summary>Tableau sur toute la durée du prêt</summary><div class="tablewrap" style="margin-top:8px"><table>
-      <tr><th>Année</th><th class="n">Intérêts</th><th class="n">Capital remboursé</th><th class="n">Restant dû au 31/12</th></tr>
-      ${ans.map(a=>{ const s = empruntAnnee(l,a); return `<tr class="${a===y?"tot":""}"><td>${a}</td><td class="n">${eur(s.interets)}</td><td class="n">${eur(s.capital)}</td><td class="n">${eur(s.crdFin)}</td></tr>`;}).join("")}
-    </table></div></details></div>`;
+    </div></div>
+    <div class="card"><h3>Échéancier de la banque (PDF)</h3>
+      ${doc ? `<div class="doc"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"><path d="M14 3H6v18h12V7zM14 3v4h4"/><path d="M9 12h6M9 16h6"/></svg>
+        <div><b>${esc(doc.libelle)}</b><small>${ecrituresDuDoc(doc).length} écriture(s) rattachée(s)</small></div>
+        <div class="row" style="margin-left:auto;gap:4px"><button class="btn small sec" onclick="ouvrirChemin('${esc(doc.fichier)}','${esc(doc.libelle).replace(/'/g,"\\'")}')">Voir</button><button class="btn small" onclick="S.rattDoc='${doc.id}';allerA('pieces');S.rattDoc='${doc.id}';renderAll()">Rattacher aux écritures…</button><button class="btn small ghost" onclick="delete S.data.emprunts[${idx}].echeancierDoc;setDirty();renderAll()">Changer</button></div></div>`
+      : zoneDepot("Déposer l'échéancier PDF", "Tableau d'amortissement fourni par la banque", `ajouterEcheancierPret(${idx})`, `ajouterEcheancierPret(${idx},event)`)}
+    </div>`;
+    const capI = ans.map(an => { const e = empruntAnnee(l, an); return [an, e.interets, e.capital]; }), maxA = Math.max(1, ...capI.map(v=>v[1]+v[2]));
+    return tete + `
+    <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)"})}${tuile(`Intérêts ${y}`, eur0(c?c.interets:a.interets), {sous:"déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
+    <div class="dash2">
+      <div class="card"><h3>Capital restant dû</h3>${courbeCRD(l, y)}</div>
+      <div class="card centre"><h3>Remboursé fin ${y}</h3>${anneau(rembourse, pctTxt(rembourse), "var(--accent)", 140)}
+        <div class="leg col" style="flex-direction:column;gap:4px"><span>Intérêts payés : <b>${eur0(intPayes)}</b></span><span>Coût total des intérêts : <b>${eur0(totInt)}</b></span></div></div>
+    </div>
+    <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Chaque année</h3><span class="leg"><i style="background:var(--warn)"></i>Intérêts (déductibles) <i style="background:var(--seg-2)"></i>Capital</span></div>
+      <div class="cbars ${capI.length>12?"serre":""}" style="height:150px;margin-top:10px">${capI.map(([an,i,k])=>`<div class="cb" style="max-width:40px"><div class="cbs ${an===y?"sel":""}" title="${an} : intérêts ${eur0(i)}, capital ${eur0(k)}"><i style="height:${(i/maxA*100).toFixed(1)}%;background:var(--warn)"></i><i style="height:${(k/maxA*100).toFixed(1)}%;background:${an===y?"var(--accent)":"var(--seg-2)"}"></i></div><span>${String(an).slice(2)}</span></div>`).join("")}</div></div>
+    ${c && ex ? `<div class="card"><h3>${y} : contrôle avec la banque</h3><div class="cmp">
+      <div><span>Intérêts calculés</span><b>${eur(c.interetsEch)}</b></div>
+      <div><span>Intérêts saisis</span><b>${c.interetsSaisis?eur(c.t.c294):"–"}</b>${c.interetsSaisis&&Math.abs(c.t.c294-c.interetsEch)<=1?'<i class="okc">✓</i>':""}</div>
+      <div><span>Restant dû calculé</span><b>${eur(c.crdEch)}</b></div>
+      <div><span>Restant dû selon la banque</span><input inputmode="decimal" value="${ex.crdBanque??""}" placeholder="à saisir" onchange="majCrd(this.value)"></div>
+    </div></div>` : ""}`;
   }).join("");
+}
+async function ajouterEcheancierPret(idx, ev){
+  let f = null; if(ev){ ev.preventDefault(); ev.currentTarget.classList.remove("survol"); f = ev.dataTransfer.files[0]; if(!f) return; }
+  const l = S.data.emprunts[idx], id = await deposerDocument("echeancier", f, `Échéancier ${l.banque||"prêt"}`);
+  if(id){ l.echeancierDoc = id; S.rattDoc = null; S.tab = "emprunt"; setDirty(); renderAll(); }
 }
 function majPret(i,k,v){ S.data.emprunts[i][k] = v; setDirty(); renderAll(); }
 function majCrd(v){ const ex = exercice(S.year); if(v.trim()==="") delete ex.crdBanque; else ex.crdBanque = r2(parseMontant(v)); setDirty(); renderAll(); }
