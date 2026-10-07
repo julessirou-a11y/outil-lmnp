@@ -200,6 +200,33 @@ details.gl[open]>summary{border-bottom:1px solid var(--line)}
 details.gl .tablewrap{padding:4px 14px 10px}
 details.gl{margin-bottom:8px}
 
+/* ---------- Banque : dépôt et imputation ---------- */
+.depot{display:flex;flex-direction:column;align-items:center;gap:4px;padding:28px 20px;margin-bottom:20px;border:2px dashed var(--line);border-radius:var(--r-lg);background:var(--surface);color:var(--muted);cursor:pointer;text-align:center}
+.depot:hover,.depot.survol{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.depot b{color:var(--text);font-size:16px;font-weight:600}
+.depot.petit{flex-direction:row;padding:14px 18px;gap:12px;text-align:left}
+.vide{padding:26px;text-align:center;color:var(--pos);font-weight:600;background:var(--pos-soft);border-radius:var(--r-lg);margin-bottom:20px}
+.op2{padding:14px 0;border-top:1px solid var(--line)}
+.op2h{display:flex;gap:12px;align-items:baseline}
+.op2h .d{color:var(--faint);font-size:13px;flex:none;width:42px}
+.op2h .t{flex:1;font-size:14px;overflow-wrap:anywhere}
+.op2h b{font-weight:600;white-space:nowrap} .op2h b.recette{color:var(--pos)}
+.postes{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0 0 54px}
+.poste{border:1px solid var(--line);background:var(--surface);color:var(--text);font:inherit;font-size:13px;padding:5px 11px;border-radius:99px;cursor:pointer;display:inline-flex;align-items:center;gap:6px}
+.poste:not(select)::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c,var(--faint))}
+.poste:hover{border-color:var(--accent)}
+.poste.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.poste.on::before{background:var(--accent-ink)}
+select.poste{padding:5px 8px;width:auto;max-width:150px}
+.poste.ign:not(.on){color:var(--muted)}
+.op2.classe .op2h .t{color:var(--muted)}
+.op2f{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:8px 0 0 54px}
+.op2f input{min-width:160px;padding:5px 9px;font-size:13.5px}
+.barresh{display:flex;flex-direction:column;gap:8px}
+.bh{display:grid;grid-template-columns:minmax(120px,220px) 1fr 90px;gap:12px;align-items:center;font-size:13.5px;cursor:pointer}
+.bh b{text-align:right;font-weight:600}
+@media (max-width:600px){ .postes,.op2f{margin-left:0} .bh{grid-template-columns:1fr 70px} .bh div{grid-column:1/-1;order:3} }
+
 /* ---------- Écritures groupées par mois ---------- */
 .month{margin-bottom:14px;padding:6px 8px 4px}
 .month header{display:flex;align-items:baseline;gap:12px;padding:12px 14px 8px}
@@ -1713,40 +1740,63 @@ function vueImport(){
   <p class="sub" style="margin:12px 0 0">${ops.length} opération(s) lisible(s), dont ${nouv} nouvelle(s)${ops.length-nouv?` et ${ops.length-nouv} déjà importée(s) ou saisie(s)`:""}${rejets?`. ${rejets} ligne(s) sans date ou sans montant seront ignorées`:""}.</p></div>
   <div class="row"><button class="btn" onclick="validerImport()" ${nouv?"":"disabled"}>Ajouter ${nouv} opération(s) à trier</button><button class="btn ghost" onclick="S.imp=null;renderAll()">Annuler</button></div>`;
 }
+/* Dépôt du relevé par glisser-déposer */
+async function deposerCSV(ev){
+  ev.preventDefault(); ev.currentTarget.classList.remove("survol");
+  const f = ev.dataTransfer.files[0]; if(!f) return;
+  try{ S.imp = analyserCSV(await lireTexte(f), f.name); renderAll(); scrollTo(0,0); } catch(e){ alert(e.message); }
+}
+const zoneDepot = (titre, sous, action, drop) => `<div class="depot noprint" role="button" tabindex="0" onclick="${action}" ondragover="event.preventDefault();this.classList.add('survol')" ondragleave="this.classList.remove('survol')" ondrop="${drop}">
+  <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 15v4h14v-4"/></svg>
+  <b>${titre}</b><span>${sous}</span></div>`;
+/* Postes proposés en un clic : les plus utilisés d'abord */
+function postesFrequents(credit){
+  const freq = {};
+  Object.values(S.data.exercices).forEach(ex => (ex.ecritures||[]).forEach(e => freq[e.nature] = (freq[e.nature]||0) + 1));
+  S.data.banque.regles.forEach(r => freq[r.nature] = (freq[r.nature]||0) + 2);
+  const base = credit ? ["Loyer","Charges refacturées","Autre recette"] : ["Copropriété","Taxe foncière","Intérêts emprunt","Remboursement emprunt","Assurance","Entretien et réparations"];
+  const nats = Object.keys(NATURES).filter(n => (NATURES[n].g === "recette") === credit);
+  return [...new Set([...nats.filter(n=>freq[n]).sort((a,b)=>freq[b]-freq[a]), ...base])].slice(0, credit ? 3 : 7);
+}
 function vueBanque(){
   if(S.imp) return vueImport();
   const B = S.data.banque, list = [...B.aTrier].sort((a,b)=>a.date.localeCompare(b.date));
   const classes = list.filter(o => o.nature).length;
+  const pc = {true:postesFrequents(true), false:postesFrequents(false)};
   const ligneOp = o => {
-    const credit = o.montant > 0, e = o.doublon && findEcr(o.doublon);
-    return `<div class="op ${o.nature?"classe":""}">
-      <div class="d"><b>${o.date.slice(8,10)}</b>${MOIS[monthOf(o.date)-1]}<small>${yearOf(o.date)}</small></div>
-      <div class="t">${esc(o.libelle)}${o.regle?`<small>Classée par la règle « ${esc(o.regle)} »</small>`:""}${o.parent?`<small>Partie d'une opération ventilée</small>`:""}</div>
-      <div class="m ${credit?"recette":""}">${credit?"+":"−"}${eur(Math.abs(o.montant))}</div>
-      ${e?`<div class="alert warn dbl" style="align-items:center;flex-wrap:wrap">Déjà saisie à la main le ${fmtDate(e.date)} (${esc(e.tiers||e.nature)}) ?
-        <span style="margin-left:auto;display:flex;gap:6px"><button class="btn small sec" onclick="confirmerDoublon('${o.id}',true)">Oui, c'est la même</button><button class="btn small ghost" onclick="confirmerDoublon('${o.id}',false)">Non</button></span></div>`:""}
-      <div class="f noprint">
-        <select aria-label="Nature" onchange="majOp('${o.id}','nature',this.value)">${optionsNature(o)}</select>
-        ${o.nature===IGNORER?"":`<input aria-label="Tiers" value="${esc(o.tiers)}" placeholder="Tiers" onchange="majOp('${o.id}','tiers',this.value.trim())">`}
-        <button class="btn small ghost" title="Classer automatiquement les prochaines opérations au libellé semblable" onclick="memoriserRegle('${o.id}')">Mémoriser</button>
-        <button class="btn small ghost" title="Couper le montant en deux lignes de natures différentes" onclick="scinderOp('${o.id}')">Ventiler</button>
-      </div></div>`; };
-  const libNat = n => n === IGNORER ? "Ignorer" : libNature(n);
-  return entete("Relevés bancaires", "Téléchargez le relevé du compte au format CSV sur le site de la banque, importez-le ici, puis indiquez pour chaque opération sa catégorie, ou « Ignorer » si elle ne concerne pas la location. Les opérations déjà importées ne reviennent pas.") + `
-  <div class="row noprint" style="margin-bottom:18px">
-    <button class="btn" onclick="importerCSV()">Importer un relevé CSV…</button>
-    ${list.length?`<button class="btn sec" onclick="validerTri()" ${classes?"":"disabled"}>Valider les ${classes} opération(s) classée(s)</button>`:""}
-    <span style="margin-left:auto;color:var(--muted);font-size:14px">${list.length} à trier</span>
-  </div>
-  ${list.length ? `<section class="card month">${list.map(ligneOp).join("")}</section>`
-    : `<div class="card"><p class="sub" style="margin:0">Rien à trier. Téléchargez le relevé du compte au format CSV depuis le site de la banque, puis cliquez sur « Importer un relevé CSV… ».</p></div>`}
-  <div class="card"><h3>Règles mémorisées</h3>
-  ${B.regles.length ? `<div class="tablewrap"><table><tr><th>Si le libellé contient</th><th>Sens</th><th>Nature</th><th>Tiers</th><th></th></tr>
+    const credit = o.montant > 0, e = o.doublon && findEcr(o.doublon), autres = Object.keys(NATURES).filter(n => (NATURES[n].g === "recette") === credit && !pc[credit].includes(n));
+    return `<div class="op2 ${o.nature?"classe":""}">
+      <div class="op2h"><span class="d">${fmtDate(o.date).slice(0,5)}</span><span class="t">${esc(o.libelle)}</span><b class="${credit?"recette":""}">${credit?"+":"−"}${eur(Math.abs(o.montant))}</b></div>
+      ${e?`<div class="alert warn" style="align-items:center;flex-wrap:wrap;margin:8px 0 0">Déjà saisie le ${fmtDate(e.date)} (${esc(e.tiers||e.nature)}) ?
+        <span style="margin-left:auto;display:flex;gap:6px"><button class="btn small sec" onclick="confirmerDoublon('${o.id}',true)">Oui</button><button class="btn small ghost" onclick="confirmerDoublon('${o.id}',false)">Non</button></span></div>`:""}
+      <div class="postes noprint">
+        ${pc[credit].map(n=>`<button class="poste ${o.nature===n?"on":""}" style="--c:${COUL_GROUPE[NATURES[n].g]}" onclick="majOp('${o.id}','nature','${n}')">${esc(n)}</button>`).join("")}
+        <select class="poste ${autres.includes(o.nature)?"on":""}" aria-label="Autre poste" onchange="majOp('${o.id}','nature',this.value)"><option value="">Autre…</option>${autres.map(n=>optNature(n, o.nature)).join("")}</select>
+        <button class="poste ign ${o.nature===IGNORER?"on":""}" onclick="majOp('${o.id}','nature','${IGNORER}')">Hors location</button>
+      </div>
+      ${o.nature && o.nature!==IGNORER ? `<div class="op2f noprint"><input aria-label="Tiers" value="${esc(o.tiers)}" placeholder="Tiers" onchange="majOp('${o.id}','tiers',this.value.trim())">
+        <button class="btn small ghost" title="Classer automatiquement les prochaines opérations semblables" onclick="memoriserRegle('${o.id}')">↻ Toujours ainsi</button>
+        <button class="btn small ghost" title="Répartir le montant sur deux postes" onclick="scinderOp('${o.id}')">✂ Répartir</button>
+        ${o.regle?`<span class="pill">règle « ${esc(o.regle)} »</span>`:""}</div>` : ""}
+    </div>`; };
+  // Ce qui a été imputé cette année, par poste
+  const y = S.year, t = totauxEcritures(y), postes = Object.entries(t.parNature).sort((a,b)=>b[1]-a[1]), maxP = Math.max(1, ...postes.map(p=>p[1]));
+  const libNat = n => n === IGNORER ? "Hors location" : libNature(n);
+  return `<div class="pagehead"><h1>Banque</h1></div>
+  ${zoneDepot("Déposer le relevé de l'année", "Fichier CSV téléchargé sur le site de la banque · glisser ici ou cliquer", "importerCSV()", "deposerCSV(event)")}
+  ${list.length ? `<div class="card"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">À imputer · ${classes}/${list.length}</h3>
+      <button class="btn" onclick="validerTri()" ${classes?"":"disabled"}>Valider ${classes} ligne${classes>1?"s":""}</button></div>
+      ${jauge([[classes,"var(--pos)"]], list.length, 8)}
+      <div style="margin-top:14px">${list.map(ligneOp).join("")}</div></div>`
+    : `<div class="vide">✓ Tout est imputé</div>`}
+  ${postes.length ? `<div class="card"><h3>Postes ${y}</h3><div class="barresh">${postes.map(([n,v])=>`<div class="bh" role="button" onclick="S.vueEcr='journal';allerA('ecritures')"><span>${libNature(n)}</span><div>${jauge([[v, COUL_GROUPE[NATURES[n]?.g||"charge"]]], maxP, 10)}</div><b>${eur0(v)}</b></div>`).join("")}</div></div>` : ""}
+  <div class="card"><details><summary>Règles automatiques (${B.regles.length})</summary>
+  ${B.regles.length ? `<div class="tablewrap" style="margin-top:10px"><table><tr><th>Si le libellé contient</th><th>Sens</th><th>Poste</th><th>Tiers</th><th></th></tr>
     ${B.regles.map(r=>`<tr><td><input value="${esc(r.motCle)}" style="width:100%;min-width:120px" onchange="majRegle('${r.id}','motCle',this.value)"></td><td>${r.sens==="credit"?"Crédit":"Débit"}</td><td>${libNat(r.nature)}</td>
       <td>${r.nature===IGNORER?"":`<input value="${esc(r.tiers)}" style="width:100%;min-width:110px" onchange="majRegle('${r.id}','tiers',this.value)">`}</td>
-      <td class="n"><button class="btn ghost small" aria-label="Supprimer la règle" title="Supprimer la règle" onclick="supprimerRegle('${r.id}')">${I_DEL}</button></td></tr>`).join("")}</table></div>`
-    : `<p class="sub" style="margin:0">Aucune règle. Après avoir classé une opération, « Mémoriser » crée une règle à partir d'un mot-clé de son libellé (par exemple le nom du locataire ou du syndic).</p>`}</div>
-  ${B.ignorees.length ? `<div class="card"><details><summary>${B.ignorees.length} opération(s) ignorée(s)</summary><div class="tablewrap" style="margin-top:10px"><table>
+      <td class="n"><button class="btn ghost small" aria-label="Supprimer la règle" onclick="supprimerRegle('${r.id}')">${I_DEL}</button></td></tr>`).join("")}</table></div>`
+    : `<p class="sub" style="margin:10px 0 0">« Toujours ainsi » sur une ligne crée une règle.</p>`}</details></div>
+  ${B.ignorees.length ? `<div class="card"><details><summary>${B.ignorees.length} opération(s) hors location</summary><div class="tablewrap" style="margin-top:10px"><table>
     ${B.ignorees.map((o,i)=>[o,i]).sort((a,b)=>b[0].date.localeCompare(a[0].date)).slice(0,200).map(([o,i])=>`<tr><td>${fmtDate(o.date)}</td><td>${esc(o.libelle)}</td><td class="n">${eur(o.montant)}</td><td class="n"><button class="btn small ghost" onclick="remettreATrier(${i})">Remettre à trier</button></td></tr>`).join("")}
   </table></div></details></div>` : ""}`;
 }
