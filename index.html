@@ -60,8 +60,8 @@ main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
   .app{grid-template-columns:1fr;background:var(--bg)}
   .topbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
   .topbar .brand{padding:0;margin-right:auto}
-  .side{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:30;transform:translateX(-100%);transition:transform .22s ease;box-shadow:0 0 40px rgba(0,0,0,.25)}
-  body.menu-open .side{transform:none}
+  .side{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:30;transform:translateX(-100%);transition:transform .22s ease}
+  body.menu-open .side{transform:none;box-shadow:0 0 40px rgba(0,0,0,.25)}
   body.menu-open .scrim{display:block}
   .scrim{display:none;position:fixed;inset:0;background:rgba(10,15,25,.4);z-index:25}
   main{padding:22px 16px 60px}
@@ -592,11 +592,12 @@ function renderAll(){
   $("#themeBtn").setAttribute("aria-pressed", sombre); $("#themeBtn").innerHTML = sombre ? "☀︎ Clair" : "☾ Sombre";
   $("#cptBtn").setAttribute("aria-pressed", comptesVisibles());
   const m = $("#main");
+  if(S.depot){ m.innerHTML = vueDepot(); return; }
   if(!S.data){ m.innerHTML = vueBienvenue(); return; }
   m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab]();
   if(S.tab === "pieces") scanNonRattaches(S.year);
 }
-$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; S.composer=false; document.body.classList.remove("menu-open"); renderAll(); window.scrollTo(0,0); } });
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; S.composer=false; S.depot=false; document.body.classList.remove("menu-open"); renderAll(); window.scrollTo(0,0); } });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
 /* Thème : automatique, clair ou sombre (mémorisé sur cet appareil) */
 /* Thème clair par défaut, sombre sur demande ; numéros de comptes affichés ou non (mémorisés sur cet appareil) */
@@ -621,7 +622,9 @@ function vueBienvenue(){
     : `<div class="alert info">Ce navigateur permet de consulter et d'imprimer. Pour modifier et enregistrer dans iCloud, ouvrez l'outil dans Chrome ou Edge sur Mac.</div>`}
     </div>
     <div class="row"><button class="btn ghost" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button>
-      <button class="btn ghost" onclick="chargerDonnees(newDossier(),'nouveau dossier');setDirty(true)">Créer un dossier vide</button></div></div>`;
+      <button class="btn ghost" onclick="chargerDonnees(newDossier(),'nouveau dossier');setDirty(true)">Créer un dossier vide</button></div>
+    <div class="card" style="margin-top:22px"><h3>Sur iPhone</h3><p class="sub">Photographiez une facture et décrivez la dépense : le fichier part dans le dossier iCloud, et l'écriture se crée en un clic sur le Mac.</p>
+    <button class="btn" onclick="S.depot=true;renderAll()">Déposer une dépense</button></div></div>`;
 }
 
 /* ---- Tableau de bord ---- */
@@ -705,7 +708,8 @@ function vueEcritures(){
   ${lock ? `<div class="alerts"><div class="alert warn" style="align-items:center">Exercice clôturé : les écritures sont verrouillées.<button class="btn small sec" style="margin-left:auto" onclick="S.unlocked[${y}]=true;renderAll()">Déverrouiller</button></div></div>` : ""}
   <div class="row noprint" style="margin-bottom:18px">
     ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"Nouvelle écriture"}</button>
-    <button class="btn sec" onclick="dupliquerMois()">Recopier le dernier mois</button>`}
+    <button class="btn sec" onclick="dupliquerMois()">Recopier le dernier mois</button>
+    <button class="btn ghost" onclick="S.depot=true;renderAll()">Déposer depuis l'iPhone</button>`}
     <span style="margin-left:auto;color:var(--muted);font-size:14px">${list.length} écritures, ${eur(t.recettes)} encaissés, ${eur(t.c242+t.c244+t.c294+t.remb)} payés</span>
   </div>
   ${ouvert ? `<div class="card composer noprint"><h3>${ed?"Modifier l'écriture":"Nouvelle écriture"}</h3><div class="form">
@@ -1099,9 +1103,10 @@ async function scanNonRattaches(y){
     S.libres = libres;
     const manq = piecesManquantes(y);
     box.innerHTML = `<h3 style="margin-top:0">Fichiers déposés non rattachés</h3>` + (libres.length ? `<p class="sub">Fichiers présents dans Justificatifs/${y}/ mais liés à aucune écriture : rattachez-les.</p><div class="tablewrap"><table>
-      ${libres.map((n,i)=>`<tr><td>${esc(n)}</td><td class="n noprint"><button class="btn small sec" onclick="voirLibre(${y},${i})">Voir</button>
+      ${libres.map((n,i)=>{ const d = lireDepot(n); return `<tr><td>${d?`<b>${fmtDate(d.date)} · ${esc(d.tiers||"Sans tiers")} · ${esc(d.nature)} · ${eur(d.montant)}</b><br><small style="color:var(--muted)">Déposé depuis l'iPhone : ${esc(n)}</small>`:esc(n)}</td><td class="n noprint"><button class="btn small sec" onclick="voirLibre(${y},${i})">Voir</button>
+      ${d?`<button class="btn small" onclick="creerDepuisDepot(${y},${i})">Créer l'écriture</button> `:""}
       <select id="lib${i}" style="max-width:280px"><option value="">Rattacher à…</option>${manq.map(e=>`<option value="${e.id}">${fmtDate(e.date)} · ${esc(e.tiers)} · ${eur(e.montant)}</option>`).join("")}</select>
-      <button class="btn small" onclick="rattacherLibre(${y},${i})">OK</button></td></tr>`).join("")}</table></div>` : `<p class="sub" style="margin:0">Aucun fichier en attente dans Justificatifs/${y}/.</p>`);
+      <button class="btn small ${d?"sec":""}" onclick="rattacherLibre(${y},${i})">OK</button></td></tr>`; }).join("")}</table></div>` : `<p class="sub" style="margin:0">Aucun fichier en attente dans Justificatifs/${y}/.</p>`);
   }catch(err){ box.querySelector("p").textContent = "Lecture du dossier impossible : " + err.message; }
 }
 async function voirLibre(y,i){
@@ -1381,6 +1386,57 @@ function vueBanque(){
   ${B.ignorees.length ? `<div class="card"><details><summary>${B.ignorees.length} opération(s) ignorée(s)</summary><div class="tablewrap" style="margin-top:10px"><table>
     ${B.ignorees.map((o,i)=>[o,i]).sort((a,b)=>b[0].date.localeCompare(a[0].date)).slice(0,200).map(([o,i])=>`<tr><td>${fmtDate(o.date)}</td><td>${esc(o.libelle)}</td><td class="n">${eur(o.montant)}</td><td class="n"><button class="btn small ghost" onclick="remettreATrier(${i})">Remettre à trier</button></td></tr>`).join("")}
   </table></div></details></div>` : ""}`;
+}
+
+/* ============ Dépôt depuis l'iPhone ============ */
+/* Sans accès direct au fichier de données sur iPhone, la dépense voyage dans le NOM du justificatif :
+   AAAA-MM-JJ_Tiers_Nature_123,45EUR.jpg, enregistré dans Justificatifs/<année>/ ; le Mac le reconnaît et crée l'écriture. */
+const RE_DEPOT = /^(\d{4}-\d{2}-\d{2})_([A-Za-z0-9-]*)_([A-Za-z0-9-]+)_(\d+),(\d{2})EUR(-\d+)?\.[A-Za-z0-9]+$/;
+function lireDepot(nom){
+  const m = String(nom).match(RE_DEPOT); if(!m || !lireDate(m[1])) return null;
+  const nature = Object.keys(NATURES).find(n => slug(n) === m[3]); if(!nature) return null;
+  return {date:m[1], tiers:m[2].replace(/-/g," "), nature, montant:Number(m[4]+"."+m[5])};
+}
+function creerDepuisDepot(y, i){
+  const nom = S.libres[i], d = lireDepot(nom), ex = exercice(yearOf(d.date));
+  if(!ex || isHistorique(yearOf(d.date))) return alert(`L'exercice ${yearOf(d.date)} n'est pas ouvert dans le carnet.`);
+  if(verrouille(yearOf(d.date))) return alert(`L'exercice ${yearOf(d.date)} est clôturé : déverrouillez-le d'abord.`);
+  const proche = (ex.ecritures||[]).find(e => !e.piece && e.nature === d.nature && Math.abs(e.montant - d.montant) < 0.005 && Math.abs(Date.parse(e.date) - Date.parse(d.date)) <= 6*864e5);
+  if(proche && confirm(`Une écriture ${d.nature} de ${eur(d.montant)} existe déjà le ${fmtDate(proche.date)}. Y rattacher ce justificatif plutôt que d'en créer une nouvelle ?`)){
+    proche.piece = `Justificatifs/${y}/${nom}`; delete proche.sansPiece;
+  } else {
+    (ex.ecritures ??= []).push({id:uid(), date:d.date, tiers:d.tiers, nature:d.nature, montant:d.montant, sens: NATURES[d.nature].g === "recette" ? "recette" : "depense", piece:`Justificatifs/${y}/${nom}`});
+  }
+  setDirty(); renderAll(); toast("Écriture créée avec son justificatif.");
+}
+function vueDepot(){
+  const auj = new Date().toISOString().slice(0,10);
+  const nats = Object.keys(NATURES).filter(n => NATURES[n].g !== "bilan" && n !== "Loyer" && n !== "Intérêts emprunt");
+  return `<div style="max-width:560px">${entete("Déposer une dépense", "Photographiez la facture et décrivez la dépense. Le fichier, nommé avec ces informations, est à enregistrer dans le dossier iCloud partagé, sous Justificatifs ; l'écriture se crée ensuite en un clic sur le Mac, page Pièces.")}
+  <div class="card"><div class="form" style="grid-template-columns:1fr">
+    <label>Facture ou ticket (photo ou PDF)<input type="file" id="dFile" accept="image/*,application/pdf"></label>
+    <label>Date<input type="date" id="dDate" value="${auj}"></label>
+    <label>Montant TTC<input id="dMont" inputmode="decimal" placeholder="0,00"></label>
+    <label>Nature<select id="dNat">${nats.map(n=>`<option value="${esc(n)}">${esc(n)}</option>`).join("")}</select></label>
+    <label>Fournisseur<input id="dTiers" placeholder="Ex. Leroy Merlin, syndic"></label>
+    <button class="btn wide" onclick="envoyerDepot()">Enregistrer dans iCloud…</button>
+  </div></div>
+  <p class="sub">Dans la fenêtre de partage, choisissez « Enregistrer dans Fichiers », puis le dossier <code>Justificatifs/&lt;année&gt;</code> du dossier LMNP partagé.</p>
+  <button class="btn ghost" onclick="S.depot=false;renderAll()">Retour</button></div>`;
+}
+async function envoyerDepot(){
+  const f = $("#dFile").files[0], date = $("#dDate").value, mt = r2(parseMontant($("#dMont").value)), nature = $("#dNat").value, tiers = $("#dTiers").value.trim();
+  if(!date || !(mt > 0)) return alert("Date et montant obligatoires.");
+  const ext = f ? ((f.name.match(/\.[A-Za-z0-9]+$/)||[".jpg"])[0].toLowerCase()) : ".txt";
+  const nom = `${date}_${tiers ? slug(tiers) : ""}_${slug(nature)}_${mt.toFixed(2).replace(".",",")}EUR${ext}`;
+  const contenu = f || new Blob([`Dépense sans justificatif\n${fmtDate(date)} · ${tiers} · ${nature} · ${eur(mt)}\n`], {type:"text/plain"});
+  const fichier = new File([contenu], nom, {type: f ? f.type : "text/plain"});
+  try{
+    if(navigator.canShare && navigator.canShare({files:[fichier]})){ await navigator.share({files:[fichier], title:nom}); }
+    else { const a = document.createElement("a"); a.href = URL.createObjectURL(fichier); a.download = nom; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000); }
+    toast(`« ${nom} » prêt : rangez-le dans Justificatifs/${yearOf(date)}.`);
+    $("#dFile").value = ""; $("#dMont").value = ""; $("#dTiers").value = "";
+  }catch(e){ if(e.name !== "AbortError") alert("Partage impossible : " + e.message); }
 }
 
 function nouvelExercice(){
