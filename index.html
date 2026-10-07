@@ -597,7 +597,7 @@ function renderAll(){
   m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab]();
   if(S.tab === "pieces") scanNonRattaches(S.year);
 }
-$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; S.composer=false; S.depot=false; document.body.classList.remove("menu-open"); renderAll(); window.scrollTo(0,0); } });
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; S.depot=false; document.body.classList.remove("menu-open"); renderAll(); window.scrollTo(0,0); } });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
 /* Thème : automatique, clair ou sombre (mémorisé sur cet appareil) */
 /* Thème clair par défaut, sombre sur demande ; numéros de comptes affichés ou non (mémorisés sur cet appareil) */
@@ -639,6 +639,8 @@ function vueAccueil(){
   const alerts = [];
   if(!c.lmnpActif) alerts.push(["info", `La location meublée démarre le ${fmtDate(debutLMNP())} : rien à déclarer pour ${y}.`]);
   if(exercice(y).statut === "cloture") alerts.push(["info","Exercice clôturé : les écritures sont verrouillées. Vous pouvez les déverrouiller depuis la page Écritures."]);
+  const snap = exercice(y).cloture;
+  if(snap && Math.abs(snap.resultatFiscal - f.resultatFiscal) > 0.5) alerts.push(["bad", `Le résultat fiscal a changé depuis la clôture du ${fmtDate(snap.date)} : ${eur(snap.resultatFiscal)} à la clôture, ${eur(f.resultatFiscal)} maintenant. Si la déclaration est déjà envoyée, il faudra la rectifier.`]);
   const loyers = (exercice(y).ecritures||[]).filter(e=>e.nature==="Loyer").map(e=>monthOf(e.date));
   const manquants = [...Array(12).keys()].map(i=>i+1).filter(m => !loyers.includes(m) && (y < new Date().getFullYear() || m <= new Date().getMonth()+1));
   if(c.lmnpActif && manquants.length && manquants.length < 12) alerts.push(["warn", `Aucun loyer saisi pour : ${manquants.map(m=>MOIS[m-1]).join(", ")}.`]);
@@ -784,7 +786,45 @@ function vueImmos(){
       <td class="noprint"><button class="btn small sec" onclick="S.editImmo='${i.id}';renderAll();scrollTo(0,0)">Modifier</button></td></tr>
       <tr class="muted"><td colspan="9"><details><summary>Plan d'amortissement</summary><table>${planAmort(i).map(p=>`<tr class="${p.annee===y?"tot":""}"><td>${p.annee}${p.avantLMNP?' <span class="pill">avant LMNP, non déduit</span>':""}</td><td class="n">${eur(p.dotation)}</td><td class="n">cumul ${eur(p.cumul)}</td><td class="n">VNC ${eur(p.vnc)}</td></tr>`).join("")}</table></details></td></tr>`).join("")}
     <tr class="tot"><td>Total</td><td class="n">${eur(tot.brut)}</td><td></td><td></td><td></td><td class="n">${eur(tot.dot)}</td><td class="n">${eur(tot.cum)}</td><td></td><td></td></tr>
-  </table></div></div>`;
+  </table></div></div>
+  ${vueConsommes(y)}`;
+}
+
+/* ---- Amortissements consommés (déduits) et en réserve, pour la plus-value à la revente ---- */
+/* Art. 150 VB III du CGI (cessions depuis le 15/02/2025) : le prix d'acquisition est minoré des amortissements
+   admis en déduction ; ceux restés en réserve (art. 39 C) ne le minorent pas. */
+function suiviAmortissements(yMax){
+  const lignes = [];
+  const hist = Object.keys(S.data.exercices).map(Number).filter(y => isHistorique(y) && y <= yMax).sort((a,b)=>a-b);
+  const dotHist = hist.reduce((s,y)=>s + (Number(exercice(y).chiffres?.dotationsAmortissements)||0), 0);
+  const reserveOuverture = Number(S.data.reports.amortissementsDifferes)||0;
+  hist.forEach(y => lignes.push({y, historique:true, dotations:Number(exercice(y).chiffres?.dotationsAmortissements)||0}));
+  // Années reprises de l'Excel : seul le total est connu = dotations déclarées − réserve encore disponible à l'ouverture
+  const consommesHist = Math.max(0, dotHist - reserveOuverture);
+  let cumul = consommesHist;
+  anneesCalculees().filter(y => y <= yMax && y >= yearOf(debutLMNP())).forEach(y => {
+    const f = fiscalJusqua(y), consommes = f.dotDeductible + f.ardUtilise;
+    cumul += consommes;
+    lignes.push({y, dotations:f.c.dotations, deduites:f.dotDeductible, reserveUtilisee:f.ardUtilise, consommes, cumul, reserveFin:f.ardFin});
+  });
+  const der = lignes.filter(l => !l.historique).pop();
+  return {lignes, consommesHist, dotHist, reserveOuverture, cumul, reserveFin: der ? der.reserveFin : reserveOuverture};
+}
+function vueConsommes(y){
+  if(isHistorique(y)) return "";
+  const t = suiviAmortissements(y);
+  if(!t.lignes.length) return "";
+  return `<div class="card"><h3>Amortissements consommés et en réserve</h3>
+    <p class="sub">À la revente, le prix d'achat retenu pour la plus-value est diminué des amortissements <b>consommés</b>, c'est-à-dire réellement déduits du résultat (art. 150 VB III du CGI, ventes depuis le 15 février 2025). Ceux restés <b>en réserve</b> (art. 39 C) ne le diminuent pas.</p>
+    <div class="grid" style="margin-bottom:18px">${kpi(`Consommés cumulés fin ${y}`, t.cumul)}${kpi(`En réserve fin ${y}`, t.reserveFin)}</div>
+    <div class="tablewrap"><table>
+    <tr><th>Année</th><th class="n">Dotations</th><th class="n">Déduites dans l'année</th><th class="n">Réserve utilisée</th><th class="n">Consommés</th><th class="n">Cumul consommés</th><th class="n">Réserve fin</th></tr>
+    ${t.lignes.map(l => l.historique
+      ? `<tr class="muted"><td>${l.y} <span class="pill">Excel</span></td><td class="n">${eur(l.dotations)}</td><td class="n" colspan="5"></td></tr>`
+      : `<tr class="${l.y===y?"tot":""}"><td>${l.y}</td><td class="n">${eur(l.dotations)}</td><td class="n">${eur(l.deduites)}</td><td class="n">${eur(l.reserveUtilisee)}</td><td class="n">${eur(l.consommes)}</td><td class="n">${eur(l.cumul)}</td><td class="n">${eur(l.reserveFin)}</td></tr>`).join("")}
+    </table></div>
+    ${t.lignes.some(l=>l.historique) ? `<p class="sub" style="margin:10px 0 0">Années reprises de l'Excel : ${eur(t.dotHist)} de dotations, dont ${eur(t.reserveOuverture)} encore en réserve à l'ouverture du premier exercice détaillé, soit <b>${eur(t.consommesHist)} consommés</b> avant cet exercice. Le détail année par année n'est pas connu.</p>` : ""}
+    <p class="sub" style="margin:8px 0 0">À conserver avec les liasses : c'est l'attestation qu'on vous demandera au moment de la vente. La part du mobilier ne concerne pas la plus-value immobilière ; faites valider la répartition par le notaire.</p></div>`;
 }
 function saveImmo(){
   const v = {libelle:$("#iLib").value.trim(), categorie:$("#iCat").value, valeurOrigine:r2(parseMontant($("#iVal").value)),
@@ -851,6 +891,7 @@ function vueDeclaration(){
   return `<div class="fiche"><div class="row" style="justify-content:space-between;align-items:flex-start">${entete(`Déclaration ${y}`, `Montants à recopier dans la liasse en ligne, en euros entiers. Revenus ${y} de ${esc(S.data.dossier.nom)}, à déclarer au printemps ${y+1}.`)}
     <div class="row noprint"><button class="btn sec" onclick="exporterFEC(${y})" title="Fichier des écritures comptables, à remettre en cas de contrôle fiscal">Exporter le FEC</button><button class="btn sec" onclick="print()">Imprimer ou enregistrer en PDF</button></div></div>
   ${exercice(y).statut!=="cloture" && y >= new Date().getFullYear() ? `<div class="alert warn">Exercice en cours : chiffres provisoires.</div>`:""}
+  ${vueControles(y)}
 
   <div class="card"><h3 style="margin-top:0">2033-B · Compte de résultat simplifié</h3><table>
     <tr><th>Case</th><th>Libellé</th><th class="n">${y}</th></tr>
@@ -980,10 +1021,59 @@ function exporterFEC(y){
   toast(`FEC ${y} téléchargé : ${lignes.length-1} lignes.`);
 }
 
+/* ---- Contrôles avant déclaration ---- */
+/* Chaque contrôle : [niveau, texte] avec niveau "ok" (vérifié), "warn" (à regarder) ou "bad" (à corriger) */
+function controles(y){
+  const ex = exercice(y), es = ex.ecritures || [], c = calculAnnee(y), out = [];
+  const chk = (cond, okTxt, niveau, koTxt) => out.push(cond ? ["ok", okTxt] : [niveau, koTxt]);
+  const hors = es.filter(e => yearOf(e.date) !== y);
+  chk(!hors.length, "Toutes les écritures sont datées de l'exercice.", "bad", `${hors.length} écriture(s) datée(s) hors de ${y} : corrigez leur date.`);
+  const nuls = es.filter(e => !(e.montant > 0));
+  chk(!nuls.length, "Aucun montant nul ou négatif.", "bad", `${nuls.length} écriture(s) à montant nul ou négatif.`);
+  chk(!c.t.inconnues, "Toutes les natures sont reconnues.", "bad", `${c.t.inconnues} écriture(s) à nature inconnue, classées par défaut en charges externes.`);
+  const moisLoyer = new Set(es.filter(e => e.nature === "Loyer").map(e => monthOf(e.date)));
+  const debut = y === yearOf(debutLMNP()) ? monthOf(debutLMNP()) : 1;
+  const attendus = [...Array(13 - debut).keys()].map(i => i + debut).filter(m => y < new Date().getFullYear() || m <= new Date().getMonth()+1);
+  const manq = attendus.filter(m => !moisLoyer.has(m));
+  chk(!manq.length, `Un loyer saisi pour chacun des ${attendus.length} mois.`, "warn", `Loyer manquant : ${manq.map(m=>MOIS[m-1]).join(", ")}.`);
+  if(c.produits > 5000) chk(!!c.t.parNature["CFE"], "CFE saisie.", "warn", "Aucune CFE saisie alors que les recettes dépassent 5 000 € : vérifiez l'avis dans l'espace professionnel impots.gouv.");
+  const pm = piecesManquantes(y).length;
+  chk(!pm, "Toutes les pièces justificatives sont rattachées.", "warn", `${pm} pièce(s) justificative(s) manquante(s) (page Pièces).`);
+  const aTrier = (S.data.banque?.aTrier || []).filter(o => yearOf(o.date) === y).length;
+  chk(!aTrier, "Aucune opération bancaire de l'année en attente de tri.", "warn", `${aTrier} opération(s) bancaire(s) de ${y} encore à trier (page Banque).`);
+  const vus = {}, dbl = [];
+  es.forEach(e => { const k = `${e.date}|${e.nature}|${e.montant}`; if(vus[k]) dbl.push(e); vus[k] = true; });
+  chk(!dbl.length, "Aucun doublon apparent.", "warn", `${dbl.length} écriture(s) en double apparent (même date, nature et montant) : vérifiez qu'il ne s'agit pas d'une saisie répétée.`);
+  const gros = es.filter(e => e.nature === "Petit équipement (< 500 € HT)" && e.montant > 600);
+  chk(!gros.length, "Aucun petit équipement au-dessus du seuil.", "warn", `${gros.length} « petit équipement » de plus de 600 € TTC : au-delà de 500 € HT par élément, il faut l'amortir (page Immobilisations).`);
+  if(S.data.emprunts.length){
+    chk(c.interetsSaisis, "Intérêts d'emprunt saisis d'après la banque.", "warn", `Intérêts non saisis : l'échéancier théorique (${eur(c.interetsEch)}) est utilisé. Saisissez les montants réellement prélevés.`);
+    const crdB = ex.crdBanque != null && ex.crdBanque !== "";
+    chk(crdB, "Capital restant dû au 31/12 saisi d'après la banque.", "warn", "Capital restant dû au 31/12 non saisi : le bilan utilise l'échéancier théorique (page Emprunt).");
+    if(crdB && Math.abs(Number(ex.crdBanque) - c.crdEch) > 50) out.push(["warn", `Écart de ${eur(Math.abs(Number(ex.crdBanque) - c.crdEch))} entre le capital restant dû de la banque et l'échéancier : vérifiez les paramètres de l'emprunt.`]);
+  }
+  const prec = exercice(y-1);
+  if(y > yearOf(debutLMNP())) chk(!!prec && (!isHistorique(y-1) || prec.chiffres?.immobilisationsNettes != null), `Colonne N-1 (${y-1}) disponible pour la 2033-A.`, "warn", `Chiffres ${y-1} incomplets : la colonne N-1 de la 2033-A sera à remplir à la main.`);
+  const f = fiscalJusqua(y);
+  if(f.perimes?.length) out.push(["warn", `Déficit(s) de plus de 10 ans perdu(s) cette année : ${f.perimes.map(d=>d.annee+" ("+eur(d.montant)+")").join(", ")}.`]);
+  return out;
+}
+function vueControles(y){
+  const l = controles(y), nb = k => l.filter(x => x[0] === k).length;
+  const bad = nb("bad"), warn = nb("warn");
+  const tete = bad ? `${bad} point(s) à corriger${warn?` et ${warn} à vérifier`:""}` : warn ? `${warn} point(s) à vérifier avant de déclarer` : "Prêt à déclarer";
+  const sym = {ok:"✓", warn:"!", bad:"✕"}, col = {ok:"var(--pos)", warn:"var(--warn)", bad:"var(--neg)"};
+  return `<div class="card noprint"><details ${bad||warn?"open":""}><summary style="font-size:16px;font-weight:600;color:${bad?col.bad:warn?col.warn:col.ok}">${tete} · ${nb("ok")}/${l.length} contrôles validés</summary>
+    <ul style="list-style:none;padding:0;margin:12px 0 0;display:flex;flex-direction:column;gap:6px">
+    ${[...l].sort((a,b)=>"bwo".indexOf(a[0][0])-"bwo".indexOf(b[0][0])).map(([k,t])=>`<li style="display:flex;gap:10px"><b style="color:${col[k]};width:14px;flex:none;text-align:center">${sym[k]}</b><span style="${k==="ok"?"color:var(--muted)":""}">${t}</span></li>`).join("")}
+    </ul></details></div>`;
+}
+
 /* ---- Dossier ---- */
 function vueDossier(){
   const d = S.data.dossier, rp = S.data.reports;
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
+  if(S.cloture && exercice(S.cloture) && !isHistorique(S.cloture)) return vueCloture(S.cloture);
   return entete("Dossier", "Paramètres du dossier, exercices et fichier de données.") + `
   <div class="card"><div class="form">
     <label>Nom du dossier<input value="${esc(d.nom)}" onchange="S.data.dossier.nom=this.value;setDirty();renderAll()"></label>
@@ -993,7 +1083,7 @@ function vueDossier(){
   </div></div>
   <div class="card"><h3 style="margin-top:0">Exercices</h3><table>
     ${ys.map(y=>`<tr><td>${y}</td><td>${esc(S.data.exercices[y].statut||"en-cours")}</td><td class="n">${isHistorique(y)?"":`
-      ${S.data.exercices[y].statut==="cloture"?`<button class="btn small sec" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`:`<button class="btn small sec" onclick="if(confirm('Clôturer ${y} ? Les écritures seront verrouillées.')){S.data.exercices[${y}].statut='cloture';setDirty();renderAll()}">Clôturer</button>`}`}</td></tr>`).join("")}
+      ${S.data.exercices[y].statut==="cloture"?`<button class="btn small sec" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`:`<button class="btn small sec" onclick="S.cloture=${y};renderAll();scrollTo(0,0)">Clôturer…</button>`}`}</td></tr>`).join("")}
   </table><div style="margin-top:10px"><button class="btn" onclick="nouvelExercice()">+ Ouvrir l'exercice ${Math.max(...ys)+1}</button></div></div>
   <div class="card"><h3 style="margin-top:0">Reports à l'ouverture du premier exercice détaillé</h3>
     <div class="form"><label>Amortissements différés (art. 39 C)<input inputmode="decimal" value="${rp.amortissementsDifferes}" onchange="S.data.reports.amortissementsDifferes=r2(parseMontant(this.value))||0;setDirty();renderAll()"></label></div>
@@ -1437,6 +1527,52 @@ async function envoyerDepot(){
     toast(`« ${nom} » prêt : rangez-le dans Justificatifs/${yearOf(date)}.`);
     $("#dFile").value = ""; $("#dMont").value = ""; $("#dTiers").value = "";
   }catch(e){ if(e.name !== "AbortError") alert("Partage impossible : " + e.message); }
+}
+
+/* ---- Clôture guidée et ouverture de l'exercice suivant ---- */
+function changementsAnnee(y){
+  // Ce qui change entre y et y+1 : fins d'amortissement, fin du prêt, déficits qui expirent
+  const out = [];
+  S.data.immobilisations.forEach(i => {
+    const plan = planAmort(i), der = plan[plan.length-1];
+    if(der && der.annee === y) out.push(`${esc(i.libelle)} finit d'être amorti en ${y} : la dotation baisse de ${eur(amortAnnee(i,y).dotation)} en ${y+1}.`);
+    if(der && der.annee === y+1) out.push(`${esc(i.libelle)} finit d'être amorti en ${y+1} (dernière dotation : ${eur(amortAnnee(i,y+1).dotation)}).`);
+  });
+  S.data.emprunts.forEach(l => { const r = echeancier(l), der = r[r.length-1]; if(der && (der.annee === y+1)) out.push(`Le prêt ${esc(l.banque)} se termine en ${MOIS_LONG[der.mois-1]} ${y+1} : plus d'intérêts déductibles ensuite.`); });
+  const f = fiscalJusqua(y);
+  (f.deficitsFin||[]).forEach(d => { if(y+1 - d.annee > DUREE_DEFICIT - 1) out.push(`Le déficit de ${d.annee} (${eur(d.montant)}) doit être imputé en ${y+1}, sinon il sera perdu.`); });
+  if(f.ardFin > 0.5) out.push(`${eur(f.ardFin)} d'amortissements en réserve sont reportés sur ${y+1} et les années suivantes, sans limite de durée.`);
+  return out;
+}
+function vueCloture(y){
+  const ex = exercice(y), l = controles(y), bad = l.filter(x=>x[0]==="bad"), warn = l.filter(x=>x[0]==="warn");
+  const f = fiscalJusqua(y), c = f.c, chg = changementsAnnee(y);
+  const step = (n, titre, corps) => `<div class="card"><h3><span class="case" style="margin-right:8px">${n}</span>${titre}</h3>${corps}</div>`;
+  return entete(`Clôture de l'exercice ${y}`, "Vérifier, figer les chiffres déclarés, puis ouvrir l'année suivante. La clôture verrouille les écritures ; vous pourrez rouvrir l'exercice si besoin.") +
+  step(1, "Contrôles", bad.length ? `<div class="alert bad">${bad.length} point(s) à corriger avant de clôturer :</div><ul>${bad.map(x=>`<li>${x[1]}</li>`).join("")}</ul>`
+    : warn.length ? `<div class="alert warn">${warn.length} point(s) à vérifier. Vous pouvez clôturer si vous les avez regardés.</div><ul>${warn.map(x=>`<li>${x[1]}</li>`).join("")}</ul>` : `<div class="alert ok">Tous les contrôles sont validés.</div>`) +
+  step(2, "Sommes dues et à recevoir au 31/12", `<p class="sub" style="margin:0 0 10px">En comptabilité super-simplifiée, seules les sommes dues ou à recevoir au 31 décembre s'ajoutent à la trésorerie. Par exemple : un loyer de décembre encaissé en janvier, une facture de décembre payée en janvier. Saisissez-les comme écritures datées du 31/12/${y}.</p>
+    <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" id="clRegul"> J'ai vérifié les sommes dues et à recevoir au 31/12/${y}.</label>`) +
+  step(3, "Chiffres figés à la clôture", `<table>
+    <tr><td>Résultat fiscal ${y}</td><td class="n"><b>${eur(f.resultatFiscal)}</b></td></tr>
+    <tr><td>Amortissements en réserve reportés sur ${y+1}</td><td class="n">${eur(f.ardFin)}</td></tr>
+    <tr><td>Déficits reportables sur ${y+1}</td><td class="n">${eur(f.deficitsFin.reduce((s,d)=>s+d.montant,0))}</td></tr>
+    <tr><td>Capital restant dû au 31/12/${y}</td><td class="n">${eur(c.crd)}</td></tr></table>
+    <div class="form" style="margin-top:14px"><label>Date d'envoi de la déclaration (facultatif)<input type="date" id="clDecl" value="${ex.dateDeclaration||""}"></label></div>
+    <p class="sub" style="margin:8px 0 0">Ces chiffres sont mémorisés : si une modification ultérieure les change, le tableau de bord vous préviendra.</p>`) +
+  step(4, `Ce qui change en ${y+1}`, chg.length ? `<ul style="margin:0">${chg.map(t=>`<li>${t}</li>`).join("")}</ul>` : `<p class="sub" style="margin:0">Rien de particulier : mêmes amortissements et même emprunt.</p>`) +
+  `<div class="row"><button class="btn" onclick="cloturer(${y})" ${bad.length?"disabled":""}>Clôturer ${y}${exercice(y+1)?"":` et ouvrir ${y+1}`}</button><button class="btn ghost" onclick="S.cloture=null;renderAll()">Annuler</button></div>`;
+}
+function cloturer(y){
+  if(!$("#clRegul").checked) return alert("Cochez d'abord la vérification des sommes dues et à recevoir au 31/12 (étape 2).");
+  const ex = exercice(y), f = fiscalJusqua(y), d = $("#clDecl").value;
+  ex.statut = "cloture"; delete S.unlocked[y];
+  ex.cloture = {date:new Date().toISOString().slice(0,10), resultatFiscal:r2(f.resultatFiscal), ardFin:r2(f.ardFin), deficitsFin:r2(f.deficitsFin.reduce((s,x)=>s+x.montant,0)), crdFin:r2(f.c.crd)};
+  if(d) ex.dateDeclaration = d; else delete ex.dateDeclaration;
+  const nouveau = !exercice(y+1);
+  if(nouveau) S.data.exercices[y+1] = {statut:"en-cours", ecritures:[]};
+  S.cloture = null; S.year = y+1; S.tab = "accueil"; setDirty(); renderAll(); scrollTo(0,0);
+  toast(`Exercice ${y} clôturé${nouveau?`, exercice ${y+1} ouvert`:""}.`);
 }
 
 function nouvelExercice(){
