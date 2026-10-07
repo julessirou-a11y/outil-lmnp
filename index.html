@@ -321,6 +321,80 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 @media (max-width:900px){ .bac{grid-template-columns:1fr} .panneau{position:static} }
 @media (max-width:500px){ .duel{grid-template-columns:1fr} .duel b{font-size:23px} }
 
+/* ---------- Déclaration : parcours et formulaires ---------- */
+.parcours{display:flex;align-items:center;gap:0;margin-bottom:16px}
+.pe{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;font:inherit;color:var(--muted);cursor:pointer;padding:6px 8px;border-radius:var(--r-md);min-width:96px}
+.pe:hover{background:var(--surface-2)}
+.pe .pn{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);background:var(--surface);font-weight:600;color:var(--muted)}
+.pe b{font-size:13.5px;color:var(--text);font-weight:600} .pe small{font-size:11.5px;color:var(--faint)}
+.pe.on .pn{background:var(--accent);border-color:var(--accent);color:#fff}
+.pe.ok .pn{border-color:var(--pos);color:var(--pos)} .pe.on.ok .pn{background:var(--pos);color:#fff}
+.pe.bad .pn{border-color:var(--neg);color:var(--neg)} .pe.bad small{color:var(--neg)}
+.pe.warn small{color:var(--warn)}
+.pl{flex:1;height:2px;background:var(--line);margin-bottom:34px;min-width:12px}
+.resume{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
+.resume .tuile{padding:12px 14px} .resume .tv{font-size:20px}
+.fil{font-size:13px;color:var(--muted);margin:0 0 10px} .fil span{color:var(--faint)}
+.ftabs{display:flex;gap:4px;overflow-x:auto;margin-bottom:-1px;position:relative;z-index:1}
+.ftabs button{font:inherit;font-size:13px;white-space:nowrap;padding:9px 14px;border:1px solid var(--line);border-bottom:0;border-radius:8px 8px 0 0;background:var(--surface-2);color:var(--muted);cursor:pointer}
+.ftabs button span{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--line);font-size:11px;margin-right:6px;color:var(--text)}
+.ftabs button.on{background:var(--surface);color:var(--text);font-weight:600} .ftabs button.on span{background:#000091;color:#fff}
+.cerfa{background:var(--surface);border:1px solid var(--line);border-radius:0 10px 10px 10px;overflow:hidden}
+.cerfa-h{display:flex;align-items:center;gap:14px;background:#000091;color:#fff;padding:14px 18px}
+.cerfa-h b{display:block;font-size:16px} .cerfa-h small{opacity:.8;font-size:12.5px}
+.cerfa-n{background:#fff;color:#000091;font-weight:700;padding:5px 9px;border-radius:4px;font-size:14px;white-space:nowrap}
+.cerfa-b{padding:4px 18px 14px;overflow-x:auto}
+.bande{background:var(--surface-2);margin:12px -18px 4px;padding:7px 18px;font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.cl{display:flex;align-items:center;gap:10px;padding:4px 0;border-bottom:1px dotted var(--line);min-width:fit-content}
+.cl .lib{flex:1;font-size:13.5px;min-width:180px}
+.cl.tot .lib{font-weight:600}
+.cl.th{border:0;padding-bottom:0} .cl.th b{font-size:11.5px;color:var(--faint);font-weight:600;text-align:right;flex:1}
+.cell{display:flex;align-items:center;gap:6px;width:168px;flex:none}
+.cell i{font-style:normal;font-size:11px;font-family:ui-monospace,Menlo,monospace;color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:1px 4px;min-width:34px;text-align:center;visibility:visible}
+.cell i:empty{visibility:hidden}
+.val{margin:0!important;flex:1;min-width:0;height:32px;line-height:30px;display:block;border:1px solid var(--line);border-radius:4px;background:var(--surface);text-align:right;padding:0 9px;font:inherit;font-size:14px;font-variant-numeric:tabular-nums;color:var(--text);cursor:copy}
+.val:hover:not(:disabled){border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.val.calc{background:var(--surface-2)} .cl.tot .val{font-weight:600}
+.val.vide{border-style:dashed;cursor:default;background:transparent}
+.cerfa-aide{background:var(--accent-soft);color:var(--text);font-size:13px;padding:10px 18px;border-top:1px solid var(--line)}
+.idents{display:grid;grid-template-columns:1fr 1fr;gap:8px 18px;padding:6px 0}
+.ident span{display:block;font-size:11.5px;color:var(--faint)} .ident b{font-weight:500;font-size:14px} .ident b.manque{color:var(--warn);font-style:italic;font-weight:400}
+.coche{display:flex;align-items:center;gap:10px;font-size:13.5px;padding:8px 0}
+.coche .box{width:20px;height:20px;border:2px solid #000091;border-radius:3px;display:grid;place-items:center;color:#000091;font-weight:700;font-size:13px}
+@media (max-width:700px){ .pe{min-width:0;padding:4px} .pe small{display:none} .pl{margin-bottom:20px} .resume{grid-template-columns:1fr 1fr}
+  .cl{flex-wrap:wrap} .cl .lib{flex:1 1 100%;min-width:0} .cl.th .lib{display:none} .cell{width:auto;flex:1 1 0;min-width:0} .idents{grid-template-columns:1fr} }
+/* ---------- États financiers ---------- */
+.ef{display:flex;flex-direction:column;gap:22px;align-items:center}
+.feuille{background:var(--surface);width:100%;max-width:820px;min-height:1080px;padding:52px 58px 28px;box-shadow:0 2px 14px rgba(0,0,0,.08);border:1px solid var(--line);display:flex;flex-direction:column;position:relative}
+.feuille h2{font-size:22px;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:8px;margin:0 0 20px}
+.feuille h3{font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:24px 0 8px}
+.feuille table{width:100%} .feuille td.n1,.feuille th.n1{color:var(--faint)}
+.feuille tr.sous td{font-size:12.5px;color:var(--muted);padding-top:3px;padding-bottom:3px} .ind{padding-left:16px!important}
+.ef-pied{margin-top:auto;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--faint);border-top:1px solid var(--line)}
+.ef-2{display:grid;grid-template-columns:1fr;gap:22px}
+.ef-barre{margin-top:28px} .ef-barre div{display:flex;height:16px;border-radius:5px;overflow:hidden;gap:2px;margin-bottom:8px}
+.ef-cascade{margin-top:30px;display:flex;flex-direction:column;gap:8px}
+.ef-cascade div{display:grid;grid-template-columns:130px 1fr 100px;align-items:center;gap:12px;font-size:13px}
+.ef-cascade i{height:14px;border-radius:4px;display:block;min-width:2px} .ef-cascade b{text-align:right;font-weight:600}
+.ef-cascade .res{border-top:1px solid var(--line);padding-top:8px;font-weight:600}
+.ef-ul{margin:0;padding-left:20px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.garde{padding:0;overflow:hidden;flex-direction:row;flex-wrap:wrap}
+.g-bande{width:16px;background:var(--accent)}
+.g-corps{flex:1;padding:120px 60px 40px;display:flex;flex-direction:column}
+.g-corps small{text-transform:uppercase;letter-spacing:.12em;color:var(--accent);font-weight:600;font-size:12px}
+.g-corps h1{font-size:46px;margin:10px 0 6px;letter-spacing:-.02em} .g-ex{font-size:18px;color:var(--muted);margin:0}
+.g-id{margin-top:70px;display:flex;flex-direction:column;gap:4px;font-size:14.5px;color:var(--muted)} .g-id b{font-size:19px;color:var(--text)}
+.g-chiffres{margin-top:60px;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.g-chiffres div{padding:16px 12px} .g-chiffres div+div{border-left:1px solid var(--line)}
+.g-chiffres span{display:block;font-size:12px;color:var(--faint)} .g-chiffres b{font-size:19px;font-weight:600}
+.g-som{margin-top:auto;color:var(--faint);font-size:13px}
+.garde .ef-pied{width:100%;padding:12px 24px 20px}
+@media (max-width:900px){ .ef-2{grid-template-columns:1fr} }
+@media (max-width:700px){ .feuille{min-height:0;padding:24px 16px 14px;overflow-x:auto} .g-corps{padding:40px 20px 20px} .g-corps h1{font-size:32px} .g-id,.g-chiffres{margin-top:30px} .g-chiffres{grid-template-columns:1fr 1fr} .g-chiffres div:nth-child(3){border-left:0}
+  .ef-cascade div{grid-template-columns:90px 1fr 80px} .feuille table{font-size:12.5px} .feuille .tablewrap{overflow-x:auto} }
+@media print{ .ef{gap:0;display:block} .feuille{box-shadow:none;border:0;max-width:none;min-height:0;padding:0 0 10px;break-after:page} .garde{min-height:95vh}
+  .cerfa,.feuille,.ef-barre,.ef-cascade,.g-bande,.cerfa-h{-webkit-print-color-adjust:exact;print-color-adjust:exact} }
+
 /* ---------- Écritures groupées par mois ---------- */
 .month{margin-bottom:14px;padding:6px 8px 4px}
 .month header{display:flex;align-items:baseline;gap:12px;padding:12px 14px 8px}
@@ -1193,100 +1267,234 @@ function majPret(i,k,v){ S.data.emprunts[i][k] = v; setDirty(); renderAll(); }
 function majCrd(v){ const ex = exercice(S.year); if(v.trim()==="") delete ex.crdBanque; else ex.crdBanque = r2(parseMontant(v)); setDirty(); renderAll(); }
 
 /* ---- Déclaration ---- */
-function ligne(cas, lib, v, opts={}){ return `<tr class="${opts.tot?"tot":""}"><td>${cas?`<span class="case">${cas}</span>`:""}</td><td>${lib}</td><td class="n">${opts.brut?eur(v):eur0(v)}</td></tr>`; }
-function vueDeclaration(){
-  const y = S.year;
-  if(isHistorique(y)) return entete(`Déclaration ${y}`) + `<div class="alert info">Exercice déjà déclaré avec l'ancien fichier Excel.</div>`;
-  const f = fiscalJusqua(y), c = f.c, R = Math.round;
-  if(!c.lmnpActif) return entete(`Déclaration ${y}`) + `<div class="alert info">Pas de location meublée cette année.</div>`;
-  const b = bilan(y), bp = exercice(y-1) ? bilan(y-1) : null;
-  const cp = exercice(y-1) && !isHistorique(y-1) ? calculAnnee(y-1) : null;
-  // 2033-B (arrondis à l'euro, totaux recalculés sur les arrondis)
+/* ---- Déclaration : formulaires présentés comme sur impots.gouv, montants à copier d'un clic ---- */
+const fmtC = v => v == null || v === "" || isNaN(v) ? "" : Math.round(v).toLocaleString("fr-FR");
+function copier(v){ try{ navigator.clipboard.writeText(String(v)); }catch(_){} toast(`Copié : ${Number(v).toLocaleString("fr-FR")}`); }
+/* Ligne de formulaire : cellules [[case, valeur, calculée]] ; valeur null = case laissée vide */
+function lc(lib, cells, o = {}){
+  return `<div class="cl${o.tot?" tot":""}"><span class="lib">${lib}</span>${cells.map(([code, v, calc]) => {
+    const vide = v == null || (!o.tot && !calc && Math.round(v) === 0);
+    return `<span class="cell">${code?`<i>${code}</i>`:"<i></i>"}<button class="val${calc||o.tot?" calc":""}${vide?" vide":""}" ${vide?"disabled":`onclick="copier(${Math.round(v)})" title="Copier"`}>${vide?"&#8203;":fmtC(v)}</button></span>`;
+  }).join("")}</div>`;
+}
+const lt = (cols) => `<div class="cl th"><span class="lib"></span>${cols.map(c=>`<span class="cell"><i></i><b>${c}</b></span>`).join("")}</div>`;
+const bande = t => `<div class="bande">${t}</div>`;
+function feuille(num, titre, y, corps, aide){
+  return `<div class="cerfa"><div class="cerfa-h"><span class="cerfa-n">${num}</span><div><b>${titre}</b><small>Exercice du 01/01/${y} au 31/12/${y}</small></div></div>
+    <div class="cerfa-b">${corps}</div>${aide?`<div class="cerfa-aide">${aide}</div>`:""}</div>`;
+}
+/* Tous les montants de la liasse, arrondis à l'euro (totaux recalculés sur les arrondis) */
+function liasse(y){
+  const f = fiscalJusqua(y), c = f.c, R = Math.round, b = bilan(y);
   const p218 = R(c.produits), c242 = R(c.c242), c244 = R(c.c244), c254 = R(c.dotations), c294 = R(c.interets);
   const c264 = c242 + c244 + c254, rExpl = p218 - c264, r310 = rExpl - c294;
-  const reint = R(f.reintegration), ardUt = R(f.ardUtilise);
-  const rf = r310 + reint - ardUt;
-  // 2033-A
+  const reint = R(f.reintegration), ardUt = R(f.ardUtilise), rf = r310 + reint - ardUt, def = R(f.deficitsImputes);
   const brut = R(b.brut), am = R(b.amort), net = brut - am, crd = R(b.crd), cap = net - r310 - crd;
-  const decl = S.data.dossier.declarant === "2" ? ["5OA","5OY"] : ["5NA","5NY"];
-  const L = b.lignes, lc = (k,lib) => L[k].brutFin ? `<tr><td>${lib}</td><td class="n">${eur0(L[k].brutDebut)}</td><td class="n">${eur0(L[k].aug)}</td><td class="n">${eur0(L[k].brutFin)}</td></tr>` : "";
-  const la = (k,lib) => L[k].brutFin && k!=="terrain" ? `<tr><td>${lib}</td><td class="n">${eur0(L[k].amDebut)}</td><td class="n">${eur0(L[k].dot)}</td><td class="n">${eur0(L[k].amFin)}</td></tr>` : "";
-  const ex = exercice(y), etape = (n, t) => `<h2 class="etape"><span>${n}</span>${t}</h2>`;
-  return `<div class="fiche"><div class="row" style="justify-content:space-between;align-items:flex-start">${entete(`Déclarer ${y}`, `Les revenus ${y} de la location meublée se déclarent début mai ${y+1}, en deux temps : la déclaration de résultat sur l'espace professionnel, puis le report du résultat sur la déclaration de revenus.`)}
-    <div class="row noprint">${comptesVisibles()?`<button class="btn sec" onclick="exporterFEC(${y})" title="Fichier des écritures comptables, à remettre en cas de contrôle fiscal">Exporter le FEC</button>`:""}<button class="btn sec" onclick="print()">Imprimer ou enregistrer en PDF</button></div></div>
-  ${ex.statut!=="cloture" && y >= new Date().getFullYear() ? `<div class="alert warn">L'année n'est pas finie : ces chiffres sont provisoires.</div>`:""}
-  <div class="noprint">${etape(1, "Vérifier les saisies")}</div>
-  ${vueControles(y)}
-  <div class="noprint">${etape(2, "Remplir la déclaration en ligne")}</div>
-  ${guideSaisie(y, {p218, c242, c244, c254, c294, r310, rf, reint, ardUt, brut, am, crd, cap, decl, def:R(f.deficitsImputes)})}
-  <div class="noprint">${etape(3, `Clôturer ${y} une fois la déclaration envoyée`)}</div>
-  <div class="card noprint">${ex.statut==="cloture"
-    ? `<p style="margin:0"><b style="color:var(--pos)">✓</b> ${y} est clôturé${ex.cloture?` depuis le ${fmtDate(ex.cloture.date)}`:""}.${ex.dateDeclaration?` Déclaration envoyée le ${fmtDate(ex.dateDeclaration)}.`:""}</p>`
-    : `<p class="sub" style="margin:0 0 12px">La clôture fige les chiffres déclarés, verrouille les saisies de ${y} et ouvre ${y+1}. On peut rouvrir l'année si besoin.</p><button class="btn" onclick="allerA('dossier');S.cloture=${y};renderAll()">Clôturer ${y}…</button>`}</div>
-  <details class="formulaires" ${comptesVisibles()?"open":""}><summary class="noprint">Voir les formulaires en détail (2033-A à D, 2031, 2042-C-PRO)</summary>
-  <p class="sub noprint">Les mêmes montants, présentés case par case comme sur les formulaires officiels. Utile pour un comptable, ou pour vérifier une case.</p>
+  return {f, c, b, p218, c242, c244, c254, c294, c264, rExpl, r310, reint, ardUt, rf, def, brut, am, net, crd, cap};
+}
+function n1(y){
+  if(!exercice(y-1)) return null;
+  if(isHistorique(y-1)){ const h = exercice(y-1).chiffres || {}, b = bilan(y-1);
+    return {hist:true, p218:h.loyers, c242:h.chargesExternes, c244:h.impotsTaxes, c254:h.dotationsAmortissements, c294:h.interets, r310:h.resultat, net:b.immoNettes, crd:b.crd, cap:b.capital}; }
+  return fiscalJusqua(y-1)?.c.lmnpActif ? liasse(y-1) : null;
+}
+function form2033A(y, L, P){
+  const p = k => P ? P[k] : null;
+  return feuille("2033-A", "Bilan simplifié", y,
+    bande("Actif") + lt(["Brut","Amortissements","Net"]) +
+    lc("Immobilisations corporelles", [["028", L.brut], ["030", L.am], ["", L.net, true]]) +
+    lc("Disponibilités", [["084", null], ["", null], ["", null]]) +
+    lc("Total actif", [["", L.brut], ["", L.am], ["110", L.net]], {tot:1}) +
+    bande("Passif") + lt(["Exercice N", "N-1"]) +
+    lc("Capital individuel", [["120", L.cap], ["", p("cap")]]) +
+    lc("Résultat de l'exercice (bénéfice ou perte)", [["136", L.r310, true], ["", p("r310")]]) +
+    lc("Emprunts et dettes assimilées", [["156", L.crd], ["", p("crd")]]) +
+    lc("Total passif", [["180", L.cap + L.r310 + L.crd], ["", P && P.cap != null ? P.cap + (P.r310||0) + (P.crd||0) : null]], {tot:1}),
+    `Le capital équilibre le bilan (trésorerie non suivie).${P?" Colonne N-1 : celle de la déclaration de l'an dernier.":""}`);
+}
+function form2033B(y, L, P){
+  const p = k => P ? P[k] ?? null : null, vide = (code, lib) => lc(lib, [[code, null], ["", null]]);
+  return feuille("2033-B", "Compte de résultat simplifié", y,
+    bande("Produits d'exploitation") + lt(["Exercice N", "N-1"]) +
+    vide("210", "Ventes de marchandises") + vide("214", "Production vendue – biens") +
+    lc("Production vendue – services (loyers)", [["218", L.p218], ["", p("p218")]]) +
+    vide("226", "Subventions d'exploitation") + vide("230", "Autres produits") +
+    lc("Total des produits d'exploitation", [["232", L.p218], ["", p("p218")]], {tot:1}) +
+    bande("Charges d'exploitation") +
+    vide("234", "Achats de marchandises") +
+    lc("Autres charges externes", [["242", L.c242], ["", p("c242")]]) +
+    lc("Impôts, taxes et versements assimilés", [["244", L.c244], ["", p("c244")]]) +
+    vide("250", "Rémunérations du personnel") + vide("252", "Charges sociales") +
+    lc("Dotations aux amortissements", [["254", L.c254], ["", p("c254")]]) +
+    vide("262", "Autres charges") +
+    lc("Total des charges d'exploitation", [["264", L.c264], ["", P&&!P.hist ? P.c264 : null]], {tot:1}) +
+    lc("Résultat d'exploitation", [["270", L.rExpl, true], ["", P&&!P.hist ? P.rExpl : null]]) +
+    lc("Charges financières (intérêts d'emprunt)", [["294", L.c294], ["", p("c294")]]) +
+    lc("Bénéfice ou perte", [["310", L.r310], ["", p("r310")]], {tot:1}) +
+    bande("Détermination du résultat fiscal") +
+    lc("Résultat comptable", [["", L.r310, true]]) +
+    (L.reint ? lc("Réintégration : amortissements non déductibles (art. 39 C)", [["", L.reint]]) : "") +
+    (L.ardUt ? lc("Déduction : amortissements différés antérieurs", [["", L.ardUt]]) : "") +
+    lc(L.rf >= 0 ? "Résultat fiscal : bénéfice" : "Résultat fiscal : déficit", [["", Math.abs(L.rf)]], {tot:1}),
+    "Les zones grisées sont calculées par le site : vérifiez seulement qu'elles affichent les mêmes montants.");
+}
+function form2033C(y, L){
+  const Li = L.b.lignes, cats = [["terrain","Terrains"],["construction","Constructions"],["travaux","Installations générales, agencements"],["mobilier","Autres immobilisations corporelles"]];
+  return feuille("2033-C", "Immobilisations et amortissements", y,
+    bande("Immobilisations (valeurs brutes)") + lt(["Début", "Augmentations", "Fin"]) +
+    cats.map(([k,l]) => lc(l, [["", Li[k].brutFin ? Li[k].brutDebut : null], ["", Li[k].brutFin ? Li[k].aug : null], ["", Li[k].brutFin || null]])).join("") +
+    lc("Total", [["", L.brut - cats.reduce((s,[k])=>s+Li[k].aug,0)], ["", cats.reduce((s,[k])=>s+Li[k].aug,0)], ["", L.brut]], {tot:1}) +
+    bande("Amortissements") + lt(["Début", "Dotations", "Fin"]) +
+    cats.slice(1).map(([k,l]) => lc(l, [["", Li[k].brutFin ? Li[k].amDebut : null], ["", Li[k].brutFin ? Li[k].dot : null], ["", Li[k].brutFin ? Li[k].amFin : null]])).join("") +
+    lc("Total", [["", cats.reduce((s,[k])=>s+Li[k].amDebut,0)], ["", L.c254], ["", L.am]], {tot:1}),
+    `Le total des dotations doit être égal à la case 254 de la 2033-B (${eur0(L.c254)}).`);
+}
+function form2033D(y, L){
+  const f = L.f, s = a => a.reduce((t,d)=>t+d.montant,0), rien = !f.deficitsDebut.length && !f.ardFin && !f.deficitAnnee && !f.ardDebut;
+  return feuille("2033-D", "Déficits et amortissements reportés", y,
+    bande("Déficits reportables") + lt(["Montant"]) +
+    lc("Déficits restant à reporter au début de l'exercice", [["", s(f.deficitsDebut)]]) +
+    lc("Déficits imputés sur le résultat de l'exercice", [["", f.deficitsImputes]]) +
+    lc("Déficit de l'exercice", [["", f.deficitAnnee]]) +
+    lc("Déficits restant à reporter en fin d'exercice", [["", s(f.deficitsFin)]], {tot:1}) +
+    bande("Amortissements réputés différés (art. 39 C)") + lt(["Montant"]) +
+    lc("Au début de l'exercice", [["", f.ardDebut]]) +
+    lc("À la fin de l'exercice", [["", f.ardFin]], {tot:1}),
+    rien ? "Rien à reporter : ce tableau reste vide." : "");
+}
+function form2031(y, L){
+  const d = S.data.dossier, champ = (lib, v) => `<div class="ident"><span>${lib}</span><b class="${v?"":"manque"}">${v ? esc(v) : "à compléter"}</b></div>`;
+  const manque = !d.siret || !(d.nomExploitant || d.nom) || !d.adresseBien;
+  return feuille("2031", "Déclaration de résultats BIC", y,
+    bande("Identification") +
+    `<div class="idents">${champ("Exploitant", d.nomExploitant || d.nom)}${champ("SIRET", d.siret)}${champ("Adresse de l'établissement", d.adresseBien)}${champ("Activité", `Location meublée non professionnelle${d.ape?` (APE ${d.ape})`:""}`)}${champ("Régime", "Réel simplifié")}${champ("Début d'activité", d.debutLocationMeublee ? fmtDate(d.debutLocationMeublee) : "")}</div>` +
+    (manque ? `<div class="row" style="margin:6px 0 10px">${lienPage("dossier")}</div>` : "") +
+    bande("Résultat fiscal") + lt(["Montant"]) +
+    lc(L.rf >= 0 ? "Bénéfice" : "Déficit", [["", Math.abs(L.rf)]], {tot:1}) +
+    bande("Options") +
+    `<div class="coche"><span class="box">✓</span>Comptabilité super-simplifiée (art. 302 septies A ter A du CGI)</div>`,
+    `Cochez l'option chaque année, puis <b>Signer et envoyer</b>. Enregistrez l'accusé de réception dans <code>Justificatifs/${y+1}/</code>.`);
+}
+function form2042(y, L){
+  const dcl = S.data.dossier.declarant === "2" ? 1 : 0, ben = L.rf >= 0, v = ben ? L.rf - L.def : -L.rf;
+  const cel = (k, code) => [code, k === dcl ? v : null];
+  return feuille("2042-C-PRO", "Revenus des professions non salariées", y,
+    bande("Locations meublées non professionnelles · régime réel") + lt(["Déclarant 1", "Déclarant 2"]) +
+    lc("Revenus imposables (bénéfice)", ben ? [cel(0,"5NA"), cel(1,"5OA")] : [["5NA",null],["5OA",null]], ben?{tot:1}:{}) +
+    lc("Déficits", ben ? [["5NY",null],["5OY",null]] : [cel(0,"5NY"), cel(1,"5OY")], ben?{}:{tot:1}),
+    `Dans l'espace particulier, déclaration de revenus ${y} : cocher la rubrique « Revenus des professions non salariées » pour afficher la 2042-C-PRO.${L.def?` Bénéfice après ${eur0(L.def)} de déficits antérieurs imputés.`:""}`);
+}
+function vueDeclaration(){
+  const y = S.year, vue = S.vueDecl || "declarer";
+  const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Déclaration ${y}</h1></div>
+    <div class="row noprint">${segments("vueDecl", [["declarer","Déclarer"],["etats","États financiers"]], vue)}</div></div>`;
+  if(isHistorique(y)) return tete + `<div class="card vide">${y} a été déclarée avec l'ancien fichier Excel.</div>`;
+  const f = fiscalJusqua(y);
+  if(!f?.c.lmnpActif) return tete + `<div class="card vide">Pas de location meublée en ${y}.</div>`;
+  if(vue === "etats") return tete + etatsFinanciers(y);
+  const L = liasse(y), P = n1(y), ex = exercice(y), ctl = controles(y), bad = ctl.filter(x=>x[0]==="bad").length, warn = ctl.filter(x=>x[0]==="warn").length;
+  const et = S.declEtape || (bad ? "1" : "2"), clos = ex.statut === "cloture";
+  const ETAPES = [
+    ["1", "Vérifier", bad ? `${bad} à corriger` : warn ? `${warn} à regarder` : "tout est bon", bad ? "bad" : warn ? "warn" : "ok"],
+    ["2", "Résultat", "espace professionnel", clos ? "ok" : ""],
+    ["3", "Revenus", "espace particulier", clos ? "ok" : ""],
+    ["4", "Clôturer", clos ? "fait" : "après l'envoi", clos ? "ok" : ""]];
+  const FORMS = [["2033-A","2033-A Bilan"],["2033-B","2033-B Résultat"],["2033-C","2033-C Immobilisations"],["2033-D","2033-D Reports"],["2031","2031"]];
+  const fo = S.formDecl || "2033-A", idx = FORMS.findIndex(x=>x[0]===fo);
+  let corps = "";
+  if(et === "1") corps = vueControles(y);
+  else if(et === "2") corps = `<div class="fil noprint">impots.gouv.fr › Espace professionnel › Déclarer › Résultat <span>· cliquez sur un montant pour le copier</span></div>
+    <div class="ftabs noprint">${FORMS.map(([k,l],i)=>`<button class="${k===fo?"on":""}" onclick="S.formDecl='${k}';renderAll()"><span>${i+1}</span>${l}</button>`).join("")}</div>
+    ${({"2033-A":()=>form2033A(y,L,P), "2033-B":()=>form2033B(y,L,P), "2033-C":()=>form2033C(y,L), "2033-D":()=>form2033D(y,L), "2031":()=>form2031(y,L)})[fo]()}
+    <div class="row noprint" style="justify-content:space-between;margin-top:12px">${idx>0?`<button class="btn sec" onclick="S.formDecl='${FORMS[idx-1][0]}';renderAll()">← ${FORMS[idx-1][0]}</button>`:"<span></span>"}
+      ${idx<FORMS.length-1?`<button class="btn" onclick="S.formDecl='${FORMS[idx+1][0]}';renderAll()">${FORMS[idx+1][0]} →</button>`:`<button class="btn" onclick="S.declEtape='3';renderAll()">Étape suivante : revenus →</button>`}</div>
+    <details class="card noprint" style="margin-top:16px"><summary>Première déclaration ?</summary><p class="sub" style="margin:10px 0 0">Il faut un espace professionnel actif, rattaché au SIRET (code d'activation reçu par courrier). Si l'onglet « Résultat » est absent, demandez au service des impôts des entreprises, par la messagerie de l'espace professionnel, l'ouverture du service « Déclarer le résultat » au réel simplifié BIC.</p></details>`;
+  else if(et === "3") corps = `<div class="fil noprint">impots.gouv.fr › Espace particulier › Déclarer mes revenus ${y} <span>· cliquez sur le montant pour le copier</span></div>${form2042(y, L)}`;
+  else corps = `<div class="card noprint">${clos
+    ? `<p style="margin:0"><b style="color:var(--pos)">✓</b> ${y} est clôturée${ex.cloture?` depuis le ${fmtDate(ex.cloture.date)}`:""}.${ex.dateDeclaration?` Déclaration envoyée le ${fmtDate(ex.dateDeclaration)}.`:""}</p>`
+    : `<p class="sub" style="margin:0 0 12px">Une fois les deux déclarations envoyées : la clôture fige les chiffres, verrouille ${y} et ouvre ${y+1}.</p><button class="btn" onclick="allerA('dossier');S.cloture=${y};renderAll()">Clôturer ${y}…</button>`}</div>`;
+  return tete + `
+  ${ex.statut!=="cloture" && y >= new Date().getFullYear() ? `<div class="alert warn noprint">Année en cours : chiffres provisoires.</div>`:""}
+  <div class="parcours noprint">${ETAPES.map(([k,l,s,st])=>`<button class="pe ${k===et?"on":""} ${st}" onclick="S.declEtape='${k}';renderAll()"><span class="pn">${st==="ok"?"✓":st==="bad"?"!":k}</span><b>${l}</b><small>${s}</small></button>`).join('<i class="pl"></i>')}</div>
+  <div class="resume noprint">${tuile("Loyers", eur0(L.p218))}${tuile("Charges et intérêts", eur0(L.c242+L.c244+L.c294))}${tuile("Amortissements", eur0(L.c254))}${tuile(L.rf>=0?"Résultat fiscal":"Déficit", eur0(Math.abs(L.rf)), {cls:"fort"})}</div>
+  ${corps}
+  ${comptesVisibles() ? `<div class="row noprint" style="margin-top:16px"><button class="btn sec" onclick="exporterFEC(${y})">Exporter le FEC</button></div>${vueBalance(y)}` : ""}`;
+}
 
-  <div class="card"><h3 style="margin-top:0">2033-B · Compte de résultat simplifié</h3><table>
-    <tr><th>Case</th><th>Libellé</th><th class="n">${y}</th></tr>
-    ${ligne("218","Production vendue – services (loyers)",p218)}
-    ${ligne("232","Total des produits d'exploitation",p218,{tot:1})}
-    ${ligne("242","Autres charges externes",c242)}
-    ${ligne("244","Impôts, taxes et versements assimilés",c244)}
-    ${ligne("254","Dotations aux amortissements",c254)}
-    ${ligne("264","Total des charges d'exploitation",c264,{tot:1})}
-    ${ligne("270","Résultat d'exploitation",rExpl)}
-    ${ligne("294","Charges financières (intérêts d'emprunt)",c294)}
-    ${ligne("310","Bénéfice ou perte comptable",r310,{tot:1})}
-  </table>
-  <h3>Détermination du résultat fiscal (bas de la 2033-B)</h3><table>
-    ${ligne("","Résultat comptable",r310)}
-    ${reint?ligne("","Réintégration : amortissements non déductibles (art. 39 C)",reint):""}
-    ${ardUt?ligne("","Déduction : amortissements différés des années antérieures",-ardUt):""}
-    ${ligne("",rf>=0?"Résultat fiscal : bénéfice":"Résultat fiscal : déficit",Math.abs(rf),{tot:1})}
-  </table>
-  ${(reint||ardUt)?`<p class="sub" style="margin-top:8px">Les intitulés exacts des lignes de réintégration/déduction figurent sur le formulaire : reportez-y ces montants.</p>`:""}</div>
-
-  <div class="card"><h3 style="margin-top:0">2033-A · Bilan simplifié au 31/12/${y}</h3><table>
-    <tr><th>Case</th><th>Libellé</th><th class="n">${y}</th></tr>
-    ${ligne("028","Immobilisations corporelles – brut",brut)}
-    ${ligne("030","Immobilisations corporelles – amortissements",am)}
-    ${ligne("","Immobilisations corporelles – net",net)}
-    ${ligne("110","Total actif (net)",net,{tot:1})}
-    ${ligne("120","Capital individuel (compte de l'exploitant)",cap)}
-    ${ligne("136","Résultat de l'exercice",r310)}
-    ${ligne("156","Emprunts et dettes assimilées",crd)}
-    ${ligne("180","Total passif",cap+r310+crd,{tot:1})}
-  </table>
-  ${bp ? `<p class="sub" style="margin-top:8px">Colonne N-1 (${y-1}) : immobilisations nettes ${eur0(bp.immoNettes)}, emprunts ${eur0(bp.crd)}, capital ${eur0(bp.capital)}, résultat ${eur0(bp.resultat)}.</p>`:""}
-  <p class="sub" style="margin-top:8px">Simplification : la trésorerie n'est pas suivie (disponibilités à 0) ; le capital de l'exploitant équilibre le bilan.</p></div>
-
-  <div class="card"><h3 style="margin-top:0">2033-C · Immobilisations et amortissements</h3>
-  <div class="tablewrap"><table><tr><th>Valeurs brutes</th><th class="n">Début d'exercice</th><th class="n">Augmentations</th><th class="n">Fin d'exercice</th></tr>
-    ${lc("terrain","Terrains")}${lc("construction","Constructions")}${lc("travaux","Installations générales, agencements")}${lc("mobilier","Autres immobilisations corporelles")}
-  </table></div>
-  <div class="tablewrap" style="margin-top:12px"><table><tr><th>Amortissements</th><th class="n">Début d'exercice</th><th class="n">Dotations</th><th class="n">Fin d'exercice</th></tr>
-    ${la("construction","Constructions")}${la("travaux","Installations générales, agencements")}${la("mobilier","Autres immobilisations corporelles")}
-  </table></div></div>
-
-  <div class="card"><h3 style="margin-top:0">2033-D · Déficits et amortissements reportés</h3><table>
-    ${ligne("","Déficits restant à reporter au début de l'exercice",f.deficitsDebut.reduce((s,d)=>s+d.montant,0))}
-    ${ligne("","Déficits imputés sur le résultat de l'exercice",f.deficitsImputes)}
-    ${ligne("","Déficit de l'exercice",f.deficitAnnee)}
-    ${ligne("","Déficits restant à reporter en fin d'exercice",f.deficitsFin.reduce((s,d)=>s+d.montant,0),{tot:1})}
-    ${ligne("","Amortissements différés (art. 39 C) – début",f.ardDebut)}
-    ${ligne("","Amortissements différés – fin",f.ardFin,{tot:1})}
-  </table>${(!f.deficitsDebut.length && !f.ardFin && !f.deficitAnnee)?`<p class="sub" style="margin-top:8px">Rien à reporter : ce tableau peut rester vide.</p>`:""}</div>
-
-  <div class="card"><h3 style="margin-top:0">2031 · Déclaration de résultats</h3><table>
-    ${ligne("",rf>=0?"Résultat fiscal – bénéfice":"Résultat fiscal – déficit",Math.abs(rf),{tot:1})}
-  </table><p class="sub" style="margin-top:8px">Régime réel simplifié, exercice du 01/01/${y} au 31/12/${y}.</p></div>
-
-  <div class="card"><h3 style="margin-top:0">2042-C-PRO · Déclaration de revenus (déclarant ${S.data.dossier.declarant})</h3><table>
-    ${rf>=0 ? ligne(decl[0],"Locations meublées non professionnelles – régime réel – bénéfice",rf-R(f.deficitsImputes),{tot:1}) : ligne(decl[1],"Locations meublées non professionnelles – régime réel – déficit",-rf,{tot:1})}
-  </table>${f.deficitsImputes?`<p class="sub" style="margin-top:8px">Bénéfice après imputation de ${eur0(f.deficitsImputes)} de déficits antérieurs : vérifiez sur la notice si l'imputation se fait dans les cases dédiées aux déficits antérieurs.</p>`:""}</div>
-  ${comptesVisibles() ? vueBalance(y) : ""}
-  </details>
-  <p class="sub">Ces montants sont calculés par l'outil à partir de vos saisies ; vérifiez-les avant envoi. Échéance habituelle de la liasse : début mai (+ 15 jours en télétransmission).</p></div>`;
+/* ---- États financiers : comptes annuels présentables (page de garde, bilan, compte de résultat, annexe) ---- */
+function etatsFinanciers(y){
+  const d = S.data.dossier, L = liasse(y), P = n1(y), c = L.c, cp = P && !P.hist ? calculAnnee(y-1) : null;
+  const nom = d.nomExploitant || d.nom || "", pied = (n) => `<div class="ef-pied"><span>${esc(nom)} · Comptes annuels ${y}</span><span>${n}</span></div>`;
+  const v = x => x == null || isNaN(x) ? "–" : eur0(x);
+  const ln = (lib, a, b, o={}) => `<tr class="${o.tot?"tot":""}${o.sous?" sous":""}"><td>${lib}</td><td class="n">${v(a)}</td><td class="n n1">${P?v(b):""}</td></tr>`;
+  const th = (t) => `<tr><th>${t}</th><th class="n">${y}</th><th class="n n1">${P?y-1:""}</th></tr>`;
+  const det = (t, l, tc) => Object.entries(t.parNature).filter(([n]) => (NATURES[n]?.l || (NATURES[n]?.g==="recette"?"218":"242")) === l && (NATURES[n]?.g || "charge") !== "bilan");
+  const lignesDet = (l) => { const a = det(c.t, l), b = cp ? det(cp.t, l) : [], noms = [...new Set([...a, ...b].map(x=>x[0]))];
+    return noms.map(n => ln(`<span class="ind">${esc(n)}</span>`, (a.find(x=>x[0]===n)||[])[1] ?? null, cp ? (b.find(x=>x[0]===n)||[])[1] ?? null : null, {sous:1})).join(""); };
+  const immos = c.immos.filter(x => x.entree <= y), emp = S.data.emprunts;
+  const total = L.cap + L.r310 + L.crd;
+  return `<div class="ef">
+  <section class="feuille garde">
+    <div class="g-bande"></div>
+    <div class="g-corps">
+      <small>Location meublée non professionnelle</small>
+      <h1>Comptes annuels</h1>
+      <p class="g-ex">Exercice du 1er janvier au 31 décembre ${y}</p>
+      <div class="g-id"><b>${esc(nom || "Nom de l'exploitant")}</b>${d.adresseBien?`<span>${esc(d.adresseBien)}</span>`:""}${d.siret?`<span>SIRET ${esc(d.siret.replace(/(\d{3})(\d{3})(\d{3})(\d{5})/,"$1 $2 $3 $4"))}</span>`:""}<span>Régime réel simplifié · BIC</span></div>
+      <div class="g-chiffres"><div><span>Loyers</span><b>${eur0(L.p218)}</b></div><div><span>Résultat comptable</span><b>${eur0(L.r310)}</b></div><div><span>Résultat fiscal</span><b>${eur0(L.rf)}</b></div><div><span>Total du bilan</span><b>${eur0(L.net)}</b></div></div>
+      <p class="g-som">Sommaire : bilan · compte de résultat · annexe</p>
+    </div>${pied(1)}
+  </section>
+  <section class="feuille">
+    <h2>Bilan au 31 décembre ${y}</h2>
+    <div class="ef-2">
+      <table><tr><th>Actif</th><th class="n">Brut</th><th class="n">Amort.</th><th class="n">Net ${y}</th>${P?`<th class="n n1">Net ${y-1}</th>`:""}</tr>
+        ${immos.length?["terrain","construction","travaux","mobilier"].map(k => { const l = L.b.lignes[k]; return l.brutFin ? `<tr class="sous"><td class="ind">${({terrain:"Terrain",construction:"Construction",travaux:"Travaux et agencements",mobilier:"Mobilier et équipements"})[k]}</td><td class="n">${eur0(l.brutFin)}</td><td class="n">${k==="terrain"?"–":eur0(l.amFin)}</td><td class="n">${eur0(l.brutFin-(k==="terrain"?0:l.amFin))}</td>${P?"<td></td>":""}</tr>` : ""; }).join(""):""}
+        <tr><td>Immobilisations corporelles</td><td class="n">${eur0(L.brut)}</td><td class="n">${eur0(L.am)}</td><td class="n">${eur0(L.net)}</td>${P?`<td class="n n1">${v(P.net)}</td>`:""}</tr>
+        <tr class="tot"><td>Total actif</td><td class="n">${eur0(L.brut)}</td><td class="n">${eur0(L.am)}</td><td class="n">${eur0(L.net)}</td>${P?`<td class="n n1">${v(P.net)}</td>`:""}</tr></table>
+      <table>${th("Passif")}
+        ${ln("Compte de l'exploitant", L.cap, P?.cap)}${ln("Résultat de l'exercice", L.r310, P?.r310)}${ln("Emprunts bancaires", L.crd, P?.crd)}
+        ${ln("Total passif", total, P && P.cap != null ? P.cap+(P.r310||0)+(P.crd||0) : null, {tot:1})}</table>
+    </div>
+    <div class="ef-barre"><div><i style="flex:${Math.max(0,L.cap)};background:var(--seg-2)"></i><i style="flex:${Math.max(0,L.r310)};background:var(--pos)"></i><i style="flex:${L.crd};background:var(--accent)"></i></div>
+      <span class="leg"><i style="background:var(--seg-2)"></i>Apport de l'exploitant <i style="background:var(--accent)"></i>Prêt bancaire${L.r310>0?' <i style="background:var(--pos)"></i>Résultat':""}</span></div>
+    ${pied(2)}
+  </section>
+  <section class="feuille">
+    <h2>Compte de résultat ${y}</h2>
+    <table>${th("Produits")}
+      ${lignesDet("218")}${ln("Total des produits", L.p218, P?.p218, {tot:1})}</table>
+    <table style="margin-top:16px">${th("Charges")}
+      ${ln("Charges externes", L.c242, P?.c242)}${lignesDet("242")}
+      ${ln("Impôts et taxes", L.c244, P?.c244)}${lignesDet("244")}
+      ${ln("Dotations aux amortissements", L.c254, P?.c254)}
+      ${ln("Intérêts d'emprunt", L.c294, P?.c294)}
+      ${ln("Total des charges", L.c264 + L.c294, P && !P.hist ? P.c264 + P.c294 : null, {tot:1})}</table>
+    <table style="margin-top:16px">${ln(`<b>${L.r310>=0?"Bénéfice":"Perte"} de l'exercice</b>`, L.r310, P?.r310, {tot:1})}</table>
+    <div class="ef-cascade">${[["Loyers",L.p218,"var(--pos)"],["Charges",-(L.c242+L.c244),"var(--neg)"],["Intérêts",-L.c294,"var(--warn)"],["Amortissements",-L.c254,"var(--accent)"]].map(([l,m,col])=>`<div><span>${l}</span><i style="width:${(Math.abs(m)/Math.max(1,L.p218)*100).toFixed(1)}%;background:${col}"></i><b>${m<0?"−":""}${eur0(Math.abs(m))}</b></div>`).join("")}
+      <div class="res"><span>Résultat</span><i style="width:${(Math.abs(L.r310)/Math.max(1,L.p218)*100).toFixed(1)}%;background:var(--text)"></i><b>${eur0(L.r310)}</b></div></div>
+    ${pied(3)}
+  </section>
+  <section class="feuille">
+    <h2>Annexe</h2>
+    <h3>Règles et méthodes comptables</h3>
+    <ul class="ef-ul"><li>Comptes établis selon le régime réel simplifié, comptabilité super-simplifiée.</li>
+      <li>Immobilisations à leur coût d'acquisition, amorties en linéaire par composants ; le terrain n'est pas amorti.</li>
+      <li>Les amortissements qui créeraient ou augmenteraient un déficit sont reportés (art. 39 C du CGI).</li></ul>
+    <h3>Immobilisations et amortissements</h3>
+    <table><tr><th>Bien</th><th>Mise en service</th><th class="n">Valeur</th><th class="n">Durée</th><th class="n">Dotation ${y}</th><th class="n">Cumul</th><th class="n">Valeur nette</th></tr>
+      ${immos.map(x=>`<tr><td>${esc(x.i.libelle)}</td><td>${fmtDate(x.i.miseEnService)}</td><td class="n">${eur0(x.i.valeurOrigine)}</td><td class="n">${x.i.dureeAns} ans</td><td class="n">${eur0(x.a.dotation)}</td><td class="n">${eur0(x.a.cumulFin)}</td><td class="n">${eur0(x.i.valeurOrigine - x.a.cumulFin)}</td></tr>`).join("")}
+      <tr class="tot"><td>Total</td><td></td><td class="n">${eur0(L.brut)}</td><td></td><td class="n">${eur0(L.c254)}</td><td class="n">${eur0(L.am)}</td><td class="n">${eur0(L.net)}</td></tr></table>
+    ${emp.length?`<h3>Emprunts</h3><table><tr><th>Banque</th><th class="n">Capital</th><th class="n">Taux</th><th class="n">Restant dû début</th><th class="n">Intérêts ${y}</th><th class="n">Restant dû fin</th></tr>
+      ${emp.map(l=>`<tr><td>${esc(l.banque)}</td><td class="n">${eur0(l.capital)}</td><td class="n">${(l.tauxAnnuel*100).toLocaleString("fr-FR",{maximumFractionDigits:2})} %</td><td class="n">${eur0(empruntAnnee(l,y-1).crdFin||l.capital)}</td><td class="n">${eur0(empruntAnnee(l,y).interets)}</td><td class="n">${eur0(empruntAnnee(l,y).crdFin)}</td></tr>`).join("")}</table>`:""}
+    <h3>Déficits et amortissements reportés</h3>
+    <table><tr><th></th><th class="n">Début</th><th class="n">Fin</th></tr>
+      <tr><td>Déficits reportables</td><td class="n">${eur0(L.f.deficitsDebut.reduce((s,x)=>s+x.montant,0))}</td><td class="n">${eur0(L.f.deficitsFin.reduce((s,x)=>s+x.montant,0))}</td></tr>
+      <tr><td>Amortissements en réserve (art. 39 C)</td><td class="n">${eur0(L.f.ardDebut)}</td><td class="n">${eur0(L.f.ardFin)}</td></tr></table>
+    ${pied(4)}
+  </section>
+  </div>
+  <div class="row noprint" style="justify-content:center;margin-top:8px"><button class="btn" onclick="print()">Imprimer ou enregistrer en PDF</button></div>`;
 }
 
 /* ============ Comptabilité : écritures en partie double, balance, FEC ============ */
@@ -1356,24 +1564,6 @@ function exporterFEC(y){
 }
 
 /* ---- Guide de saisie en ligne (mode EFI de l'espace professionnel) ---- */
-function guideSaisie(y, v){
-  const n = x => `<b>${eur0(x)}</b>`;
-  return `<div class="card noprint"><details open><summary style="font-size:16px;font-weight:600">Pas à pas sur impots.gouv.fr</summary>
-  <ol style="margin:14px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:10px">
-    <li><b>Une seule fois</b> : avoir un espace professionnel actif, rattaché au SIRET de la location (le code d'activation arrive par courrier). Si l'onglet « Résultat » est absent ou grisé, écrire au service des impôts des entreprises par la messagerie sécurisée de l'espace professionnel pour demander l'ouverture du service « Déclarer le résultat », régime réel simplifié BIC.</li>
-    <li>Espace professionnel → <b>Déclarer</b> → <b>Résultat</b> → exercice du 01/01/${y} au 31/12/${y}. Saisir les tableaux dans cet ordre, les annexes avant la 2031 qui en reprend une partie.</li>
-    <li><b>2033-A (bilan)</b> : immobilisations brutes (028) ${n(v.brut)}, amortissements (030) ${n(v.am)}, capital (120) ${n(v.cap)}, résultat (136) ${n(v.r310)}, emprunts (156) ${n(v.crd)}. Reprendre la colonne N-1 de la déclaration de ${y-1}.</li>
-    <li><b>2033-C (immobilisations)</b> : recopier les deux tableaux de « Voir les formulaires en détail », plus bas. Le total des dotations doit être égal à la ligne 254 de la 2033-B (${n(v.c254)}).</li>
-    <li><b>2033-B (compte de résultat)</b> : loyers (218) ${n(v.p218)}, charges externes (242) ${n(v.c242)}, impôts et taxes (244) ${n(v.c244)}, dotations (254) ${n(v.c254)}, intérêts (294) ${n(v.c294)}. Le résultat comptable (310) doit afficher ${n(v.r310)}.${v.reint?` En bas du tableau, réintégrer ${n(v.reint)} d'amortissements non déductibles (art. 39 C).`:""}${v.ardUt?` Déduire ${n(v.ardUt)} d'amortissements différés antérieurs.`:""} Résultat fiscal : ${n(Math.abs(v.rf))} (${v.rf>=0?"bénéfice":"déficit"}).</li>
-    <li><b>2033-D</b> : déficits et amortissements reportés, comme dans « Voir les formulaires en détail » ; à laisser vide s'il n'y a rien à reporter. 2033-E, F et G : néant.</li>
-    <li><b>2031</b> : vérifier l'identification et le résultat fiscal, puis cocher l'option pour la <b>comptabilité super-simplifiée</b> (art. 302 septies A ter A du CGI), à renouveler chaque année.</li>
-    <li>Ne pas recopier les zones grisées, calculées par le site : vérifier seulement qu'elles redonnent les totaux de la fiche (232, 264, 310, 110, 180).</li>
-    <li><b>Continuer</b> → relire le récapitulatif → <b>Signer et envoyer</b>. Enregistrer aussitôt l'accusé de réception en PDF dans <code>Justificatifs/${y+1}/</code> : c'est la seule preuve du dépôt.</li>
-    <li>Puis, dans l'<b>espace particulier</b> du déclarant, sur la déclaration de revenus ${y} : rubrique 2042-C-PRO, case <b>${v.rf>=0?v.decl[0]:v.decl[1]}</b> ${n(v.rf>=0?v.rf-v.def:-v.rf)}.</li>
-  </ol>
-  <p class="sub" style="margin:12px 0 0">Échéance habituelle : début mai ${y+1}, avec 15 jours de plus pour une déclaration en ligne. Les intitulés des écrans d'impots.gouv peuvent changer d'une année à l'autre.</p></details></div>`;
-}
-
 /* ============ Simulations : micro-BIC contre réel, plus-value à la revente ============ */
 const PS_REVENUS = 0.186;   // prélèvements sociaux sur les revenus LMNP depuis la LFSS 2026
 const PS_PLUSVALUE = 0.172; // plus-values immobilières : taux inchangé
