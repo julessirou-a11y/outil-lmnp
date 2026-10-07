@@ -596,7 +596,7 @@ function renderAll(){
   m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab]();
   if(S.tab === "pieces") scanNonRattaches(S.year);
 }
-$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; S.composer=false; document.body.classList.remove("menu-open"); renderAll(); window.scrollTo(0,0); } });
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; document.body.classList.remove("menu-open"); renderAll(); window.scrollTo(0,0); } });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
 /* Thème : automatique, clair ou sombre (mémorisé sur cet appareil) */
 /* Thème clair par défaut, sombre sur demande ; numéros de comptes affichés ou non (mémorisés sur cet appareil) */
@@ -636,6 +636,8 @@ function vueAccueil(){
   const alerts = [];
   if(!c.lmnpActif) alerts.push(["info", `La location meublée démarre le ${fmtDate(debutLMNP())} : rien à déclarer pour ${y}.`]);
   if(exercice(y).statut === "cloture") alerts.push(["info","Exercice clôturé : les écritures sont verrouillées. Vous pouvez les déverrouiller depuis la page Écritures."]);
+  const snap = exercice(y).cloture;
+  if(snap && Math.abs(snap.resultatFiscal - f.resultatFiscal) > 0.5) alerts.push(["bad", `Le résultat fiscal a changé depuis la clôture du ${fmtDate(snap.date)} : ${eur(snap.resultatFiscal)} à la clôture, ${eur(f.resultatFiscal)} maintenant. Si la déclaration est déjà envoyée, il faudra la rectifier.`]);
   const loyers = (exercice(y).ecritures||[]).filter(e=>e.nature==="Loyer").map(e=>monthOf(e.date));
   const manquants = [...Array(12).keys()].map(i=>i+1).filter(m => !loyers.includes(m) && (y < new Date().getFullYear() || m <= new Date().getMonth()+1));
   if(c.lmnpActif && manquants.length && manquants.length < 12) alerts.push(["warn", `Aucun loyer saisi pour : ${manquants.map(m=>MOIS[m-1]).join(", ")}.`]);
@@ -1029,6 +1031,7 @@ function vueControles(y){
 function vueDossier(){
   const d = S.data.dossier, rp = S.data.reports;
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
+  if(S.cloture && exercice(S.cloture) && !isHistorique(S.cloture)) return vueCloture(S.cloture);
   return entete("Dossier", "Paramètres du dossier, exercices et fichier de données.") + `
   <div class="card"><div class="form">
     <label>Nom du dossier<input value="${esc(d.nom)}" onchange="S.data.dossier.nom=this.value;setDirty();renderAll()"></label>
@@ -1038,7 +1041,7 @@ function vueDossier(){
   </div></div>
   <div class="card"><h3 style="margin-top:0">Exercices</h3><table>
     ${ys.map(y=>`<tr><td>${y}</td><td>${esc(S.data.exercices[y].statut||"en-cours")}</td><td class="n">${isHistorique(y)?"":`
-      ${S.data.exercices[y].statut==="cloture"?`<button class="btn small sec" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`:`<button class="btn small sec" onclick="if(confirm('Clôturer ${y} ? Les écritures seront verrouillées.')){S.data.exercices[${y}].statut='cloture';setDirty();renderAll()}">Clôturer</button>`}`}</td></tr>`).join("")}
+      ${S.data.exercices[y].statut==="cloture"?`<button class="btn small sec" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`:`<button class="btn small sec" onclick="S.cloture=${y};renderAll();scrollTo(0,0)">Clôturer…</button>`}`}</td></tr>`).join("")}
   </table><div style="margin-top:10px"><button class="btn" onclick="nouvelExercice()">+ Ouvrir l'exercice ${Math.max(...ys)+1}</button></div></div>
   <div class="card"><h3 style="margin-top:0">Reports à l'ouverture du premier exercice détaillé</h3>
     <div class="form"><label>Amortissements différés (art. 39 C)<input inputmode="decimal" value="${rp.amortissementsDifferes}" onchange="S.data.reports.amortissementsDifferes=r2(parseMontant(this.value))||0;setDirty();renderAll()"></label></div>
@@ -1430,6 +1433,52 @@ function vueBanque(){
   ${B.ignorees.length ? `<div class="card"><details><summary>${B.ignorees.length} opération(s) ignorée(s)</summary><div class="tablewrap" style="margin-top:10px"><table>
     ${B.ignorees.map((o,i)=>[o,i]).sort((a,b)=>b[0].date.localeCompare(a[0].date)).slice(0,200).map(([o,i])=>`<tr><td>${fmtDate(o.date)}</td><td>${esc(o.libelle)}</td><td class="n">${eur(o.montant)}</td><td class="n"><button class="btn small ghost" onclick="remettreATrier(${i})">Remettre à trier</button></td></tr>`).join("")}
   </table></div></details></div>` : ""}`;
+}
+
+/* ---- Clôture guidée et ouverture de l'exercice suivant ---- */
+function changementsAnnee(y){
+  // Ce qui change entre y et y+1 : fins d'amortissement, fin du prêt, déficits qui expirent
+  const out = [];
+  S.data.immobilisations.forEach(i => {
+    const plan = planAmort(i), der = plan[plan.length-1];
+    if(der && der.annee === y) out.push(`${esc(i.libelle)} finit d'être amorti en ${y} : la dotation baisse de ${eur(amortAnnee(i,y).dotation)} en ${y+1}.`);
+    if(der && der.annee === y+1) out.push(`${esc(i.libelle)} finit d'être amorti en ${y+1} (dernière dotation : ${eur(amortAnnee(i,y+1).dotation)}).`);
+  });
+  S.data.emprunts.forEach(l => { const r = echeancier(l), der = r[r.length-1]; if(der && (der.annee === y+1)) out.push(`Le prêt ${esc(l.banque)} se termine en ${MOIS_LONG[der.mois-1]} ${y+1} : plus d'intérêts déductibles ensuite.`); });
+  const f = fiscalJusqua(y);
+  (f.deficitsFin||[]).forEach(d => { if(y+1 - d.annee > DUREE_DEFICIT - 1) out.push(`Le déficit de ${d.annee} (${eur(d.montant)}) doit être imputé en ${y+1}, sinon il sera perdu.`); });
+  if(f.ardFin > 0.5) out.push(`${eur(f.ardFin)} d'amortissements en réserve sont reportés sur ${y+1} et les années suivantes, sans limite de durée.`);
+  return out;
+}
+function vueCloture(y){
+  const ex = exercice(y), l = controles(y), bad = l.filter(x=>x[0]==="bad"), warn = l.filter(x=>x[0]==="warn");
+  const f = fiscalJusqua(y), c = f.c, chg = changementsAnnee(y);
+  const step = (n, titre, corps) => `<div class="card"><h3><span class="case" style="margin-right:8px">${n}</span>${titre}</h3>${corps}</div>`;
+  return entete(`Clôture de l'exercice ${y}`, "Vérifier, figer les chiffres déclarés, puis ouvrir l'année suivante. La clôture verrouille les écritures ; vous pourrez rouvrir l'exercice si besoin.") +
+  step(1, "Contrôles", bad.length ? `<div class="alert bad">${bad.length} point(s) à corriger avant de clôturer :</div><ul>${bad.map(x=>`<li>${x[1]}</li>`).join("")}</ul>`
+    : warn.length ? `<div class="alert warn">${warn.length} point(s) à vérifier. Vous pouvez clôturer si vous les avez regardés.</div><ul>${warn.map(x=>`<li>${x[1]}</li>`).join("")}</ul>` : `<div class="alert ok">Tous les contrôles sont validés.</div>`) +
+  step(2, "Sommes dues et à recevoir au 31/12", `<p class="sub" style="margin:0 0 10px">En comptabilité super-simplifiée, seules les sommes dues ou à recevoir au 31 décembre s'ajoutent à la trésorerie. Par exemple : un loyer de décembre encaissé en janvier, une facture de décembre payée en janvier. Saisissez-les comme écritures datées du 31/12/${y}.</p>
+    <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" id="clRegul"> J'ai vérifié les sommes dues et à recevoir au 31/12/${y}.</label>`) +
+  step(3, "Chiffres figés à la clôture", `<table>
+    <tr><td>Résultat fiscal ${y}</td><td class="n"><b>${eur(f.resultatFiscal)}</b></td></tr>
+    <tr><td>Amortissements en réserve reportés sur ${y+1}</td><td class="n">${eur(f.ardFin)}</td></tr>
+    <tr><td>Déficits reportables sur ${y+1}</td><td class="n">${eur(f.deficitsFin.reduce((s,d)=>s+d.montant,0))}</td></tr>
+    <tr><td>Capital restant dû au 31/12/${y}</td><td class="n">${eur(c.crd)}</td></tr></table>
+    <div class="form" style="margin-top:14px"><label>Date d'envoi de la déclaration (facultatif)<input type="date" id="clDecl" value="${ex.dateDeclaration||""}"></label></div>
+    <p class="sub" style="margin:8px 0 0">Ces chiffres sont mémorisés : si une modification ultérieure les change, le tableau de bord vous préviendra.</p>`) +
+  step(4, `Ce qui change en ${y+1}`, chg.length ? `<ul style="margin:0">${chg.map(t=>`<li>${t}</li>`).join("")}</ul>` : `<p class="sub" style="margin:0">Rien de particulier : mêmes amortissements et même emprunt.</p>`) +
+  `<div class="row"><button class="btn" onclick="cloturer(${y})" ${bad.length?"disabled":""}>Clôturer ${y}${exercice(y+1)?"":` et ouvrir ${y+1}`}</button><button class="btn ghost" onclick="S.cloture=null;renderAll()">Annuler</button></div>`;
+}
+function cloturer(y){
+  if(!$("#clRegul").checked) return alert("Cochez d'abord la vérification des sommes dues et à recevoir au 31/12 (étape 2).");
+  const ex = exercice(y), f = fiscalJusqua(y), d = $("#clDecl").value;
+  ex.statut = "cloture"; delete S.unlocked[y];
+  ex.cloture = {date:new Date().toISOString().slice(0,10), resultatFiscal:r2(f.resultatFiscal), ardFin:r2(f.ardFin), deficitsFin:r2(f.deficitsFin.reduce((s,x)=>s+x.montant,0)), crdFin:r2(f.c.crd)};
+  if(d) ex.dateDeclaration = d; else delete ex.dateDeclaration;
+  const nouveau = !exercice(y+1);
+  if(nouveau) S.data.exercices[y+1] = {statut:"en-cours", ecritures:[]};
+  S.cloture = null; S.year = y+1; S.tab = "accueil"; setDirty(); renderAll(); scrollTo(0,0);
+  toast(`Exercice ${y} clôturé${nouveau?`, exercice ${y+1} ouvert`:""}.`);
 }
 
 function nouvelExercice(){
