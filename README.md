@@ -8,6 +8,7 @@ Petit outil web pour tenir la comptabilité d'une location meublée non professi
 - échéancier d'emprunt ;
 - calcul du résultat fiscal, avec report des amortissements non déductibles (art. 39 C du CGI) et des déficits ;
 - fiche de déclaration case par case (2033-A, B, C, D, 2031, 2042-C-PRO).
+- plan de comptes derrière chaque nature (affichage au choix), balance des comptes et export FEC.
 
 ## Confidentialité
 
