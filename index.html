@@ -568,11 +568,12 @@ const IC = {
   pieces:'<path d="M14 4H7v16h10V7zM14 4v3h3M10 12h4M10 16h4"/>',
   immos:'<path d="M4 11l8-6 8 6v9H4zM10 20v-5h4v5"/>',
   emprunt:'<path d="M4 7h16v10H4zM4 11h16M8 15h3"/>',
+  simulations:'<path d="M4 19h16M7 16l4-5 3 3 5-7"/>',
   declaration:'<path d="M7 4h10v16H7zM10 8h4M10 12h4M10 16l1.5 1.5L14 15"/>',
   dossier:'<path d="M4 7h6l2 2h8v10H4z"/>'
 };
 const icon = k => `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${IC[k]}</svg>`;
-const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["banque","Banque"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["sep"],["dossier","Dossier"]];
+const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["banque","Banque"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["simulations","Simulations"],["sep"],["dossier","Dossier"]];
 function renderAll(){
   $("#fileinfo").textContent = S.data ? S.data.dossier.nom : "Aucun dossier ouvert";
   $("#fileinfo").title = S.fileName || "";
@@ -593,10 +594,10 @@ function renderAll(){
   $("#cptBtn").setAttribute("aria-pressed", comptesVisibles());
   const m = $("#main");
   if(!S.data){ m.innerHTML = vueBienvenue(); return; }
-  m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab]();
+  m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, simulations:vueSimulations, dossier:vueDossier, pieces:vuePieces})[S.tab]();
   if(S.tab === "pieces") scanNonRattaches(S.year);
 }
-$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; S.composer=false; document.body.classList.remove("menu-open"); renderAll(); window.scrollTo(0,0); } });
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; document.body.classList.remove("menu-open"); renderAll(); window.scrollTo(0,0); } });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
 /* Thème : automatique, clair ou sombre (mémorisé sur cet appareil) */
 /* Thème clair par défaut, sombre sur demande ; numéros de comptes affichés ou non (mémorisés sur cet appareil) */
@@ -636,6 +637,8 @@ function vueAccueil(){
   const alerts = [];
   if(!c.lmnpActif) alerts.push(["info", `La location meublée démarre le ${fmtDate(debutLMNP())} : rien à déclarer pour ${y}.`]);
   if(exercice(y).statut === "cloture") alerts.push(["info","Exercice clôturé : les écritures sont verrouillées. Vous pouvez les déverrouiller depuis la page Écritures."]);
+  const snap = exercice(y).cloture;
+  if(snap && Math.abs(snap.resultatFiscal - f.resultatFiscal) > 0.5) alerts.push(["bad", `Le résultat fiscal a changé depuis la clôture du ${fmtDate(snap.date)} : ${eur(snap.resultatFiscal)} à la clôture, ${eur(f.resultatFiscal)} maintenant. Si la déclaration est déjà envoyée, il faudra la rectifier.`]);
   const loyers = (exercice(y).ecritures||[]).filter(e=>e.nature==="Loyer").map(e=>monthOf(e.date));
   const manquants = [...Array(12).keys()].map(i=>i+1).filter(m => !loyers.includes(m) && (y < new Date().getFullYear() || m <= new Date().getMonth()+1));
   if(c.lmnpActif && manquants.length && manquants.length < 12) alerts.push(["warn", `Aucun loyer saisi pour : ${manquants.map(m=>MOIS[m-1]).join(", ")}.`]);
@@ -1035,6 +1038,107 @@ function guideSaisie(y, v){
   <p class="sub" style="margin:12px 0 0">Échéance habituelle : début mai ${y+1}, avec 15 jours de plus pour une déclaration en ligne. Les intitulés des écrans d'impots.gouv peuvent changer d'une année à l'autre.</p></details></div>`;
 }
 
+/* ============ Simulations : micro-BIC contre réel, plus-value à la revente ============ */
+const PS_REVENUS = 0.186;   // prélèvements sociaux sur les revenus LMNP depuis la LFSS 2026
+const PS_PLUSVALUE = 0.172; // plus-values immobilières : taux inchangé
+const MICRO = {plafond:77700, abattement:0.5, minimum:305}; // meublé de longue durée non classé
+function simu(){ S.data.dossier.simu ??= {}; return S.data.dossier.simu; }
+function majSimu(k, v){ simu()[k] = v; setDirty(); renderAll(); }
+/* Projection : mêmes loyers et charges que l'année de référence, intérêts selon l'échéancier, amortissements selon les plans */
+function projection(y0, n){
+  const c0 = calculAnnee(y0), f0 = fiscalJusqua(y0);
+  let ard = f0.ardFin, out = [];
+  for(let y = y0; y < y0 + n; y++){
+    let interets = 0; S.data.emprunts.forEach(l => interets += empruntAnnee(l, y).interets);
+    if(y === y0) interets = c0.interets;
+    const dot = S.data.immobilisations.reduce((s,i)=>s + (anneeEntreeBilan(i) <= y ? amortAnnee(i,y).dotation : 0), 0);
+    const R0 = c0.produits - c0.c242 - c0.c244 - interets;
+    let base;
+    if(y === y0) base = Math.max(0, f0.resultatFiscal - f0.deficitsImputes);
+    else { const ded = Math.max(0, Math.min(dot, R0)); const reste = Math.max(0, R0 - ded); const use = Math.min(ard, reste); ard = ard - use + (dot - ded); base = Math.max(0, reste - use); }
+    const micro = c0.produits <= MICRO.plafond ? Math.max(MICRO.minimum, c0.produits * (1 - MICRO.abattement)) : null;
+    out.push({y, interets, dot, base, micro, estime: y !== y0});
+  }
+  return out;
+}
+function abattements(n){
+  const ir = n < 6 ? 0 : n <= 21 ? (n-5)*6 : 100;
+  const ps = n < 6 ? 0 : n <= 21 ? (n-5)*1.65 : n === 22 ? 28 : n < 30 ? 28 + (n-22)*9 : 100;
+  return {ir: Math.min(ir,100)/100, ps: Math.min(ps,100)/100};
+}
+function surtaxe(pv){
+  const T = [[50000,60000,0.02,1/20],[60000,100000,0.02],[100000,110000,0.03,1/10],[110000,150000,0.03],[150000,160000,0.04,0.15],[160000,200000,0.04],[200000,210000,0.05,0.2],[210000,250000,0.05],[250000,260000,0.06,0.25]];
+  if(pv <= 50000) return 0;
+  if(pv > 260000) return pv * 0.06;
+  const t = T.find(([a,b]) => pv > a && pv <= b);
+  return t[3] ? pv * t[2] - (t[1] - pv) * t[3] : pv * t[2];
+}
+function calculPlusValue(p){
+  const fraisAcq = p.fraisAcqForfait ? p.prixAchat * 0.075 : (p.fraisAcq||0);
+  const ans = Math.floor((Date.parse(p.dateVente) - Date.parse(p.dateAchat)) / (365.25*864e5));
+  const travaux = p.travauxForfait && ans > 5 ? p.prixAchat * 0.15 : (p.travaux||0);
+  const calc = amort => {
+    const prixRevient = p.prixAchat + fraisAcq + travaux - amort;
+    const pv = Math.max(0, p.prixVente - (p.fraisVente||0) - prixRevient);
+    const ab = abattements(ans), pvIR = pv * (1 - ab.ir), pvPS = pv * (1 - ab.ps);
+    const ir = pvIR * 0.19, ps = pvPS * PS_PLUSVALUE, st = surtaxe(pvIR);
+    return {prixRevient, pv, ab, pvIR, pvPS, ir, ps, st, total: ir + ps + st};
+  };
+  return {ans, fraisAcq, travaux, avec: calc(p.amortissements||0), sans: calc(0)};
+}
+function vueSimulations(){
+  const y = S.year, s = simu();
+  const tmi = s.tmi ?? 0.30;
+  let micro = "";
+  if(!isHistorique(y) && fiscalJusqua(y)?.c.lmnpActif){
+    const pr = projection(y, 6), taux = tmi + PS_REVENUS;
+    micro = `<div class="card"><h3>Micro-BIC ou réel ?</h3>
+      <p class="sub">Comparaison de l'impôt (impôt sur le revenu + prélèvements sociaux de ${(PS_REVENUS*100).toFixed(1).replace(".",",")} %) sur le revenu LMNP. ${y} d'après vos écritures ; années suivantes estimées avec les mêmes loyers et charges, les intérêts de l'échéancier et les plans d'amortissement.</p>
+      <div class="form" style="margin-bottom:14px"><label>Tranche marginale d'imposition<select onchange="majSimu('tmi',Number(this.value))">${[0,0.11,0.30,0.41,0.45].map(t=>`<option value="${t}" ${t===tmi?"selected":""}>${Math.round(t*100)} %</option>`).join("")}</select></label></div>
+      <div class="tablewrap"><table><tr><th>Année</th><th class="n">Amortissements</th><th class="n">Imposable au réel</th><th class="n">Imposable au micro</th><th class="n">Impôt au réel</th><th class="n">Impôt au micro</th><th class="n">Écart</th></tr>
+      ${pr.map(r=>`<tr class="${r.y===y?"tot":""}"><td>${r.y}${r.estime?' <span class="pill">estimé</span>':""}</td><td class="n">${eur0(r.dot)}</td><td class="n">${eur0(r.base)}</td><td class="n">${r.micro==null?"non éligible":eur0(r.micro)}</td><td class="n">${eur0(r.base*taux)}</td><td class="n">${r.micro==null?"–":eur0(r.micro*taux)}</td><td class="n" style="color:${r.micro!=null&&r.micro<r.base?"var(--neg)":"var(--pos)"}">${r.micro==null?"–":(r.micro>=r.base?"réel −":"micro −")+eur0(Math.abs(r.micro-r.base)*taux)}</td></tr>`).join("")}
+      </table></div>
+      <p class="sub" style="margin:10px 0 0">Au micro-BIC (loyers jusqu'à ${eur0(MICRO.plafond)}, abattement de 50 %), il n'y a ni amortissement ni déficit, et la réserve d'amortissements ne sert plus. Avantage : rien à réintégrer à la revente pour ces années.</p></div>`;
+  }
+  const constr = S.data.immobilisations.filter(i => i.categorie === "construction");
+  const t = typeof suiviAmortissements === "function" ? suiviAmortissements(isHistorique(y) ? y : y) : null;
+  const p = {
+    prixAchat: s.prixAchat ?? r2(constr.reduce((a,i)=>a+i.valeurOrigine,0)),
+    dateAchat: s.dateAchat ?? (constr.map(i=>i.miseEnService).sort()[0] || debutLMNP()),
+    fraisAcqForfait: s.fraisAcqForfait ?? true, fraisAcq: s.fraisAcq ?? 0,
+    travauxForfait: s.travauxForfait ?? false, travaux: s.travaux ?? r2(S.data.immobilisations.filter(i=>i.categorie==="travaux").reduce((a,i)=>a+i.valeurOrigine,0)),
+    prixVente: s.prixVente ?? 0, fraisVente: s.fraisVente ?? 0, dateVente: s.dateVente ?? `${new Date().getFullYear()+1}-06-30`,
+    amortissements: s.amortissements ?? r2(t ? t.cumul : 0)
+  };
+  const r = calculPlusValue(p), A = r.avec;
+  const num = (k, lib, v, aide) => `<label>${lib}<input inputmode="decimal" value="${String(v).replace(".",",")}" onchange="majSimu('${k}', r2(parseMontant(this.value))||0)">${aide?`<small style="color:var(--faint)">${aide}</small>`:""}</label>`;
+  const pct = v => (v*100).toLocaleString("fr-FR",{maximumFractionDigits:2}) + " %";
+  return entete("Simulations", "Pour décider : rester au réel ou passer au micro-BIC, et estimer l'impôt sur la plus-value en cas de vente. Estimations à confirmer avec le notaire ou un conseiller.") + micro + `
+  <div class="card"><h3>Plus-value à la revente</h3>
+    <div class="form">
+      ${num("prixVente","Prix de vente envisagé",p.prixVente)}
+      ${num("fraisVente","Frais de vente (agence, diagnostics)",p.fraisVente)}
+      <label>Date de vente<input type="date" value="${p.dateVente}" onchange="majSimu('dateVente',this.value)"></label>
+      ${num("prixAchat","Prix d'achat du logement",p.prixAchat,"Prix payé à l'achat, pas la valeur de 2022")}
+      <label>Date d'achat<input type="date" value="${p.dateAchat}" onchange="majSimu('dateAchat',this.value)"></label>
+      <label>Frais d'achat<select onchange="majSimu('fraisAcqForfait',this.value==='1')"><option value="1" ${p.fraisAcqForfait?"selected":""}>Forfait 7,5 %</option><option value="0" ${p.fraisAcqForfait?"":"selected"}>Montant réel</option></select></label>
+      ${p.fraisAcqForfait?"":num("fraisAcq","Frais d'achat réels",p.fraisAcq)}
+      <label>Travaux<select onchange="majSimu('travauxForfait',this.value==='1')"><option value="0" ${p.travauxForfait?"":"selected"}>Montant réel (factures)</option><option value="1" ${p.travauxForfait?"selected":""}>Forfait 15 % (plus de 5 ans)</option></select></label>
+      ${p.travauxForfait?"":num("travaux","Travaux réels",p.travaux)}
+      ${num("amortissements","Amortissements consommés",p.amortissements,"Repris du suivi des immobilisations")}
+    </div>
+    ${p.prixVente > 0 ? `<div class="grid" style="margin:18px 0">${kpi("Plus-value brute",A.pv)}${kpi("Impôt total estimé",A.total)}${kpi("Dont effet des amortissements", A.total - r.sans.total)}</div>
+    <div class="tablewrap"><table>
+      <tr><td>Prix d'achat + frais (${eur(r.fraisAcq)}) + travaux (${eur(r.travaux)}) − amortissements consommés</td><td class="n">${eur(A.prixRevient)}</td></tr>
+      <tr><td>Durée de détention</td><td class="n">${r.ans} ans</td></tr>
+      <tr><td>Impôt sur le revenu 19 % (abattement ${pct(A.ab.ir)})</td><td class="n">${eur(A.ir)}</td></tr>
+      <tr><td>Prélèvements sociaux 17,2 % (abattement ${pct(A.ab.ps)})</td><td class="n">${eur(A.ps)}</td></tr>
+      ${A.st?`<tr><td>Surtaxe sur les plus-values de plus de 50 000 €</td><td class="n">${eur(A.st)}</td></tr>`:""}
+      <tr class="tot"><td>Total</td><td class="n">${eur(A.total)}</td></tr>
+    </table></div>` : `<p class="sub" style="margin:14px 0 0">Saisissez un prix de vente pour lancer le calcul.</p>`}
+    <p class="sub" style="margin:10px 0 0">Exonération d'impôt sur le revenu après 22 ans de détention, de prélèvements sociaux après 30 ans. Le logement n'étant plus la résidence principale, pas d'exonération à ce titre. Propriétaire non résidente (Canada) : mêmes taux en principe, à faire valider par le notaire.</p></div>`;
+}
+
 /* ---- Contrôles avant déclaration ---- */
 /* Chaque contrôle : [niveau, texte] avec niveau "ok" (vérifié), "warn" (à regarder) ou "bad" (à corriger) */
 function controles(y){
@@ -1087,6 +1191,7 @@ function vueControles(y){
 function vueDossier(){
   const d = S.data.dossier, rp = S.data.reports;
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
+  if(S.cloture && exercice(S.cloture) && !isHistorique(S.cloture)) return vueCloture(S.cloture);
   return entete("Dossier", "Paramètres du dossier, exercices et fichier de données.") + `
   <div class="card"><div class="form">
     <label>Nom du dossier<input value="${esc(d.nom)}" onchange="S.data.dossier.nom=this.value;setDirty();renderAll()"></label>
@@ -1096,7 +1201,7 @@ function vueDossier(){
   </div></div>
   <div class="card"><h3 style="margin-top:0">Exercices</h3><table>
     ${ys.map(y=>`<tr><td>${y}</td><td>${esc(S.data.exercices[y].statut||"en-cours")}</td><td class="n">${isHistorique(y)?"":`
-      ${S.data.exercices[y].statut==="cloture"?`<button class="btn small sec" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`:`<button class="btn small sec" onclick="if(confirm('Clôturer ${y} ? Les écritures seront verrouillées.')){S.data.exercices[${y}].statut='cloture';setDirty();renderAll()}">Clôturer</button>`}`}</td></tr>`).join("")}
+      ${S.data.exercices[y].statut==="cloture"?`<button class="btn small sec" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`:`<button class="btn small sec" onclick="S.cloture=${y};renderAll();scrollTo(0,0)">Clôturer…</button>`}`}</td></tr>`).join("")}
   </table><div style="margin-top:10px"><button class="btn" onclick="nouvelExercice()">+ Ouvrir l'exercice ${Math.max(...ys)+1}</button></div></div>
   <div class="card"><h3 style="margin-top:0">Reports à l'ouverture du premier exercice détaillé</h3>
     <div class="form"><label>Amortissements différés (art. 39 C)<input inputmode="decimal" value="${rp.amortissementsDifferes}" onchange="S.data.reports.amortissementsDifferes=r2(parseMontant(this.value))||0;setDirty();renderAll()"></label></div>
@@ -1488,6 +1593,52 @@ function vueBanque(){
   ${B.ignorees.length ? `<div class="card"><details><summary>${B.ignorees.length} opération(s) ignorée(s)</summary><div class="tablewrap" style="margin-top:10px"><table>
     ${B.ignorees.map((o,i)=>[o,i]).sort((a,b)=>b[0].date.localeCompare(a[0].date)).slice(0,200).map(([o,i])=>`<tr><td>${fmtDate(o.date)}</td><td>${esc(o.libelle)}</td><td class="n">${eur(o.montant)}</td><td class="n"><button class="btn small ghost" onclick="remettreATrier(${i})">Remettre à trier</button></td></tr>`).join("")}
   </table></div></details></div>` : ""}`;
+}
+
+/* ---- Clôture guidée et ouverture de l'exercice suivant ---- */
+function changementsAnnee(y){
+  // Ce qui change entre y et y+1 : fins d'amortissement, fin du prêt, déficits qui expirent
+  const out = [];
+  S.data.immobilisations.forEach(i => {
+    const plan = planAmort(i), der = plan[plan.length-1];
+    if(der && der.annee === y) out.push(`${esc(i.libelle)} finit d'être amorti en ${y} : la dotation baisse de ${eur(amortAnnee(i,y).dotation)} en ${y+1}.`);
+    if(der && der.annee === y+1) out.push(`${esc(i.libelle)} finit d'être amorti en ${y+1} (dernière dotation : ${eur(amortAnnee(i,y+1).dotation)}).`);
+  });
+  S.data.emprunts.forEach(l => { const r = echeancier(l), der = r[r.length-1]; if(der && (der.annee === y+1)) out.push(`Le prêt ${esc(l.banque)} se termine en ${MOIS_LONG[der.mois-1]} ${y+1} : plus d'intérêts déductibles ensuite.`); });
+  const f = fiscalJusqua(y);
+  (f.deficitsFin||[]).forEach(d => { if(y+1 - d.annee > DUREE_DEFICIT - 1) out.push(`Le déficit de ${d.annee} (${eur(d.montant)}) doit être imputé en ${y+1}, sinon il sera perdu.`); });
+  if(f.ardFin > 0.5) out.push(`${eur(f.ardFin)} d'amortissements en réserve sont reportés sur ${y+1} et les années suivantes, sans limite de durée.`);
+  return out;
+}
+function vueCloture(y){
+  const ex = exercice(y), l = controles(y), bad = l.filter(x=>x[0]==="bad"), warn = l.filter(x=>x[0]==="warn");
+  const f = fiscalJusqua(y), c = f.c, chg = changementsAnnee(y);
+  const step = (n, titre, corps) => `<div class="card"><h3><span class="case" style="margin-right:8px">${n}</span>${titre}</h3>${corps}</div>`;
+  return entete(`Clôture de l'exercice ${y}`, "Vérifier, figer les chiffres déclarés, puis ouvrir l'année suivante. La clôture verrouille les écritures ; vous pourrez rouvrir l'exercice si besoin.") +
+  step(1, "Contrôles", bad.length ? `<div class="alert bad">${bad.length} point(s) à corriger avant de clôturer :</div><ul>${bad.map(x=>`<li>${x[1]}</li>`).join("")}</ul>`
+    : warn.length ? `<div class="alert warn">${warn.length} point(s) à vérifier. Vous pouvez clôturer si vous les avez regardés.</div><ul>${warn.map(x=>`<li>${x[1]}</li>`).join("")}</ul>` : `<div class="alert ok">Tous les contrôles sont validés.</div>`) +
+  step(2, "Sommes dues et à recevoir au 31/12", `<p class="sub" style="margin:0 0 10px">En comptabilité super-simplifiée, seules les sommes dues ou à recevoir au 31 décembre s'ajoutent à la trésorerie. Par exemple : un loyer de décembre encaissé en janvier, une facture de décembre payée en janvier. Saisissez-les comme écritures datées du 31/12/${y}.</p>
+    <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" id="clRegul"> J'ai vérifié les sommes dues et à recevoir au 31/12/${y}.</label>`) +
+  step(3, "Chiffres figés à la clôture", `<table>
+    <tr><td>Résultat fiscal ${y}</td><td class="n"><b>${eur(f.resultatFiscal)}</b></td></tr>
+    <tr><td>Amortissements en réserve reportés sur ${y+1}</td><td class="n">${eur(f.ardFin)}</td></tr>
+    <tr><td>Déficits reportables sur ${y+1}</td><td class="n">${eur(f.deficitsFin.reduce((s,d)=>s+d.montant,0))}</td></tr>
+    <tr><td>Capital restant dû au 31/12/${y}</td><td class="n">${eur(c.crd)}</td></tr></table>
+    <div class="form" style="margin-top:14px"><label>Date d'envoi de la déclaration (facultatif)<input type="date" id="clDecl" value="${ex.dateDeclaration||""}"></label></div>
+    <p class="sub" style="margin:8px 0 0">Ces chiffres sont mémorisés : si une modification ultérieure les change, le tableau de bord vous préviendra.</p>`) +
+  step(4, `Ce qui change en ${y+1}`, chg.length ? `<ul style="margin:0">${chg.map(t=>`<li>${t}</li>`).join("")}</ul>` : `<p class="sub" style="margin:0">Rien de particulier : mêmes amortissements et même emprunt.</p>`) +
+  `<div class="row"><button class="btn" onclick="cloturer(${y})" ${bad.length?"disabled":""}>Clôturer ${y}${exercice(y+1)?"":` et ouvrir ${y+1}`}</button><button class="btn ghost" onclick="S.cloture=null;renderAll()">Annuler</button></div>`;
+}
+function cloturer(y){
+  if(!$("#clRegul").checked) return alert("Cochez d'abord la vérification des sommes dues et à recevoir au 31/12 (étape 2).");
+  const ex = exercice(y), f = fiscalJusqua(y), d = $("#clDecl").value;
+  ex.statut = "cloture"; delete S.unlocked[y];
+  ex.cloture = {date:new Date().toISOString().slice(0,10), resultatFiscal:r2(f.resultatFiscal), ardFin:r2(f.ardFin), deficitsFin:r2(f.deficitsFin.reduce((s,x)=>s+x.montant,0)), crdFin:r2(f.c.crd)};
+  if(d) ex.dateDeclaration = d; else delete ex.dateDeclaration;
+  const nouveau = !exercice(y+1);
+  if(nouveau) S.data.exercices[y+1] = {statut:"en-cours", ecritures:[]};
+  S.cloture = null; S.year = y+1; S.tab = "accueil"; setDirty(); renderAll(); scrollTo(0,0);
+  toast(`Exercice ${y} clôturé${nouveau?`, exercice ${y+1} ouvert`:""}.`);
 }
 
 function nouvelExercice(){
