@@ -44,6 +44,7 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .menu button:hover{background:var(--surface-2);color:var(--text)}
 .menu button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
 .menu .sep{height:1px;background:var(--line);margin:8px 10px}
+.menu .grp{margin:14px 10px 4px;font-size:11.5px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--faint)}
 .badge{margin-left:auto;min-width:22px;padding:0 7px;border-radius:99px;background:var(--warn-soft);color:var(--warn);font-size:12px;font-weight:600;text-align:center;line-height:20px}
 .sidefoot{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:0 6px}
 .status{font-size:12.5px;color:var(--muted);min-height:18px}
@@ -52,6 +53,16 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .prefs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:inherit;font-size:12.5px;padding:5px 6px;border-radius:var(--r-md);cursor:pointer}
 .prefs button:hover{color:var(--text)}
 .prefs button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.todo ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px}
+.todo li{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
+.todo li:last-child{border-bottom:0}
+.todo li{flex-wrap:wrap}
+.todo li>b{width:14px;flex:none;text-align:center}
+.todo li>span{flex:1 1 240px}
+.etape{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:600;margin:26px 0 10px}
+.etape span{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-size:14px}
+details.formulaires{margin-top:30px}
+details.formulaires>summary{cursor:pointer;color:var(--accent);font-weight:600;margin-bottom:12px}
 .cpt{font-size:12px;font-weight:500;color:var(--faint);margin-right:6px;font-variant-numeric:tabular-nums}
 .topbar{display:none}
 main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
@@ -213,13 +224,13 @@ dialog#viewer::backdrop{background:rgba(10,15,25,.5)}
       <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M9 22.5V13.2L16 8l7 5.2v9.3h-5.2v-5.1h-3.6v5.1z" fill="var(--accent-ink)"/></svg>
       <div><b>Carnet LMNP</b><small id="fileinfo">Aucun dossier ouvert</small></div>
     </div>
-    <div class="yearbox" id="yearbox"><label>Exercice<select id="yearSel"></select></label></div>
+    <div class="yearbox" id="yearbox"><label>Année<select id="yearSel"></select></label></div>
     <nav class="menu" id="tabs" aria-label="Sections"></nav>
     <div class="sidefoot">
       <div class="status" id="dirty"></div>
       <button class="btn wide" id="saveBtn" disabled>Enregistrer</button>
       <div class="prefs">
-        <button id="cptBtn" aria-pressed="false" title="Afficher les numéros de comptes à côté des natures">N° de comptes</button>
+        <button id="cptBtn" aria-pressed="false" title="Vue comptable : numéros de comptes, balance, export FEC et formulaires détaillés">Vue comptable</button>
         <button id="themeBtn" aria-pressed="false" title="Basculer entre le thème clair et le thème sombre"></button>
       </div>
     </div>
@@ -573,7 +584,8 @@ const IC = {
   dossier:'<path d="M4 7h6l2 2h8v10H4z"/>'
 };
 const icon = k => `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${IC[k]}</svg>`;
-const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["banque","Banque"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["simulations","Simulations"],["sep"],["dossier","Dossier"]];
+/* Menu regroupé par moment d'usage, avec les mots du quotidien plutôt que ceux du comptable */
+const TABS = [["accueil","Accueil"],["h","Au fil de l'année"],["ecritures","Recettes et dépenses"],["banque","Relevés bancaires"],["pieces","Justificatifs"],["h","Une fois par an"],["declaration","Déclarer"],["h","Le logement"],["immos","Logement et meubles"],["emprunt","Prêt immobilier"],["simulations","Simulations"],["sep"],["dossier","Paramètres"]];
 function renderAll(){
   $("#fileinfo").textContent = S.data ? S.data.dossier.nom : "Aucun dossier ouvert";
   $("#fileinfo").title = S.fileName || "";
@@ -585,8 +597,9 @@ function renderAll(){
   } else sel.innerHTML = "";
   $("#tabs").innerHTML = S.data ? TABS.map(([k,l]) => {
     if(k==="sep") return '<div class="sep"></div>';
+    if(k==="h") return `<div class="grp">${l}</div>`;
     const n = k==="pieces" ? piecesManquantes(S.year).length : k==="banque" ? S.data.banque.aTrier.length : 0;
-    const bt = k==="banque" ? "Opérations bancaires à trier" : "Pièces manquantes";
+    const bt = k==="banque" ? "Opérations bancaires à trier" : "Justificatifs manquants";
     return `<button data-tab="${k}" class="${S.tab===k?"on":""}" ${S.tab===k?'aria-current="page"':""}>${icon(k)}<span>${l}</span>${n?`<span class="badge" title="${bt}">${n}</span>`:""}</button>`; }).join("") : "";
   $("#saveBtn").disabled = !S.data;
   const sombre = themeActuel() === "dark";
@@ -597,7 +610,7 @@ function renderAll(){
   m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, simulations:vueSimulations, dossier:vueDossier, pieces:vuePieces})[S.tab]();
   if(S.tab === "pieces") scanNonRattaches(S.year);
 }
-$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b){ S.tab = b.dataset.tab; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; document.body.classList.remove("menu-open"); renderAll(); window.scrollTo(0,0); } });
+$("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b) allerA(b.dataset.tab); });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
 /* Thème : automatique, clair ou sombre (mémorisé sur cet appareil) */
 /* Thème clair par défaut, sombre sur demande ; numéros de comptes affichés ou non (mémorisés sur cet appareil) */
@@ -630,23 +643,16 @@ function vueAccueil(){
   const y = S.year;
   if(isHistorique(y)){
     const h = exercice(y).chiffres||{};
-    return entete(`Exercice ${y}`, "Exercice repris de l'ancien fichier Excel : seuls les chiffres de synthèse sont disponibles.") +
+    return entete(`${y}`, "Année reprise de l'ancien fichier Excel : seuls les chiffres de synthèse sont disponibles.") +
       `<div class="card"><table>${Object.entries({loyers:"Loyers",chargesExternes:"Charges externes",impotsTaxes:"Impôts et taxes",dotationsAmortissements:"Dotations aux amortissements",interets:"Intérêts",resultat:"Résultat",immobilisationsNettes:"Immobilisations nettes",capitalRestantDu:"Capital restant dû"}).map(([k,l])=>`<tr><td>${l}</td><td class="n">${eur(h[k])}</td></tr>`).join("")}</table></div>`;
   }
-  const f = fiscalJusqua(y), c = f.c;
+  const f = fiscalJusqua(y), c = f.c, ex = exercice(y);
   const alerts = [];
   if(!c.lmnpActif) alerts.push(["info", `La location meublée démarre le ${fmtDate(debutLMNP())} : rien à déclarer pour ${y}.`]);
-  if(exercice(y).statut === "cloture") alerts.push(["info","Exercice clôturé : les écritures sont verrouillées. Vous pouvez les déverrouiller depuis la page Écritures."]);
-  const snap = exercice(y).cloture;
-  if(snap && Math.abs(snap.resultatFiscal - f.resultatFiscal) > 0.5) alerts.push(["bad", `Le résultat fiscal a changé depuis la clôture du ${fmtDate(snap.date)} : ${eur(snap.resultatFiscal)} à la clôture, ${eur(f.resultatFiscal)} maintenant. Si la déclaration est déjà envoyée, il faudra la rectifier.`]);
-  const loyers = (exercice(y).ecritures||[]).filter(e=>e.nature==="Loyer").map(e=>monthOf(e.date));
-  const manquants = [...Array(12).keys()].map(i=>i+1).filter(m => !loyers.includes(m) && (y < new Date().getFullYear() || m <= new Date().getMonth()+1));
-  if(c.lmnpActif && manquants.length && manquants.length < 12) alerts.push(["warn", `Aucun loyer saisi pour : ${manquants.map(m=>MOIS[m-1]).join(", ")}.`]);
-  if(c.lmnpActif && !c.t.parNature["CFE"] && c.produits > 5000) alerts.push(["warn","Aucune CFE saisie. Au-delà de 5 000 € de recettes, elle est en principe due : l'avis se consulte dans l'espace professionnel impots.gouv.fr (il n'est pas envoyé par courrier)."]);
-  if(S.data.emprunts.length && !c.interetsSaisis) alerts.push(["info", `Intérêts non saisis : l'échéancier théorique est utilisé (${eur(c.interetsEch)}).`]);
-  if(S.data.emprunts.length && c.interetsSaisis && Math.abs(c.interets - c.interetsEch) > 1) alerts.push(["info", `Intérêts réellement prélevés : ${eur(c.interets)}, contre ${eur(c.interetsEch)} selon l'échéancier théorique. Le montant réel est retenu.`]);
-  if(c.t.inconnues) alerts.push(["warn", `${c.t.inconnues} écriture(s) ont une nature inconnue : elles sont classées en charges externes.`]);
-  if(f.reintegration > 0.5) alerts.push(["info", `${eur(f.reintegration)} d'amortissements ne sont pas déductibles cette année car ils créeraient un déficit : ils sont reportés, sans limite de durée.`]);
+  const snap = ex.cloture;
+  if(snap && Math.abs(snap.resultatFiscal - f.resultatFiscal) > 0.5) alerts.push(["bad", `Le résultat a changé depuis la clôture du ${fmtDate(snap.date)} : ${eur(snap.resultatFiscal)} à la clôture, ${eur(f.resultatFiscal)} maintenant. Si la déclaration est déjà envoyée, il faudra la rectifier.`]);
+  if(comptesVisibles() && S.data.emprunts.length && c.interetsSaisis && Math.abs(c.interets - c.interetsEch) > 1) alerts.push(["info", `Intérêts réellement prélevés : ${eur(c.interets)}, contre ${eur(c.interetsEch)} selon l'échéancier théorique. Le montant réel est retenu.`]);
+  if(f.reintegration > 0.5) alerts.push(["info", `${eur(f.reintegration)} d'amortissements ne sont pas déductibles cette année car ils créeraient un déficit : ils sont mis en réserve pour les années suivantes, sans limite de durée.`]);
 
   // Des loyers au résultat
   const amortDeduits = f.dotDeductible + f.ardUtilise;
@@ -665,9 +671,11 @@ function vueAccueil(){
       ${rows.map(([l,a,b])=>`<tr><td>${l}</td><td class="n">${eur(a)}</td><td class="n">${eur(b)}</td><td class="n">${Math.abs(b-a)<0.02?'<span class="pill">identique</span>':eur(b-a)}</td></tr>`).join("")}</table></div></div>`;
   }
   const nat = Object.entries(c.t.parNature).sort((a,b)=>b[1]-a[1]);
-  return entete(`Exercice ${y}`, `${esc(S.data.dossier.nom)}, régime réel simplifié. Revenus à déclarer au printemps ${y+1}.`) + `
+  const enCours = y >= new Date().getFullYear() && ex.statut !== "cloture";
+  return entete(`${y} en un coup d'œil`, `Location meublée de ${esc(S.data.dossier.nom)}. Revenus ${y} à déclarer en mai ${y+1}.`) + `
+    ${c.lmnpActif ? aFaire(y) : ""}
     <section class="card flow" aria-label="Des loyers au résultat">
-      <p class="lead">Résultat fiscal ${y}</p>
+      <p class="lead">Revenu imposable ${y}${enCours?' <span class="pill">provisoire</span>':""}</p>
       <p class="big ${rf<0?"neg":""}">${eur0(rf)}</p>
       <p class="phrase">${phrase}</p>
       <div class="bar" role="img" aria-label="Répartition des loyers entre charges, amortissements et résultat">${segs.filter(x=>x[1]>0.5).map(([l,v,col])=>`<span style="width:${(v/base*100).toFixed(2)}%;background:${col}" title="${l} : ${eur0(v)}"></span>`).join("")}</div>
@@ -675,9 +683,24 @@ function vueAccueil(){
     </section>
     ${alerts.length?`<div class="alerts">${alerts.map(([k,t])=>`<div class="alert ${k}">${t}</div>`).join("")}</div>`:""}
     ${comp}
-    <div class="card"><h3>Par nature</h3><div class="tablewrap"><table>
-      ${nat.map(([n,v])=>`<tr><td>${libNature(n)}</td><td>${NATURES[n]?.l?`<span class="case" title="Ligne de la 2033-B">${NATURES[n].l}</span>`:'<span class="pill">hors résultat</span>'}</td><td class="n">${eur(v)}</td></tr>`).join("") || '<tr><td class="muted">Aucune écriture pour l\'instant.</td></tr>'}
-    </table></div></div>`;
+    <div class="card"><details><summary>Détail par catégorie</summary><div class="tablewrap" style="margin-top:8px"><table>
+      ${nat.map(([n,v])=>`<tr><td>${libNature(n)}</td><td>${comptesVisibles()?(NATURES[n]?.l?`<span class="case" title="Ligne de la 2033-B">${NATURES[n].l}</span>`:'<span class="pill">hors résultat</span>'):(NATURES[n]?.l?"":'<span class="pill" title="Le capital remboursé ne réduit pas l\'impôt">sans effet sur l\'impôt</span>')}</td><td class="n">${eur(v)}</td></tr>`).join("") || '<tr><td class="muted">Aucune écriture pour l\'instant.</td></tr>'}
+    </table></div></details></div>`;
+}
+/* « À faire » : les points à régler, chacun avec un bouton vers la bonne page, puis l'étape de saison */
+function aFaire(y){
+  const ex = exercice(y), l = controles(y).filter(x => x[0] !== "ok");
+  const finie = y < new Date().getFullYear(), close = ex.statut === "cloture";
+  const etapes = [];
+  if(close) etapes.push(["ok", `${y} est déclaré et clôturé.${ex.dateDeclaration?` Déclaration envoyée le ${fmtDate(ex.dateDeclaration)}.`:""}`]);
+  else if(finie) etapes.push(["etape", `L'année ${y} est terminée : il est temps de préparer la déclaration (à envoyer début mai ${y+1}).`, "declaration"]);
+  const items = [...l, ...etapes];
+  const sym = {ok:"✓", warn:"!", bad:"✕", etape:"→"}, col = {ok:"var(--pos)", warn:"var(--warn)", bad:"var(--neg)", etape:"var(--accent)"};
+  const rapide = close ? "" : `<div class="row noprint" style="margin-top:14px"><button class="btn" onclick="allerA('ecritures');S.composer=true;renderAll()">+ Ajouter une recette ou une dépense</button><button class="btn sec" onclick="allerA('banque')">Importer un relevé bancaire</button></div>`;
+  return `<div class="card todo"><h3 style="margin-top:0">${items.length && !(items.length===1&&close) ? "À faire" : "Tout est à jour"}</h3>
+    ${items.length ? `<ul>${items.map(([k,t,pg])=>`<li><b style="color:${col[k]}">${sym[k]}</b><span>${t}</span>${pg?lienPage(pg):""}</li>`).join("")}</ul>`
+      : `<p class="sub" style="margin:0">Rien à régler pour l'instant. Pensez à saisir chaque mois le loyer encaissé et les factures payées, ou à importer le relevé bancaire.</p>`}
+    ${rapide}</div>`;
 }
 function kpi(l,v,signe){ return `<div class="card kpi"><div class="l">${l}</div><div class="v" style="${signe&&v<0?'color:var(--neg)':''}">${eur(v)}</div></div>`; }
 
@@ -689,11 +712,11 @@ const I_EDIT = svgI('<path d="M5 19h3l10-10-3-3L5 16zM13 7l3 3"/>'), I_DEL = svg
 function piecesLigne(e){
   if(e.piece) return `<button class="btn ghost small pj" style="color:var(--accent)" title="${esc(e.piece)}" onclick="ouvrirPiece('${e.id}')">${I_CLIP}Voir</button>`;
   if(!pieceRequise(e)) return "";
-  return `<button class="btn ghost small pj" style="color:var(--warn)" onclick="attacherPiece('${e.id}')">${I_CLIP}Ajouter la pièce</button>`;
+  return `<button class="btn ghost small pj" style="color:var(--warn)" onclick="attacherPiece('${e.id}')">${I_CLIP}Ajouter le justificatif</button>`;
 }
 function vueEcritures(){
   const y = S.year;
-  if(isHistorique(y)) return entete(`Écritures ${y}`) + `<div class="alert info">Exercice repris de l'Excel : pas d'écritures détaillées.</div>`;
+  if(isHistorique(y)) return entete(`Recettes et dépenses ${y}`) + `<div class="alert info">Année reprise de l'Excel : pas d'écritures détaillées.</div>`;
   const ex = exercice(y); ex.ecritures ??= [];
   const list = [...ex.ecritures].sort((a,b)=> a.date.localeCompare(b.date));
   const lock = verrouille(y);
@@ -704,17 +727,17 @@ function vueEcritures(){
   const parMois = {};
   list.forEach(e => (parMois[monthOf(e.date)] ??= []).push(e));
   const groupe = g => NATURES[g.nature]?.g || (g.sens==="recette"?"recette":"charge");
-  return entete(`Écritures ${y}`, "Chaque mouvement d'argent lié à la location : loyers encaissés, factures payées, échéances de prêt.") + `
+  return entete(`Recettes et dépenses ${y}`, "Tout l'argent qui entre ou sort pour la location : loyers encaissés, factures payées, prêt. Le plus simple est d'importer le relevé bancaire ; on peut aussi saisir à la main.") + `
   ${lock ? `<div class="alerts"><div class="alert warn" style="align-items:center">Exercice clôturé : les écritures sont verrouillées.<button class="btn small sec" style="margin-left:auto" onclick="S.unlocked[${y}]=true;renderAll()">Déverrouiller</button></div></div>` : ""}
   <div class="row noprint" style="margin-bottom:18px">
-    ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"Nouvelle écriture"}</button>
+    ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"+ Ajouter une recette ou une dépense"}</button>
     <button class="btn sec" onclick="dupliquerMois()">Recopier le dernier mois</button>`}
-    <span style="margin-left:auto;color:var(--muted);font-size:14px">${list.length} écritures, ${eur(t.recettes)} encaissés, ${eur(t.c242+t.c244+t.c294+t.remb)} payés</span>
+    <span style="margin-left:auto;color:var(--muted);font-size:14px">${eur(t.recettes)} encaissés, ${eur(t.c242+t.c244+t.c294+t.remb)} payés</span>
   </div>
-  ${ouvert ? `<div class="card composer noprint"><h3>${ed?"Modifier l'écriture":"Nouvelle écriture"}</h3><div class="form">
+  ${ouvert ? `<div class="card composer noprint"><h3>${ed?"Modifier":"Nouvelle recette ou dépense"}</h3><div class="form">
     <label>Date<input type="date" id="eDate" value="${ed?ed.date:(list.length?list[list.length-1].date:y+"-01-01")}"></label>
-    <label>Tiers<input id="eTiers" list="tiersList" value="${esc(ed?ed.tiers:"")}" placeholder="Ex. syndic, banque"></label>
-    <label>Nature<select id="eNat">${natOpts(ed?ed.nature:"Loyer")}</select></label>
+    <label>Payé à / reçu de<input id="eTiers" list="tiersList" value="${esc(ed?ed.tiers:"")}" placeholder="Ex. syndic, banque"></label>
+    <label>Catégorie<select id="eNat">${natOpts(ed?ed.nature:"Loyer")}</select></label>
     <label>Montant TTC<input id="eMont" inputmode="decimal" value="${ed?String(ed.montant).replace(".",","):""}" placeholder="0,00"></label>
     <label style="grid-column:span 2">Commentaire<input id="eCom" value="${esc(ed?.commentaire||"")}" placeholder="Facultatif"></label>
     <div class="row"><button class="btn" onclick="saveEcriture()">${ed?"Enregistrer la modification":"Ajouter"}</button><button class="btn ghost" onclick="S.editId=null;S.composer=false;renderAll()">Annuler</button></div>
@@ -725,12 +748,12 @@ function vueEcritures(){
     return `<section class="card month"><header><h3>${MOIS_LONG[m-1]} ${y}</h3><span>${rec?`+${eur(rec)}`:""}${rec&&dep?" / ":""}${dep?`−${eur(dep)}`:""}</span></header>
     ${es.map(e => { const g = groupe(e); return `<div class="ecr ${S.editId===e.id?"editing":""}">
       <div class="d"><b>${e.date.slice(8,10)}</b>${MOIS[monthOf(e.date)-1]}</div>
-      <div class="t" ${e.libelleBanque?`title="Relevé bancaire : ${esc(e.libelleBanque)}"`:""}><b>${esc(e.tiers)||"Sans tiers"}</b><small><i class="${g}"></i>${libNature(e.nature)}</small></div>
+      <div class="t" ${e.libelleBanque?`title="Relevé bancaire : ${esc(e.libelleBanque)}"`:""}><b>${esc(e.tiers)||"Sans nom"}</b><small><i class="${g}"></i>${libNature(e.nature)}</small></div>
       <div class="m ${g}">${g==="recette"?"+":"−"}${eur(e.montant)}</div>
       <div class="a noprint">${piecesLigne(e)}${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();scrollTo(0,0)">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</div>
       ${e.commentaire?`<div class="c">${esc(e.commentaire)}</div>`:""}
     </div>`; }).join("")}</section>`; }).join("")
-  : `<div class="card"><p class="sub" style="margin:0">Aucune écriture pour ${y}. Commencez par le premier loyer encaissé avec « Nouvelle écriture ».</p></div>`}`;
+  : `<div class="card"><p class="sub" style="margin:0">Aucune écriture pour ${y}. Commencez par le premier loyer encaissé avec « Ajouter une recette ou une dépense », ou importez un relevé bancaire.</p></div>`}`;
 }
 function parseMontant(s){ return Number(String(s).replace(/\s/g,"").replace(",", ".")); }
 function saveEcriture(){
@@ -763,7 +786,7 @@ function vueImmos(){
   const ed = S.editImmo === "new" ? {libelle:"",categorie:"mobilier",valeurOrigine:"",quotePartTerrain:0,dureeAns:7,miseEnService:y+"-01-01"} : S.data.immobilisations.find(i=>i.id===S.editImmo);
   const rows = S.data.immobilisations.map(i => { const a = amortAnnee(i,y); return {i,a}; });
   const tot = rows.reduce((s,{i,a})=>({brut:s.brut+i.valeurOrigine, dot:s.dot+(anneeEntreeBilan(i)<=y?a.dotation:0), cum:s.cum+a.cumulFin}),{brut:0,dot:0,cum:0});
-  return entete(`Immobilisations ${y}`, "Ce qui s'amortit : le logement hors terrain, les travaux et le mobilier. Montants TTC, puisqu'un LMNP ne récupère pas la TVA.") + `
+  return entete(`Logement et meubles`, "Le logement, les gros travaux et les meubles ne sont pas déduits d'un coup : leur prix est étalé sur plusieurs années (c'est l'amortissement), ce qui réduit l'impôt chaque année. Montants TTC.") + `
   ${ed ? `<div class="card"><div class="form">
     <label>Libellé<input id="iLib" value="${esc(ed.libelle)}"></label>
     <label>Catégorie<select id="iCat">${Object.entries(CATEGORIES).map(([k,l])=>`<option value="${k}" ${k===ed.categorie?"selected":""}>${l}</option>`).join("")}</select></label>
@@ -774,17 +797,17 @@ function vueImmos(){
     <div class="row"><button class="btn" onclick="saveImmo()">Enregistrer</button><button class="btn sec" onclick="S.editImmo=null;renderAll()">Annuler</button>
     ${S.editImmo!=="new"?`<button class="btn danger" onclick="delImmo()">Supprimer</button>`:""}</div></div>
     <p class="sub" style="margin:10px 0 0">Durées usuelles : gros œuvre 40–50 ans, logement en un seul bloc 25–30 ans, travaux 10–15 ans, mobilier 5–10 ans. Un achat inférieur à 500 € HT se passe plutôt en charge (« Petit équipement »).</p></div>`
-  : `<div class="noprint" style="margin-bottom:12px"><button class="btn" onclick="S.editImmo='new';renderAll()">+ Ajouter une immobilisation</button></div>`}
+  : `<div class="noprint" style="margin-bottom:12px"><button class="btn" onclick="S.editImmo='new';renderAll()">+ Ajouter un bien (meuble, travaux…)</button></div>`}
   <div class="card"><div class="tablewrap"><table>
-    <tr><th>Bien</th><th class="n">Valeur</th><th class="n">Base amortissable</th><th class="n">Durée</th><th>Mise en service</th><th class="n">Dotation ${y}</th><th class="n">Cumul fin ${y}</th><th class="n">VNC</th><th></th></tr>
-    ${rows.map(({i,a})=>`<tr><td>${esc(i.libelle)}<br><small style="color:var(--muted)">${comptesVisibles()&&CPT_IMMO[i.categorie]?`<span class="cpt">${CPT_IMMO[i.categorie].brut}</span>`:""}${CATEGORIES[i.categorie]||i.categorie}</small></td>
-      <td class="n">${eur(i.valeurOrigine)}</td><td class="n">${eur(a.base)}</td><td class="n">${i.dureeAns} ans</td><td>${fmtDate(i.miseEnService)}</td>
+    <tr><th>Bien</th><th class="n">Prix</th><th class="n">Étalé sur</th><th class="n" title="Dotation aux amortissements">Déduit en ${y}</th><th class="n">Déduit au total fin ${y}</th><th class="n" title="Valeur nette comptable">Reste à déduire</th><th></th></tr>
+    ${rows.map(({i,a})=>`<tr><td>${esc(i.libelle)}<br><small style="color:var(--muted)">${comptesVisibles()&&CPT_IMMO[i.categorie]?`<span class="cpt">${CPT_IMMO[i.categorie].brut}</span>`:""}${CATEGORIES[i.categorie]||i.categorie} · depuis le ${fmtDate(i.miseEnService)}${a.base<i.valeurOrigine-0.005?` · ${eur0(a.base)} amortis, hors terrain`:""}</small></td>
+      <td class="n">${eur(i.valeurOrigine)}</td><td class="n">${i.dureeAns} ans</td>
       <td class="n">${eur(a.dotation)}</td><td class="n">${eur(a.cumulFin)}</td><td class="n">${eur(a.base-a.cumulFin)}</td>
       <td class="noprint"><button class="btn small sec" onclick="S.editImmo='${i.id}';renderAll();scrollTo(0,0)">Modifier</button></td></tr>
-      <tr class="muted"><td colspan="9"><details><summary>Plan d'amortissement</summary><table>${planAmort(i).map(p=>`<tr class="${p.annee===y?"tot":""}"><td>${p.annee}${p.avantLMNP?' <span class="pill">avant LMNP, non déduit</span>':""}</td><td class="n">${eur(p.dotation)}</td><td class="n">cumul ${eur(p.cumul)}</td><td class="n">VNC ${eur(p.vnc)}</td></tr>`).join("")}</table></details></td></tr>`).join("")}
-    <tr class="tot"><td>Total</td><td class="n">${eur(tot.brut)}</td><td></td><td></td><td></td><td class="n">${eur(tot.dot)}</td><td class="n">${eur(tot.cum)}</td><td></td><td></td></tr>
+      <tr class="muted"><td colspan="7"><details><summary>Année par année</summary><table>${planAmort(i).map(p=>`<tr class="${p.annee===y?"tot":""}"><td>${p.annee}${p.avantLMNP?' <span class="pill">avant LMNP, non déduit</span>':""}</td><td class="n">${eur(p.dotation)}</td><td class="n">cumul ${eur(p.cumul)}</td><td class="n">VNC ${eur(p.vnc)}</td></tr>`).join("")}</table></details></td></tr>`).join("")}
+    <tr class="tot"><td>Total</td><td class="n">${eur(tot.brut)}</td><td></td><td class="n">${eur(tot.dot)}</td><td class="n">${eur(tot.cum)}</td><td></td><td></td></tr>
   </table></div></div>
-  ${vueConsommes(y)}`;
+  ${comptesVisibles() ? vueConsommes(y) : `<div class="card"><details><summary>Pour une future revente : amortissements déjà déduits</summary>${vueConsommes(y).replace(/^<div class="card">|<\/div>$/g,"")}</details></div>`}`;
 }
 
 /* ---- Amortissements consommés (déduits) et en réserve, pour la plus-value à la revente ---- */
@@ -836,31 +859,31 @@ function delImmo(){ if(!confirm("Supprimer cette immobilisation ?")) return; S.d
 /* ---- Emprunt ---- */
 function vueEmprunt(){
   const y = S.year;
-  if(!S.data.emprunts.length) return entete("Emprunt") + `<div class="card"><p>Aucun emprunt.</p><button class="btn" onclick="S.data.emprunts.push({id:uid(),banque:'',capital:0,tauxAnnuel:0,dureeMois:240,premiereEcheance:'${y}-01-01',mensualite:0});setDirty();renderAll()">+ Ajouter un emprunt</button></div>`;
+  if(!S.data.emprunts.length) return entete("Prêt immobilier") + `<div class="card"><p>Aucun prêt.</p><button class="btn" onclick="S.data.emprunts.push({id:uid(),banque:'',capital:0,tauxAnnuel:0,dureeMois:240,premiereEcheance:'${y}-01-01',mensualite:0});setDirty();renderAll()">+ Ajouter un prêt</button></div>`;
   return S.data.emprunts.map((l,idx) => {
     const rows = echeancier(l);
     const ans = [...new Set(rows.map(r=>r.annee))];
     const c = !isHistorique(y) ? calculAnnee(y) : null;
     const ex = exercice(y);
-    return entete(`Emprunt ${esc(l.banque)}`, "Les intérêts sont déductibles du résultat ; le capital remboursé ne l'est pas.") + `
-    <div class="card"><div class="form">
+    return entete(`Prêt ${esc(l.banque)}`, "Seuls les intérêts réduisent l'impôt ; le capital remboursé, non. L'outil calcule les intérêts de chaque année à partir des caractéristiques du prêt.") + `
+    <div class="card"><details ${l.capital?"":"open"}><summary>Caractéristiques du prêt</summary><div class="form" style="margin-top:12px">
       <label>Banque<input value="${esc(l.banque)}" onchange="majPret(${idx},'banque',this.value)"></label>
       <label>Capital emprunté<input inputmode="decimal" value="${l.capital}" onchange="majPret(${idx},'capital',parseMontant(this.value))"></label>
       <label>Taux annuel (%)<input inputmode="decimal" value="${r2(l.tauxAnnuel*10000)/100}" onchange="majPret(${idx},'tauxAnnuel',parseMontant(this.value)/100)"></label>
       <label>Durée (mois)<input type="number" value="${l.dureeMois}" onchange="majPret(${idx},'dureeMois',parseInt(this.value,10))"></label>
       <label>1re échéance<input type="date" value="${l.premiereEcheance}" onchange="majPret(${idx},'premiereEcheance',this.value)"></label>
       <label>Mensualité hors assurance<input inputmode="decimal" value="${l.mensualite}" onchange="majPret(${idx},'mensualite',parseMontant(this.value))"></label>
-    </div></div>
-    ${c && ex ? `<div class="card"><h3 style="margin-top:0">${y} : théorique ou réel ?</h3><table>
-      <tr><td>Intérêts selon l'échéancier théorique</td><td class="n">${eur(c.interetsEch)}</td></tr>
-      <tr><td>Intérêts saisis dans les écritures (retenus)</td><td class="n">${c.interetsSaisis?eur(c.t.c294):"–"}</td></tr>
-      <tr><td>Capital restant dû au 31/12 selon l'échéancier</td><td class="n">${eur(c.crdEch)}</td></tr>
-      <tr><td>Capital restant dû selon la banque (facultatif)</td><td class="n"><input inputmode="decimal" style="width:130px;text-align:right" value="${ex.crdBanque??""}" placeholder="à saisir" onchange="majCrd(this.value)"></td></tr></table>
-      <p class="sub" style="margin:8px 0 0">Le montant de la banque (relevé annuel ou tableau d'amortissement) prime s'il est saisi : c'est lui qui va au bilan.</p></div>` : ""}
-    <div class="card"><h3 style="margin-top:0">Synthèse annuelle (échéancier théorique)</h3><div class="tablewrap"><table>
+    </div></details></div>
+    ${c && ex ? `<div class="card"><h3 style="margin-top:0">${y} : comparer avec la banque</h3><table>
+      <tr><td>Intérêts calculés par l'outil</td><td class="n">${eur(c.interetsEch)}</td></tr>
+      <tr><td>Intérêts saisis dans les dépenses (ceux retenus)</td><td class="n">${c.interetsSaisis?eur(c.t.c294):"–"}</td></tr>
+      <tr><td>Capital restant dû au 31/12 calculé par l'outil</td><td class="n">${eur(c.crdEch)}</td></tr>
+      <tr><td>Capital restant dû selon la banque<br><small style="color:var(--muted)">Relevé annuel de prêt, reçu en début d'année</small></td><td class="n"><input inputmode="decimal" style="width:130px;text-align:right" value="${ex.crdBanque??""}" placeholder="à saisir" onchange="majCrd(this.value)"></td></tr></table>
+      <p class="sub" style="margin:8px 0 0">S'il est saisi, le montant de la banque remplace le calcul de l'outil dans la déclaration.</p></div>` : ""}
+    <div class="card"><details><summary>Tableau sur toute la durée du prêt</summary><div class="tablewrap" style="margin-top:8px"><table>
       <tr><th>Année</th><th class="n">Intérêts</th><th class="n">Capital remboursé</th><th class="n">Restant dû au 31/12</th></tr>
       ${ans.map(a=>{ const s = empruntAnnee(l,a); return `<tr class="${a===y?"tot":""}"><td>${a}</td><td class="n">${eur(s.interets)}</td><td class="n">${eur(s.capital)}</td><td class="n">${eur(s.crdFin)}</td></tr>`;}).join("")}
-    </table></div></div>`;
+    </table></div></details></div>`;
   }).join("");
 }
 function majPret(i,k,v){ S.data.emprunts[i][k] = v; setDirty(); renderAll(); }
@@ -885,10 +908,20 @@ function vueDeclaration(){
   const decl = S.data.dossier.declarant === "2" ? ["5OA","5OY"] : ["5NA","5NY"];
   const L = b.lignes, lc = (k,lib) => L[k].brutFin ? `<tr><td>${lib}</td><td class="n">${eur0(L[k].brutDebut)}</td><td class="n">${eur0(L[k].aug)}</td><td class="n">${eur0(L[k].brutFin)}</td></tr>` : "";
   const la = (k,lib) => L[k].brutFin && k!=="terrain" ? `<tr><td>${lib}</td><td class="n">${eur0(L[k].amDebut)}</td><td class="n">${eur0(L[k].dot)}</td><td class="n">${eur0(L[k].amFin)}</td></tr>` : "";
-  return `<div class="fiche"><div class="row" style="justify-content:space-between;align-items:flex-start">${entete(`Déclaration ${y}`, `Montants à recopier dans la liasse en ligne, en euros entiers. Revenus ${y} de ${esc(S.data.dossier.nom)}, à déclarer au printemps ${y+1}.`)}
-    <div class="row noprint"><button class="btn sec" onclick="exporterFEC(${y})" title="Fichier des écritures comptables, à remettre en cas de contrôle fiscal">Exporter le FEC</button><button class="btn sec" onclick="print()">Imprimer ou enregistrer en PDF</button></div></div>
-  ${exercice(y).statut!=="cloture" && y >= new Date().getFullYear() ? `<div class="alert warn">Exercice en cours : chiffres provisoires.</div>`:""}
+  const ex = exercice(y), etape = (n, t) => `<h2 class="etape"><span>${n}</span>${t}</h2>`;
+  return `<div class="fiche"><div class="row" style="justify-content:space-between;align-items:flex-start">${entete(`Déclarer ${y}`, `Les revenus ${y} de la location meublée se déclarent début mai ${y+1}, en deux temps : la déclaration de résultat sur l'espace professionnel, puis le report du résultat sur la déclaration de revenus.`)}
+    <div class="row noprint">${comptesVisibles()?`<button class="btn sec" onclick="exporterFEC(${y})" title="Fichier des écritures comptables, à remettre en cas de contrôle fiscal">Exporter le FEC</button>`:""}<button class="btn sec" onclick="print()">Imprimer ou enregistrer en PDF</button></div></div>
+  ${ex.statut!=="cloture" && y >= new Date().getFullYear() ? `<div class="alert warn">L'année n'est pas finie : ces chiffres sont provisoires.</div>`:""}
+  <div class="noprint">${etape(1, "Vérifier les saisies")}</div>
   ${vueControles(y)}
+  <div class="noprint">${etape(2, "Remplir la déclaration en ligne")}</div>
+  ${guideSaisie(y, {p218, c242, c244, c254, c294, r310, rf, reint, ardUt, brut, am, crd, cap, decl, def:R(f.deficitsImputes)})}
+  <div class="noprint">${etape(3, `Clôturer ${y} une fois la déclaration envoyée`)}</div>
+  <div class="card noprint">${ex.statut==="cloture"
+    ? `<p style="margin:0"><b style="color:var(--pos)">✓</b> ${y} est clôturé${ex.cloture?` depuis le ${fmtDate(ex.cloture.date)}`:""}.${ex.dateDeclaration?` Déclaration envoyée le ${fmtDate(ex.dateDeclaration)}.`:""}</p>`
+    : `<p class="sub" style="margin:0 0 12px">La clôture fige les chiffres déclarés, verrouille les saisies de ${y} et ouvre ${y+1}. On peut rouvrir l'année si besoin.</p><button class="btn" onclick="allerA('dossier');S.cloture=${y};renderAll()">Clôturer ${y}…</button>`}</div>
+  <details class="formulaires" ${comptesVisibles()?"open":""}><summary class="noprint">Voir les formulaires en détail (2033-A à D, 2031, 2042-C-PRO)</summary>
+  <p class="sub noprint">Les mêmes montants, présentés case par case comme sur les formulaires officiels. Utile pour un comptable, ou pour vérifier une case.</p>
 
   <div class="card"><h3 style="margin-top:0">2033-B · Compte de résultat simplifié</h3><table>
     <tr><th>Case</th><th>Libellé</th><th class="n">${y}</th></tr>
@@ -948,8 +981,8 @@ function vueDeclaration(){
   <div class="card"><h3 style="margin-top:0">2042-C-PRO · Déclaration de revenus (déclarant ${S.data.dossier.declarant})</h3><table>
     ${rf>=0 ? ligne(decl[0],"Locations meublées non professionnelles – régime réel – bénéfice",rf-R(f.deficitsImputes),{tot:1}) : ligne(decl[1],"Locations meublées non professionnelles – régime réel – déficit",-rf,{tot:1})}
   </table>${f.deficitsImputes?`<p class="sub" style="margin-top:8px">Bénéfice après imputation de ${eur0(f.deficitsImputes)} de déficits antérieurs : vérifiez sur la notice si l'imputation se fait dans les cases dédiées aux déficits antérieurs.</p>`:""}</div>
-  ${guideSaisie(y, {p218, c242, c244, c254, c294, r310, rf, reint, ardUt, brut, am, crd, cap, decl, def:R(f.deficitsImputes)})}
   ${comptesVisibles() ? vueBalance(y) : ""}
+  </details>
   <p class="sub">Ces montants sont calculés par l'outil à partir de vos saisies ; vérifiez-les avant envoi. Échéance habituelle de la liasse : début mai (+ 15 jours en télétransmission).</p></div>`;
 }
 
@@ -1022,14 +1055,14 @@ function exporterFEC(y){
 /* ---- Guide de saisie en ligne (mode EFI de l'espace professionnel) ---- */
 function guideSaisie(y, v){
   const n = x => `<b>${eur0(x)}</b>`;
-  return `<div class="card noprint"><details><summary style="font-size:16px;font-weight:600">Guide de saisie sur impots.gouv.fr, pas à pas</summary>
+  return `<div class="card noprint"><details open><summary style="font-size:16px;font-weight:600">Pas à pas sur impots.gouv.fr</summary>
   <ol style="margin:14px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:10px">
     <li><b>Une seule fois</b> : avoir un espace professionnel actif, rattaché au SIRET de la location (le code d'activation arrive par courrier). Si l'onglet « Résultat » est absent ou grisé, écrire au service des impôts des entreprises par la messagerie sécurisée de l'espace professionnel pour demander l'ouverture du service « Déclarer le résultat », régime réel simplifié BIC.</li>
     <li>Espace professionnel → <b>Déclarer</b> → <b>Résultat</b> → exercice du 01/01/${y} au 31/12/${y}. Saisir les tableaux dans cet ordre, les annexes avant la 2031 qui en reprend une partie.</li>
     <li><b>2033-A (bilan)</b> : immobilisations brutes (028) ${n(v.brut)}, amortissements (030) ${n(v.am)}, capital (120) ${n(v.cap)}, résultat (136) ${n(v.r310)}, emprunts (156) ${n(v.crd)}. Reprendre la colonne N-1 de la déclaration de ${y-1}.</li>
-    <li><b>2033-C (immobilisations)</b> : recopier les deux tableaux de la fiche ci-dessus. Le total des dotations doit être égal à la ligne 254 de la 2033-B (${n(v.c254)}).</li>
+    <li><b>2033-C (immobilisations)</b> : recopier les deux tableaux de « Voir les formulaires en détail », plus bas. Le total des dotations doit être égal à la ligne 254 de la 2033-B (${n(v.c254)}).</li>
     <li><b>2033-B (compte de résultat)</b> : loyers (218) ${n(v.p218)}, charges externes (242) ${n(v.c242)}, impôts et taxes (244) ${n(v.c244)}, dotations (254) ${n(v.c254)}, intérêts (294) ${n(v.c294)}. Le résultat comptable (310) doit afficher ${n(v.r310)}.${v.reint?` En bas du tableau, réintégrer ${n(v.reint)} d'amortissements non déductibles (art. 39 C).`:""}${v.ardUt?` Déduire ${n(v.ardUt)} d'amortissements différés antérieurs.`:""} Résultat fiscal : ${n(Math.abs(v.rf))} (${v.rf>=0?"bénéfice":"déficit"}).</li>
-    <li><b>2033-D</b> : déficits et amortissements reportés, comme dans la fiche ci-dessus ; à laisser vide s'il n'y a rien à reporter. 2033-E, F et G : néant.</li>
+    <li><b>2033-D</b> : déficits et amortissements reportés, comme dans « Voir les formulaires en détail » ; à laisser vide s'il n'y a rien à reporter. 2033-E, F et G : néant.</li>
     <li><b>2031</b> : vérifier l'identification et le résultat fiscal, puis cocher l'option pour la <b>comptabilité super-simplifiée</b> (art. 302 septies A ter A du CGI), à renouveler chaque année.</li>
     <li>Ne pas recopier les zones grisées, calculées par le site : vérifier seulement qu'elles redonnent les totaux de la fiche (232, 264, 310, 110, 180).</li>
     <li><b>Continuer</b> → relire le récapitulatif → <b>Signer et envoyer</b>. Enregistrer aussitôt l'accusé de réception en PDF dans <code>Justificatifs/${y+1}/</code> : c'est la seule preuve du dépôt.</li>
@@ -1140,51 +1173,55 @@ function vueSimulations(){
 }
 
 /* ---- Contrôles avant déclaration ---- */
-/* Chaque contrôle : [niveau, texte] avec niveau "ok" (vérifié), "warn" (à regarder) ou "bad" (à corriger) */
+/* Chaque contrôle : [niveau, texte, page] avec niveau "ok" (vérifié), "warn" (à regarder) ou "bad" (à corriger),
+   et la page où régler le point (facultatif) */
 function controles(y){
   const ex = exercice(y), es = ex.ecritures || [], c = calculAnnee(y), out = [];
-  const chk = (cond, okTxt, niveau, koTxt) => out.push(cond ? ["ok", okTxt] : [niveau, koTxt]);
+  const chk = (cond, okTxt, niveau, koTxt, page) => out.push(cond ? ["ok", okTxt] : [niveau, koTxt, page]);
   const hors = es.filter(e => yearOf(e.date) !== y);
-  chk(!hors.length, "Toutes les écritures sont datées de l'exercice.", "bad", `${hors.length} écriture(s) datée(s) hors de ${y} : corrigez leur date.`);
+  chk(!hors.length, "Toutes les écritures sont datées de l'exercice.", "bad", `${hors.length} écriture(s) datée(s) hors de ${y} : corrigez leur date.`, "ecritures");
   const nuls = es.filter(e => !(e.montant > 0));
-  chk(!nuls.length, "Aucun montant nul ou négatif.", "bad", `${nuls.length} écriture(s) à montant nul ou négatif.`);
-  chk(!c.t.inconnues, "Toutes les natures sont reconnues.", "bad", `${c.t.inconnues} écriture(s) à nature inconnue, classées par défaut en charges externes.`);
+  chk(!nuls.length, "Aucun montant nul ou négatif.", "bad", `${nuls.length} écriture(s) à montant nul ou négatif.`, "ecritures");
+  chk(!c.t.inconnues, "Toutes les natures sont reconnues.", "bad", `${c.t.inconnues} écriture(s) à nature inconnue, classées par défaut en charges externes.`, "ecritures");
   const moisLoyer = new Set(es.filter(e => e.nature === "Loyer").map(e => monthOf(e.date)));
   const debut = y === yearOf(debutLMNP()) ? monthOf(debutLMNP()) : 1;
   const attendus = [...Array(13 - debut).keys()].map(i => i + debut).filter(m => y < new Date().getFullYear() || m <= new Date().getMonth()+1);
   const manq = attendus.filter(m => !moisLoyer.has(m));
-  chk(!manq.length, `Un loyer saisi pour chacun des ${attendus.length} mois.`, "warn", `Loyer manquant : ${manq.map(m=>MOIS[m-1]).join(", ")}.`);
-  if(c.produits > 5000) chk(!!c.t.parNature["CFE"], "CFE saisie.", "warn", "Aucune CFE saisie alors que les recettes dépassent 5 000 € : vérifiez l'avis dans l'espace professionnel impots.gouv.");
+  chk(!manq.length, `Un loyer saisi pour chacun des ${attendus.length} mois.`, "warn", `Loyer manquant : ${manq.map(m=>MOIS[m-1]).join(", ")}.`, "ecritures");
+  if(c.produits > 5000) chk(!!c.t.parNature["CFE"], "CFE saisie.", "warn", "Aucune CFE saisie alors que les recettes dépassent 5 000 € : vérifiez l'avis dans l'espace professionnel impots.gouv, puis saisissez-la comme dépense.", "ecritures");
   const pm = piecesManquantes(y).length;
-  chk(!pm, "Toutes les pièces justificatives sont rattachées.", "warn", `${pm} pièce(s) justificative(s) manquante(s) (page Pièces).`);
+  chk(!pm, "Toutes les pièces justificatives sont rattachées.", "warn", `${pm} justificatif(s) manquant(s).`, "pieces");
   const aTrier = (S.data.banque?.aTrier || []).filter(o => yearOf(o.date) === y).length;
-  chk(!aTrier, "Aucune opération bancaire de l'année en attente de tri.", "warn", `${aTrier} opération(s) bancaire(s) de ${y} encore à trier (page Banque).`);
+  chk(!aTrier, "Aucune opération bancaire de l'année en attente de tri.", "warn", `${aTrier} opération(s) bancaire(s) de ${y} encore à trier.`, "banque");
   const vus = {}, dbl = [];
   es.forEach(e => { const k = `${e.date}|${e.nature}|${e.montant}`; if(vus[k]) dbl.push(e); vus[k] = true; });
-  chk(!dbl.length, "Aucun doublon apparent.", "warn", `${dbl.length} écriture(s) en double apparent (même date, nature et montant) : vérifiez qu'il ne s'agit pas d'une saisie répétée.`);
+  chk(!dbl.length, "Aucun doublon apparent.", "warn", `${dbl.length} écriture(s) en double apparent (même date, nature et montant) : vérifiez qu'il ne s'agit pas d'une saisie répétée.`, "ecritures");
   const gros = es.filter(e => e.nature === "Petit équipement (< 500 € HT)" && e.montant > 600);
-  chk(!gros.length, "Aucun petit équipement au-dessus du seuil.", "warn", `${gros.length} « petit équipement » de plus de 600 € TTC : au-delà de 500 € HT par élément, il faut l'amortir (page Immobilisations).`);
+  chk(!gros.length, "Aucun petit équipement au-dessus du seuil.", "warn", `${gros.length} « petit équipement » de plus de 600 € TTC : au-delà de 500 € HT par élément, il faut l'amortir (page Logement et meubles).`, "immos");
   if(S.data.emprunts.length){
-    chk(c.interetsSaisis, "Intérêts d'emprunt saisis d'après la banque.", "warn", `Intérêts non saisis : l'échéancier théorique (${eur(c.interetsEch)}) est utilisé. Saisissez les montants réellement prélevés.`);
+    chk(c.interetsSaisis, "Intérêts d'emprunt saisis d'après la banque.", "warn", `Intérêts non saisis : l'échéancier théorique (${eur(c.interetsEch)}) est utilisé. Saisissez les montants réellement prélevés.`, "ecritures");
     const crdB = ex.crdBanque != null && ex.crdBanque !== "";
-    chk(crdB, "Capital restant dû au 31/12 saisi d'après la banque.", "warn", "Capital restant dû au 31/12 non saisi : le bilan utilise l'échéancier théorique (page Emprunt).");
-    if(crdB && Math.abs(Number(ex.crdBanque) - c.crdEch) > 50) out.push(["warn", `Écart de ${eur(Math.abs(Number(ex.crdBanque) - c.crdEch))} entre le capital restant dû de la banque et l'échéancier : vérifiez les paramètres de l'emprunt.`]);
+    chk(crdB, "Capital restant dû au 31/12 saisi d'après la banque.", "warn", "Capital restant dû au 31/12 non saisi : le bilan utilise l'échéancier théorique.", "emprunt");
+    if(crdB && Math.abs(Number(ex.crdBanque) - c.crdEch) > 50) out.push(["warn", `Écart de ${eur(Math.abs(Number(ex.crdBanque) - c.crdEch))} entre le capital restant dû de la banque et l'échéancier : vérifiez les paramètres de l'emprunt.`, "emprunt"]);
   }
   const prec = exercice(y-1);
-  if(y > yearOf(debutLMNP())) chk(!!prec && (!isHistorique(y-1) || prec.chiffres?.immobilisationsNettes != null), `Colonne N-1 (${y-1}) disponible pour la 2033-A.`, "warn", `Chiffres ${y-1} incomplets : la colonne N-1 de la 2033-A sera à remplir à la main.`);
+  if(y > yearOf(debutLMNP())) chk(!!prec && (!isHistorique(y-1) || prec.chiffres?.immobilisationsNettes != null), `Colonne N-1 (${y-1}) disponible pour la 2033-A.`, "warn", `Chiffres ${y-1} incomplets : la colonne « année précédente » du bilan (2033-A) sera à remplir à la main lors de la déclaration.`);
   const f = fiscalJusqua(y);
   if(f.perimes?.length) out.push(["warn", `Déficit(s) de plus de 10 ans perdu(s) cette année : ${f.perimes.map(d=>d.annee+" ("+eur(d.montant)+")").join(", ")}.`]);
   return out;
 }
+const NOM_PAGE = Object.fromEntries(TABS.filter(t=>t[0]!=="h"&&t[0]!=="sep"));
+function allerA(pg){ S.tab = pg; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; document.body.classList.remove("menu-open"); renderAll(); scrollTo(0,0); }
+const lienPage = pg => `<button class="btn ghost small noprint" style="margin-left:auto;flex:none;color:var(--accent)" onclick="allerA('${pg}')">${NOM_PAGE[pg]} →</button>`;
 function vueControles(y){
   const l = controles(y), nb = k => l.filter(x => x[0] === k).length;
-  const bad = nb("bad"), warn = nb("warn");
-  const tete = bad ? `${bad} point(s) à corriger${warn?` et ${warn} à vérifier`:""}` : warn ? `${warn} point(s) à vérifier avant de déclarer` : "Prêt à déclarer";
+  const bad = nb("bad"), warn = nb("warn"), oks = l.filter(x => x[0] === "ok");
+  const tete = bad ? `${bad} point(s) à corriger${warn?` et ${warn} à vérifier`:""}` : warn ? `${warn} point(s) à vérifier avant de déclarer` : "Tout est vérifié : prêt à déclarer";
   const sym = {ok:"✓", warn:"!", bad:"✕"}, col = {ok:"var(--pos)", warn:"var(--warn)", bad:"var(--neg)"};
-  return `<div class="card noprint"><details ${bad||warn?"open":""}><summary style="font-size:16px;font-weight:600;color:${bad?col.bad:warn?col.warn:col.ok}">${tete} · ${nb("ok")}/${l.length} contrôles validés</summary>
-    <ul style="list-style:none;padding:0;margin:12px 0 0;display:flex;flex-direction:column;gap:6px">
-    ${[...l].sort((a,b)=>"bwo".indexOf(a[0][0])-"bwo".indexOf(b[0][0])).map(([k,t])=>`<li style="display:flex;gap:10px"><b style="color:${col[k]};width:14px;flex:none;text-align:center">${sym[k]}</b><span style="${k==="ok"?"color:var(--muted)":""}">${t}</span></li>`).join("")}
-    </ul></details></div>`;
+  const li = ([k,t,pg]) => `<li><b style="color:${col[k]}">${sym[k]}</b><span style="${k==="ok"?"color:var(--muted)":""}">${t}</span>${pg&&k!=="ok"?lienPage(pg):""}</li>`;
+  return `<div class="card todo noprint"><h3 style="margin-top:0;color:${bad?col.bad:warn?col.warn:col.ok}">${tete}</h3>
+    ${bad||warn ? `<ul>${l.filter(x=>x[0]!=="ok").sort((a,b)=>"bw".indexOf(a[0][0])-"bw".indexOf(b[0][0])).map(li).join("")}</ul>` : ""}
+    <details style="margin-top:10px"><summary class="sub" style="cursor:pointer">Voir les ${oks.length} points déjà validés</summary><ul style="margin-top:6px">${oks.map(li).join("")}</ul></details></div>`;
 }
 
 /* ---- Dossier ---- */
@@ -1192,22 +1229,22 @@ function vueDossier(){
   const d = S.data.dossier, rp = S.data.reports;
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
   if(S.cloture && exercice(S.cloture) && !isHistorique(S.cloture)) return vueCloture(S.cloture);
-  return entete("Dossier", "Paramètres du dossier, exercices et fichier de données.") + `
+  return entete("Paramètres", "Informations du dossier, années et fichier de données. À régler une fois, puis rarement.") + `
   <div class="card"><div class="form">
     <label>Nom du dossier<input value="${esc(d.nom)}" onchange="S.data.dossier.nom=this.value;setDirty();renderAll()"></label>
     <label>Début de la location meublée<input type="date" value="${d.debutLocationMeublee}" onchange="S.data.dossier.debutLocationMeublee=this.value;setDirty();renderAll()"></label>
     <label>Déclarant sur la 2042<select onchange="S.data.dossier.declarant=this.value;setDirty();renderAll()"><option value="1" ${d.declarant==="1"?"selected":""}>Déclarant 1</option><option value="2" ${d.declarant==="2"?"selected":""}>Déclarant 2</option></select></label>
     <label>SIREN (pour le nom du fichier FEC)<input inputmode="numeric" maxlength="9" value="${esc(d.siren||"")}" placeholder="9 chiffres" onchange="S.data.dossier.siren=this.value.replace(/\D/g,'');setDirty();renderAll()"></label>
   </div></div>
-  <div class="card"><h3 style="margin-top:0">Exercices</h3><table>
-    ${ys.map(y=>`<tr><td>${y}</td><td>${esc(S.data.exercices[y].statut||"en-cours")}</td><td class="n">${isHistorique(y)?"":`
+  <div class="card"><h3 style="margin-top:0">Années</h3><table>
+    ${ys.map(y=>`<tr><td>${y}</td><td>${({historique:"reprise de l'Excel","en-cours":"en cours",cloture:"clôturée"})[S.data.exercices[y].statut||"en-cours"]||esc(S.data.exercices[y].statut)}</td><td class="n">${isHistorique(y)?"":`
       ${S.data.exercices[y].statut==="cloture"?`<button class="btn small sec" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`:`<button class="btn small sec" onclick="S.cloture=${y};renderAll();scrollTo(0,0)">Clôturer…</button>`}`}</td></tr>`).join("")}
-  </table><div style="margin-top:10px"><button class="btn" onclick="nouvelExercice()">+ Ouvrir l'exercice ${Math.max(...ys)+1}</button></div></div>
+  </table><div style="margin-top:10px"><button class="btn" onclick="nouvelExercice()">+ Ouvrir l'année ${Math.max(...ys)+1}</button></div></div>
   <div class="card"><h3 style="margin-top:0">Reports à l'ouverture du premier exercice détaillé</h3>
     <div class="form"><label>Amortissements différés (art. 39 C)<input inputmode="decimal" value="${rp.amortissementsDifferes}" onchange="S.data.reports.amortissementsDifferes=r2(parseMontant(this.value))||0;setDirty();renderAll()"></label></div>
     <p class="sub" style="margin:8px 0 0">Déficits antérieurs : ${rp.deficits.length?rp.deficits.map(x=>x.annee+" : "+eur(x.montant)).join(", "):"aucun"}.</p></div>
   <div class="card"><details><summary>Plan de comptes utilisé</summary>
-    <p class="sub" style="margin:10px 0">Chaque nature est rattachée à un compte du plan comptable général. Ces comptes servent à la balance et à l'export FEC ; le bouton « N° de comptes » du menu les affiche partout.</p>
+    <p class="sub" style="margin:10px 0">Chaque nature est rattachée à un compte du plan comptable général. Ces comptes servent à la balance et à l'export FEC ; le bouton « Vue comptable » du menu les affiche partout.</p>
     <div class="tablewrap"><table><tr><th>Compte</th><th>Libellé</th><th>Nature de l'outil</th></tr>
     ${Object.entries(COMPTES).map(([c,l])=>`<tr><td>${c}</td><td>${esc(l)}</td><td>${Object.keys(NATURES).filter(n=>NATURES[n].c===c).map(esc).join(", ")}</td></tr>`).join("")}
     </table></div></details></div>
@@ -1281,24 +1318,22 @@ function detacherPiece(id){ const e = findEcr(id); if(!confirm("Détacher ce jus
 function marquerSansPiece(id, v){ const e = findEcr(id); if(v) e.sansPiece = true; else delete e.sansPiece; setDirty(); renderAll(); }
 function vuePieces(){
   const y = S.year;
-  if(isHistorique(y)) return entete(`Pièces ${y}`) + `<div class="alert info">Exercice repris de l'Excel : pas d'écritures détaillées.</div>`;
+  if(isHistorique(y)) return entete(`Justificatifs ${y}`) + `<div class="alert info">Année reprise de l'Excel : pas d'écritures détaillées.</div>`;
   const ex = exercice(y), all = (ex.ecritures||[]).filter(pieceRequise);
   const manq = piecesManquantes(y).sort((a,b)=>a.date.localeCompare(b.date));
   const ok = all.filter(e=>e.piece).sort((a,b)=>a.date.localeCompare(b.date));
   const ligneE = (e, actions) => `<tr><td>${fmtDate(e.date)}</td><td>${esc(e.tiers)}</td><td>${libNature(e.nature)}</td><td class="n">${eur(e.montant)}</td><td class="n noprint">${actions}</td></tr>`;
-  return entete(`Pièces ${y}`, `Les factures sont rangées dans <code>Justificatifs/${y}/</code> du dossier LMNP. Les loyers et l'emprunt n'en demandent pas : le bail, le relevé et l'échéancier en tiennent lieu.`) + `
+  return entete(`Justificatifs ${y}`, `Les factures sont rangées dans <code>Justificatifs/${y}/</code> du dossier LMNP. Les loyers et l'emprunt n'en demandent pas : le bail, le relevé et l'échéancier en tiennent lieu.`) + `
   ${!S.dir ? `<div class="alert warn">Pour ajouter ou consulter les justificatifs, ouvrez l'outil dans Chrome avec « Ouvrir le dossier LMNP… ».</div>` : ""}
-  <div class="grid" style="margin-bottom:20px">${kpiN("Pièces manquantes", manq.length, manq.length?"var(--warn)":"var(--ok)")}${kpiN("Pièces rattachées", ok.length)}${kpiN("Écritures à justifier", all.length)}</div>
-  <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">À fournir</h3>
+  <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">À fournir${manq.length?` (${manq.length} sur ${all.length})`:""}</h3>
     ${manq.length>3?`<button class="btn small sec noprint" onclick="if(confirm('Marquer les ${manq.length} écritures comme ne nécessitant pas de justificatif dans l\\'outil (par ex. pièces archivées ailleurs) ?')){piecesManquantes(${y}).forEach(e=>e.sansPiece=true);setDirty();renderAll()}">Tout marquer « classé ailleurs »</button>`:""}</div>
-  ${manq.length ? `<div class="tablewrap"><table><tr><th>Date</th><th>Tiers</th><th>Nature</th><th class="n">Montant</th><th></th></tr>
+  ${manq.length ? `<div class="tablewrap"><table><tr><th>Date</th><th>Qui</th><th>Catégorie</th><th class="n">Montant</th><th></th></tr>
     ${manq.map(e=>ligneE(e, `<button class="btn small sec" onclick="attacherPiece('${e.id}')">Ajouter</button> <button class="btn small ghost" title="Cette écriture n'a pas besoin de justificatif dans l'outil" onclick="marquerSansPiece('${e.id}',true)">Non requis</button>`)).join("")}</table></div>`
-    : `<div class="alert ok">Toutes les pièces sont là.</div>`}</div>
-  <div class="card" id="nonRattaches"><h3 style="margin-top:0">Fichiers déposés non rattachés</h3><p class="sub" style="margin:0">${S.dir?"Recherche dans Justificatifs/"+y+"/…":"Disponible quand le dossier LMNP est ouvert."}</p></div>
-  ${ok.length?`<div class="card"><h3 style="margin-top:0">Pièces rattachées</h3><div class="tablewrap"><table><tr><th>Date</th><th>Tiers</th><th>Nature</th><th class="n">Montant</th><th></th></tr>
+    : `<div class="alert ok">Tous les justificatifs sont là.</div>`}</div>
+  ${S.dir?`<div class="card" id="nonRattaches"><h3 style="margin-top:0">Fichiers du dossier pas encore associés à une dépense</h3><p class="sub" style="margin:0">Recherche dans Justificatifs/${y}/…</p></div>`:""}
+  ${ok.length?`<div class="card"><h3 style="margin-top:0">Justificatifs rangés</h3><div class="tablewrap"><table><tr><th>Date</th><th>Qui</th><th>Catégorie</th><th class="n">Montant</th><th></th></tr>
     ${ok.map(e=>ligneE(e, `<button class="btn small sec" onclick="ouvrirPiece('${e.id}')">📎 Voir</button> <button class="btn small danger" title="Détacher" onclick="detacherPiece('${e.id}')">×</button>`)).join("")}</table></div></div>`:""}`;
 }
-function kpiN(l,v,col){ return `<div class="card kpi"><div class="l">${l}</div><div class="v" style="${col?"color:"+col:""}">${v}</div></div>`; }
 async function scanNonRattaches(y){
   const box = $("#nonRattaches"); if(!box || !S.dir) return;
   try{
@@ -1576,7 +1611,7 @@ function vueBanque(){
         <button class="btn small ghost" title="Couper le montant en deux lignes de natures différentes" onclick="scinderOp('${o.id}')">Ventiler</button>
       </div></div>`; };
   const libNat = n => n === IGNORER ? "Ignorer" : libNature(n);
-  return entete("Banque", "Importez le relevé CSV du compte, puis classez chaque opération : une nature LMNP, ou « Ignorer » pour ce qui ne concerne pas la location. Les opérations déjà importées ne reviennent pas.") + `
+  return entete("Relevés bancaires", "Téléchargez le relevé du compte au format CSV sur le site de la banque, importez-le ici, puis indiquez pour chaque opération sa catégorie, ou « Ignorer » si elle ne concerne pas la location. Les opérations déjà importées ne reviennent pas.") + `
   <div class="row noprint" style="margin-bottom:18px">
     <button class="btn" onclick="importerCSV()">Importer un relevé CSV…</button>
     ${list.length?`<button class="btn sec" onclick="validerTri()" ${classes?"":"disabled"}>Valider les ${classes} opération(s) classée(s)</button>`:""}
@@ -1614,7 +1649,7 @@ function vueCloture(y){
   const ex = exercice(y), l = controles(y), bad = l.filter(x=>x[0]==="bad"), warn = l.filter(x=>x[0]==="warn");
   const f = fiscalJusqua(y), c = f.c, chg = changementsAnnee(y);
   const step = (n, titre, corps) => `<div class="card"><h3><span class="case" style="margin-right:8px">${n}</span>${titre}</h3>${corps}</div>`;
-  return entete(`Clôture de l'exercice ${y}`, "Vérifier, figer les chiffres déclarés, puis ouvrir l'année suivante. La clôture verrouille les écritures ; vous pourrez rouvrir l'exercice si besoin.") +
+  return entete(`Clôturer ${y}`, "Vérifier, figer les chiffres déclarés, puis ouvrir l'année suivante. La clôture verrouille les saisies ; vous pourrez rouvrir l'année si besoin.") +
   step(1, "Contrôles", bad.length ? `<div class="alert bad">${bad.length} point(s) à corriger avant de clôturer :</div><ul>${bad.map(x=>`<li>${x[1]}</li>`).join("")}</ul>`
     : warn.length ? `<div class="alert warn">${warn.length} point(s) à vérifier. Vous pouvez clôturer si vous les avez regardés.</div><ul>${warn.map(x=>`<li>${x[1]}</li>`).join("")}</ul>` : `<div class="alert ok">Tous les contrôles sont validés.</div>`) +
   step(2, "Sommes dues et à recevoir au 31/12", `<p class="sub" style="margin:0 0 10px">En comptabilité super-simplifiée, seules les sommes dues ou à recevoir au 31 décembre s'ajoutent à la trésorerie. Par exemple : un loyer de décembre encaissé en janvier, une facture de décembre payée en janvier. Saisissez-les comme écritures datées du 31/12/${y}.</p>
@@ -1646,6 +1681,8 @@ function nouvelExercice(){
   S.data.exercices[y] = {statut:"en-cours", ecritures:[]}; S.year = y; S.tab = "ecritures"; setDirty(); renderAll();
 }
 
+addEventListener("beforeprint", () => document.querySelectorAll("#main details").forEach(d => { if(!d.open){ d.open = true; d.dataset.ferme = "1"; } }));
+addEventListener("afterprint", () => document.querySelectorAll("#main details[data-ferme]").forEach(d => { d.open = false; delete d.dataset.ferme; }));
 renderAll();
 </script>
 </body>
