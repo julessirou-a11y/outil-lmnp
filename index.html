@@ -242,6 +242,33 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 .ratt .m{text-align:right}
 @media (max-width:700px){ .pieces-top{grid-template-columns:1fr} .pc{grid-template-columns:44px minmax(0,1fr) auto} .pc .a{grid-column:1/-1} .ratt label{grid-template-columns:22px 46px minmax(0,1fr) 80px} .ratt label .chip{display:none} }
 
+/* ---------- Immobilisations ---------- */
+.frise{position:relative;padding-top:22px}
+.frise .axe{position:relative;height:18px;margin-left:150px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.frise .axe span{position:absolute;transform:translateX(-50%);font-size:11.5px;color:var(--faint);top:0}
+.fl{display:flex;align-items:center;gap:0;height:30px}
+.fn{width:150px;flex:none;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:10px}
+.fb{position:relative;flex:1;height:14px}
+.fbar{position:absolute;top:0;height:14px;border-radius:99px;background:color-mix(in srgb, var(--c) 18%, transparent);overflow:hidden}
+.fbar i{display:block;height:100%;background:var(--c);border-radius:99px}
+.today{position:absolute;top:22px;bottom:0;border-left:2px dashed var(--neg);pointer-events:none}
+.today span{position:absolute;top:-20px;left:4px;font-size:11px;color:var(--neg);white-space:nowrap}
+.immos{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
+.immo{margin:0;display:flex;flex-direction:column;gap:12px}
+.immo .ih{display:flex;gap:10px;align-items:center} .immo .ih b{display:block;font-weight:600} .immo .ih small{color:var(--muted)}
+.immo .ib{display:flex;gap:16px;align-items:center}
+.iv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 12px;flex:1}
+.iv span{display:block;font-size:12px;color:var(--muted)} .iv b{font-weight:600;font-size:15px}
+.muted-s{color:var(--faint);font-size:12px}
+.conso{display:grid;grid-template-columns:240px 1fr;gap:24px;align-items:center}
+.cbars{display:flex;gap:10px;align-items:flex-end;height:170px;padding-top:6px}
+.cb{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;max-width:60px}
+.cbs{flex:1;width:100%;display:flex;flex-direction:column-reverse;border-radius:6px 6px 0 0;overflow:hidden}
+.cbs i{display:block;width:100%}
+.cb span{font-size:11.5px;color:var(--faint)}
+.immos + .card{margin-top:20px}
+@media (max-width:700px){ .conso{grid-template-columns:1fr} .fn{width:96px} .frise .axe{margin-left:96px} .today{display:none} .immos{grid-template-columns:1fr} .iv{grid-template-columns:repeat(2,1fr)} }
+
 /* ---------- Écritures groupées par mois ---------- */
 .month{margin-bottom:14px;padding:6px 8px 4px}
 .month header{display:flex;align-items:baseline;gap:12px;padding:12px 14px 8px}
@@ -945,33 +972,50 @@ function dupliquerMois(){
 }
 
 /* ---- Immobilisations ---- */
+const IC_CAT = {construction:'<path d="M4 11l8-6 8 6v9H4zM10 20v-5h4v5"/>', travaux:'<path d="M4 20l8-8M13 5a4 4 0 0 0 6 6l-3 1-4-4z"/>', mobilier:'<path d="M5 11V7h14v4M4 11h16v5H4zM6 16v3M18 16v3"/>'};
+const COUL_CAT = {construction:"var(--accent)", travaux:"#8B5CF6", mobilier:"#0EA5A4"};
 function vueImmos(){
   const y = S.year;
   const ed = S.editImmo === "new" ? {libelle:"",categorie:"mobilier",valeurOrigine:"",quotePartTerrain:0,dureeAns:7,miseEnService:y+"-01-01"} : S.data.immobilisations.find(i=>i.id===S.editImmo);
-  const rows = S.data.immobilisations.map(i => { const a = amortAnnee(i,y); return {i,a}; });
-  const tot = rows.reduce((s,{i,a})=>({brut:s.brut+i.valeurOrigine, dot:s.dot+(anneeEntreeBilan(i)<=y?a.dotation:0), cum:s.cum+a.cumulFin}),{brut:0,dot:0,cum:0});
-  return entete(`Logement et meubles`, "Le logement, les gros travaux et les meubles ne sont pas déduits d'un coup : leur prix est étalé sur plusieurs années (c'est l'amortissement), ce qui réduit l'impôt chaque année. Montants TTC.") + `
-  ${ed ? `<div class="card"><div class="form">
+  const immos = S.data.immobilisations.map(i => { const plan = planAmort(i), a = amortAnnee(i,y), avant = plan.filter(p=>p.avantLMNP && p.annee<=y).reduce((s,p)=>s+p.dotation,0);
+    return {i, plan, a, avant, fin: plan.length ? plan[plan.length-1].annee : yearOf(i.miseEnService)}; });
+  const T = immos.reduce((s,x)=>({val:s.val+x.i.valeurOrigine, base:s.base+x.a.base, cum:s.cum+x.a.cumulFin, dot:s.dot+(anneeEntreeBilan(x.i)<=y?x.a.dotation:0)}), {val:0,base:0,cum:0,dot:0});
+  // Frise : de la plus ancienne mise en service à la dernière fin d'amortissement
+  const y0 = Math.min(y, ...immos.map(x=>yearOf(x.i.miseEnService))), y1 = Math.max(y+1, ...immos.map(x=>x.fin)), span = y1 - y0 + 1;
+  const pos = a => ((a - y0) / span * 100).toFixed(2) + "%";
+  const frise = immos.length ? `<div class="card"><h3>Frise des amortissements</h3><div class="frise">
+    <div class="axe">${[...Array(span).keys()].map(k=>y0+k).filter((a,k,arr)=>span<=16||a%5===0||a===y).map(a=>`<span style="left:${pos(a)}">${a}</span>`).join("")}</div>
+    ${immos.map(x => { const d = yearOf(x.i.miseEnService) + (monthOf(x.i.miseEnService)-1)/12, f = x.fin + 1, fait = Math.min(1, x.a.cumulFin / (x.a.base||1));
+      return `<div class="fl"><span class="fn">${esc(x.i.libelle)}</span><div class="fb"><div class="fbar" style="left:${pos(d)};width:${((f-d)/span*100).toFixed(2)}%;--c:${COUL_CAT[x.i.categorie]||"var(--accent)"}"><i style="width:${(fait*100).toFixed(1)}%"></i></div></div></div>`; }).join("")}
+    <div class="today" style="left:calc(150px + (100% - 150px) * ${((y + 1 - y0)/span).toFixed(4)})"><span>fin ${y}</span></div>
+  </div></div>` : "";
+  const carte = x => { const {i, a, plan} = x, fait = a.cumulFin / (a.base||1), restant = a.base - a.cumulFin, col = COUL_CAT[i.categorie]||"var(--accent)";
+    return `<div class="card immo">
+      <div class="ih">${svgI(IC_CAT[i.categorie]||IC_CAT.travaux).replace('width="17" height="17"','width="22" height="22"')}<div><b>${esc(i.libelle)}</b><small>${CATEGORIES[i.categorie]||i.categorie}${comptesVisibles()&&CPT_IMMO[i.categorie]?` · ${CPT_IMMO[i.categorie].brut}`:""}</small></div>
+        <button class="btn small ghost noprint" style="margin-left:auto" onclick="S.editImmo='${i.id}';renderAll();scrollTo(0,0)">${I_EDIT}</button></div>
+      <div class="ib">${anneau(fait, pctTxt(fait), col, 96)}
+        <div class="iv"><div><span>Prix</span><b>${eur0(i.valeurOrigine)}</b></div><div><span>Durée</span><b>${i.dureeAns} ans</b></div><div><span>Fin</span><b>${x.fin}</b></div>
+          <div><span>Amortissement ${y}</span><b style="color:${col}">${eur0(a.dotation)}</b></div><div><span>Amorti fin ${y}</span><b>${eur0(a.cumulFin)}</b></div><div><span>Reste</span><b>${eur0(restant)}</b></div></div></div>
+      ${jauge([[x.avant,"var(--seg-2)","Avant la location meublée (non déduit)"],[a.cumulFin - x.avant, col, "Amorti"]], a.base, 10)}
+      ${a.base < i.valeurOrigine - 0.005 ? `<small class="muted-s">Terrain non amortissable : ${eur0(i.valeurOrigine - a.base)}</small>` : ""}
+      <details><summary>Plan année par année</summary><div class="tablewrap"><table>${plan.map(p=>`<tr class="${p.annee===y?"tot":""}"><td>${p.annee}${p.avantLMNP?' <span class="pill">avant LMNP</span>':""}</td><td class="n">${eur(p.dotation)}</td><td class="n">${eur(p.cumul)}</td><td class="n">reste ${eur(p.vnc)}</td></tr>`).join("")}</table></div></details>
+    </div>`; };
+  return `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Immobilisations</h1></div>
+    <button class="btn noprint" onclick="S.editImmo='new';renderAll()">+ Ajouter</button></div>
+  ${ed ? `<div class="card composer"><div class="form">
     <label>Libellé<input id="iLib" value="${esc(ed.libelle)}"></label>
     <label>Catégorie<select id="iCat">${Object.entries(CATEGORIES).map(([k,l])=>`<option value="${k}" ${k===ed.categorie?"selected":""}>${l}</option>`).join("")}</select></label>
-    <label>Valeur d'origine TTC<input id="iVal" inputmode="decimal" value="${String(ed.valeurOrigine).replace(".",",")}"></label>
+    <label>Prix TTC<input id="iVal" inputmode="decimal" value="${String(ed.valeurOrigine).replace(".",",")}"></label>
     <label>Part terrain (%)<input id="iTer" inputmode="decimal" value="${(ed.quotePartTerrain||0)*100}"></label>
     <label>Durée (ans)<input id="iDur" type="number" min="1" value="${ed.dureeAns}"></label>
     <label>Mise en service<input id="iDate" type="date" value="${ed.miseEnService}"></label>
     <div class="row"><button class="btn" onclick="saveImmo()">Enregistrer</button><button class="btn sec" onclick="S.editImmo=null;renderAll()">Annuler</button>
     ${S.editImmo!=="new"?`<button class="btn danger" onclick="delImmo()">Supprimer</button>`:""}</div></div>
-    <p class="sub" style="margin:10px 0 0">Durées usuelles : gros œuvre 40–50 ans, logement en un seul bloc 25–30 ans, travaux 10–15 ans, mobilier 5–10 ans. Un achat inférieur à 500 € HT se passe plutôt en charge (« Petit équipement »).</p></div>`
-  : `<div class="noprint" style="margin-bottom:12px"><button class="btn" onclick="S.editImmo='new';renderAll()">+ Ajouter un bien (meuble, travaux…)</button></div>`}
-  <div class="card"><div class="tablewrap"><table>
-    <tr><th>Bien</th><th class="n">Prix</th><th class="n">Étalé sur</th><th class="n" title="Dotation aux amortissements">Déduit en ${y}</th><th class="n">Déduit au total fin ${y}</th><th class="n" title="Valeur nette comptable">Reste à déduire</th><th></th></tr>
-    ${rows.map(({i,a})=>`<tr><td>${esc(i.libelle)}<br><small style="color:var(--muted)">${comptesVisibles()&&CPT_IMMO[i.categorie]?`<span class="cpt">${CPT_IMMO[i.categorie].brut}</span>`:""}${CATEGORIES[i.categorie]||i.categorie} · depuis le ${fmtDate(i.miseEnService)}${a.base<i.valeurOrigine-0.005?` · ${eur0(a.base)} amortis, hors terrain`:""}</small></td>
-      <td class="n">${eur(i.valeurOrigine)}</td><td class="n">${i.dureeAns} ans</td>
-      <td class="n">${eur(a.dotation)}</td><td class="n">${eur(a.cumulFin)}</td><td class="n">${eur(a.base-a.cumulFin)}</td>
-      <td class="noprint"><button class="btn small sec" onclick="S.editImmo='${i.id}';renderAll();scrollTo(0,0)">Modifier</button></td></tr>
-      <tr class="muted"><td colspan="7"><details><summary>Année par année</summary><table>${planAmort(i).map(p=>`<tr class="${p.annee===y?"tot":""}"><td>${p.annee}${p.avantLMNP?' <span class="pill">avant LMNP, non déduit</span>':""}</td><td class="n">${eur(p.dotation)}</td><td class="n">cumul ${eur(p.cumul)}</td><td class="n">VNC ${eur(p.vnc)}</td></tr>`).join("")}</table></details></td></tr>`).join("")}
-    <tr class="tot"><td>Total</td><td class="n">${eur(tot.brut)}</td><td></td><td class="n">${eur(tot.dot)}</td><td class="n">${eur(tot.cum)}</td><td></td><td></td></tr>
-  </table></div></div>
-  ${comptesVisibles() ? vueConsommes(y) : `<div class="card"><details><summary>Pour une future revente : amortissements déjà déduits</summary>${vueConsommes(y).replace(/^<div class="card">|<\/div>$/g,"")}</details></div>`}`;
+    <p class="sub" style="margin:10px 0 0">Durées usuelles : logement 25–30 ans, travaux 10–15 ans, mobilier 5–10 ans. Moins de 500 € HT : en charge.</p></div>` : ""}
+  <div class="tuiles">${tuile("Valeur totale", eur0(T.val))}${tuile(`Amortissement ${y}`, eur0(T.dot), {col:"var(--accent)"})}${tuile(`Amorti fin ${y}`, eur0(T.cum))}${tuile("Reste à amortir", eur0(T.base - T.cum))}</div>
+  ${frise}
+  <div class="immos">${immos.map(carte).join("")}</div>
+  ${vueConsommes(y)}`;
 }
 
 /* ---- Amortissements consommés (déduits) et en réserve, pour la plus-value à la revente ---- */
@@ -998,17 +1042,25 @@ function vueConsommes(y){
   if(isHistorique(y)) return "";
   const t = suiviAmortissements(y);
   if(!t.lignes.length) return "";
+  const det = t.lignes, max = Math.max(1, ...det.map(l=>l.dotations + (l.reserveUtilisee||0)));
+  const tot = t.cumul + t.reserveFin;
   return `<div class="card"><h3>Amortissements consommés et en réserve</h3>
-    <p class="sub">À la revente, le prix d'achat retenu pour la plus-value est diminué des amortissements <b>consommés</b>, c'est-à-dire réellement déduits du résultat (art. 150 VB III du CGI, ventes depuis le 15 février 2025). Ceux restés <b>en réserve</b> (art. 39 C) ne le diminuent pas.</p>
-    <div class="grid" style="margin-bottom:18px">${kpi(`Consommés cumulés fin ${y}`, t.cumul)}${kpi(`En réserve fin ${y}`, t.reserveFin)}</div>
-    <div class="tablewrap"><table>
-    <tr><th>Année</th><th class="n">Dotations</th><th class="n">Déduites dans l'année</th><th class="n">Réserve utilisée</th><th class="n">Consommés</th><th class="n">Cumul consommés</th><th class="n">Réserve fin</th></tr>
+    <div class="conso">
+      <div class="centre">${donut([["Consommés", t.cumul, "var(--accent)"],["En réserve", t.reserveFin, "var(--warn)"]], eur0(tot), "amortissements")}
+        <div class="leg col"><span><i style="background:var(--accent)"></i>Consommés ${eur0(t.cumul)}</span><span><i style="background:var(--warn)"></i>En réserve ${eur0(t.reserveFin)}</span></div></div>
+      <div><div class="cbars">${det.map(l => l.historique ? `<div class="cb"><div class="cbs" title="${l.y} (Excel) : ${eur0(l.dotations)} de dotations"><i style="height:${(l.dotations/max*100).toFixed(1)}%;background:var(--seg-2)"></i></div><span>${l.y}</span></div>` : `<div class="cb"><div class="cbs" title="${l.y}">
+          <i style="height:${(l.deduites/max*100).toFixed(1)}%;background:var(--accent)" title="Déduits : ${eur0(l.deduites)}"></i>
+          <i style="height:${(l.reserveUtilisee/max*100).toFixed(1)}%;background:#7C93F0" title="Réserve utilisée : ${eur0(l.reserveUtilisee)}"></i>
+          <i style="height:${(Math.max(0,l.dotations-l.deduites)/max*100).toFixed(1)}%;background:var(--warn)" title="Mis en réserve : ${eur0(l.dotations-l.deduites)}"></i></div><span>${l.y}</span></div>`).join("")}</div>
+        <div class="leg" style="margin-top:8px"><span><i style="background:var(--accent)"></i>Déduits</span><span><i style="background:#7C93F0"></i>Réserve utilisée</span><span><i style="background:var(--warn)"></i>Mis en réserve</span>${det.some(l=>l.historique)?'<span><i style="background:var(--seg-2)"></i>Années Excel</span>':""}</div></div>
+    </div>
+    <p class="sub" style="margin:14px 0 0"><b>Consommés</b> : déduits du résultat, ils réduiront le prix d'achat retenu à la revente. <b>En réserve</b> : reportés sans limite, sans effet sur la plus-value.</p>
+    <details><summary>Détail par année</summary><div class="tablewrap"><table>
+    <tr><th>Année</th><th class="n">Dotations</th><th class="n">Déduites</th><th class="n">Réserve utilisée</th><th class="n">Consommés</th><th class="n">Cumul</th><th class="n">Réserve fin</th></tr>
     ${t.lignes.map(l => l.historique
       ? `<tr class="muted"><td>${l.y} <span class="pill">Excel</span></td><td class="n">${eur(l.dotations)}</td><td class="n" colspan="5"></td></tr>`
       : `<tr class="${l.y===y?"tot":""}"><td>${l.y}</td><td class="n">${eur(l.dotations)}</td><td class="n">${eur(l.deduites)}</td><td class="n">${eur(l.reserveUtilisee)}</td><td class="n">${eur(l.consommes)}</td><td class="n">${eur(l.cumul)}</td><td class="n">${eur(l.reserveFin)}</td></tr>`).join("")}
-    </table></div>
-    ${t.lignes.some(l=>l.historique) ? `<p class="sub" style="margin:10px 0 0">Années reprises de l'Excel : ${eur(t.dotHist)} de dotations, dont ${eur(t.reserveOuverture)} encore en réserve à l'ouverture du premier exercice détaillé, soit <b>${eur(t.consommesHist)} consommés</b> avant cet exercice. Le détail année par année n'est pas connu.</p>` : ""}
-    <p class="sub" style="margin:8px 0 0">À conserver avec les liasses : c'est l'attestation qu'on vous demandera au moment de la vente. La part du mobilier ne concerne pas la plus-value immobilière ; faites valider la répartition par le notaire.</p></div>`;
+    </table></div>${t.lignes.some(l=>l.historique) ? `<p class="sub" style="margin:8px 0 0">Années Excel : ${eur(t.consommesHist)} consommés (${eur(t.dotHist)} de dotations moins ${eur(t.reserveOuverture)} en réserve à l'ouverture).</p>` : ""}</details></div>`;
 }
 function saveImmo(){
   const v = {libelle:$("#iLib").value.trim(), categorie:$("#iCat").value, valeurOrigine:r2(parseMontant($("#iVal").value)),
