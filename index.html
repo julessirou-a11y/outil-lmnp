@@ -906,6 +906,7 @@ function vueDeclaration(){
   <div class="card"><h3 style="margin-top:0">2042-C-PRO · Déclaration de revenus (déclarant ${S.data.dossier.declarant})</h3><table>
     ${rf>=0 ? ligne(decl[0],"Locations meublées non professionnelles – régime réel – bénéfice",rf-R(f.deficitsImputes),{tot:1}) : ligne(decl[1],"Locations meublées non professionnelles – régime réel – déficit",-rf,{tot:1})}
   </table>${f.deficitsImputes?`<p class="sub" style="margin-top:8px">Bénéfice après imputation de ${eur0(f.deficitsImputes)} de déficits antérieurs : vérifiez sur la notice si l'imputation se fait dans les cases dédiées aux déficits antérieurs.</p>`:""}</div>
+  ${guideSaisie(y, {p218, c242, c244, c254, c294, r310, rf, reint, ardUt, brut, am, crd, cap, decl, def:R(f.deficitsImputes)})}
   ${comptesVisibles() ? vueBalance(y) : ""}
   <p class="sub">Ces montants sont calculés par l'outil à partir de vos saisies ; vérifiez-les avant envoi. Échéance habituelle de la liasse : début mai (+ 15 jours en télétransmission).</p></div>`;
 }
@@ -974,6 +975,25 @@ function exporterFEC(y){
   a.href = URL.createObjectURL(new Blob([bytes], {type:"text/plain;charset=iso-8859-15"}));
   a.download = `${siren}FEC${y}1231.txt`; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
   toast(`FEC ${y} téléchargé : ${lignes.length-1} lignes.`);
+}
+
+/* ---- Guide de saisie en ligne (mode EFI de l'espace professionnel) ---- */
+function guideSaisie(y, v){
+  const n = x => `<b>${eur0(x)}</b>`;
+  return `<div class="card noprint"><details><summary style="font-size:16px;font-weight:600">Guide de saisie sur impots.gouv.fr, pas à pas</summary>
+  <ol style="margin:14px 0 0;padding-left:22px;display:flex;flex-direction:column;gap:10px">
+    <li><b>Une seule fois</b> : avoir un espace professionnel actif, rattaché au SIRET de la location (le code d'activation arrive par courrier). Si l'onglet « Résultat » est absent ou grisé, écrire au service des impôts des entreprises par la messagerie sécurisée de l'espace professionnel pour demander l'ouverture du service « Déclarer le résultat », régime réel simplifié BIC.</li>
+    <li>Espace professionnel → <b>Déclarer</b> → <b>Résultat</b> → exercice du 01/01/${y} au 31/12/${y}. Saisir les tableaux dans cet ordre, les annexes avant la 2031 qui en reprend une partie.</li>
+    <li><b>2033-A (bilan)</b> : immobilisations brutes (028) ${n(v.brut)}, amortissements (030) ${n(v.am)}, capital (120) ${n(v.cap)}, résultat (136) ${n(v.r310)}, emprunts (156) ${n(v.crd)}. Reprendre la colonne N-1 de la déclaration de ${y-1}.</li>
+    <li><b>2033-C (immobilisations)</b> : recopier les deux tableaux de la fiche ci-dessus. Le total des dotations doit être égal à la ligne 254 de la 2033-B (${n(v.c254)}).</li>
+    <li><b>2033-B (compte de résultat)</b> : loyers (218) ${n(v.p218)}, charges externes (242) ${n(v.c242)}, impôts et taxes (244) ${n(v.c244)}, dotations (254) ${n(v.c254)}, intérêts (294) ${n(v.c294)}. Le résultat comptable (310) doit afficher ${n(v.r310)}.${v.reint?` En bas du tableau, réintégrer ${n(v.reint)} d'amortissements non déductibles (art. 39 C).`:""}${v.ardUt?` Déduire ${n(v.ardUt)} d'amortissements différés antérieurs.`:""} Résultat fiscal : ${n(Math.abs(v.rf))} (${v.rf>=0?"bénéfice":"déficit"}).</li>
+    <li><b>2033-D</b> : déficits et amortissements reportés, comme dans la fiche ci-dessus ; à laisser vide s'il n'y a rien à reporter. 2033-E, F et G : néant.</li>
+    <li><b>2031</b> : vérifier l'identification et le résultat fiscal, puis cocher l'option pour la <b>comptabilité super-simplifiée</b> (art. 302 septies A ter A du CGI), à renouveler chaque année.</li>
+    <li>Ne pas recopier les zones grisées, calculées par le site : vérifier seulement qu'elles redonnent les totaux de la fiche (232, 264, 310, 110, 180).</li>
+    <li><b>Continuer</b> → relire le récapitulatif → <b>Signer et envoyer</b>. Enregistrer aussitôt l'accusé de réception en PDF dans <code>Justificatifs/${y+1}/</code> : c'est la seule preuve du dépôt.</li>
+    <li>Puis, dans l'<b>espace particulier</b> du déclarant, sur la déclaration de revenus ${y} : rubrique 2042-C-PRO, case <b>${v.rf>=0?v.decl[0]:v.decl[1]}</b> ${n(v.rf>=0?v.rf-v.def:-v.rf)}.</li>
+  </ol>
+  <p class="sub" style="margin:12px 0 0">Échéance habituelle : début mai ${y+1}, avec 15 jours de plus pour une déclaration en ligne. Les intitulés des écrans d'impots.gouv peuvent changer d'une année à l'autre.</p></details></div>`;
 }
 
 /* ---- Dossier ---- */
