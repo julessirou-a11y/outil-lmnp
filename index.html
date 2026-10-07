@@ -780,7 +780,45 @@ function vueImmos(){
       <td class="noprint"><button class="btn small sec" onclick="S.editImmo='${i.id}';renderAll();scrollTo(0,0)">Modifier</button></td></tr>
       <tr class="muted"><td colspan="9"><details><summary>Plan d'amortissement</summary><table>${planAmort(i).map(p=>`<tr class="${p.annee===y?"tot":""}"><td>${p.annee}${p.avantLMNP?' <span class="pill">avant LMNP, non déduit</span>':""}</td><td class="n">${eur(p.dotation)}</td><td class="n">cumul ${eur(p.cumul)}</td><td class="n">VNC ${eur(p.vnc)}</td></tr>`).join("")}</table></details></td></tr>`).join("")}
     <tr class="tot"><td>Total</td><td class="n">${eur(tot.brut)}</td><td></td><td></td><td></td><td class="n">${eur(tot.dot)}</td><td class="n">${eur(tot.cum)}</td><td></td><td></td></tr>
-  </table></div></div>`;
+  </table></div></div>
+  ${vueConsommes(y)}`;
+}
+
+/* ---- Amortissements consommés (déduits) et en réserve, pour la plus-value à la revente ---- */
+/* Art. 150 VB III du CGI (cessions depuis le 15/02/2025) : le prix d'acquisition est minoré des amortissements
+   admis en déduction ; ceux restés en réserve (art. 39 C) ne le minorent pas. */
+function suiviAmortissements(yMax){
+  const lignes = [];
+  const hist = Object.keys(S.data.exercices).map(Number).filter(y => isHistorique(y) && y <= yMax).sort((a,b)=>a-b);
+  const dotHist = hist.reduce((s,y)=>s + (Number(exercice(y).chiffres?.dotationsAmortissements)||0), 0);
+  const reserveOuverture = Number(S.data.reports.amortissementsDifferes)||0;
+  hist.forEach(y => lignes.push({y, historique:true, dotations:Number(exercice(y).chiffres?.dotationsAmortissements)||0}));
+  // Années reprises de l'Excel : seul le total est connu = dotations déclarées − réserve encore disponible à l'ouverture
+  const consommesHist = Math.max(0, dotHist - reserveOuverture);
+  let cumul = consommesHist;
+  anneesCalculees().filter(y => y <= yMax && y >= yearOf(debutLMNP())).forEach(y => {
+    const f = fiscalJusqua(y), consommes = f.dotDeductible + f.ardUtilise;
+    cumul += consommes;
+    lignes.push({y, dotations:f.c.dotations, deduites:f.dotDeductible, reserveUtilisee:f.ardUtilise, consommes, cumul, reserveFin:f.ardFin});
+  });
+  const der = lignes.filter(l => !l.historique).pop();
+  return {lignes, consommesHist, dotHist, reserveOuverture, cumul, reserveFin: der ? der.reserveFin : reserveOuverture};
+}
+function vueConsommes(y){
+  if(isHistorique(y)) return "";
+  const t = suiviAmortissements(y);
+  if(!t.lignes.length) return "";
+  return `<div class="card"><h3>Amortissements consommés et en réserve</h3>
+    <p class="sub">À la revente, le prix d'achat retenu pour la plus-value est diminué des amortissements <b>consommés</b>, c'est-à-dire réellement déduits du résultat (art. 150 VB III du CGI, ventes depuis le 15 février 2025). Ceux restés <b>en réserve</b> (art. 39 C) ne le diminuent pas.</p>
+    <div class="grid" style="margin-bottom:18px">${kpi(`Consommés cumulés fin ${y}`, t.cumul)}${kpi(`En réserve fin ${y}`, t.reserveFin)}</div>
+    <div class="tablewrap"><table>
+    <tr><th>Année</th><th class="n">Dotations</th><th class="n">Déduites dans l'année</th><th class="n">Réserve utilisée</th><th class="n">Consommés</th><th class="n">Cumul consommés</th><th class="n">Réserve fin</th></tr>
+    ${t.lignes.map(l => l.historique
+      ? `<tr class="muted"><td>${l.y} <span class="pill">Excel</span></td><td class="n">${eur(l.dotations)}</td><td class="n" colspan="5"></td></tr>`
+      : `<tr class="${l.y===y?"tot":""}"><td>${l.y}</td><td class="n">${eur(l.dotations)}</td><td class="n">${eur(l.deduites)}</td><td class="n">${eur(l.reserveUtilisee)}</td><td class="n">${eur(l.consommes)}</td><td class="n">${eur(l.cumul)}</td><td class="n">${eur(l.reserveFin)}</td></tr>`).join("")}
+    </table></div>
+    ${t.lignes.some(l=>l.historique) ? `<p class="sub" style="margin:10px 0 0">Années reprises de l'Excel : ${eur(t.dotHist)} de dotations, dont ${eur(t.reserveOuverture)} encore en réserve à l'ouverture du premier exercice détaillé, soit <b>${eur(t.consommesHist)} consommés</b> avant cet exercice. Le détail année par année n'est pas connu.</p>` : ""}
+    <p class="sub" style="margin:8px 0 0">À conserver avec les liasses : c'est l'attestation qu'on vous demandera au moment de la vente. La part du mobilier ne concerne pas la plus-value immobilière ; faites valider la répartition par le notaire.</p></div>`;
 }
 function saveImmo(){
   const v = {libelle:$("#iLib").value.trim(), categorie:$("#iCat").value, valeurOrigine:r2(parseMontant($("#iVal").value)),
