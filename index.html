@@ -153,6 +153,53 @@ details summary{cursor:pointer;color:var(--accent);font-size:13.5px}
 .legend b{display:block;font-size:16px;font-weight:600;color:var(--text);margin-top:2px}
 .legend i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:7px;vertical-align:-1px}
 
+/* ---------- Tableau de bord visuel ---------- */
+.dash-head{display:flex;align-items:center;gap:12px;margin-bottom:18px}
+.dash-head h1{font-size:32px;font-weight:600;letter-spacing:-.02em;margin:0}
+.pill.ok{background:var(--pos-soft);color:var(--pos)} .pill.warn{background:var(--warn-soft);color:var(--warn)}
+.tuiles{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));margin-bottom:20px}
+.tuile{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:16px 18px;display:flex;flex-direction:column;gap:2px}
+.tuile[role=button]{cursor:pointer} .tuile[role=button]:hover{border-color:var(--accent)}
+.tuile .tl{font-size:13px;color:var(--muted)} .tuile .tv{font-size:26px;font-weight:600;letter-spacing:-.02em}
+.tuile .ts{font-size:12.5px;color:var(--faint)}
+.tuile.fort{background:var(--accent);border-color:var(--accent)} .tuile.fort .tl,.tuile.fort .ts{color:var(--accent-ink);opacity:.8} .tuile.fort .tv{color:var(--accent-ink)}
+.dash2{display:grid;gap:20px;grid-template-columns:minmax(0,1.8fr) minmax(0,1fr)}
+.dash2 .card{margin-bottom:20px}
+.centre{display:flex;flex-direction:column;align-items:center}
+.centre h3{align-self:flex-start}
+.leg{font-size:12.5px;color:var(--muted);display:flex;gap:6px 12px;flex-wrap:wrap;align-items:center}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.leg.col{justify-content:center;margin-top:10px}
+.suivis{display:flex;gap:10px 26px;flex-wrap:wrap}
+.suivi{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--muted);text-align:center;width:104px}
+.suivi:hover span{color:var(--accent)}
+.pastilles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.pastille{border:0;border-radius:99px;padding:7px 14px;font:inherit;font-size:13.5px;font-weight:500;cursor:pointer}
+.pastille.warn{background:var(--warn-soft);color:var(--warn)} .pastille.bad{background:var(--neg-soft);color:var(--neg)} .pastille.go{background:var(--accent);color:var(--accent-ink)}
+.jauge{display:flex;border-radius:99px;overflow:hidden;background:var(--surface-2)}
+.jauge span{display:block;height:100%}
+@media (max-width:860px){ .dash2{grid-template-columns:1fr} .tuile .tv{font-size:22px} }
+
+/* ---------- Écritures : vues, journal, balance, grand livre ---------- */
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:var(--r-md);padding:3px;gap:2px}
+.seg button{border:0;background:none;font:inherit;font-size:13.5px;padding:6px 14px;border-radius:7px;color:var(--muted);cursor:pointer}
+.seg button.on{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.mois{display:flex;gap:2px;flex-wrap:wrap;margin-left:auto}
+.mois button{border:0;background:none;font:inherit;font-size:12.5px;padding:4px 7px;border-radius:6px;color:var(--muted);cursor:pointer;text-transform:capitalize}
+.mois button.on{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.chip{display:inline-flex;align-items:center;gap:6px;font-size:13px;white-space:nowrap}
+.chip::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+table.journal td{padding:9px 10px}
+table.journal tr.editing td{background:var(--accent-soft)}
+td.act{white-space:nowrap}
+table.balance tr.cl td{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);padding-top:16px}
+details.gl{padding:0}
+details.gl>summary{display:flex;gap:10px;align-items:center;padding:14px 20px;color:var(--text);font-size:14.5px;list-style:none}
+details.gl>summary::-webkit-details-marker{display:none}
+details.gl[open]>summary{border-bottom:1px solid var(--line)}
+details.gl .tablewrap{padding:4px 14px 10px}
+details.gl{margin-bottom:8px}
+
 /* ---------- Écritures groupées par mois ---------- */
 .month{margin-bottom:14px;padding:6px 8px 4px}
 .month header{display:flex;align-items:baseline;gap:12px;padding:12px 14px 8px}
@@ -224,7 +271,7 @@ dialog#viewer::backdrop{background:rgba(10,15,25,.5)}
       <svg width="34" height="34" viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="9" fill="var(--accent)"/><path d="M9 22.5V13.2L16 8l7 5.2v9.3h-5.2v-5.1h-3.6v5.1z" fill="var(--accent-ink)"/></svg>
       <div><b>Carnet LMNP</b><small id="fileinfo">Aucun dossier ouvert</small></div>
     </div>
-    <div class="yearbox" id="yearbox"><label>Année<select id="yearSel"></select></label></div>
+    <div class="yearbox" id="yearbox"><label>Exercice<select id="yearSel"></select></label></div>
     <nav class="menu" id="tabs" aria-label="Sections"></nav>
     <div class="sidefoot">
       <div class="status" id="dirty"></div>
@@ -581,11 +628,10 @@ const IC = {
   emprunt:'<path d="M4 7h16v10H4zM4 11h16M8 15h3"/>',
   simulations:'<path d="M4 19h16M7 16l4-5 3 3 5-7"/>',
   declaration:'<path d="M7 4h10v16H7zM10 8h4M10 12h4M10 16l1.5 1.5L14 15"/>',
-  dossier:'<path d="M4 7h6l2 2h8v10H4z"/>'
+  dossier:'<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/><circle cx="12" cy="12" r="6.5"/>'
 };
 const icon = k => `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${IC[k]}</svg>`;
-/* Menu regroupé par moment d'usage, avec les mots du quotidien plutôt que ceux du comptable */
-const TABS = [["accueil","Accueil"],["h","Au fil de l'année"],["ecritures","Recettes et dépenses"],["banque","Relevés bancaires"],["pieces","Justificatifs"],["h","Une fois par an"],["declaration","Déclarer"],["h","Le logement"],["immos","Logement et meubles"],["emprunt","Prêt immobilier"],["simulations","Simulations"],["sep"],["dossier","Paramètres"]];
+const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["banque","Banque"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["simulations","Simulations"],["sep"],["dossier","Paramètres du dossier"]];
 function renderAll(){
   $("#fileinfo").textContent = S.data ? S.data.dossier.nom : "Aucun dossier ouvert";
   $("#fileinfo").title = S.fileName || "";
@@ -638,69 +684,108 @@ function vueBienvenue(){
       <button class="btn ghost" onclick="chargerDonnees(newDossier(),'nouveau dossier');setDirty(true)">Créer un dossier vide</button></div></div>`;
 }
 
+/* ============ Graphiques (SVG, sans bibliothèque) ============ */
+const pctTxt = p => Math.round(p*100) + " %";
+/* Anneau de progression : p entre 0 et 1 */
+function anneau(p, centre, couleur="var(--accent)", taille=92){
+  const r = 38, L = 2*Math.PI*r, v = Math.max(0, Math.min(1, p||0));
+  return `<svg viewBox="0 0 92 92" width="${taille}" height="${taille}" role="img" aria-label="${pctTxt(v)}"><circle cx="46" cy="46" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="9"/>
+    <circle cx="46" cy="46" r="${r}" fill="none" stroke="${couleur}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(v*L).toFixed(1)} ${L.toFixed(1)}" transform="rotate(-90 46 46)"/>
+    <text x="46" y="51" text-anchor="middle" font-size="17" font-weight="600" fill="var(--text)">${centre}</text></svg>`;
+}
+/* Anneau découpé en parts : [[libellé, valeur, couleur]] */
+function donut(parts, centre, sous){
+  const tot = parts.reduce((s,p)=>s+Math.max(0,p[1]),0) || 1, r = 60, L = 2*Math.PI*r; let off = 0;
+  return `<svg viewBox="0 0 160 160" width="170" height="170" role="img"><circle cx="80" cy="80" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="22"/>
+    ${parts.filter(p=>p[1]>0.5).map(([l,v,col]) => { const d = v/tot*L, s = `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${col}" stroke-width="22" stroke-dasharray="${Math.max(0,d-1.5).toFixed(1)} ${L.toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 80 80)"><title>${l} : ${eur0(v)}</title></circle>`; off += d; return s; }).join("")}
+    <text x="80" y="78" text-anchor="middle" font-size="20" font-weight="600" fill="var(--text)">${centre}</text><text x="80" y="98" text-anchor="middle" font-size="11.5" fill="var(--muted)">${sous}</text></svg>`;
+}
+/* Barres groupées par mois : séries [[libellé, couleur, valeurs[12]]] */
+function barresMois(series, hauteur=170){
+  const W = 640, H = hauteur, pad = 22, max = Math.max(1, ...series.flatMap(s=>s[2])), bw = (W - 10) / 12, n = series.length, b = Math.min(16, (bw - 10) / n);
+  const ech = v => (H - pad - 6) * v / max;
+  return `<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="height:${H}px" role="img">
+    <line x1="0" x2="${W}" y1="${H-pad}" y2="${H-pad}" stroke="var(--line)"/>
+    ${[...Array(12).keys()].map(m => series.map(([l,col,vals],k) => { const h = ech(vals[m]||0), x = 5 + m*bw + (bw - n*b - (n-1)*3)/2 + k*(b+3);
+      return h>0 ? `<rect x="${x.toFixed(1)}" y="${(H-pad-h).toFixed(1)}" width="${b.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${col}"><title>${MOIS_LONG[m]} · ${l} : ${eur(vals[m])}</title></rect>` : ""; }).join("") +
+      `<text x="${(5 + m*bw + bw/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="11" fill="var(--faint)">${MOIS[m].replace(".","")}</text>`).join("")}
+  </svg>`;
+}
+/* Barre de progression horizontale, segments [[valeur, couleur, titre]] sur un total */
+function jauge(segs, total, h=12){
+  const t = total || 1;
+  return `<div class="jauge" style="height:${h}px">${segs.filter(s=>s[0]>0.005).map(([v,col,tt])=>`<span style="width:${Math.min(100,v/t*100).toFixed(2)}%;background:${col}" ${tt?`title="${esc(tt)}"`:""}></span>`).join("")}</div>`;
+}
+const tuile = (lib, val, opts={}) => `<div class="tuile ${opts.cls||""}" ${opts.page?`role="button" tabindex="0" onclick="allerA('${opts.page}')"`:""}><span class="tl">${lib}</span><span class="tv" style="${opts.col?`color:${opts.col}`:""}">${val}</span>${opts.sous?`<span class="ts">${opts.sous}</span>`:""}</div>`;
+
 /* ---- Tableau de bord ---- */
 function vueAccueil(){
   const y = S.year;
   if(isHistorique(y)){
     const h = exercice(y).chiffres||{};
-    return entete(`${y}`, "Année reprise de l'ancien fichier Excel : seuls les chiffres de synthèse sont disponibles.") +
-      `<div class="card"><table>${Object.entries({loyers:"Loyers",chargesExternes:"Charges externes",impotsTaxes:"Impôts et taxes",dotationsAmortissements:"Dotations aux amortissements",interets:"Intérêts",resultat:"Résultat",immobilisationsNettes:"Immobilisations nettes",capitalRestantDu:"Capital restant dû"}).map(([k,l])=>`<tr><td>${l}</td><td class="n">${eur(h[k])}</td></tr>`).join("")}</table></div>`;
+    return entete(`${y}`, "Année reprise de l'ancien fichier Excel.") +
+      `<div class="tuiles">${tuile("Loyers", eur0(h.loyers), {col:"var(--pos)"})}${tuile("Charges", eur0((h.chargesExternes||0)+(h.impotsTaxes||0)+(h.interets||0)))}${tuile("Amortissements", eur0(h.dotationsAmortissements), {col:"var(--accent)"})}${tuile("Résultat", eur0(h.resultat), {cls:"fort"})}</div>`;
   }
-  const f = fiscalJusqua(y), c = f.c, ex = exercice(y);
-  const alerts = [];
-  if(!c.lmnpActif) alerts.push(["info", `La location meublée démarre le ${fmtDate(debutLMNP())} : rien à déclarer pour ${y}.`]);
-  const snap = ex.cloture;
-  if(snap && Math.abs(snap.resultatFiscal - f.resultatFiscal) > 0.5) alerts.push(["bad", `Le résultat a changé depuis la clôture du ${fmtDate(snap.date)} : ${eur(snap.resultatFiscal)} à la clôture, ${eur(f.resultatFiscal)} maintenant. Si la déclaration est déjà envoyée, il faudra la rectifier.`]);
-  if(comptesVisibles() && S.data.emprunts.length && c.interetsSaisis && Math.abs(c.interets - c.interetsEch) > 1) alerts.push(["info", `Intérêts réellement prélevés : ${eur(c.interets)}, contre ${eur(c.interetsEch)} selon l'échéancier théorique. Le montant réel est retenu.`]);
-  if(f.reintegration > 0.5) alerts.push(["info", `${eur(f.reintegration)} d'amortissements ne sont pas déductibles cette année car ils créeraient un déficit : ils sont mis en réserve pour les années suivantes, sans limite de durée.`]);
-
-  // Des loyers au résultat
-  const amortDeduits = f.dotDeductible + f.ardUtilise;
-  const segs = [["Charges externes", c.c242, "var(--seg-1)"],["Impôts et taxes", c.c244, "var(--seg-2)"],["Intérêts d'emprunt", c.interets, "var(--seg-3)"],["Amortissements déduits", amortDeduits, "var(--accent)"],["Résultat imposable", Math.max(f.resultatFiscal,0), "var(--pos)"]];
-  const base = Math.max(c.produits, c.c242 + c.c244 + c.interets + amortDeduits, 1);
-  const rf = f.resultatFiscal;
-  const phrase = rf > 0
-    ? `Sur ${eur0(c.produits)} de loyers, ${eur0(rf)} seront imposés : les charges en absorbent ${eur0(c.c242+c.c244+c.interets)} et les amortissements ${eur0(amortDeduits)}.`
-    : rf === 0 ? `Les ${eur0(c.produits)} de loyers sont entièrement couverts par les charges et les amortissements : rien n'est imposé.${f.ardFin>0.5?` ${eur0(f.ardFin)} d'amortissements restent en réserve pour les années suivantes.`:""}`
-    : `Les charges dépassent les loyers de ${eur0(-rf)} : ce déficit pourra être déduit des bénéfices de location meublée des dix prochaines années.`;
-  const decl = exercice(y).chiffresDeclares;
-  let comp = "";
-  if(decl){
-    const rows = [["Loyers",decl.loyers,c.produits],["Charges externes",decl.chargesExternes,c.c242],["Impôts et taxes",decl.impotsTaxes,c.c244],["Dotations aux amortissements",decl.dotationsAmortissements,c.dotations],["Intérêts",decl.interets,c.interets],["Résultat",decl.resultat,c.resultatComptable]];
-    comp = `<div class="card"><h3>Comparaison avec l'ancien fichier Excel</h3><div class="tablewrap"><table><tr><th></th><th class="n">Excel</th><th class="n">Carnet</th><th class="n">Écart</th></tr>
-      ${rows.map(([l,a,b])=>`<tr><td>${l}</td><td class="n">${eur(a)}</td><td class="n">${eur(b)}</td><td class="n">${Math.abs(b-a)<0.02?'<span class="pill">identique</span>':eur(b-a)}</td></tr>`).join("")}</table></div></div>`;
-  }
-  const nat = Object.entries(c.t.parNature).sort((a,b)=>b[1]-a[1]);
+  const f = fiscalJusqua(y), c = f.c, ex = exercice(y), es = ex.ecritures || [];
+  const amortDeduits = f.dotDeductible + f.ardUtilise, rf = f.resultatFiscal;
+  const tmi = S.data.dossier.simu?.tmi ?? 0.30, impot = Math.max(0, rf - f.deficitsImputes) * (tmi + PS_REVENUS);
+  const charges = c.c242 + c.c244 + c.interets;
+  // Mois par mois : encaissé / payé
+  const rec = Array(12).fill(0), dep = Array(12).fill(0);
+  es.forEach(e => { const m = monthOf(e.date)-1, g = NATURES[e.nature]?.g || (e.sens==="recette"?"recette":"charge"); if(m<0||m>11) return; if(g==="recette") rec[m] += e.montant; else dep[m] += e.montant; });
+  // Indicateurs de suivi
+  const debut = y === yearOf(debutLMNP()) ? monthOf(debutLMNP()) : 1;
+  const moisAttendus = [...Array(13-debut).keys()].map(i=>i+debut).filter(m => y < new Date().getFullYear() || m <= new Date().getMonth()+1);
+  const moisLoyer = new Set(es.filter(e=>e.nature==="Loyer").map(e=>monthOf(e.date)));
+  const loyersOk = moisAttendus.filter(m=>moisLoyer.has(m)).length;
+  const aJust = es.filter(pieceRequise), justOk = aJust.filter(e=>e.piece).length;
+  const aTrier = (S.data.banque?.aTrier||[]).filter(o=>yearOf(o.date)===y).length;
+  const immos = S.data.immobilisations, baseTot = immos.reduce((s,i)=>s+baseAmort(i),0), amortiTot = immos.reduce((s,i)=>s+amortAnnee(i,y).cumulFin,0);
+  const pret = S.data.emprunts[0], crd = c.crd, capPret = S.data.emprunts.reduce((s,l)=>s+l.capital,0);
+  const snap = ex.cloture, change = snap && Math.abs(snap.resultatFiscal - rf) > 0.5;
   const enCours = y >= new Date().getFullYear() && ex.statut !== "cloture";
-  return entete(`${y} en un coup d'œil`, `Location meublée de ${esc(S.data.dossier.nom)}. Revenus ${y} à déclarer en mai ${y+1}.`) + `
-    ${c.lmnpActif ? aFaire(y) : ""}
-    <section class="card flow" aria-label="Des loyers au résultat">
-      <p class="lead">Revenu imposable ${y}${enCours?' <span class="pill">provisoire</span>':""}</p>
-      <p class="big ${rf<0?"neg":""}">${eur0(rf)}</p>
-      <p class="phrase">${phrase}</p>
-      <div class="bar" role="img" aria-label="Répartition des loyers entre charges, amortissements et résultat">${segs.filter(x=>x[1]>0.5).map(([l,v,col])=>`<span style="width:${(v/base*100).toFixed(2)}%;background:${col}" title="${l} : ${eur0(v)}"></span>`).join("")}</div>
-      <div class="legend"><div><i style="background:transparent;border:1.5px solid var(--faint)"></i>Loyers encaissés<b>${eur0(c.produits)}</b></div>${segs.map(([l,v,col])=>`<div><i style="background:${col}"></i>${l}<b>${eur0(v)}</b></div>`).join("")}</div>
-    </section>
-    ${alerts.length?`<div class="alerts">${alerts.map(([k,t])=>`<div class="alert ${k}">${t}</div>`).join("")}</div>`:""}
-    ${comp}
-    <div class="card"><details><summary>Détail par catégorie</summary><div class="tablewrap" style="margin-top:8px"><table>
-      ${nat.map(([n,v])=>`<tr><td>${libNature(n)}</td><td>${comptesVisibles()?(NATURES[n]?.l?`<span class="case" title="Ligne de la 2033-B">${NATURES[n].l}</span>`:'<span class="pill">hors résultat</span>'):(NATURES[n]?.l?"":'<span class="pill" title="Le capital remboursé ne réduit pas l\'impôt">sans effet sur l\'impôt</span>')}</td><td class="n">${eur(v)}</td></tr>`).join("") || '<tr><td class="muted">Aucune écriture pour l\'instant.</td></tr>'}
-    </table></div></details></div>`;
+  const suivi = (p, centre, lib, page, col) => `<div class="suivi" role="button" tabindex="0" onclick="allerA('${page}')">${anneau(p, centre, col)}<span>${lib}</span></div>`;
+  return `<div class="dash-head"><h1>${y}</h1>${ex.statut==="cloture"?'<span class="pill ok">clôturé</span>':enCours?'<span class="pill">en cours</span>':'<span class="pill warn">à déclarer</span>'}</div>
+    ${change?`<div class="alert bad">Résultat modifié depuis la clôture : ${eur0(snap.resultatFiscal)} déclarés, ${eur0(rf)} maintenant.</div>`:""}
+    ${!c.lmnpActif?`<div class="alert info">Location meublée à partir du ${fmtDate(debutLMNP())}.</div>`:""}
+    ${aFaire(y)}
+    <div class="tuiles">
+      ${tuile("Loyers encaissés", eur0(c.produits), {col:"var(--pos)", page:"ecritures"})}
+      ${tuile("Charges", eur0(charges), {page:"ecritures", sous:`dont intérêts ${eur0(c.interets)}`})}
+      ${tuile("Amortissements", eur0(amortDeduits), {col:"var(--accent)", page:"immos", sous:f.ardFin>0.5?`+ ${eur0(f.ardFin)} en réserve`:"déduits cette année"})}
+      ${tuile(rf<0?"Déficit":"Revenu imposable", eur0(rf), {cls:"fort", col:rf<0?"var(--neg)":"", page:"declaration", sous:rf>0?`impôt ≈ ${eur0(impot)}`:"aucun impôt"})}
+    </div>
+    <div class="dash2">
+      <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">Mois par mois</h3>
+        <span class="leg"><i style="background:var(--pos)"></i>Encaissé <i style="background:var(--seg-1)"></i>Payé</span></div>
+        ${barresMois([["Encaissé","var(--pos)",rec],["Payé","var(--seg-1)",dep]])}</div>
+      <div class="card centre"><h3>Où vont les loyers</h3>
+        ${donut([["Charges",c.c242,"var(--seg-1)"],["Taxes",c.c244,"var(--seg-2)"],["Intérêts",c.interets,"var(--seg-3)"],["Amortissements",amortDeduits,"var(--accent)"],["Imposable",Math.max(rf,0),"var(--pos)"]], eur0(c.produits), "de loyers")}
+        <div class="leg col"><span><i style="background:var(--seg-1)"></i>Charges</span><span><i style="background:var(--seg-2)"></i>Taxes</span><span><i style="background:var(--seg-3)"></i>Intérêts</span><span><i style="background:var(--accent)"></i>Amortissements</span><span><i style="background:var(--pos)"></i>Imposable</span></div></div>
+    </div>
+    <div class="card"><h3>Suivi</h3><div class="suivis">
+      ${suivi(moisAttendus.length?loyersOk/moisAttendus.length:1, `${loyersOk}/${moisAttendus.length}`, "Loyers saisis", "ecritures", loyersOk===moisAttendus.length?"var(--pos)":"var(--warn)")}
+      ${suivi(aJust.length?justOk/aJust.length:1, aJust.length?pctTxt(justOk/aJust.length):"✓", "Justificatifs", "pieces", justOk===aJust.length?"var(--pos)":"var(--warn)")}
+      ${suivi(aTrier?0:1, aTrier||"✓", aTrier?"Opérations à trier":"Relevé trié", "banque", aTrier?"var(--warn)":"var(--pos)")}
+      ${baseTot?suivi(amortiTot/baseTot, pctTxt(amortiTot/baseTot), "Logement amorti", "immos"):""}
+      ${pret&&capPret?suivi(1-crd/capPret, pctTxt(1-crd/capPret), "Prêt remboursé", "emprunt"):""}
+    </div></div>`;
 }
-/* « À faire » : les points à régler, chacun avec un bouton vers la bonne page, puis l'étape de saison */
+/* « À faire » : pastilles courtes, chacune ouvre la bonne page */
 function aFaire(y){
-  const ex = exercice(y), l = controles(y).filter(x => x[0] !== "ok");
-  const finie = y < new Date().getFullYear(), close = ex.statut === "cloture";
-  const etapes = [];
-  if(close) etapes.push(["ok", `${y} est déclaré et clôturé.${ex.dateDeclaration?` Déclaration envoyée le ${fmtDate(ex.dateDeclaration)}.`:""}`]);
-  else if(finie) etapes.push(["etape", `L'année ${y} est terminée : il est temps de préparer la déclaration (à envoyer début mai ${y+1}).`, "declaration"]);
-  const items = [...l, ...etapes];
-  const sym = {ok:"✓", warn:"!", bad:"✕", etape:"→"}, col = {ok:"var(--pos)", warn:"var(--warn)", bad:"var(--neg)", etape:"var(--accent)"};
-  const rapide = close ? "" : `<div class="row noprint" style="margin-top:14px"><button class="btn" onclick="allerA('ecritures');S.composer=true;renderAll()">+ Ajouter une recette ou une dépense</button><button class="btn sec" onclick="allerA('banque')">Importer un relevé bancaire</button></div>`;
-  return `<div class="card todo"><h3 style="margin-top:0">${items.length && !(items.length===1&&close) ? "À faire" : "Tout est à jour"}</h3>
-    ${items.length ? `<ul>${items.map(([k,t,pg])=>`<li><b style="color:${col[k]}">${sym[k]}</b><span>${t}</span>${pg?lienPage(pg):""}</li>`).join("")}</ul>`
-      : `<p class="sub" style="margin:0">Rien à régler pour l'instant. Pensez à saisir chaque mois le loyer encaissé et les factures payées, ou à importer le relevé bancaire.</p>`}
-    ${rapide}</div>`;
+  const ex = exercice(y), c = calculAnnee(y), es = ex.ecritures || [], out = [];
+  if(!c.lmnpActif) return "";
+  const bad = controles(y).filter(x=>x[0]==="bad").length;
+  const aTrier = (S.data.banque?.aTrier||[]).filter(o=>yearOf(o.date)===y).length;
+  const pm = piecesManquantes(y).length;
+  if(bad) out.push(["bad", `${bad} erreur${bad>1?"s":""} à corriger`, "declaration"]);
+  if(aTrier) out.push(["warn", `${aTrier} opération${aTrier>1?"s":""} à trier`, "banque"]);
+  if(pm) out.push(["warn", `${pm} justificatif${pm>1?"s":""} manquant${pm>1?"s":""}`, "pieces"]);
+  if(c.produits > 5000 && !c.t.parNature["CFE"]) out.push(["warn", "CFE à saisir", "ecritures"]);
+  if(S.data.emprunts.length && (ex.crdBanque == null || ex.crdBanque === "") && y < new Date().getFullYear()) out.push(["warn", "Capital restant dû à saisir", "emprunt"]);
+  if(y < new Date().getFullYear() && ex.statut !== "cloture") out.push(["go", `Déclarer ${y}`, "declaration"]);
+  if(!out.length) return "";
+  return `<div class="pastilles">${out.map(([k,t,pg])=>`<button class="pastille ${k}" onclick="allerA('${pg}')">${t} →</button>`).join("")}</div>`;
 }
 function kpi(l,v,signe){ return `<div class="card kpi"><div class="l">${l}</div><div class="v" style="${signe&&v<0?'color:var(--neg)':''}">${eur(v)}</div></div>`; }
 
@@ -714,46 +799,82 @@ function piecesLigne(e){
   if(!pieceRequise(e)) return "";
   return `<button class="btn ghost small pj" style="color:var(--warn)" onclick="attacherPiece('${e.id}')">${I_CLIP}Ajouter le justificatif</button>`;
 }
+/* Couleur d'une nature, pour les pastilles et graphiques */
+const COUL_GROUPE = {recette:"var(--pos)", charge:"var(--seg-3)", bilan:"var(--faint)"};
+const grpNature = e => NATURES[e.nature]?.g || (e.sens==="recette"?"recette":"charge");
+const chipNature = n => `<span class="chip" style="--c:${COUL_GROUPE[NATURES[n]?.g||"charge"]}">${libNature(n)}</span>`;
+/* Sélecteur de vue (onglets segmentés) */
+const segments = (cle, opts, val) => `<div class="seg noprint" role="tablist">${opts.map(([k,l])=>`<button role="tab" aria-selected="${k===val}" class="${k===val?"on":""}" onclick="S['${cle}']='${k}';renderAll()">${l}</button>`).join("")}</div>`;
 function vueEcritures(){
   const y = S.year;
-  if(isHistorique(y)) return entete(`Recettes et dépenses ${y}`) + `<div class="alert info">Année reprise de l'Excel : pas d'écritures détaillées.</div>`;
+  if(isHistorique(y)) return entete(`Écritures ${y}`) + `<div class="alert info">Année reprise de l'Excel : pas d'écritures détaillées.</div>`;
   const ex = exercice(y); ex.ecritures ??= [];
-  const list = [...ex.ecritures].sort((a,b)=> a.date.localeCompare(b.date));
-  const lock = verrouille(y);
+  const vue = S.vueEcr || "journal", lock = verrouille(y);
   const ed = S.editId ? ex.ecritures.find(e=>e.id===S.editId) : null;
   const ouvert = !lock && (S.composer || ed);
-  const natOpts = sel => Object.keys(NATURES).map(n=>optNature(n, sel)).join("");
   const t = totauxEcritures(y);
-  const parMois = {};
-  list.forEach(e => (parMois[monthOf(e.date)] ??= []).push(e));
-  const groupe = g => NATURES[g.nature]?.g || (g.sens==="recette"?"recette":"charge");
-  return entete(`Recettes et dépenses ${y}`, "Tout l'argent qui entre ou sort pour la location : loyers encaissés, factures payées, prêt. Le plus simple est d'importer le relevé bancaire ; on peut aussi saisir à la main.") + `
-  ${lock ? `<div class="alerts"><div class="alert warn" style="align-items:center">Exercice clôturé : les écritures sont verrouillées.<button class="btn small sec" style="margin-left:auto" onclick="S.unlocked[${y}]=true;renderAll()">Déverrouiller</button></div></div>` : ""}
-  <div class="row noprint" style="margin-bottom:18px">
-    ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"+ Ajouter une recette ou une dépense"}</button>
+  const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Écritures ${y}</h1></div>
+    ${segments("vueEcr", [["journal","Écritures"],["balance","Balance"],["grandlivre","Grand livre"]], vue)}</div>`;
+  if(vue === "balance") return tete + vueBalanceVisuelle(y);
+  if(vue === "grandlivre") return tete + vueGrandLivre(y);
+  const mois = S.moisEcr || 0;
+  const list = [...ex.ecritures].filter(e => !mois || monthOf(e.date) === mois).sort((a,b)=> a.date.localeCompare(b.date));
+  const natOpts = sel => Object.keys(NATURES).map(n=>optNature(n, sel)).join("");
+  const nbMois = m => ex.ecritures.filter(e=>monthOf(e.date)===m).length;
+  return tete + `
+  ${lock ? `<div class="alert warn" style="align-items:center">Année clôturée : écritures verrouillées.<button class="btn small sec" style="margin-left:auto" onclick="S.unlocked[${y}]=true;renderAll()">Déverrouiller</button></div>` : ""}
+  <div class="tuiles">${tuile("Encaissé", eur0(t.recettes), {col:"var(--pos)"})}${tuile("Payé", eur0(t.c242+t.c244+t.c294+t.remb))}${tuile("Écritures", ex.ecritures.length)}${tuile("Sans justificatif", piecesManquantes(y).length, {page:"pieces", col:piecesManquantes(y).length?"var(--warn)":""})}</div>
+  <div class="row noprint" style="margin-bottom:14px">
+    ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"+ Écriture"}</button>
     <button class="btn sec" onclick="dupliquerMois()">Recopier le dernier mois</button>`}
-    <span style="margin-left:auto;color:var(--muted);font-size:14px">${eur(t.recettes)} encaissés, ${eur(t.c242+t.c244+t.c294+t.remb)} payés</span>
+    <div class="mois noprint">${["Tout",...MOIS].map((l,i)=>`<button class="${i===mois?"on":""}" ${i&&!nbMois(i)?'style="opacity:.45"':""} onclick="S.moisEcr=${i};renderAll()">${l.replace(".","")}</button>`).join("")}</div>
   </div>
-  ${ouvert ? `<div class="card composer noprint"><h3>${ed?"Modifier":"Nouvelle recette ou dépense"}</h3><div class="form">
+  ${ouvert ? `<div class="card composer noprint"><div class="form">
     <label>Date<input type="date" id="eDate" value="${ed?ed.date:(list.length?list[list.length-1].date:y+"-01-01")}"></label>
-    <label>Payé à / reçu de<input id="eTiers" list="tiersList" value="${esc(ed?ed.tiers:"")}" placeholder="Ex. syndic, banque"></label>
-    <label>Catégorie<select id="eNat">${natOpts(ed?ed.nature:"Loyer")}</select></label>
+    <label>Tiers<input id="eTiers" list="tiersList" value="${esc(ed?ed.tiers:"")}" placeholder="Syndic, banque…"></label>
+    <label>Nature<select id="eNat">${natOpts(ed?ed.nature:"Loyer")}</select></label>
     <label>Montant TTC<input id="eMont" inputmode="decimal" value="${ed?String(ed.montant).replace(".",","):""}" placeholder="0,00"></label>
-    <label style="grid-column:span 2">Commentaire<input id="eCom" value="${esc(ed?.commentaire||"")}" placeholder="Facultatif"></label>
-    <div class="row"><button class="btn" onclick="saveEcriture()">${ed?"Enregistrer la modification":"Ajouter"}</button><button class="btn ghost" onclick="S.editId=null;S.composer=false;renderAll()">Annuler</button></div>
+    <label style="grid-column:span 2">Commentaire<input id="eCom" value="${esc(ed?.commentaire||"")}"></label>
+    <div class="row"><button class="btn" onclick="saveEcriture()">${ed?"Enregistrer":"Ajouter"}</button><button class="btn ghost" onclick="S.editId=null;S.composer=false;renderAll()">Annuler</button></div>
   </div>
   <datalist id="tiersList">${[...new Set(ex.ecritures.map(e=>e.tiers).filter(Boolean))].map(t=>`<option value="${esc(t)}">`).join("")}</datalist></div>` : ""}
-  ${list.length ? Object.entries(parMois).map(([m,es]) => {
-    const rec = es.filter(e=>groupe(e)==="recette").reduce((s,e)=>s+e.montant,0), dep = es.filter(e=>groupe(e)!=="recette").reduce((s,e)=>s+e.montant,0);
-    return `<section class="card month"><header><h3>${MOIS_LONG[m-1]} ${y}</h3><span>${rec?`+${eur(rec)}`:""}${rec&&dep?" / ":""}${dep?`−${eur(dep)}`:""}</span></header>
-    ${es.map(e => { const g = groupe(e); return `<div class="ecr ${S.editId===e.id?"editing":""}">
-      <div class="d"><b>${e.date.slice(8,10)}</b>${MOIS[monthOf(e.date)-1]}</div>
-      <div class="t" ${e.libelleBanque?`title="Relevé bancaire : ${esc(e.libelleBanque)}"`:""}><b>${esc(e.tiers)||"Sans nom"}</b><small><i class="${g}"></i>${libNature(e.nature)}</small></div>
-      <div class="m ${g}">${g==="recette"?"+":"−"}${eur(e.montant)}</div>
-      <div class="a noprint">${piecesLigne(e)}${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();scrollTo(0,0)">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</div>
-      ${e.commentaire?`<div class="c">${esc(e.commentaire)}</div>`:""}
-    </div>`; }).join("")}</section>`; }).join("")
-  : `<div class="card"><p class="sub" style="margin:0">Aucune écriture pour ${y}. Commencez par le premier loyer encaissé avec « Ajouter une recette ou une dépense », ou importez un relevé bancaire.</p></div>`}`;
+  <div class="card" style="padding:8px 12px">${list.length ? `<div class="tablewrap"><table class="journal">
+    <tr><th>Date</th><th>Tiers</th><th>Nature</th>${comptesVisibles()?"<th>Compte</th>":""}<th class="n">Montant</th><th></th></tr>
+    ${list.map(e => { const g = grpNature(e); return `<tr class="${S.editId===e.id?"editing":""}">
+      <td style="white-space:nowrap">${fmtDate(e.date).slice(0,5)}</td>
+      <td ${e.libelleBanque?`title="Relevé : ${esc(e.libelleBanque)}"`:""}>${esc(e.tiers)||"–"}${e.commentaire?`<br><small style="color:var(--muted)">${esc(e.commentaire)}</small>`:""}</td>
+      <td>${chipNature(e.nature).replace(/<span class="cpt">.*?<\/span>/,"")}</td>${comptesVisibles()?`<td class="cpt">${compteNature(e.nature)}</td>`:""}
+      <td class="n" style="font-weight:500;color:${g==="recette"?"var(--pos)":"var(--text)"}">${g==="recette"?"+":"−"}${eur(e.montant)}</td>
+      <td class="n noprint act">${piecesLigne(e)}${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();scrollTo(0,0)">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</td></tr>`; }).join("")}
+  </table></div>` : `<p class="sub" style="margin:14px 8px">Aucune écriture${mois?" ce mois-ci":""}. Importez le relevé (page Banque) ou ajoutez-en une.</p>`}</div>`;
+}
+/* Balance : soldes par compte, avec une barre proportionnelle */
+function vueBalanceVisuelle(y){
+  const rows = balance(y), tot = rows.reduce((s,r)=>({d:s.d+r.d, cr:s.cr+r.cr}),{d:0,cr:0});
+  const max = Math.max(1, ...rows.map(r=>Math.abs(r.solde)));
+  const classe = c => ({"1":"Capitaux","2":"Immobilisations","5":"Banque","6":"Charges","7":"Produits"})[c[0]] || "";
+  let prev = "";
+  return `<div class="card"><div class="tablewrap"><table class="balance">
+    <tr><th>Compte</th><th>Libellé</th><th class="n">Débit</th><th class="n">Crédit</th><th class="n">Solde</th><th style="width:22%"></th></tr>
+    ${rows.map(r => { const cl = classe(r.c), h = cl !== prev ? `<tr class="cl"><td colspan="6">${cl}</td></tr>` : ""; prev = cl;
+      return h + `<tr><td class="cpt">${r.c}</td><td>${esc(r.lib)}</td><td class="n">${r.d?eur(r.d):""}</td><td class="n">${r.cr?eur(r.cr):""}</td><td class="n"><b>${eur(Math.abs(r.solde))}</b> <small>${r.solde>=0.005?"D":r.solde<=-0.005?"C":""}</small></td>
+      <td>${jauge([[Math.abs(r.solde), r.c[0]==="7"?"var(--pos)":r.c[0]==="6"?"var(--seg-3)":"var(--accent)"]], max, 8)}</td></tr>`; }).join("")}
+    <tr class="tot"><td></td><td>Total</td><td class="n">${eur(tot.d)}</td><td class="n">${eur(tot.cr)}</td><td></td><td></td></tr>
+  </table></div></div>`;
+}
+/* Grand livre : mouvements par compte avec solde progressif */
+function vueGrandLivre(y){
+  const parC = {};
+  ecrituresComptables(y).forEach(e => e.lignes.forEach(l => (parC[l.c] ??= []).push({date:e.date, j:e.journal, lib:e.lib, d:l.d||0, cr:l.cr||0})));
+  const ouvert = S.glOuvert || {};
+  return Object.keys(parC).sort().map(c => {
+    const ls = parC[c].sort((a,b)=>a.date.localeCompare(b.date)); let s = 0;
+    const D = ls.reduce((x,l)=>x+l.d,0), C = ls.reduce((x,l)=>x+l.cr,0), solde = D - C;
+    return `<details class="card gl" ${ouvert[c]?"open":""} ontoggle="(S.glOuvert??={})['${c}']=this.open"><summary><span class="cpt">${c}</span><b>${esc(COMPTES[c]||"")}</b><span class="pill">${ls.length}</span><span style="margin-left:auto;font-weight:600">${eur(Math.abs(solde))} ${solde>=0.005?"D":solde<=-0.005?"C":""}</span></summary>
+      <div class="tablewrap"><table><tr><th>Date</th><th>Jnl</th><th>Libellé</th><th class="n">Débit</th><th class="n">Crédit</th><th class="n">Solde</th></tr>
+      ${ls.map(l => { s += l.d - l.cr; return `<tr><td style="white-space:nowrap">${fmtDate(l.date)}</td><td><span class="pill">${l.j}</span></td><td>${esc(l.lib)}</td><td class="n">${l.d?eur(l.d):""}</td><td class="n">${l.cr?eur(l.cr):""}</td><td class="n">${eur(Math.abs(s))} ${s>=0.005?"D":s<=-0.005?"C":""}</td></tr>`; }).join("")}
+      <tr class="tot"><td></td><td></td><td>Total</td><td class="n">${eur(D)}</td><td class="n">${eur(C)}</td><td class="n">${eur(Math.abs(solde))}</td></tr></table></div></details>`;
+  }).join("");
 }
 function parseMontant(s){ return Number(String(s).replace(/\s/g,"").replace(",", ".")); }
 function saveEcriture(){
