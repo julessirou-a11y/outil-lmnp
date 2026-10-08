@@ -4,6 +4,7 @@ Petit outil web pour tenir la comptabilité d'une location meublée non professi
 
 - saisie des recettes et dépenses ;
 - import du relevé bancaire CSV, avec tri des opérations, règles mémorisées par mot-clé et détection des doublons ;
+- import des factures reçues sur la plateforme agréée (PDF Factur-X, XML UBL ou CII, ZIP) : rangement dans `Justificatifs/` et rattachement automatique au paiement de même montant ;
 - amortissements par composant (logement hors terrain, travaux, mobilier) ;
 - échéancier d'emprunt ;
 - calcul du résultat fiscal, avec report des amortissements non déductibles (art. 39 C du CGI) et des déficits ;
@@ -20,5 +21,7 @@ Ce dépôt ne contient **que le code**. Les données comptables sont dans un fic
 
 - **Mac, Chrome ou Edge** : bouton « Ouvrir le dossier LMNP… », puis choisir le dossier iCloud. Chaque enregistrement met à jour le fichier et ajoute une copie datée dans `Sauvegardes/`.
 - **Safari, iPhone** : consultation et impression ; l'enregistrement télécharge le fichier, qu'il faut ensuite replacer dans le dossier iCloud.
+
+Pour les factures électroniques, déposer l'export de la plateforme agréée dans le sous-dossier `Factures reçues/` : l'outil le lit à l'ouverture. Rien n'est envoyé à la plateforme ni ailleurs.
 
 Les montants produits sont à vérifier avant chaque déclaration.
