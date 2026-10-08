@@ -106,8 +106,8 @@ main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
 /* Ordinateur : la page ne défile plus, seule la zone de droite défile. Le menu reste immobile. */
 @media screen and (min-width: 861px){
   html,body{height:100%;overflow:hidden}
-  .app{height:100vh;height:100dvh;min-height:0}
-  .side{position:relative;height:auto;min-height:0}
+  .app{height:100vh;height:100dvh;min-height:0;grid-template-rows:minmax(0,1fr)}
+  .side{position:relative;height:auto;min-height:0;max-height:100vh;max-height:100dvh}
   main{max-width:none;overflow:hidden auto;overscroll-behavior:contain;padding-right:max(44px, calc(100% - 1080px + 44px))}
 }
 main:focus{outline:none}
@@ -892,9 +892,13 @@ document.querySelectorAll(".logolink").forEach(a => a.addEventListener("click", 
 function ajusterMenu(){
   const side = $(".side"), niveaux = ["c1","c2","c3"];
   side.classList.remove(...niveaux);
-  for(const c of niveaux){ if(side.scrollHeight <= side.clientHeight) break; side.classList.add(c); }
+  const deborde = () => side.scrollHeight > Math.min(side.clientHeight, innerHeight - Math.max(0, side.getBoundingClientRect().top)) + 1;
+  for(const c of niveaux){ if(!deborde()) break; side.classList.add(c); }
 }
 addEventListener("resize", ajusterMenu);
+/* Les tailles changent aussi quand la police web finit de charger ou qu'un badge apparaît : on réajuste à chaque changement */
+if(window.ResizeObserver){ const ro = new ResizeObserver(() => ajusterMenu()); [".side",".brand",".yearbox","#tabs",".sidefoot"].forEach(q => ro.observe($(q))); }
+if(document.fonts) document.fonts.ready.then(ajusterMenu);
 $("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b) allerA(b.dataset.tab); });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
 /* Thème : automatique, clair ou sombre (mémorisé sur cet appareil) */
