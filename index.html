@@ -113,8 +113,9 @@ main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
 @media screen and (min-width: 861px){
   html,body{height:100%;overflow:hidden}
   .app{height:100vh;height:100dvh;min-height:0;grid-template-rows:minmax(0,1fr)}
-  .side{position:relative;height:auto;min-height:0;max-height:100vh;max-height:100dvh}
-  main{max-width:none;overflow:hidden auto;overscroll-behavior:contain;padding-right:max(44px, calc(100% - 1080px + 44px))}
+  /* Colonne accrochée aux bords haut et bas de la fenêtre : elle ne peut pas être plus haute que l'écran */
+  .side{position:fixed;top:0;bottom:0;left:0;width:248px;height:auto;max-height:none}
+  main{grid-column:2;max-width:none;overflow:hidden auto;overscroll-behavior:contain;padding-right:max(44px, calc(100% - 1080px + 44px))}
 }
 main:focus{outline:none}
 /* Pas de défilement horizontal de la page : seuls les tableaux larges défilent dans leur cadre */
@@ -908,6 +909,18 @@ addEventListener("resize", ajusterMenu);
 /* Les tailles changent aussi quand la police web finit de charger ou qu'un badge apparaît : on réajuste à chaque changement */
 if(window.ResizeObserver){ const ro = new ResizeObserver(() => ajusterMenu()); [".side",".brand",".yearbox","#tabs",".sidefoot"].forEach(q => ro.observe($(q))); }
 if(document.fonts) document.fonts.ready.then(ajusterMenu);
+/* Diagnostic d'affichage : ouvrir la page avec ?diag à la fin de l'adresse */
+if(/[?&]diag\b/.test(location.search)){
+  const d = document.createElement("pre");
+  d.style.cssText = "position:fixed;right:8px;bottom:8px;z-index:99;margin:0;padding:8px 10px;font:12px/1.4 ui-monospace,Menlo,monospace;background:#000c;color:#fff;border-radius:8px;pointer-events:none";
+  document.body.appendChild(d);
+  const r = el => { if(!el) return "absent"; const b = el.getBoundingClientRect(); return `${Math.round(b.top)}→${Math.round(b.bottom)} (h ${Math.round(b.height)})`; };
+  const maj = () => { const s = $(".side"), cs = getComputedStyle(s);
+    d.textContent = [`fenêtre ${innerWidth}×${innerHeight}  vv ${Math.round(visualViewport?.height||0)}  dpr ${devicePixelRatio}`,
+      `colonne ${r(s)}  ${cs.position}  classes [${s.className}]`, `contenu ${s.scrollHeight} / visible ${s.clientHeight}`,
+      `menu ${r($("#tabs"))}`, `pied ${r($(".sidefoot"))}`, `app ${r($(".app"))}`, `Plex ${document.fonts?.check('15px "IBM Plex Sans"')}`].join("\n"); };
+  maj(); addEventListener("resize", maj); setInterval(maj, 1000);
+}
 $("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b) allerA(b.dataset.tab); });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
 /* Thème : automatique, clair ou sombre (mémorisé sur cet appareil) */
