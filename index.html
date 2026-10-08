@@ -43,6 +43,12 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .yearbox{padding:0 6px}
 .yearbox select{width:100%;font-weight:600}
 .menu{display:flex;flex-direction:column;gap:2px}
+/* Le menu se tasse de lui-même quand la colonne manque de hauteur : les boutons rétrécissent (jusqu'à 28 px) au lieu de faire dépasser la colonne */
+.side>*{flex-shrink:0}
+.side>.menu{flex:0 1 auto;min-height:calc(var(--n, 9) * 30px + 20px)} /* --n : nombre de boutons, posé par renderAll */
+.menu button,.menu .sep{flex-shrink:1}
+.menu button{min-height:28px}
+.side.mesure>.menu,.side.mesure .menu button{flex-shrink:0}
 .menu button{display:flex;align-items:center;gap:11px;width:100%;padding:9px 10px;border:0;border-radius:var(--r-md);background:none;color:var(--muted);font:inherit;font-size:14.5px;text-align:left;cursor:pointer}
 .menu button svg{flex:none;opacity:.85}
 .menu button:hover{background:var(--surface-2);color:var(--text)}
@@ -882,6 +888,7 @@ function renderAll(){
   const sombre = themeActuel() === "dark";
   $("#themeBtn").setAttribute("aria-pressed", sombre); $("#themeBtn").innerHTML = sombre ? "☀︎ Clair" : "☾ Sombre";
   $("#cptBtn").setAttribute("aria-pressed", comptesVisibles());
+  $("#tabs").style.setProperty("--n", $("#tabs").querySelectorAll("button").length);
   ajusterMenu();
   const m = $("#main");
   if(!S.data){ m.innerHTML = vueBienvenue(); return; }
@@ -893,7 +900,9 @@ function ajusterMenu(){
   const side = $(".side"), niveaux = ["c1","c2","c3"];
   side.classList.remove(...niveaux);
   const deborde = () => side.scrollHeight > Math.min(side.clientHeight, innerHeight - Math.max(0, side.getBoundingClientRect().top)) + 1;
+  side.classList.add("mesure"); /* mesure à taille naturelle, sans le tassement automatique */
   for(const c of niveaux){ if(!deborde()) break; side.classList.add(c); }
+  side.classList.remove("mesure");
 }
 addEventListener("resize", ajusterMenu);
 /* Les tailles changent aussi quand la police web finit de charger ou qu'un badge apparaît : on réajuste à chaque changement */
