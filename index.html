@@ -101,6 +101,14 @@ main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
   .menu .sep{margin:3px 10px}
   .status:empty{display:none}
 }
+/* Ordinateur : la page ne défile plus, seule la zone de droite défile. Le menu reste immobile. */
+@media screen and (min-width: 861px){
+  html,body{height:100%;overflow:hidden}
+  .app{height:100vh;height:100dvh;min-height:0}
+  .side{position:relative;height:auto;min-height:0}
+  main{max-width:none;overflow:hidden auto;overscroll-behavior:contain;padding-right:max(44px, calc(100% - 1080px + 44px))}
+}
+main:focus{outline:none}
 /* Pas de défilement horizontal de la page : seuls les tableaux larges défilent dans leur cadre */
 html,body{overflow-x:clip;overscroll-behavior-x:none}
 
@@ -501,7 +509,7 @@ dialog#viewer::backdrop{background:rgba(10,15,25,.5)}
       </div>
     </div>
   </aside>
-  <main id="main"></main>
+  <main id="main" tabindex="-1"></main>
 </div>
 
 <input type="file" id="fileInput" accept=".json,application/json" class="hide">
@@ -556,6 +564,7 @@ const S = {data:null, dirty:false, dir:null, fileName:null, year:null, tab:"accu
 
 /* ============ Utilitaires ============ */
 const $ = s => document.querySelector(s);
+function haut(){ window.scrollTo(0,0); const m = document.getElementById("main"); m.scrollTop = 0; m.focus({preventScroll:true}); }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
 const eur = n => (n==null||isNaN(n)) ? "–" : n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
@@ -1066,7 +1075,7 @@ function vueEcritures(){
       <td ${e.libelleBanque?`title="Relevé : ${esc(e.libelleBanque)}"`:""}>${esc(e.tiers)||"–"}${e.commentaire?`<br><small style="color:var(--muted)">${esc(e.commentaire)}</small>`:""}</td>
       <td>${chipNature(e.nature).replace(/<span class="cpt">.*?<\/span>/,"")}</td>${comptesVisibles()?`<td class="cpt">${compteNature(e.nature)}</td>`:""}
       <td class="n" style="font-weight:500;color:${g==="recette"?"var(--pos)":"var(--text)"}">${g==="recette"?"+":"−"}${eur(e.montant)}</td>
-      <td class="n noprint act">${piecesLigne(e)}${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();scrollTo(0,0)">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</td></tr>`; }).join("")}
+      <td class="n noprint act">${piecesLigne(e)}${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();haut()">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</td></tr>`; }).join("")}
   </table></div>` : `<p class="sub" style="margin:14px 8px">Aucune écriture${mois?" ce mois-ci":""}. Importez le relevé (page Banque) ou ajoutez-en une.</p>`}</div>`;
 }
 /* Balance : soldes par compte, avec une barre proportionnelle */
@@ -1143,7 +1152,7 @@ function vueImmos(){
   const carte = x => { const {i, a, plan} = x, fait = a.cumulFin / (a.base||1), restant = a.base - a.cumulFin, col = COUL_CAT[i.categorie]||"var(--accent)";
     return `<div class="card immo">
       <div class="ih">${svgI(IC_CAT[i.categorie]||IC_CAT.travaux).replace('width="17" height="17"','width="22" height="22"')}<div><b>${esc(i.libelle)}</b><small>${CATEGORIES[i.categorie]||i.categorie}${comptesVisibles()&&CPT_IMMO[i.categorie]?` · ${CPT_IMMO[i.categorie].brut}`:""}</small></div>
-        <button class="btn small ghost noprint" style="margin-left:auto" onclick="S.editImmo='${i.id}';renderAll();scrollTo(0,0)">${I_EDIT}</button></div>
+        <button class="btn small ghost noprint" style="margin-left:auto" onclick="S.editImmo='${i.id}';renderAll();haut()">${I_EDIT}</button></div>
       <div class="ib">${anneau(fait, pctTxt(fait), col, 96)}
         <div class="iv"><div><span>Prix</span><b>${eur0(i.valeurOrigine)}</b></div><div><span>Durée</span><b>${i.dureeAns} ans</b></div><div><span>Fin</span><b>${x.fin}</b></div>
           <div><span>Amortissement ${y}</span><b style="color:${col}">${eur0(a.dotation)}</b></div><div><span>Amorti fin ${y}</span><b>${eur0(a.cumulFin)}</b></div><div><span>Reste</span><b>${eur0(restant)}</b></div></div></div>
@@ -1785,7 +1794,7 @@ function controles(y){
   return out;
 }
 const NOM_PAGE = Object.fromEntries(TABS.filter(t=>t[0]!=="h"&&t[0]!=="sep"));
-function allerA(pg){ S.tab = pg; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; document.body.classList.remove("menu-open"); renderAll(); scrollTo(0,0); }
+function allerA(pg){ S.tab = pg; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; document.body.classList.remove("menu-open"); renderAll(); haut(); }
 const lienPage = pg => `<button class="btn ghost small noprint" style="margin-left:auto;flex:none;color:var(--accent)" onclick="allerA('${pg}')">${NOM_PAGE[pg]} →</button>`;
 function vueControles(y){
   const l = controles(y), nb = k => l.filter(x => x[0] === k).length;
@@ -1849,7 +1858,7 @@ function vueDossier(){
     ${ys.map(y=>{ const st = S.data.exercices[y].statut||"en-cours", [lib,col] = STAT[st]||[st,"var(--line)"];
       return `<div class="an" style="--c:${col}"><b>${y}</b><span>${lib}</span>${isHistorique(y)?"":st==="cloture"
         ?`<button class="btn small ghost" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`
-        :`<button class="btn small sec" onclick="S.cloture=${y};renderAll();scrollTo(0,0)">Clôturer…</button>`}</div>`; }).join("")}
+        :`<button class="btn small sec" onclick="S.cloture=${y};renderAll();haut()">Clôturer…</button>`}</div>`; }).join("")}
     <button class="an plus" onclick="nouvelExercice()"><b>+</b><span>Ouvrir ${Math.max(...ys)+1}</span></button>
   </div></div>
   <div class="dosgrid">
@@ -2165,7 +2174,7 @@ function chercherDoublon(o){
 function importerCSV(){ $("#csvInput").click(); }
 $("#csvInput").addEventListener("change", async ev => {
   const f = ev.target.files[0]; ev.target.value = ""; if(!f) return;
-  try{ S.imp = analyserCSV(await lireTexte(f), f.name); S.tab = "banque"; renderAll(); window.scrollTo(0,0); }
+  try{ S.imp = analyserCSV(await lireTexte(f), f.name); S.tab = "banque"; renderAll(); haut(); }
   catch(e){ alert(e.message); }
 });
 function majImport(k, v){ S.imp.map[k] = k === "mode" ? v : Number(v); renderAll(); }
@@ -2280,7 +2289,7 @@ function vueImport(){
 async function deposerCSV(ev){
   ev.preventDefault(); ev.currentTarget.classList.remove("survol");
   const f = ev.dataTransfer.files[0]; if(!f) return;
-  try{ S.imp = analyserCSV(await lireTexte(f), f.name); renderAll(); scrollTo(0,0); } catch(e){ alert(e.message); }
+  try{ S.imp = analyserCSV(await lireTexte(f), f.name); renderAll(); haut(); } catch(e){ alert(e.message); }
 }
 const zoneDepot = (titre, sous, action, drop) => `<div class="depot noprint" role="button" tabindex="0" onclick="${action}" ondragover="event.preventDefault();this.classList.add('survol')" ondragleave="this.classList.remove('survol')" ondrop="${drop}">
   <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 15v4h14v-4"/></svg>
@@ -2379,7 +2388,7 @@ function cloturer(y){
   if(d) ex.dateDeclaration = d; else delete ex.dateDeclaration;
   const nouveau = !exercice(y+1);
   if(nouveau) S.data.exercices[y+1] = {statut:"en-cours", ecritures:[]};
-  S.cloture = null; S.year = y+1; S.tab = "accueil"; setDirty(); renderAll(); scrollTo(0,0);
+  S.cloture = null; S.year = y+1; S.tab = "accueil"; setDirty(); renderAll(); haut();
   toast(`Exercice ${y} clôturé${nouveau?`, exercice ${y+1} ouvert`:""}.`);
 }
 
