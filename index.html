@@ -53,6 +53,7 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .sidefoot{margin-top:auto;display:flex;flex-direction:column;gap:10px;padding:0 6px}
 .status{font-size:12.5px;color:var(--muted);min-height:18px}
 .status.warn{color:var(--warn)}
+.side .status{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .prefs{display:flex;gap:6px}
 .prefs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:inherit;font-size:12.5px;padding:5px 6px;border-radius:var(--r-md);cursor:pointer}
 .prefs button:hover{color:var(--text)}
@@ -82,25 +83,26 @@ main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
   main{padding:22px 16px 60px}
 }
 @media (prefers-reduced-motion: reduce){ .side{transition:none} }
-/* Menu toujours visible en entier : il se resserre quand la fenêtre est basse */
-@media (max-height: 780px){
-  .side{gap:12px;padding:14px 14px}
-  .yearbox label{flex-direction:row;align-items:center;gap:10px}
-  .yearbox select{flex:1;padding:5px 8px}
-  .menu button{padding:6px 10px}
-  .menu .sep{margin:5px 10px}
-  .sidefoot{gap:8px}
-  .sidefoot .btn{padding:6px 15px}
-}
-@media (max-height: 600px){
-  .side{gap:8px;padding:10px 14px}
-  .brand small{display:none}
-  .brand .logo{height:24px}
-  .menu{gap:0}
-  .menu button{padding:4px 10px;font-size:14px}
-  .menu .sep{margin:3px 10px}
-  .status:empty{display:none}
-}
+/* Menu toujours visible en entier : ajusterMenu() le resserre par paliers (c1, c2, c3) tant qu'il dépasse de la fenêtre */
+.side.c1{gap:12px;padding:14px 14px}
+.side.c1 .yearbox label{flex-direction:row;align-items:center;gap:10px}
+.side.c1 .yearbox select{flex:1;padding:5px 8px}
+.side.c1 .menu button{padding:6px 10px}
+.side.c1 .menu .sep{margin:5px 10px}
+.side.c1 .sidefoot{gap:8px}
+.side.c1 .sidefoot .btn{padding:6px 15px}
+.side.c2{gap:8px;padding:10px 14px}
+.side.c2 .brand small{display:none}
+.side.c2 .brand .logo{height:24px}
+.side.c2 .menu{gap:0}
+.side.c2 .menu button{padding:4px 10px;font-size:14px}
+.side.c2 .menu .sep{margin:3px 10px}
+.side.c2 .status:empty{display:none}
+.side.c3{gap:6px;padding:8px 12px}
+.side.c3 .menu button{padding:2px 10px;font-size:13.5px;line-height:1.4}
+.side.c3 .menu .sep{margin:2px 10px}
+.side.c3 .yearbox select,.side.c3 .sidefoot .btn{padding:3px 8px}
+.side.c3 .prefs button{padding:3px 6px}
 /* Ordinateur : la page ne défile plus, seule la zone de droite défile. Le menu reste immobile. */
 @media screen and (min-width: 861px){
   html,body{height:100%;overflow:hidden}
@@ -581,7 +583,7 @@ function setDirty(v=true){
   $("#saveBtn").disabled = !S.data;
   if(v && S.dir){ clearTimeout(S.autoT); S.autoT = setTimeout(autoSave, 1200); }
 }
-function statut(txt, alerte){ for(const id of ["#dirty","#statusTop"]){ const el = $(id); if(el){ el.textContent = txt; el.classList.toggle("warn", !!alerte); } } }
+function statut(txt, alerte){ for(const id of ["#dirty","#statusTop"]){ const el = $(id); if(el){ el.textContent = txt; el.classList.toggle("warn", !!alerte); } } ajusterMenu(); }
 /* Enregistrement automatique dans le dossier (sans demander d'autorisation) */
 async function autoSave(){
   if(!S.dir || !S.dirty) return;
@@ -880,12 +882,19 @@ function renderAll(){
   const sombre = themeActuel() === "dark";
   $("#themeBtn").setAttribute("aria-pressed", sombre); $("#themeBtn").innerHTML = sombre ? "☀︎ Clair" : "☾ Sombre";
   $("#cptBtn").setAttribute("aria-pressed", comptesVisibles());
+  ajusterMenu();
   const m = $("#main");
   if(!S.data){ m.innerHTML = vueBienvenue(); return; }
   m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, simulations:vueSimulations, dossier:vueDossier, pieces:vuePieces})[S.tab]();
   if(S.tab === "pieces") scanNonRattaches(S.year);
 }
 document.querySelectorAll(".logolink").forEach(a => a.addEventListener("click", e => { e.preventDefault(); allerA("accueil"); }));
+function ajusterMenu(){
+  const side = $(".side"), niveaux = ["c1","c2","c3"];
+  side.classList.remove(...niveaux);
+  for(const c of niveaux){ if(side.scrollHeight <= side.clientHeight) break; side.classList.add(c); }
+}
+addEventListener("resize", ajusterMenu);
 $("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b) allerA(b.dataset.tab); });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
 /* Thème : automatique, clair ou sombre (mémorisé sur cet appareil) */
