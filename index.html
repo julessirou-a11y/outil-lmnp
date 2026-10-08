@@ -1829,12 +1829,14 @@ function controles(y){
   }
   const prec = exercice(y-1);
   if(y > yearOf(debutLMNP())) chk(!!prec && (!isHistorique(y-1) || prec.chiffres?.immobilisationsNettes != null), `Colonne N-1 (${y-1}) disponible pour la 2033-A.`, "warn", `Chiffres ${y-1} incomplets : la colonne « année précédente » du bilan (2033-A) sera à remplir à la main lors de la déclaration.`);
+  const xl = ex.reprise?.chiffres?.resultat;
+  if(xl != null) chk(Math.abs(c.resultatComptable - xl) < 1, `Résultat comptable identique à l'Excel repris (${eur(xl)}).`, "warn", `Résultat comptable de ${eur(c.resultatComptable)} contre ${eur(xl)} dans l'Excel repris : vérifiez les écritures et les immobilisations.`, "ecritures");
   const f = fiscalJusqua(y);
   if(f.perimes?.length) out.push(["warn", `Déficit(s) de plus de 10 ans perdu(s) cette année : ${f.perimes.map(d=>d.annee+" ("+eur(d.montant)+")").join(", ")}.`]);
   return out;
 }
 const NOM_PAGE = Object.fromEntries(TABS.filter(t=>t[0]!=="h"&&t[0]!=="sep"));
-function allerA(pg){ S.tab = pg; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; document.body.classList.remove("menu-open"); renderAll(); haut(); }
+function allerA(pg){ S.tab = pg; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; S.reprise=null; document.body.classList.remove("menu-open"); renderAll(); haut(); }
 const lienPage = pg => `<button class="btn ghost small noprint" style="margin-left:auto;flex:none;color:var(--accent)" onclick="allerA('${pg}')">${NOM_PAGE[pg]} →</button>`;
 function vueControles(y){
   const l = controles(y), nb = k => l.filter(x => x[0] === k).length;
@@ -1883,6 +1885,7 @@ function vueDossier(){
   const d = S.data.dossier, rp = S.data.reports;
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
   if(S.cloture && exercice(S.cloture) && !isHistorique(S.cloture)) return vueCloture(S.cloture);
+  if(S.reprise) return vueReprise(S.reprise.y);
   const comp = completudeDossier(), ini = (d.nomExploitant||d.nom||"?").split(/\s+/).map(m=>m[0]).slice(0,2).join("").toUpperCase();
   const STAT = {historique:["Reprise Excel","var(--seg-2)"], "en-cours":["En cours","var(--warn)"], cloture:["Clôturée","var(--pos)"]};
   return `<div class="pagehead"><h1>Paramètres du dossier</h1></div>
@@ -1895,8 +1898,9 @@ function vueDossier(){
   </div>
   <div class="dosgrid">${Object.values(CHAMPS_DOSSIER).map(([titre, ic, champs]) => `<div class="card"><h3 class="ich"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${ic}"/></svg>${titre}</h3><div class="form f2">${champs.map(champDossier).join("")}</div></div>`).join("")}</div>
   <div class="card"><h3>Années</h3><div class="annees">
+    ${anneeReprenable() ? `<button class="an plus" onclick="ouvrirReprise(${anneeReprenable()})"><b>+</b><span>Reprendre ${anneeReprenable()}</span></button>` : ""}
     ${ys.map(y=>{ const st = S.data.exercices[y].statut||"en-cours", [lib,col] = STAT[st]||[st,"var(--line)"];
-      return `<div class="an" style="--c:${col}"><b>${y}</b><span>${lib}</span>${isHistorique(y)?"":st==="cloture"
+      return `<div class="an" style="--c:${col}"><b>${y}</b><span>${lib}</span>${isHistorique(y)?`<button class="btn small sec" onclick="ouvrirReprise(${y})">Détailler…</button>`:st==="cloture"
         ?`<button class="btn small ghost" onclick="S.data.exercices[${y}].statut='en-cours';setDirty();renderAll()">Rouvrir</button>`
         :`<button class="btn small sec" onclick="S.cloture=${y};renderAll();haut()">Clôturer…</button>`}</div>`; }).join("")}
     <button class="an plus" onclick="nouvelExercice()"><b>+</b><span>Ouvrir ${Math.max(...ys)+1}</span></button>
@@ -2144,6 +2148,10 @@ async function xmlDuPdf(u8){
 }
 /* Lecture d'un ZIP (export groupé de la plateforme) */
 async function fichiersDuZip(u8){
+  return (await entreesZip(u8)).map(e => new File([e.data], e.nom.split("/").pop()));
+}
+/* Contenu d'un ZIP (chemin complet et octets) : sert aux factures de la plateforme et aux classeurs Excel */
+async function entreesZip(u8){
   const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength), out = [];
   let e = u8.length - 22; while(e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
   if(e < 0) throw new Error("ZIP illisible");
@@ -2155,7 +2163,7 @@ async function fichiersDuZip(u8){
     if(nom.endsWith("/") || /(^|\/)(__MACOSX\/|\.)/.test(nom)) continue;
     const d = off + 30 + dv.getUint16(off+26, true) + dv.getUint16(off+28, true), brut = u8.subarray(d, d+taille);
     const data = meth === 0 ? brut : meth === 8 ? await decompresser(brut, "deflate-raw") : null;
-    if(data) out.push(new File([data], nom.split("/").pop()));
+    if(data) out.push({nom, data});
   }
   return out;
 }
@@ -2643,6 +2651,169 @@ function cloturer(y){
 function nouvelExercice(){
   const y = Math.max(...Object.keys(S.data.exercices).map(Number)) + 1;
   S.data.exercices[y] = {statut:"en-cours", ecritures:[]}; S.year = y; S.tab = "ecritures"; setDirty(); renderAll();
+}
+
+/* ---- Reprise d'une année antérieure depuis l'ancien classeur Excel (« Dossier de travail ») ---- */
+/* Le classeur est lu dans le navigateur : rien n'est envoyé sur internet. On en tire les écritures des onglets
+   mensuels (livre des recettes à gauche, registre des dépenses à droite) ; « Compte de résultat » et « BILAN »
+   servent de contrôle. L'année reprise devient une année calculée comme les autres. */
+async function lireClasseur(u8){
+  const ent = Object.fromEntries((await entreesZip(u8)).map(e => [e.nom, e.data]));
+  if(!ent["xl/workbook.xml"]) throw new Error("Ce fichier n'est pas un classeur Excel (.xlsx).");
+  const xml = n => new DOMParser().parseFromString(ent[n] ? new TextDecoder().decode(ent[n]) : "<x/>", "application/xml");
+  const partages = [...xml("xl/sharedStrings.xml").getElementsByTagName("si")].map(si => [...si.getElementsByTagName("t")].map(t => t.textContent).join(""));
+  const rels = Object.fromEntries([...xml("xl/_rels/workbook.xml.rels").getElementsByTagName("Relationship")].map(r => [r.getAttribute("Id"), r.getAttribute("Target")]));
+  const colNum = c => [...c].reduce((n, ch) => n*26 + ch.charCodeAt(0) - 64, 0);
+  const feuilles = {};
+  for(const f of xml("xl/workbook.xml").getElementsByTagName("sheet")){
+    const cible = (rels[f.getAttribute("r:id")] || "").replace(/^\//, "").replace(/^(?!xl\/)/, "xl/");
+    const g = [];
+    for(const c of xml(cible).getElementsByTagName("c")){
+      const m = (c.getAttribute("r") || "").match(/^([A-Z]+)(\d+)$/), t = c.getAttribute("t"), v = c.getElementsByTagName("v")[0]?.textContent;
+      const val = t === "s" ? partages[+v] : t === "inlineStr" ? c.getElementsByTagName("t")[0]?.textContent : t === "str" ? v : t === "e" || t === "b" ? null : (v != null && v !== "" ? Number(v) : null);
+      if(m && val != null && val !== "") (g[+m[2]-1] ??= [])[colNum(m[1])-1] = val;
+    }
+    feuilles[f.getAttribute("name")] = g;
+  }
+  return feuilles;
+}
+const MOIS_XL = MOIS_LONG.map(m => norm(m));
+const dateExcel = n => typeof n === "number" ? new Date(Date.UTC(1899, 11, 30) + Math.round(n) * 864e5).toISOString().slice(0,10) : null;
+/* Libellés de l'Excel → natures de l'outil (ajustables avant la reprise) */
+const NAT_XL = [[/loyer/, "Loyer"], [/refactur|provision/, "Charges refacturées"], [/interet/, "Intérêts emprunt"], [/assurance.*(credit|pret|emprunt)/, "Assurance emprunt"],
+  [/copro|syndic/, "Copropriété"], [/assurance|pno/, "Assurance"], [/foncier|fonciere/, "Taxe foncière"], [/\bcfe\b|cotisation fonc/, "CFE"], [/\beau\b/, "Eau"],
+  [/electri|\bgaz\b/, "Électricité / gaz"], [/internet|\bbox\b|telecom/, "Internet"], [/entretien|reparation/, "Entretien et réparations"], [/frais bancaire|tenue de compte/, "Frais bancaires"],
+  [/honoraire|comptab|\boga\b|\bcga\b/, "Honoraires"], [/agence|gestion/, "Frais de gestion / agence"], [/capital|rembours/, "Remboursement emprunt"], [/petit equip|electromenager/, "Petit équipement (< 500 € HT)"]];
+const natureXL = (lib, recette) => (NAT_XL.find(([re, n]) => re.test(norm(lib)) && (NATURES[n].g === "recette") === recette) || [0, recette ? "Autre recette" : "Autre charge"])[1];
+function analyserDossierExcel(feuilles, fichier){
+  let annee = null; const lignes = [];
+  for(const [nom, g] of Object.entries(feuilles)){
+    const m = MOIS_XL.indexOf(norm(nom)) + 1; if(!m) continue;
+    g.forEach(r => r && r.forEach((v, j) => { if(norm(v).startsWith("annee") && typeof r[j+1] === "number") annee ??= r[j+1]; }));
+    const iH = g.findIndex(r => r && r.some(v => norm(v) === "nature") && r.some(v => norm(v) === "montant"));
+    if(iH < 0) continue;
+    const h = g[iH].map(norm), blocs = [];
+    h.forEach((v, j) => { if(v === "nature") blocs.push({nat:j, mt:h.indexOf("montant", j), date:h.lastIndexOf("date", j), recette:!blocs.length}); });
+    for(let i = iH + 1; i < g.length; i++){
+      const r = g[i] || [];
+      blocs.forEach(b => {
+        if(norm(r[b.nat]).startsWith("total")) b.fin = true;
+        if(b.fin || typeof r[b.mt] !== "number" || Math.abs(r[b.mt]) < 0.005) return;
+        lignes.push({mois:m, jour:dateExcel(r[b.date]), tiers:String(r[b.nat-1] ?? "").trim(), lib:String(r[b.nat] ?? "").trim(), montant:r2(r[b.mt]), recette:b.recette});
+      });
+    }
+  }
+  if(!lignes.length) throw new Error("Aucune écriture trouvée : le classeur doit avoir un onglet par mois (Janvier, Février…) avec les colonnes « Nature » et « Montant ».");
+  // Chiffres de contrôle : premier montant à droite du libellé (colonne « Exercice N »)
+  const feuille = re => Object.entries(feuilles).find(([n]) => re.test(norm(n)))?.[1] || [];
+  const apres = (g, re, rang = 0, somme = false) => { let tot = null;
+    for(const r of g){ if(!r) continue; const j = r.findIndex(v => typeof v === "string" && re.test(norm(v))); if(j < 0) continue;
+      const n = r.slice(j+1).filter(v => typeof v === "number"); if(n.length <= rang) continue; if(!somme) return n[rang]; tot = (tot||0) + n[rang]; }
+    return tot; };
+  const cr = feuille(/compte de resultat/), bi = feuille(/^bilan/);
+  const ben = apres(cr, /solde crediteur/), per = apres(cr, /solde debiteur/);
+  const ctl = {loyers:apres(cr, /production vendue/), chargesExternes:apres(cr, /autres achats et charges externes/), impotsTaxes:apres(cr, /^impots, taxes/),
+    interets:apres(cr, /interets et charges assimilees/), dotationsAmortissements:apres(cr, /dotations aux amortissements/, 0, true),
+    resultat:ben == null && per == null ? null : r2((ben||0) - (per||0)), immobilisationsNettes:apres(bi, /immobilisations corporelles/, 2),
+    capitalRestantDu:apres(bi, /emprunts et dettes/), capitalExploitant:apres(bi, /^capital$/)};
+  for(const k in ctl) if(ctl[k] != null) ctl[k] = r2(ctl[k]);
+  return {fichier, annee, lignes, ctl};
+}
+const cleXL = l => (l.recette ? "R|" : "D|") + l.lib;
+function ecrituresReprise(R){
+  const y = R.y;
+  return R.lu.lignes.map(l => {
+    const mm = String(l.mois).padStart(2, "0"), j = l.jour && l.jour.startsWith(`${y}-${mm}`) ? l.jour : `${y}-${mm}-01`;
+    return {id:uid(), date:j, tiers:l.tiers, nature:R.natures[cleXL(l)], montant:l.montant, commentaire:`Repris de l'Excel (${l.lib || "sans nature"})`};
+  });
+}
+/* Écrit la reprise dans les données d mais ne clôture pas (la clôture a besoin des calculs) */
+function appliquerReprise(d, R){
+  const avant = d.exercices[R.y] || {}, ex = {statut:"en-cours", ecritures:ecrituresReprise(R)};
+  ex.reprise = {source:"Excel", fichier:R.lu.fichier, date:new Date().toISOString().slice(0,10), chiffres:R.lu.ctl};
+  if(avant.chiffres) ex.reprise.anciensChiffres = avant.chiffres;
+  if(R.crd === "excel" && R.lu.ctl.capitalRestantDu != null) ex.crdBanque = R.lu.ctl.capitalRestantDu;
+  d.exercices[R.y] = ex;
+  return ex;
+}
+function avecDonnees(d, fn){ const s = S.data; S.data = d; try{ return fn(); } finally { S.data = s; } }
+function simulerReprise(R){
+  const y = R.y, suiv = d => d.exercices[y+1] && d.exercices[y+1].statut !== "historique";
+  const avantSuiv = suiv(S.data) ? fiscalJusqua(y+1) : null;
+  const d = normalize(JSON.parse(JSON.stringify(S.data)));
+  return avecDonnees(d, () => { appliquerReprise(d, R);
+    return {c:calculAnnee(y), f:fiscalJusqua(y), b:bilan(y), crdEch:calculAnnee(y).crdEch, avantSuiv, apresSuiv:suiv(d) ? fiscalJusqua(y+1) : null}; });
+}
+function anneeReprenable(){
+  const ys = Object.keys(S.data.exercices).map(Number), y = Math.min(...ys) - 1;
+  return y >= yearOf(debutLMNP()) ? y : null;
+}
+function ouvrirReprise(y){ S.reprise = {y, crd:"excel", cloturer:true}; S.tab = "dossier"; renderAll(); haut(); }
+async function lireRepriseExcel(f){
+  if(!f) return;
+  try{
+    const lu = analyserDossierExcel(await lireClasseur(new Uint8Array(await f.arrayBuffer())), f.name), R = S.reprise;
+    if(lu.annee && lu.annee !== R.y) return alert(`Ce classeur porte sur ${lu.annee}, pas sur ${R.y}.`);
+    R.lu = lu; R.natures = {};
+    lu.lignes.forEach(l => R.natures[cleXL(l)] ??= natureXL(l.lib, l.recette));
+    renderAll();
+  }catch(e){ alert("Lecture impossible : " + e.message); }
+}
+function deposerRepriseExcel(ev){ ev.preventDefault(); ev.currentTarget.classList.remove("survol"); lireRepriseExcel(ev.dataTransfer.files[0]); }
+function validerReprise(){
+  const R = S.reprise, y = R.y, ex = exercice(y);
+  if(ex && !isHistorique(y) && (ex.ecritures||[]).length) return alert(`${y} contient déjà des écritures : la reprise ne peut se faire que sur une année absente ou reprise en synthèse.`);
+  const nouv = appliquerReprise(S.data, R);
+  if(R.cloturer){
+    const f = fiscalJusqua(y);
+    nouv.statut = "cloture";
+    nouv.cloture = {date:new Date().toISOString().slice(0,10), resultatFiscal:r2(f.resultatFiscal), ardFin:r2(f.ardFin), deficitsFin:r2(f.deficitsFin.reduce((s,x)=>s+x.montant,0)), crdFin:r2(f.c.crd)};
+  }
+  S.reprise = null; S.year = y; S.tab = "ecritures"; setDirty(); renderAll(); haut();
+  toast(`${y} repris de l'Excel : ${nouv.ecritures.length} écritures${R.cloturer ? ", année clôturée" : ""}.`);
+}
+function creerAnneeVide(y){
+  S.data.exercices[y] = {statut:"en-cours", ecritures:[]};
+  S.reprise = null; S.year = y; S.tab = "ecritures"; setDirty(); renderAll(); haut();
+}
+function vueReprise(y){
+  const R = S.reprise, ex = exercice(y), tete = entete(`Reprendre ${y}`, `Les écritures de l'ancien classeur Excel deviennent celles de ${y}, contrôlées avec son compte de résultat et son bilan.`);
+  const annuler = `<button class="btn ghost" onclick="S.reprise=null;renderAll()">Annuler</button>`;
+  if(!R.lu) return tete + `<div class="card">${zoneDepot(`Déposer le classeur Excel ${y}`, "« Dossier de travail » .xlsx avec un onglet par mois · glisser ici ou cliquer · lu sur cet ordinateur, rien n'est envoyé", "$('#repriseInput').click()", "deposerRepriseExcel(event)")}
+    <input type="file" id="repriseInput" accept=".xlsx" class="hide" onchange="lireRepriseExcel(this.files[0])"></div>
+    <div class="row">${annuler}${ex ? "" : `<button class="btn ghost" onclick="creerAnneeVide(${y})">Créer ${y} vide, sans Excel</button>`}</div>`;
+  const s = simulerReprise(R), C = R.lu.ctl, c = s.c;
+  const groupes = {};
+  R.lu.lignes.forEach(l => { const k = cleXL(l); (groupes[k] ??= {l, n:0, tot:0}); groupes[k].n++; groupes[k].tot += l.montant; });
+  const optsNat = rec => Object.keys(NATURES).filter(n => (NATURES[n].g === "recette") === rec);
+  const ecart = (a, b) => a != null && b != null && Math.abs(a - b) >= 1;
+  const ligne = (lib, xl, outil, note) => `<tr><td>${lib}${note ? `<br><small class="muted-s">${note}</small>` : ""}</td><td class="n">${eur(xl)}</td><td class="n">${eur(outil)}</td><td class="n">${xl == null || outil == null ? "" : ecart(xl, outil) ? `<b style="color:var(--warn)">${eur(outil - xl)}</b>` : `<span style="color:var(--pos)">✓</span>`}</td></tr>`;
+  const sv = s.avantSuiv, sa = s.apresSuiv, suivOk = !sv || !sa || Math.abs(sv.resultatFiscal - sa.resultatFiscal) < 0.5;
+  const nbEcarts = [[C.loyers, c.produits], [C.chargesExternes, c.c242], [C.impotsTaxes, c.c244], [C.interets, c.interets], [C.dotationsAmortissements, c.dotations], [C.resultat, c.resultatComptable], [C.immobilisationsNettes, s.b.immoNettes]].filter(([a, b]) => ecart(a, b)).length;
+  return tete + `<div class="card"><h3>1. ${R.lu.lignes.length} lignes lues dans « ${esc(R.lu.fichier)} »</h3>
+    <div class="tablewrap"><table><tr><th>Dans l'Excel</th><th class="n">Lignes</th><th class="n">Total</th><th>Nature dans l'outil</th></tr>
+    ${Object.entries(groupes).map(([k, g]) => `<tr><td>${esc(g.l.lib || "(sans nature)")} <span class="pill">${g.l.recette ? "recette" : "dépense"}</span></td><td class="n">${g.n}</td><td class="n">${eur(g.tot)}</td>
+      <td><select onchange="S.reprise.natures[this.dataset.k]=this.value;renderAll()" data-k="${esc(k)}">${optsNat(g.l.recette).map(n => optNature(n, R.natures[k])).join("")}</select></td></tr>`).join("")}
+    </table></div></div>
+  <div class="card"><h3>2. Contrôle avec l'Excel</h3>
+    ${nbEcarts ? `<div class="alert warn">${nbEcarts} écart(s) avec l'Excel : vérifiez les natures ci-dessus, ou les immobilisations si l'écart porte sur les amortissements.</div>` : `<div class="alert ok">L'outil retrouve les chiffres de l'Excel.</div>`}
+    <div class="tablewrap"><table><tr><th></th><th class="n">Excel</th><th class="n">Outil</th><th class="n">Écart</th></tr>
+    ${ligne("Loyers et recettes", C.loyers, c.produits)}${ligne("Charges externes", C.chargesExternes, c.c242)}${ligne("Impôts et taxes", C.impotsTaxes, c.c244)}
+    ${ligne("Intérêts d'emprunt", C.interets, c.interets)}${ligne("Amortissements", C.dotationsAmortissements, c.dotations, "calculés d'après les immobilisations du dossier")}
+    ${ligne("Résultat comptable", C.resultat, c.resultatComptable)}${ligne(`Immobilisations nettes au 31/12/${y}`, C.immobilisationsNettes, s.b.immoNettes)}
+    </table></div>
+    <p class="sub" style="margin:10px 0 0">Résultat fiscal ${y} dans l'outil : <b>${eur(s.f.resultatFiscal)}</b>${s.f.ardFin > 0.5 ? ` · ${eur(s.f.ardFin)} d'amortissements en réserve fin ${y}` : ""}${s.f.deficitsFin.length ? ` · déficits reportables : ${eur(s.f.deficitsFin.reduce((t, x) => t + x.montant, 0))}` : ""}.</p></div>
+  <div class="card"><h3>3. Capital restant dû au 31/12/${y}</h3><div class="form">
+    ${C.capitalRestantDu != null ? `<label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="radio" name="rcrd" ${R.crd === "excel" ? "checked" : ""} onchange="S.reprise.crd='excel';renderAll()"> Celui de l'Excel, déclaré au bilan : <b>${eur(C.capitalRestantDu)}</b></label>` : ""}
+    <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="radio" name="rcrd" ${R.crd !== "excel" || C.capitalRestantDu == null ? "checked" : ""} onchange="S.reprise.crd='echeancier';renderAll()"> Celui de l'échéancier du prêt : <b>${eur(s.crdEch)}</b></label></div>
+    ${C.capitalRestantDu != null && Math.abs(C.capitalRestantDu - s.crdEch) > 50 ? `<p class="sub" style="margin:8px 0 0">Les deux diffèrent de ${eur(Math.abs(C.capitalRestantDu - s.crdEch))} : le relevé de prêt de la banque au 31/12/${y} tranchera. Le montant reste modifiable ensuite sur la page Emprunt.</p>` : ""}</div>
+  <div class="card"><h3>4. Effet sur ${y+1}</h3>
+    ${!sv ? `<p class="sub" style="margin:0">Pas d'année ${y+1} calculée dans le dossier.</p>` : suivOk
+      ? `<div class="alert ok">Le résultat fiscal ${y+1} ne change pas : ${eur(sa.resultatFiscal)}.</div>`
+      : `<div class="alert warn">Le résultat fiscal ${y+1} passerait de ${eur(sv.resultatFiscal)} à ${eur(sa.resultatFiscal)} : les reports d'ouverture (amortissements en réserve, déficits) s'appliquent désormais à partir de ${y}. Vérifiez-les dans les paramètres du dossier.</div>`}
+    <p class="sub" style="margin:8px 0 0">La colonne N-1 de la déclaration ${y+1} sera calculée à partir de ces écritures.</p></div>
+  <div class="card"><label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" ${R.cloturer ? "checked" : ""} onchange="S.reprise.cloturer=this.checked"> ${y} est déjà déclarée : la clôturer (saisies verrouillées, réouverture possible)</label></div>
+  <div class="row"><button class="btn" onclick="validerReprise()">Reprendre ${y}</button><button class="btn sec" onclick="S.reprise.lu=null;renderAll()">Autre fichier…</button>${annuler}</div>`;
 }
 
 addEventListener("beforeprint", () => document.querySelectorAll("#main details").forEach(d => { if(!d.open){ d.open = true; d.dataset.ferme = "1"; } }));
