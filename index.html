@@ -523,7 +523,7 @@ dialog#viewer::backdrop{background:rgba(10,15,25,.5)}
 
 <input type="file" id="fileInput" accept=".json,application/json" class="hide">
 <input type="file" id="csvInput" accept=".csv,.txt,text/csv" class="hide">
-<input type="file" id="facInput" accept=".pdf,.xml,.zip" multiple class="hide">
+<input type="file" id="pieceInput" accept=".pdf,.xml,.zip,image/*" multiple class="hide">
 <dialog id="viewer"><div class="vbar"><b id="vTitle" style="margin-right:auto;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></b><a class="btn small sec" id="vOpen" target="_blank">Ouvrir dans un onglet</a><button class="btn small" onclick="fermerPiece()">Fermer</button></div><iframe id="vFrame" title="Justificatif"></iframe></dialog>
 
 <script>
@@ -821,7 +821,6 @@ async function lireDepuisDossier(){
     const fh = await S.dir.getFileHandle(FILE);
     const txt = await (await fh.getFile()).text();
     chargerDonnees(JSON.parse(txt), S.dir.name + "/" + FILE);
-    scannerFacturesRecues();
   }catch(e){
     if(e.name === "NotFoundError"){
       if(confirm("Aucun fichier « "+FILE+" » dans ce dossier. Créer un dossier comptable vide ici ?")){
@@ -897,7 +896,7 @@ function renderAll(){
   const m = $("#main");
   if(!S.data){ m.innerHTML = vueBienvenue(); return; }
   m.innerHTML = ({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, simulations:vueSimulations, dossier:vueDossier, pieces:vuePieces})[S.tab]();
-  if(S.tab === "pieces"){ scanNonRattaches(S.year); scannerFacturesRecues(); }
+  if(S.tab === "pieces") scanPieces(S.year);
 }
 document.querySelectorAll(".logolink").forEach(a => a.addEventListener("click", e => { e.preventDefault(); allerA("accueil"); }));
 function ajusterMenu(){
@@ -2050,12 +2049,9 @@ function vuePieces(){
   ${!S.dir ? `<div class="alert warn">Ouvrez le dossier LMNP dans Chrome pour déposer ou consulter les pièces.</div>` : ""}
   <div class="pieces-top">
     <div class="card centre" style="margin:0">${anneau(all.length?ok.length/all.length:1, all.length?`${ok.length}/${all.length}`:"✓", ok.length===all.length?"var(--pos)":"var(--warn)", 120)}<span class="sub" style="margin:6px 0 0">écritures justifiées</span></div>
-    <div style="display:flex;flex-direction:column;gap:12px">
-      ${zoneDepot("Déposer un échéancier", "Prêt, assurance, appels de charges… · un fichier pour plusieurs écritures", "deposerDocument('echeancier')", "deposerDocumentDrop(event,'echeancier')").replace('class="depot noprint"','class="depot petit noprint" style="margin:0"')}
-      <div class="sub" style="margin:0">Pour une facture : glissez-la sur sa ligne ci-dessous, ou cliquez sur « Ajouter ».</div>
-    </div>
+    ${zoneDepot("Déposer des pièces", "Factures (PDF, Factur-X, UBL), échéanciers, photos… · un ou plusieurs fichiers, ou le ZIP de la plateforme", "$('#pieceInput').click()", "deposerPiecesDrop(event)").replace('class="depot noprint"','class="depot noprint" style="margin:0"')}
   </div>
-  ${carteFactures(y)}
+  ${carteARattacher(y)}
   ${ratt}
   ${dd.length ? `<div class="card"><h3>Échéanciers et documents</h3><div class="docs">${dd.map(d => { const n = ecrituresDuDoc(d).length; return `<div class="doc">
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"><path d="M14 3H6v18h12V7zM14 3v4h4"/><path d="M9 12h6M9 16h6"/></svg>
@@ -2065,40 +2061,58 @@ function vuePieces(){
     ${manq.length>3?`<button class="btn small ghost noprint" onclick="if(confirm('Marquer les ${manq.length} écritures comme justifiées ailleurs ?')){piecesManquantes(${y}).forEach(e=>e.sansPiece=true);setDirty();renderAll()}">Tout marquer « classé ailleurs »</button>`:""}</div>
     ${manq.length ? manq.map(e=>ligne(e, `<button class="btn small" onclick="attacherPiece('${e.id}')">Ajouter</button>${dd.length?`<select class="btn small sec" style="padding:4px 6px" onchange="if(this.value){const d=docs().find(x=>x.id===this.value);findEcr('${e.id}').piece=d.fichier;setDirty();renderAll()}"><option value="">Document…</option>${dd.map(d=>`<option value="${d.id}">${esc(d.libelle)}</option>`).join("")}</select>`:""}<button class="btn small ghost" title="Pas besoin de justificatif" onclick="marquerSansPiece('${e.id}',true)">Non requis</button>`)).join("")
       : `<div class="vide" style="margin:6px 0 0">✓ Tout est justifié</div>`}</div>
-  ${S.dir?`<div class="card" id="nonRattaches"><h3 style="margin-top:0">Fichiers du dossier non rattachés</h3><p class="sub" style="margin:0">Recherche dans Justificatifs/${y}/…</p></div>`:""}
   ${ok.length?`<div class="card"><details><summary>Pièces rangées · ${ok.length}</summary><div style="margin-top:8px">
     ${ok.map(e=>ligne(e, `${nomDoc(e.piece)?`<span class="pill">${esc(nomDoc(e.piece))}</span>`:""}<button class="btn small sec" onclick="ouvrirPiece('${e.id}')">📎 Voir</button><button class="btn small ghost" title="Détacher" onclick="detacherPiece('${e.id}')">×</button>`)).join("")}</div></details></div>`:""}`;
 }
-async function scanNonRattaches(y){
-  const box = $("#nonRattaches"); if(!box || !S.dir) return;
+/* Fichiers de Justificatifs/<année>/ liés à rien : une facture électronique y est reconnue et rattachée seule, le reste est proposé au rattachement */
+async function scanPieces(y){
+  if(!S.dir || S.scanPieces) return;
+  S.scanPieces = true;
   try{
-    if(await S.dir.queryPermission({mode:"read"}) !== "granted") { box.querySelector("p").textContent = "Cliquez sur « Enregistrer » ou « Ajouter » pour autoriser l'accès au dossier, puis revenez ici."; return; }
-    let dir; try{ dir = await justifDir(y,false); }catch(_){ box.querySelector("p").textContent = `Aucun dossier Justificatifs/${y}/ pour l'instant. Ta sœur peut y déposer ses factures depuis son iPhone (app Fichiers) : elles apparaîtront ici.`; return; }
-    const lies = new Set([...Object.values(S.data.exercices).flatMap(ex=>(ex.ecritures||[]).map(e=>e.piece)), ...factures().map(f=>f.fichier)].filter(Boolean)); // les factures de la plateforme ont leur propre carte
-    const libres = [];
-    for await (const [nom, h] of dir.entries()) if(h.kind === "file" && !nom.startsWith(".") && !lies.has(`Justificatifs/${y}/${nom}`)) libres.push(nom);
+    if(await S.dir.queryPermission({mode:"readwrite"}) !== "granted") return;
+    let dir; try{ dir = await justifDir(y,false); }catch(_){ return; }
+    const lies = cheminsLies(), lus = new Set(S.data.facturesLues), libres = [], fichiers = {};
+    for await (const [nom, h] of dir.entries()) if(h.kind === "file" && !nom.startsWith(".") && !lies.has(`Justificatifs/${y}/${nom}`)) fichiers[nom] = h;
+    let n = 0;
+    // Déposés depuis l'iPhone (app Fichiers) : on regarde une seule fois chaque PDF ou XML
+    const aLire = [];
+    for(const [nom, h] of Object.entries(fichiers)){
+      if(!/\.(pdf|xml)$/i.test(nom)) continue;
+      const f = await h.getFile(), sig = `${y}/${nom}|${f.size}|${f.lastModified}`;
+      if(!lus.has(sig)){ aLire.push(f); S.data.facturesLues.push(sig); }
+    }
+    if(aLire.length){
+      const {out} = await analyserFichiersFactures(aLire);
+      for(const {meta, piece, xml} of out) if(enregistrerFacture(meta, `Justificatifs/${y}/${piece.name}`, xml && `Justificatifs/${y}/${xml.name}`)) n++;
+      rapprocherFactures(); setDirty();
+    }
+    const lies2 = cheminsLies();
+    for(const nom of Object.keys(fichiers)) if(!lies2.has(`Justificatifs/${y}/${nom}`)) libres.push(nom);
     libres.sort();
-    S.libres = libres;
-    const manq = piecesManquantes(y);
-    box.innerHTML = `<h3 style="margin-top:0">Fichiers déposés non rattachés</h3>` + (libres.length ? `<p class="sub">Fichiers présents dans Justificatifs/${y}/ mais liés à aucune écriture : rattachez-les.</p><div class="tablewrap"><table>
-      ${libres.map((n,i)=>`<tr><td>${esc(n)}</td><td class="n noprint"><button class="btn small sec" onclick="voirLibre(${y},${i})">Voir</button>
-      <select id="lib${i}" style="max-width:280px"><option value="">Rattacher à…</option>${manq.map(e=>`<option value="${e.id}">${fmtDate(e.date)} · ${esc(e.tiers)} · ${eur(e.montant)}</option>`).join("")}</select>
-      <button class="btn small" onclick="rattacherLibre(${y},${i})">OK</button></td></tr>`).join("")}</table></div>` : `<p class="sub" style="margin:0">Aucun fichier en attente dans Justificatifs/${y}/.</p>`);
-  }catch(err){ box.querySelector("p").textContent = "Lecture du dossier impossible : " + err.message; }
+    const avant = JSON.stringify(S.libres);
+    S.libres = {y, noms:libres};
+    if(n || avant !== JSON.stringify(S.libres)) renderAll();
+  }catch(_){ }
+  finally{ S.scanPieces = false; }
 }
-async function voirLibre(y,i){
-  const nom = S.libres[i]; const file = await (await (await justifDir(y,false)).getFileHandle(nom)).getFile();
-  const url = urlPiece(file); $("#vTitle").textContent = nom; $("#vFrame").src = url; $("#vOpen").href = url; ouvrirViewer();
-}
-function rattacherLibre(y,i){
-  const id = $("#lib"+i).value; if(!id) return alert("Choisissez l'écriture correspondante.");
-  const e = findEcr(id); e.piece = `Justificatifs/${y}/${S.libres[i]}`; delete e.sansPiece; setDirty(); renderAll();
+/* Chemins déjà pris par une écriture, une facture électronique ou un document */
+const cheminsLies = () => new Set([...Object.values(S.data.exercices).flatMap(ex=>(ex.ecritures||[]).map(e=>e.piece)), ...factures().flatMap(f=>[f.fichier, f.xml]), ...docs().map(d=>d.fichier)].filter(Boolean));
+const cheminLibre = i => `Justificatifs/${S.libres.y}/${S.libres.noms[i]}`;
+/* Un seul menu par fichier : l'écriture qu'il justifie, ou « échéancier » s'il en justifie plusieurs */
+function rattacherLibre(i, v){
+  if(!v) return;
+  const chemin = cheminLibre(i), nom = S.libres.noms[i];
+  if(v === "__doc"){
+    const libelle = prompt("Nom de l'échéancier ou du document :", nom.replace(/\.[^.]+$/, "")); if(libelle == null) return;
+    const d = {id:uid(), type:"echeancier", libelle:libelle.trim() || nom, fichier:chemin, date:new Date().toISOString().slice(0,10)};
+    docs().push(d); S.rattDoc = d.id; setDirty(); renderAll(); return;
+  }
+  const e = findEcr(v); e.piece = chemin; delete e.sansPiece; setDirty(); renderAll(); toast("Pièce rattachée.");
 }
 
 /* ============ Factures électroniques reçues (plateforme agréée) ============ */
-/* L'export de la plateforme (PDF Factur-X, XML UBL ou CII, ou ZIP de ces fichiers) est déposé dans « Factures reçues »
-   ou glissé sur la page Pièces. Tout est lu dans le navigateur : rien n'est envoyé sur internet. */
-const DOSSIER_FACTURES = "Factures reçues";
+/* L'export de la plateforme (PDF Factur-X, XML UBL ou CII, ou ZIP de ces fichiers) est déposé sur la page Pièces,
+   comme n'importe quelle pièce. Tout est lu dans le navigateur : rien n'est envoyé sur internet. */
 const AVOIRS = ["381","261","262","396"];
 const factures = () => (S.data.factures ??= []);
 const estAvoir = f => AVOIRS.includes(f.type);
@@ -2184,57 +2198,48 @@ async function analyserFichiersFactures(files){
     if(/\.zip$/i.test(f.name)){ try{ plats.push(...await fichiersDuZip(new Uint8Array(await f.arrayBuffer()))); }catch(_){ illisibles.push(f.name); } }
     else plats.push(f);
   }
-  const pdfs = plats.filter(f => /\.pdf$/i.test(f.name)), base = n => n.replace(/\.[^.]+$/, "").toLowerCase(), out = [];
+  const pdfs = plats.filter(f => /\.pdf$/i.test(f.name)), base = n => n.replace(/\.[^.]+$/, "").toLowerCase(), out = [], autres = [];
   for(const x of plats.filter(f => /\.xml$/i.test(f.name))){
     const meta = lireFactureXML(await x.text());
     if(!meta){ illisibles.push(x.name); continue; }
     const pdf = pdfs.find(p => base(p.name) === base(x.name)) || (meta.numero && pdfs.find(p => norm(p.name).includes(norm(meta.numero))));
     if(pdf) pdfs.splice(pdfs.indexOf(pdf), 1);
-    out.push({meta, piece:pdf || x});
+    out.push({meta, piece:pdf || x, xml:pdf ? x : null});
   }
   for(const p of pdfs){
     let xml = null; try{ xml = await xmlDuPdf(new Uint8Array(await p.arrayBuffer())); }catch(_){}
     const meta = xml && lireFactureXML(xml);
-    if(meta) out.push({meta, piece:p}); else illisibles.push(p.name);
+    if(meta) out.push({meta, piece:p}); else autres.push(p);
   }
-  return {out, illisibles};
+  return {out, autres:[...autres, ...plats.filter(f => !/\.(pdf|xml|zip)$/i.test(f.name))], illisibles};
 }
-/* Range chaque nouvelle facture dans Justificatifs/<année>/ puis la rattache à son paiement */
-async function importerFactures(files, auto){
-  if(!auto && !await dossierRequis()) return;
-  const {out, illisibles} = await analyserFichiersFactures(files);
-  const connues = new Set(factures().map(f => f.cle));
-  let n = 0;
+/* Enregistre une facture électronique (sauf si déjà connue) ; renvoie true si elle est nouvelle */
+function enregistrerFacture(meta, fichier, xml){
+  const cle = `${meta.siren || norm(meta.fournisseur)}|${meta.numero}`;
+  if(!meta.date || factures().some(f => f.cle === cle)) return false;
+  factures().push({id:uid(), cle, ...meta, montant:r2(meta.ttc || 0), fichier, ...(xml ? {xml} : {}), importee:new Date().toISOString().slice(0,10)});
+  return true;
+}
+/* Zone de dépôt unique : factures électroniques lues et rangées à leur date, autres fichiers rangés dans l'année affichée puis proposés au rattachement */
+async function deposerPieces(files){
+  if(!await dossierRequis()) return;
+  const {out, autres, illisibles} = await analyserFichiersFactures(files);
+  let n = 0, deja = 0;
   for(const {meta, piece} of out){
     const cle = `${meta.siren || norm(meta.fournisseur)}|${meta.numero}`;
-    if(!meta.date || connues.has(cle)) continue;
+    if(!meta.date || factures().some(f => f.cle === cle)){ deja++; continue; }
     const fichier = await copierDansDossier(piece, ["Justificatifs", String(yearOf(meta.date))], `${meta.date}_${slug(meta.fournisseur)}_${slug(meta.numero)}`);
-    factures().push({id:uid(), cle, ...meta, montant:r2(meta.ttc || 0), fichier, importee:new Date().toISOString().slice(0,10)});
-    connues.add(cle); n++;
+    if(enregistrerFacture(meta, fichier)) n++;
   }
+  for(const f of autres) await copierDansDossier(f, ["Justificatifs", String(S.year)], f.name.replace(/\.[^.]+$/, ""));
   const lies = rapprocherFactures();
-  if(n || lies){ setDirty(); renderAll(); }
-  if(n) toast(`${n} facture(s) importée(s)${lies?`, ${lies} rattachée(s) à leur paiement`:""}.`);
-  else if(!auto) toast(out.length ? "Ces factures sont déjà importées." : "Aucune facture électronique reconnue dans ces fichiers.");
-  if(!auto && illisibles.length) alert(`Fichier(s) sans facture électronique lisible : ${illisibles.join(", ")}.\n\nUn PDF simple (sans XML Factur-X) se rattache avec « Ajouter » sur la ligne de l'écriture.`);
+  setDirty(); renderAll();
+  const msg = [n && `${n} facture(s) électronique(s) lue(s)${lies?`, ${lies} rattachée(s) à leur paiement`:""}`, deja && `${deja} déjà connue(s)`, autres.length && `${autres.length} fichier(s) à rattacher ci-dessous`].filter(Boolean);
+  toast(msg.length ? msg.join(" · ") + "." : "Aucun fichier utilisable.");
+  if(illisibles.length) alert(`Fichier(s) illisible(s) : ${illisibles.join(", ")}.`);
 }
-/* À l'ouverture : lit les fichiers nouveaux du dossier « Factures reçues » */
-async function scannerFacturesRecues(){
-  if(!S.dir || !S.data || S.scanFactures) return;
-  S.scanFactures = true;
-  try{
-    if(await S.dir.queryPermission({mode:"readwrite"}) !== "granted") return;
-    let dir; try{ dir = await S.dir.getDirectoryHandle(DOSSIER_FACTURES); }catch(_){ return; }
-    const lus = new Set(S.data.facturesLues ??= []), nouveaux = [];
-    for await (const [nom, h] of dir.entries()){
-      if(h.kind !== "file" || nom.startsWith(".") || !/\.(pdf|xml|zip)$/i.test(nom)) continue;
-      const f = await h.getFile(), sig = `${nom}|${f.size}|${f.lastModified}`;
-      if(!lus.has(sig)){ nouveaux.push(f); S.data.facturesLues.push(sig); }
-    }
-    if(nouveaux.length){ setDirty(); await importerFactures(nouveaux, true); }
-  }catch(_){ }
-  finally{ S.scanFactures = false; }
-}
+function deposerPiecesDrop(ev){ ev.preventDefault(); ev.currentTarget.classList.remove("survol"); const fs = [...ev.dataTransfer.files]; if(fs.length) deposerPieces(fs); }
+$("#pieceInput").addEventListener("change", ev => { const fs = [...ev.target.files]; ev.target.value = ""; if(fs.length) deposerPieces(fs); });
 /* Paiement correspondant : dépense de même montant sans justificatif, payée entre 15 jours avant la facture et 3 mois après l'échéance */
 function candidatsFacture(f){
   const t = Date.parse(f.date), lim = Math.max(t, Date.parse(f.echeance || f.date) || t) + 90*864e5;
@@ -2264,35 +2269,35 @@ function natureFacture(f){
     [/comptab|expert|cga|oga|avocat|notaire/, "Honoraires"], [/plomb|electricien|serrur|travaux|renov|peint|depann|chauffag/, "Entretien et réparations"]].find(([re]) => re.test(n))?.[1] || "";
 }
 function voirFacture(id){ const f = factures().find(x => x.id === id); ouvrirChemin(f.fichier, `${fmtDate(f.date)} · ${f.fournisseur} · facture ${f.numero} · ${eur(f.montant)}`); }
-function rattacherFacture(id, eid){ if(!eid) return; const f = factures().find(x => x.id === id); lierFacture(f, findEcr(eid)); setDirty(); renderAll(); toast("Facture rattachée à l'écriture."); }
-function creerEcritureFacture(id){
-  const f = factures().find(x => x.id === id), nature = $("#fn_"+id).value, y = yearOf(f.date);
-  if(!nature) return alert("Choisissez le poste de cette dépense.");
+function rattacherFacture(id, v){
+  if(!v) return;
+  if(v.startsWith("__nat:")) return creerEcritureFacture(id, v.slice(6));
+  const eid = v, f = factures().find(x => x.id === id); lierFacture(f, findEcr(eid)); setDirty(); renderAll(); toast("Facture rattachée à l'écriture."); }
+function creerEcritureFacture(id, nature){
+  const f = factures().find(x => x.id === id), y = yearOf(f.date);
   if(!exercice(y) || isHistorique(y) || verrouille(y)) return alert(`L'exercice ${y} est clôturé, repris de l'Excel ou n'existe pas.`);
   const ex = exercice(y), e = {id:uid(), date:f.date, tiers:f.fournisseur, nature, montant:f.montant, sens:"depense", commentaire:`Facture ${f.numero}, payée hors du compte importé`};
   (ex.ecritures ??= []).push(e); lierFacture(f, e); setDirty(); renderAll(); toast(`Écriture créée au ${fmtDate(f.date)}.`);
 }
 function ignorerFacture(id){ const f = factures().find(x => x.id === id); if(!confirm(`Ne plus proposer la facture ${f.numero} de ${f.fournisseur} ? (le fichier reste dans le dossier)`)) return; f.ignoree = true; setDirty(); renderAll(); }
-async function deposerFactures(ev){ ev.preventDefault(); ev.currentTarget.classList.remove("survol"); const fs = [...ev.dataTransfer.files]; if(fs.length) importerFactures(fs); }
-$("#facInput").addEventListener("change", ev => { const fs = [...ev.target.files]; ev.target.value = ""; if(fs.length) importerFactures(fs); });
-function carteFactures(y){
-  const att = facturesEnAttente().sort((a,b) => a.date.localeCompare(b.date)), faites = factures().filter(f => ecrDeFacture(f) && yearOf(f.date) === y);
-  const charges = Object.keys(NATURES).filter(n => NATURES[n].g === "charge");
-  const ligne = f => {
-    const sans = Object.values(S.data.exercices).flatMap(ex => ex.ecritures || []).filter(e => !e.piece && NATURES[e.nature]?.g !== "recette" && Math.abs(Date.parse(e.date) - Date.parse(f.date)) < 200*864e5)
-      .sort((a,b) => Math.abs(a.montant-f.montant) - Math.abs(b.montant-f.montant)).slice(0, 12), nat = natureFacture(f);
-    return `<div class="pc"><span class="d">${fmtDate(f.date).slice(0,5)}</span><span class="t"><b>${esc(f.fournisseur)||"–"}</b><small class="muted-s">n° ${esc(f.numero)}${f.objet?` · ${esc(f.objet)}`:""}</small>${estAvoir(f)?`<span class="pill">Avoir</span>`:""}</span><span class="m">${eur(f.montant)}</span>
+function carteARattacher(y){
+  const pris = cheminsLies(), libres = (S.libres?.y === y ? S.libres.noms : []).map((nom, i) => [nom, i]).filter(([nom]) => !pris.has(`Justificatifs/${y}/${nom}`));
+  const att = facturesEnAttente().sort((a,b) => a.date.localeCompare(b.date));
+  if(!att.length && !libres.length) return "";
+  const sansPiece = Object.values(S.data.exercices).flatMap(ex => ex.ecritures || []).filter(e => !e.piece && pieceRequise(e));
+  const optE = list => list.map(e=>`<option value="${e.id}">${fmtDate(e.date)} · ${esc(e.tiers||e.nature)} · ${eur(e.montant)}</option>`).join("");
+  const sel = (onch, opts) => `<select class="btn small sec" style="padding:4px 6px;max-width:260px" onchange="${onch}"><option value="">Rattacher à…</option>${opts}</select>`;
+  const lf = f => {
+    const proches = sansPiece.filter(e => NATURES[e.nature]?.g !== "recette" && Math.abs(Date.parse(e.date) - Date.parse(f.date)) < 200*864e5).sort((a,b) => Math.abs(a.montant-f.montant) - Math.abs(b.montant-f.montant)).slice(0, 10);
+    const nat = natureFacture(f), nats = [nat, ...Object.keys(NATURES).filter(n => NATURES[n].g === "charge" && n !== nat)].filter(Boolean);
+    return `<div class="pc"><span class="d">${fmtDate(f.date).slice(0,5)}</span><span class="t"><b>${esc(f.fournisseur)||"–"}</b><small class="muted-s">facture ${esc(f.numero)}${f.objet?` · ${esc(f.objet)}`:""}</small>${estAvoir(f)?`<span class="pill">Avoir</span>`:""}</span><span class="m">${eur(f.montant)}</span>
       <span class="a noprint"><button class="btn small sec" onclick="voirFacture('${f.id}')">Voir</button>
-      ${estAvoir(f) ? "" : `<select class="btn small sec" style="padding:4px 6px;max-width:220px" onchange="rattacherFacture('${f.id}',this.value)"><option value="">Rattacher au paiement…</option>${sans.map(e=>`<option value="${e.id}">${fmtDate(e.date)} · ${esc(e.tiers||e.nature)} · ${eur(e.montant)}</option>`).join("")}</select>
-      <select id="fn_${f.id}" class="btn small sec" style="padding:4px 6px;max-width:170px" aria-label="Poste"><option value="">Poste…</option>${charges.map(n=>optNature(n, nat)).join("")}</select><button class="btn small" title="Facture payée hors du compte importé (carte personnelle…)" onclick="creerEcritureFacture('${f.id}')">Créer l'écriture</button>`}
+      ${estAvoir(f) ? "" : sel(`rattacherFacture('${f.id}',this.value)`, `${proches.length?`<optgroup label="Paiement déjà saisi">${optE(proches)}</optgroup>`:""}<optgroup label="Nouvelle dépense (payée hors du compte)">${nats.map(n=>`<option value="__nat:${esc(n)}">${esc(n)}</option>`).join("")}</optgroup>`)}
       <button class="btn small ghost" aria-label="Ne plus proposer" title="Ne plus proposer" onclick="ignorerFacture('${f.id}')">×</button></span></div>`; };
-  return `<div class="card" ondragover="event.preventDefault();this.classList.add('survol')" ondragleave="this.classList.remove('survol')" ondrop="deposerFactures(event)">
-    <div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">Factures de la plateforme${att.length?` · ${att.length} à rattacher`:""}</h3>
-      <div class="row noprint">${S.dir?`<button class="btn small ghost" onclick="S.data.facturesLues=[];scannerFacturesRecues()">Relire « ${DOSSIER_FACTURES} »</button>`:""}<button class="btn small sec" onclick="$('#facInput').click()">Importer…</button></div></div>
-    <p class="sub" style="margin:0 0 6px">Déposez l'export de la plateforme agréée (PDF Factur-X, XML ou ZIP) dans le dossier « ${DOSSIER_FACTURES} », ou glissez-le ici. Chaque facture est rangée dans Justificatifs et rattachée au paiement de même montant.</p>
-    ${att.map(ligne).join("") || (factures().length ? `<div class="vide" style="margin:6px 0 0">✓ Toutes les factures reçues sont rattachées</div>` : "")}
-    ${faites.length ? `<details style="margin-top:8px"><summary>${faites.length} facture(s) ${y} rattachée(s)</summary>${faites.map(f => { const e = ecrDeFacture(f); return `<div class="pc"><span class="d">${fmtDate(f.date).slice(0,5)}</span><span class="t"><b>${esc(f.fournisseur)}</b><small class="muted-s">n° ${esc(f.numero)} · payée le ${fmtDate(e.date)}</small></span><span class="m">${eur(f.montant)}</span><span class="a noprint"><button class="btn small sec" onclick="voirFacture('${f.id}')">Voir</button></span></div>`; }).join("")}</details>` : ""}
-  </div>`;
+  const ll = (nom, i) => `<div class="pc"><span class="d">${I_CLIP}</span><span class="t"><b style="overflow-wrap:anywhere">${esc(nom)}</b></span><span class="m"></span>
+      <span class="a noprint"><button class="btn small sec" onclick="ouvrirChemin(cheminLibre(${i}), S.libres.noms[${i}])">Voir</button>
+      ${sel(`rattacherLibre(${i},this.value)`, `<option value="__doc">Échéancier : plusieurs écritures…</option>${sansPiece.filter(e => yearOf(e.date) === y).length?`<optgroup label="Écriture">${optE(sansPiece.filter(e => yearOf(e.date) === y).sort((a,b)=>a.date.localeCompare(b.date)))}</optgroup>`:""}`)}</span></div>`;
+  return `<div class="card"><h3 style="margin:0 0 6px">À rattacher · ${att.length + libres.length}</h3>${att.map(lf).join("")}${libres.map(([nom, i]) => ll(nom, i)).join("")}</div>`;
 }
 
 /* ============ Banque : import du relevé CSV et tri ============ */
