@@ -896,7 +896,7 @@ function echeancierTheorique(l){
     if(k === l.dureeMois-1 || capital > crd) capital = crd;
     crd -= capital;
     const mm = m0 - 1 + k;
-    rows.push({n:k+1, annee: y0 + Math.floor(mm/12), mois: (mm%12)+1, interet, capital, crd, mensualite: interet + capital});
+    rows.push({n:k+1, annee: y0 + Math.floor(mm/12), mois: (mm%12)+1, interet, capital, assurance: l.assurance||0, crd, mensualite: interet + capital});
   }
   return rows;
 }
@@ -1872,11 +1872,11 @@ document.addEventListener("click", e => document.querySelectorAll("details.menu3
 function carteContrat(l, idx){
   const edit = S.editPret === l.id || !l.capital, banque = !!lignesBanque(l), eb = l.echeancierBanque;
   const taux = (l.tauxAnnuel*100).toLocaleString("fr-FR",{maximumFractionDigits:3}) + " %";
-  const fiche = [["Banque", esc(l.banque)||"–"], ["Capital emprunté", eur(l.capital)], ["Taux annuel", taux], ["Durée", `${l.dureeMois} mois`], ["1re échéance", fmtDate(l.premiereEcheance)], ["Mensualité hors assurance", l.mensualite ? eur(l.mensualite) : "calculée"]];
+  const fiche = [["Banque", esc(l.banque)||"–"], ["Capital emprunté", eur(l.capital)], ["Taux annuel", taux], ["Durée", `${l.dureeMois} mois`], ["1re échéance", fmtDate(l.premiereEcheance)], ["Mensualité hors assurance", l.mensualite ? eur(l.mensualite) : "calculée"], ["Assurance mensuelle", l.assurance ? eur(l.assurance) : "aucune"]];
   const champ = (lib, k, v, type = "text") => `<label>${lib}<input data-k="${k}" ${type === "num" ? 'inputmode="decimal"' : `type="${type}"`} value="${v}"></label>`;
   const caract = edit ? `<div class="form" id="contrat${idx}">
       ${champ("Banque", "banque", esc(l.banque))}${champ("Capital emprunté", "capital", l.capital, "num")}${champ("Taux annuel (%)", "taux", r2(l.tauxAnnuel*10000)/100, "num")}
-      ${champ("Durée (mois)", "dureeMois", l.dureeMois, "number")}${champ("1re échéance", "premiereEcheance", l.premiereEcheance, "date")}${champ("Mensualité hors assurance", "mensualite", l.mensualite, "num")}
+      ${champ("Durée (mois)", "dureeMois", l.dureeMois, "number")}${champ("1re échéance", "premiereEcheance", l.premiereEcheance, "date")}${champ("Mensualité hors assurance", "mensualite", l.mensualite, "num")}${champ("Assurance mensuelle (facultatif)", "assurance", l.assurance||"", "num")}
     </div><div class="row" style="justify-content:flex-end;margin-top:14px">${l.capital ? `<button class="btn small sec" onclick="S.editPret=null;renderAll()">Annuler</button>` : ""}<button class="btn small" onclick="validerContrat(${idx})">Valider</button></div>`
     : `<div class="fiche">${fiche.map(([k,v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("")}</div>`;
   // Échéancier de la banque : une vignette, ouverte d'un clic, actions dans « ⋯ »
@@ -1897,7 +1897,7 @@ function carteContrat(l, idx){
 /* Les caractéristiques ne changent qu'à la validation de l'édition */
 function validerContrat(idx){
   const l = S.data.emprunts[idx], v = k => $(`#contrat${idx} [data-k="${k}"]`).value.trim();
-  const n = {banque:v("banque"), capital:parseMontant(v("capital")), tauxAnnuel:parseMontant(v("taux"))/100, dureeMois:parseInt(v("dureeMois"),10), premiereEcheance:v("premiereEcheance"), mensualite:parseMontant(v("mensualite"))||0};
+  const n = {banque:v("banque"), capital:parseMontant(v("capital")), tauxAnnuel:parseMontant(v("taux"))/100, dureeMois:parseInt(v("dureeMois"),10), premiereEcheance:v("premiereEcheance"), mensualite:parseMontant(v("mensualite"))||0, assurance:r2(parseMontant(v("assurance"))||0)};
   if(!(n.capital > 0) || !(n.dureeMois > 0) || !n.premiereEcheance || isNaN(n.tauxAnnuel)) return alert("Renseignez au moins le capital, le taux, la durée et la 1re échéance.");
   Object.assign(l, n); S.editPret = null; setDirty(); renderAll(); toast("Contrat de prêt mis à jour.");
 }
@@ -2034,7 +2034,7 @@ const IC_RP = {
    vert = intérêts, capital (et assurance) comptabilisés au bon montant, jaune = en partie, rouge = aucune écriture ou un écart.
    Seules les écritures bancaires comptent en comptabilité : un mois sans écriture n'a rien passé en charge. */
 function carteEcheancier(l, y){
-  const banque = lignesBanque(l), rows0 = echeancier(l), ass = !!(banque && l.echeancierBanque.colonnes?.assurance);
+  const banque = lignesBanque(l), rows0 = echeancier(l), ass = banque ? !!l.echeancierBanque.colonnes?.assurance : l.assurance > 0;
   const ans = [...new Set(rows0.map(r => r.annee))];
   const an = S.echAn === "tout" ? "tout" : ans.includes(Number(S.echAn)) ? Number(S.echAn) : ans.includes(y) ? y : ans[0];
   const choixAn = `<select class="btn small sec" aria-label="Année" onchange="S.echAn=this.value;renderAll()">${ans.map(a => `<option value="${a}" ${a===an?"selected":""}>${a}</option>`).join("")}<option value="tout" ${an==="tout"?"selected":""}>Tout le prêt</option></select>`;
@@ -2065,7 +2065,6 @@ function carteEcheancier(l, y){
   return `<div class="card" id="echeancier"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">Échéancier</h3>
       <div class="row"><span class="pill">${banque ? "de la banque" : "saisi, en attendant celui de la banque"}</span>${choixAn}</div></div>
     ${resume}
-    ${nb("ko") ? `<div class="alert warn" style="align-items:center"><span>Seules les écritures bancaires sont comptabilisées : une échéance sans écriture ne passe rien en charge. Triez le prélèvement de la banque en le ventilant (intérêts, capital${ass ? ", assurance" : ""}).</span><button class="btn small sec" style="margin-left:auto" onclick="allerA('banque')">Opérations bancaires</button></div>` : ""}
     <div class="tablewrap echtab ${an === "tout" ? "long" : ""}"><table><tr><th>Échéance</th><th class="n">Mensualité</th><th class="n">Intérêts</th><th class="n">Capital</th>${ass?`<th class="n">Assurance</th>`:""}<th class="n">Restant dû</th></tr>
       ${corps}</table></div></div>`;
 }
