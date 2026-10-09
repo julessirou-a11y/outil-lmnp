@@ -234,7 +234,46 @@ details summary{cursor:pointer;color:var(--accent);font-size:13.5px}
 table.journal td{padding:9px 10px}
 table.journal tr.editing td{background:var(--accent-soft)}
 td.act{white-space:nowrap}
-table.balance tr.cl td{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);padding-top:16px}
+/* Balance : même tableau que le grand livre, solde N, N-1 et variation */
+table.blx{table-layout:fixed;font-size:13.5px;font-variant-numeric:tabular-nums}
+table.blx th.cpt{width:118px} table.blx th.so{width:150px}
+table.blx thead th{background:var(--surface-2);font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:10px;border-bottom:1px solid var(--line)}
+table.blx th.n,table.blx td.n{text-align:right;white-space:nowrap}
+table.blx td{padding:9px 10px;border-top:1px solid var(--line)}
+table.blx td:first-child,table.blx th:first-child{padding-left:20px}
+table.blx td:last-child,table.blx th:last-child{padding-right:20px}
+table.blx .glx-pill{font-size:12px;padding:3px 10px}
+table.blx .sfx{font-size:11px;font-weight:600;margin-left:3px;color:var(--faint)}
+table.blx .anorm,table.blx .anorm .sfx{color:var(--neg)}
+table.blx td.n1{color:var(--muted)}
+table.blx th.va{width:190px}
+.blx-var{display:inline-flex;align-items:center;justify-content:flex-end;gap:10px}
+.blx-mt{font-size:12.5px;color:var(--muted)}
+.blx-b{display:inline-flex;align-items:center;justify-content:center;gap:4px;min-width:72px;box-sizing:border-box;font-size:12px;font-weight:700;padding:3px 8px;border-radius:99px;border:1px solid transparent;white-space:nowrap}
+.blx-b svg{flex:none}
+.blx-b.up{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-soft)}
+.blx-b.down{background:transparent;color:var(--muted);border-color:var(--seg-1)}
+.blx-b.eq{color:var(--faint);font-weight:600}
+.blx-b.nv{color:var(--accent);font-weight:600;font-style:italic}
+table.blx .blx-0{color:var(--faint)}
+tr.blx-h td{border-top:0;padding:20px 20px 8px}
+tbody.blx-c:first-of-type tr.blx-h td{padding-top:12px}
+.blx-hd{display:flex;align-items:center;gap:10px}
+.blx-cl{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+tr.blx-st td{border-top:1px solid var(--line);font-weight:600;font-size:13px;color:var(--muted);background:var(--surface-2)}
+tr.blx-st td b{color:var(--text)}
+tbody.blx-res td{background:var(--warn-soft);font-weight:600;border-top:1px solid var(--line);padding-top:12px;padding-bottom:12px}
+.blx-mob{display:none}
+table.blx td.cptl .blx-l{display:none}
+@media (max-width:700px){
+  table.blx th.n1,table.blx td.n1,table.blx th.va,table.blx td.va{display:none}
+  table.blx th.cpt{width:auto} table.blx th.lib{display:none} table.blx td.lib{display:none}
+  table.blx td.cptl .blx-l{display:block;margin-top:5px;font-weight:inherit;font-size:13px;color:var(--text);white-space:normal}
+  table.blx{table-layout:auto} table.blx th.so{width:auto}
+  table.blx td.cptl{white-space:normal}
+  .blx-mob{display:flex;align-items:center;justify-content:flex-end;gap:7px;font-size:11.5px;color:var(--faint);margin-top:5px;font-weight:400}
+  .blx-mob .blx-b{min-width:66px;font-size:11.5px;padding:2px 7px}
+}
 /* Grand livre : un seul tableau, comptes en pastilles, solde progressif */
 .glx-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 10px;font-size:13.5px;color:var(--muted)}
 .glx-bar b{color:var(--text);font-weight:600}
@@ -1470,18 +1509,51 @@ document.addEventListener("keydown", ev => {
   if(ev.key !== "/" || ev.metaKey || ev.ctrlKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) return;
   const el = $("#qEcr"); if(el){ ev.preventDefault(); el.focus(); }
 });
-/* Balance : soldes par compte, avec une barre proportionnelle */
+/* Balance : un seul tableau façon grand livre, solde de l'exercice, solde N-1 et variation */
 function vueBalanceVisuelle(y){
-  const rows = balance(y), tot = rows.reduce((s,r)=>({d:s.d+r.d, cr:s.cr+r.cr}),{d:0,cr:0});
-  const max = Math.max(1, ...rows.map(r=>Math.abs(r.solde)));
-  const classe = c => ({"1":"Capitaux","2":"Immobilisations","5":"Banque","6":"Charges","7":"Produits"})[c[0]] || "";
-  let prev = "";
-  return `<div class="card"><div class="tablewrap"><table class="balance">
-    <tr><th>Compte</th><th>Libellé</th><th class="n">Débit</th><th class="n">Crédit</th><th class="n">Solde</th><th style="width:22%"></th></tr>
-    ${rows.map(r => { const cl = classe(r.c), h = cl !== prev ? `<tr class="cl"><td colspan="6">${cl}</td></tr>` : ""; prev = cl;
-      return h + `<tr><td class="cpt">${r.c}</td><td>${esc(r.lib)}</td><td class="n">${r.d?eur(r.d):""}</td><td class="n">${r.cr?eur(r.cr):""}</td><td class="n"><b>${eur(Math.abs(r.solde))}</b> <small>${r.solde>=0.005?"D":r.solde<=-0.005?"C":""}</small></td>
-      <td>${jauge([[Math.abs(r.solde), r.c[0]==="7"?"var(--pos)":r.c[0]==="6"?"var(--seg-3)":"var(--accent)"]], max, 8)}</td></tr>`; }).join("")}
-    <tr class="tot"><td></td><td>Total</td><td class="n">${eur(tot.d)}</td><td class="n">${eur(tot.cr)}</td><td></td><td></td></tr>
+  const rows = balance(y), avant = exercice(y-1) && !isHistorique(y-1) ? balance(y-1) : null;
+  const p = {}; (avant||[]).forEach(r => p[r.c] = r.solde);
+  const comptes = [...new Set([...rows.map(r=>r.c), ...Object.keys(p)])].sort();
+  const N = {}; rows.forEach(r => N[r.c] = r.solde);
+  const num = x => eur(x).replace(/\s€$/, "");
+  const sens = s => s >= 0.005 ? "D" : s <= -0.005 ? "C" : "";
+  // Rouge seulement pour un solde dans le sens inhabituel du compte, comme au grand livre
+  const solde = (s, c) => { const k = sens(s), anormal = c && k && sensNormal(c) && k !== sensNormal(c);
+    return `<span class="${anormal?"anorm":""}" ${anormal?'title="Solde inhabituel pour ce compte"':""}>${num(Math.abs(s))}<span class="sfx">${k}</span></span>`; };
+  // Variation lue dans le sens habituel du compte : une charge ou un produit qui augmente est « + »
+  const orient = c => sensNormal(c) === "C" ? -1 : 1;
+  // Variation lue dans le sens habituel : pastille pleine ▲ si le poste augmente, contour ▼ s'il baisse
+  const FL = d => `<svg width="9" height="9" viewBox="0 0 10 10" aria-hidden="true"><path d="${d>0?"M5 1.5 9.2 8.5H.8z":"M5 8.5.8 1.5h8.4z"}" fill="currentColor"/></svg>`;
+  const pastilleVar = (n, a, o) => { if(a == null) return "";
+    const v = r2((n - a) * o);
+    if(Math.abs(v) < 0.005) return `<span class="blx-b eq" title="Inchangé">=</span>`;
+    if(Math.abs(a) < 0.005) return `<span class="blx-b nv">nouveau</span>`;
+    const pct = Math.abs(v / Math.abs(a) * 100), t = pct >= 999.5 ? "> 999" : pct.toLocaleString("fr-FR",{maximumFractionDigits: pct < 10 ? 1 : 0});
+    return `<span class="blx-b ${v>0?"up":"down"}" title="${v>0?"En hausse":"En baisse"} par rapport à ${y-1}">${FL(v)}${t} %</span>`; };
+  const varTxt = (n, a, o) => { if(a == null) return `<span class="blx-0">–</span>`;
+    const v = r2((n - a) * o);
+    return `<span class="blx-var">${Math.abs(v) < 0.005 ? "" : `<span class="blx-mt">${v > 0 ? "+" : "−"}${num(Math.abs(v))}</span>`}${pastilleVar(n, a, o)}</span>`; };
+  const mob = (n, a, o, txt) => `<span class="blx-mob"><span>${y-1} : ${txt}</span>${pastilleVar(n, a, o)}</span>`;
+  const CL = [["1","Capitaux"],["2","Immobilisations"],["4","Tiers"],["5","Banque"],["6","Charges"],["7","Produits"]];
+  const ligne = c => { const n = N[c] ?? 0, a = avant ? (p[c] ?? 0) : null;
+    return `<tr><td class="cptl"><span class="glx-pill">${c}</span><span class="blx-l">${esc(COMPTES[c]||"")}</span></td><td class="lib">${esc(COMPTES[c]||"")}</td>
+      <td class="n"><b>${solde(n, c)}</b>${avant ? mob(n, a, orient(c), num(Math.abs(a)) + " " + sens(a)) : ""}</td>
+      <td class="n n1">${avant ? solde(a, c) : `<span class="blx-0">–</span>`}</td><td class="n va">${varTxt(n, a, orient(c))}</td></tr>`; };
+  const corps = CL.map(([k, nom]) => { const cs = comptes.filter(c => c[0] === k); if(!cs.length) return "";
+    const st = k === "6" || k === "7" ? (() => { const o = k === "7" ? -1 : 1, n = cs.reduce((s,c)=>s+(N[c]||0),0), a = avant ? cs.reduce((s,c)=>s+(p[c]||0),0) : null;
+      return `<tr class="blx-st"><td class="cptl"><span class="blx-l">Total ${nom.toLowerCase()}</span></td><td class="lib">Total ${nom.toLowerCase()}</td><td class="n"><b>${num(Math.abs(n))}</b>${a==null ? "" : mob(n, a, o, num(Math.abs(a)))}</td><td class="n n1">${a==null?"–":num(Math.abs(a))}</td><td class="n va">${varTxt(n, a, o)}</td></tr>`; })() : "";
+    return `<tbody class="blx-c"><tr class="blx-h"><td colspan="5"><div class="blx-hd"><span class="blx-cl">${nom}</span><span class="glx-nb">${cs.length} compte${cs.length>1?"s":""}</span><span class="glx-rule"></span></div></td></tr>${cs.map(ligne).join("")}${st}</tbody>`; }).join("");
+  const res = M => { const t = Object.entries(M).reduce((s,[c,v]) => s + (c[0]==="7"||c[0]==="6" ? -v : 0), 0); return r2(t); };
+  const rN = res(N), rA = avant ? res(p) : null;
+  const tot = rows.reduce((s,r)=>({d:s.d+r.d, cr:s.cr+r.cr}),{d:0,cr:0});
+  const bar = `<div class="glx-bar"><span><b>${rows.length}</b> compte${rows.length>1?"s":""}</span>
+    ${Math.abs(tot.d-tot.cr) < 0.005 ? '<span class="ok">Balance équilibrée ✓</span>' : `<span class="anorm">Écart débit − crédit : ${eur(tot.d-tot.cr)}</span>`}
+    ${avant ? "" : `<span class="lien" style="color:var(--faint)">Pas d'écritures ${y-1} : colonne N-1 vide</span>`}</div>`;
+  return bar + `<div class="card glxw"><div class="tablewrap"><table class="blx">
+    <thead><tr><th class="cpt">Compte</th><th class="lib">Libellé</th><th class="n so">Solde ${y}</th><th class="n so n1">Solde ${y-1}</th><th class="n va">Variation</th></tr></thead>
+    ${corps}
+    <tbody class="blx-res"><tr><td class="cptl"><span class="blx-l">Résultat comptable</span></td><td class="lib">Résultat comptable (produits − charges)</td><td class="n">${rN<0?"−":""}${num(Math.abs(rN))}${avant ? mob(rN, rA, 1, (rA<0?"−":"") + num(Math.abs(rA))) : ""}</td>
+      <td class="n n1">${rA==null?"–":(rA<0?"−":"")+num(Math.abs(rA))}</td><td class="n va">${varTxt(rN, rA, 1)}</td></tr></tbody>
   </table></div></div>`;
 }
 /* Grand livre : un seul tableau, un bloc par compte, avec solde progressif (façon Inqom) */
@@ -2674,7 +2746,7 @@ function vuePieces(){
   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">À fournir · ${manq.length}</h3>
     ${manq.length>3?`<button class="btn small ghost noprint" onclick="if(confirm('Marquer les ${manq.length} écritures comme justifiées ailleurs ?')){piecesManquantes(${y}).forEach(e=>e.sansPiece=true);setDirty();renderAll()}">Tout marquer « classé ailleurs »</button>`:""}</div>
     ${manq.length ? manq.map(e=>ligne(e, `<button class="btn small" onclick="attacherPiece('${e.id}')">Ajouter</button>${dd.length?`<select class="btn small sec" style="padding:4px 6px" onchange="if(this.value){const d=docs().find(x=>x.id===this.value);findEcr('${e.id}').piece=d.fichier;setDirty();renderAll()}"><option value="">Document…</option>${dd.map(d=>`<option value="${d.id}">${esc(d.libelle)}</option>`).join("")}</select>`:""}<button class="btn small ghost" title="Pas besoin de justificatif" onclick="marquerSansPiece('${e.id}',true)">Non requis</button>`)).join("")
-      : `<div class="vide" style="margin:6px 0 0">✓ Tout est justifié</div>`}</div>
+      : `<div class="blx-0" style="margin:6px 0 0">✓ Tout est justifié</div>`}</div>
   ${ok.length?`<div class="card"><details><summary>Pièces rangées · ${ok.length}</summary><div style="margin-top:8px">
     ${ok.map(e=>ligne(e, `${nomDoc(e.piece)?`<span class="pill">${esc(nomDoc(e.piece))}</span>`:""}<button class="btn small sec" onclick="ouvrirPiece('${e.id}')">📎 Voir</button><button class="btn small ghost" title="Détacher" onclick="detacherPiece('${e.id}')">×</button>`)).join("")}</div></details></div>`:""}`;
 }
@@ -3199,7 +3271,7 @@ function vueBanque(){
       <button class="btn" onclick="validerTri()" ${classes?"":"disabled"}>Valider ${classes} ligne${classes>1?"s":""}</button></div>
       ${jauge([[classes,"var(--pos)"]], list.length, 8)}
       <div style="margin-top:14px">${list.map(ligneOp).join("")}</div></div>`
-    : `<div class="vide">✓ Tout est imputé</div>`}
+    : `<div class="blx-0">✓ Tout est imputé</div>`}
   ${postes.length ? `<div class="card"><h3>Postes ${y}</h3><div class="barresh">${postes.map(([n,v])=>`<div class="bh" role="button" title="Voir ces écritures" onclick="S.vueEcr='journal';S.fEcr=[{t:'nature',v:'${esc(n).replace(/'/g,"\\'")}'}];S.lignesEcr='';allerA('ecritures')"><span>${libNature(n)}</span><div>${jauge([[v, COUL_GROUPE[NATURES[n]?.g||"charge"]]], maxP, 10)}</div><b>${eur0(v)}</b></div>`).join("")}</div></div>` : ""}
   <div class="card"><details><summary>Règles automatiques (${B.regles.length})</summary>
   ${B.regles.length ? `<div class="tablewrap" style="margin-top:10px"><table><tr><th>Si le libellé contient</th><th>Sens</th><th>Poste</th><th>Tiers</th><th></th></tr>
