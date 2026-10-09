@@ -6,10 +6,10 @@ Petit outil web pour tenir la comptabilité d'une location meublée non professi
 - import du relevé bancaire CSV, avec tri des opérations, règles mémorisées par mot-clé et détection des doublons ;
 - une seule zone de dépôt pour les pièces : PDF, photos, échéanciers et factures électroniques de la plateforme agréée (Factur-X, UBL, CII, ZIP), lues et rattachées automatiquement au paiement de même montant ;
 - amortissements par composant (logement hors terrain, travaux, mobilier) ;
-- échéancier d'emprunt mois par mois ; le PDF de la banque, une fois déposé, est lu dans le navigateur et comparé à l'échéancier du dossier, avec la liste des corrections à faire sur l'année ;
+- emprunt : seules les écritures bancaires (intérêts, capital, assurance) sont comptabilisées ; l'échéancier de la page Emprunt indique pour chaque échéance passée si elle est rapprochée (vert), en partie (jaune) ou sans écriture ou avec écart (rouge). Un seul échéancier : celui saisi d'après les caractéristiques du prêt, remplacé par celui de la banque dès que son PDF est déposé (lu dans le navigateur, rattaché d'office comme justificatif aux écritures d'emprunt) ;
 - calcul du résultat fiscal, avec report des amortissements non déductibles (art. 39 C du CGI) et des déficits ;
 - fiche de déclaration case par case (2033-A, B, C, D, 2031, 2042-C-PRO).
-- plan de comptes derrière chaque nature (affichage au choix), journal des écritures mois par mois (reçu, payé, justificatif manquant), balance des comptes avec solde N-1 et variation, grand livre avec solde progressif par compte et export FEC ; un clic sur un montant ou un numéro de compte ouvre, dans un nouvel onglet, le grand livre filtré sur ce montant exact ou ce compte.
+- plan de comptes derrière chaque nature, journal des écritures mois par mois (reçu, payé, justificatif manquant), balance des comptes avec solde N-1 et variation, grand livre avec solde progressif par compte et export FEC ; un clic sur un montant ou un numéro de compte ouvre, dans un nouvel onglet, le grand livre filtré sur ce montant exact ou ce compte.
 - reprise d'une année antérieure depuis l'ancien classeur Excel « Dossier de travail » (Paramètres du dossier > Années), lu sur l'ordinateur et contrôlé avec son compte de résultat et son bilan.
 
 ## Confidentialité
