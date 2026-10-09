@@ -235,12 +235,66 @@ table.journal td{padding:9px 10px}
 table.journal tr.editing td{background:var(--accent-soft)}
 td.act{white-space:nowrap}
 table.balance tr.cl td{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);padding-top:16px}
-details.gl{padding:0}
-details.gl>summary{display:flex;gap:10px;align-items:center;padding:14px 20px;color:var(--text);font-size:14.5px;list-style:none}
-details.gl>summary::-webkit-details-marker{display:none}
-details.gl[open]>summary{border-bottom:1px solid var(--line)}
-details.gl .tablewrap{padding:4px 14px 10px}
-details.gl{margin-bottom:8px}
+/* Grand livre : un seul tableau, comptes en pastilles, solde progressif */
+.glx-bar{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin:0 0 10px;font-size:13.5px;color:var(--muted)}
+.glx-bar b{color:var(--text);font-weight:600}
+.glx-bar .ok{color:var(--pos);font-weight:600}
+.glx-bar .lien{margin-left:auto;display:flex;gap:4px}
+.glx-bar .lien button{border:0;background:none;font:inherit;font-size:13px;color:var(--accent);cursor:pointer;padding:4px 8px;border-radius:6px}
+.glx-bar .lien button:hover{background:var(--accent-soft)}
+.card.glxw{padding:0;overflow:hidden}
+.card.glxw .tablewrap{margin:0}
+table.glx{table-layout:fixed;font-size:13.5px;font-variant-numeric:tabular-nums}
+table.glx th.d{width:110px} table.glx th.j{width:64px} table.glx th.cp{width:120px} table.glx th.dc{width:118px} table.glx th.so{width:140px}
+table.glx thead th{background:var(--surface-2);font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:10px;border-bottom:1px solid var(--line)}
+table.glx th.n,table.glx td.n{text-align:right;white-space:nowrap}
+table.glx td{padding:7px 10px;border-top:1px solid var(--line)}
+table.glx td:first-child,table.glx th:first-child{padding-left:20px}
+table.glx td:last-child,table.glx th:last-child{padding-right:20px}
+table.glx .mv{width:0;padding:0!important;border-left:0;border-right:0;overflow:hidden;font-size:0}
+tr.glx-h td{border-top:0;padding:18px 20px 8px}
+tbody.glx-c:first-of-type tr.glx-h td{padding-top:12px}
+.glx-hd{display:flex;align-items:center;gap:10px;cursor:pointer;border-radius:8px}
+.glx-hd:focus-visible{outline:2px solid var(--accent);outline-offset:4px}
+.glx-pill{display:inline-flex;align-items:center;gap:6px;background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:12.5px;padding:4px 11px 4px 9px;border-radius:99px;letter-spacing:.02em}
+.glx-pill svg{opacity:.85}
+.glx-lib{font-weight:600;color:var(--text);font-size:14px}
+.glx-nb{font-size:12px;color:var(--faint);white-space:nowrap}
+.glx-rule{flex:1;height:1px;background:var(--line);margin:0 6px}
+.glx-solde{font-size:13px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;white-space:nowrap}
+.glx-solde b{font-size:14.5px;letter-spacing:0;text-transform:none;margin-left:4px;color:var(--text)}
+.glx-chev{color:var(--faint);transition:transform .15s;display:inline-flex}
+tbody.ferme .glx-chev{transform:rotate(-90deg)}
+tbody.ferme tr:not(.glx-h){display:none}
+tbody.ferme tr.glx-h td{padding-bottom:10px}
+table.glx .sfx{font-size:11px;font-weight:600;margin-left:3px;color:var(--faint)}
+table.glx .anorm,table.glx .anorm .sfx{color:var(--neg)}
+td.j span{display:inline-block;font-size:11.5px;font-weight:600;color:var(--muted);background:var(--surface-2);border:1px solid var(--line);border-radius:5px;padding:1px 6px}
+td.cp span{display:inline-block;font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:99px;padding:1px 9px;min-width:62px;text-align:center}
+td.d{white-space:nowrap;color:var(--muted)}
+td.lb2{overflow-wrap:anywhere}
+tr.glx-an td{background:var(--surface-2);font-style:italic;color:var(--muted)}
+tr.glx-an td.n{font-style:normal}
+tr.glx-ex td{border-top:0;padding:8px 20px 6px}
+.glx-flag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:99px;padding:3px 11px 3px 9px}
+tr.glx-tot td{background:var(--warn-soft);font-weight:600}
+tr.glx-tot td.lb{text-align:right;color:var(--muted)}
+tbody.glx-gen td{background:var(--surface-2);font-weight:700;border-top:2px solid var(--line);padding-top:12px;padding-bottom:12px}
+.dcrt{display:none}
+@media (max-width:700px){
+  table.glx .cp,table.glx .j,table.glx .dc{width:0!important;padding:0!important;border-left:0;border-right:0;overflow:hidden;font-size:0}
+  table.glx .mv{font-size:inherit;padding:8px 6px!important} table.glx th.mv{width:86px!important} table.glx th.d{width:46px} table.glx th.so{width:94px}
+  .dcrt{display:inline} .dl{display:none}
+  table.glx{font-size:12.5px}
+  table.glx td{padding:8px 6px} table.glx th{padding:10px 6px}
+  table.glx td:first-child,table.glx th:first-child{padding-left:12px}
+  table.glx td:last-child,table.glx th:last-child{padding-right:12px}
+  td.lb2{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  tr.glx-h td{padding:16px 12px 6px} .glx-nb,.glx-rule{display:none}
+  .glx-hd{min-width:0} .glx-lib{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1}
+  .glx-pill{font-size:11.5px;padding:3px 9px 3px 8px} .glx-pill svg{display:none} .glx-solde{font-size:0} .glx-solde b{font-size:13px}
+  tr.glx-tot td.lb{font-size:12px} .glx-bar .stat{display:none}
+}
 
 /* ---------- Banque : dépôt et imputation ---------- */
 .depot{display:flex;flex-direction:column;align-items:center;gap:4px;padding:28px 20px;margin-bottom:20px;border:2px dashed var(--line);border-radius:var(--r-lg);background:var(--surface);color:var(--muted);cursor:pointer;text-align:center}
@@ -1430,21 +1484,56 @@ function vueBalanceVisuelle(y){
     <tr class="tot"><td></td><td>Total</td><td class="n">${eur(tot.d)}</td><td class="n">${eur(tot.cr)}</td><td></td><td></td></tr>
   </table></div></div>`;
 }
-/* Grand livre : mouvements par compte avec solde progressif */
+/* Grand livre : un seul tableau, un bloc par compte, avec solde progressif (façon Inqom) */
+/* Sens habituel du solde d'un compte : "D", "C", ou "" quand les deux sont courants (exploitant, tiers) */
+function sensNormal(c){
+  if(/^(108|119|129|4)/.test(c)) return "";
+  if(/^(28|29|39|49|59)/.test(c)) return "C";
+  return c[0] === "1" || c[0] === "7" ? "C" : "D";
+}
+const IC_GL = {
+  liste:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>',
+  drapeau:'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 3v18h2v-7h11l-2-4 2-4H7V3z"/></svg>',
+  chevron:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'};
+function basculerCompteGL(c){ (S.glFerme ??= {})[c] = !S.glFerme[c]; renderAll(); }
+function toutReplierGL(ferme){ S.glFerme = {}; if(ferme) balance(S.year).forEach(r => S.glFerme[r.c] = true); renderAll(); }
 function vueGrandLivre(y){
   const parC = {}, J = S.fEcr || [], lignes = S.lignesGL || "", filtre = J.length || lignes;
-  ecrituresComptables(y).forEach(e => e.lignes.forEach(l => { const x = {c:l.c, date:e.date, j:e.journal, lib:e.lib, d:l.d||0, cr:l.cr||0, src:e.src};
+  ecrituresComptables(y).forEach(e => e.lignes.forEach(l => {
+    const autres = [...new Set(e.lignes.filter(o => o.c !== l.c).map(o => o.c))];
+    const x = {c:l.c, date:e.date, j:e.journal, lib:e.lib, d:l.d||0, cr:l.cr||0, src:e.src, cp: autres.length === 1 ? autres[0] : "Divers"};
     if(passeLignesGL(x, lignes) && passeFiltre(x, J, "gl")) (parC[l.c] ??= []).push(x); }));
-  const ouvert = S.glOuvert || {}, n = Object.values(parC).reduce((s,ls)=>s+ls.length,0);
+  const comptes = Object.keys(parC).sort(), n = comptes.reduce((s,c)=>s+parC[c].length,0);
   if(filtre && !n) return jetonsActifs("gl", 0) + `<p class="sub" style="margin:14px 8px">Aucune ligne ne correspond aux filtres. <a href="#" onclick="event.preventDefault();viderFiltres()">Retirer les filtres</a></p>`;
-  return (filtre ? jetonsActifs("gl", n) : "") + Object.keys(parC).sort().map(c => {
-    const ls = parC[c].sort((a,b)=>a.date.localeCompare(b.date)); let s = 0;
-    const D = ls.reduce((x,l)=>x+l.d,0), C = ls.reduce((x,l)=>x+l.cr,0), solde = D - C;
-    return `<details class="card gl" ${ouvert[c]||filtre?"open":""} ontoggle="(S.glOuvert??={})['${c}']=this.open"><summary><span class="cpt">${c}</span><b>${esc(COMPTES[c]||"")}</b><span class="pill">${ls.length}</span><span style="margin-left:auto;font-weight:600">${eur(Math.abs(solde))} ${solde>=0.005?"D":solde<=-0.005?"C":""}</span></summary>
-      <div class="tablewrap"><table><tr><th>Date</th><th>Jnl</th><th>Libellé</th><th class="n">Débit</th><th class="n">Crédit</th><th class="n">Solde</th></tr>
-      ${ls.map(l => { s += l.d - l.cr; return `<tr><td style="white-space:nowrap">${fmtDate(l.date)}</td><td><span class="pill">${l.j}</span></td><td>${esc(l.lib)}</td><td class="n">${l.d?eur(l.d):""}</td><td class="n">${l.cr?eur(l.cr):""}</td><td class="n">${eur(Math.abs(s))} ${s>=0.005?"D":s<=-0.005?"C":""}</td></tr>`; }).join("")}
-      <tr class="tot"><td></td><td></td><td>Total</td><td class="n">${eur(D)}</td><td class="n">${eur(C)}</td><td class="n">${eur(Math.abs(solde))}</td></tr></table></div></details>`;
+  const num = x => eur(x).replace(/\s€$/, "");
+  const sens = s => s >= 0.005 ? "D" : s <= -0.005 ? "C" : "";
+  // Le solde passe en rouge seulement quand il est dans le sens inhabituel du compte (banque créditrice, charge créditrice…)
+  const solde = (s, c) => { const k = sens(s), anormal = k && sensNormal(c) && k !== sensNormal(c);
+    return `<span class="${anormal?"anorm":""}" ${anormal?'title="Solde inhabituel pour ce compte"':""}>${num(Math.abs(s))}<span class="sfx">${k}</span></span>`; };
+  let TD = 0, TC = 0;
+  const corps = comptes.map(c => {
+    const ls = parC[c].sort((a,b)=>a.date.localeCompare(b.date)); let s = 0, drapeau = false;
+    const D = ls.reduce((x,l)=>x+l.d,0), C = ls.reduce((x,l)=>x+l.cr,0), sol = D - C; TD += D; TC += C;
+    const ferme = !!(S.glFerme||{})[c];
+    const rows = ls.map(l => { s += l.d - l.cr; let pre = "";
+      if(l.j !== "AN" && !drapeau){ drapeau = true; if(ls[0].j === "AN") pre = `<tr class="glx-ex"><td colspan="8"><span class="glx-flag">${IC_GL.drapeau}Exercice ${y}</span></td></tr>`; }
+      const mv = `${num(l.d || l.cr)}<span class="sfx">${l.d ? "D" : "C"}</span>`;
+      return pre + `<tr class="${l.j==="AN"?"glx-an":""}"><td class="d"><span class="dl">${fmtDate(l.date)}</span><span class="dcrt">${fmtDate(l.date).slice(0,5)}</span></td><td class="j"><span>${l.j}</span></td>
+        <td class="cp"><span title="${esc(COMPTES[l.cp]||"Plusieurs comptes")}">${l.cp}</span></td><td class="lb2">${l.j==="AN" ? "Report à nouveau au 1er janvier" : esc(l.lib)}</td>
+        <td class="n dc">${l.d?num(l.d):""}</td><td class="n dc">${l.cr?num(l.cr):""}</td><td class="n mv">${mv}</td><td class="n">${solde(s, c)}</td></tr>`; }).join("");
+    const tot = ls.length > 1 ? `<tr class="glx-tot"><td colspan="4" class="lb">Total ${c}</td><td class="n dc">${num(D)}</td><td class="n dc">${num(C)}</td><td class="n mv"></td><td class="n">${solde(sol, c)}</td></tr>` : "";
+    return `<tbody class="glx-c ${ferme?"ferme":""}"><tr class="glx-h"><td colspan="8"><div class="glx-hd" role="button" tabindex="0" aria-expanded="${!ferme}" onclick="basculerCompteGL('${c}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();basculerCompteGL('${c}')}">
+        <span class="glx-pill">${IC_GL.liste}${c}</span><span class="glx-lib">${esc(COMPTES[c]||"")}</span><span class="glx-nb">${ls.length} ligne${ls.length>1?"s":""}</span><span class="glx-rule"></span>
+        <span class="glx-solde">Solde <b>${solde(sol, c)}</b></span><span class="glx-chev noprint">${IC_GL.chevron}</span></div></td></tr>${rows}${tot}</tbody>`;
   }).join("");
+  const bar = `<div class="glx-bar"><span><b>${comptes.length}</b> compte${comptes.length>1?"s":""} · <b>${n}</b> ligne${n>1?"s":""}</span>
+    <span class="stat">Débit <b>${eur(TD)}</b> · Crédit <b>${eur(TC)}</b>${Math.abs(TD-TC) < 0.005 ? ' <span class="ok">· équilibré ✓</span>' : ""}</span>
+    <span class="lien noprint"><button onclick="toutReplierGL(false)">Tout déplier</button><button onclick="toutReplierGL(true)">Tout replier</button></span></div>`;
+  return (filtre ? jetonsActifs("gl", n) : bar) + `<div class="card glxw"><div class="tablewrap"><table class="glx">
+    <thead><tr><th class="d">Date</th><th class="j">Jnl</th><th class="cp">Contrepartie</th><th>Libellé</th><th class="n dc">Débit</th><th class="n dc">Crédit</th><th class="n mv">Mouvement</th><th class="n so">Solde</th></tr></thead>
+    ${corps}
+    ${filtre ? "" : `<tbody class="glx-gen"><tr><td colspan="4" style="text-align:right">Total général</td><td class="n dc">${num(TD)}</td><td class="n dc">${num(TC)}</td><td class="n mv"></td><td class="n"></td></tr></tbody>`}
+  </table></div></div>`;
 }
 function parseMontant(s){ return Number(String(s).replace(/\s/g,"").replace(",", ".")); }
 function saveEcriture(){
