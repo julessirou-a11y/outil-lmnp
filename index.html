@@ -1298,7 +1298,7 @@ function tableEcritures(list, lock, filtre){
   const num = x => eur(x).replace(/\s€$/, "");
   const recu = l => l.filter(e => grpNature(e) === "recette").reduce((s,e)=>s+e.montant,0), paye = l => l.filter(e => grpNature(e) !== "recette").reduce((s,e)=>s+e.montant,0);
   const som = l => { const r = recu(l), p = paye(l);
-    return `<span class="ejx-som"><span class="in">Reçu <b>+${num(r)}</b></span><span>Payé <b>−${num(p)}</b></span><span class="net">Solde <b>${r-p>=0?"+":"−"}${num(Math.abs(r-p))}</b></span></span>`; };
+    return `<span class="ejx-som">${r ? `<span class="in">Reçu <b>+${num(r)}</b></span>` : ""}${p ? `<span>Payé <b>−${num(p)}</b></span>` : ""}${r && p ? `<span class="net">Solde <b>${r-p>=0?"+":"−"}${num(Math.abs(r-p))}</b></span>` : ""}</span>`; };
   const pj = e => e.piece ? `<button class="ejx-pj ok" title="${esc(e.piece)}" onclick="ouvrirPiece('${e.id}')">${I_CLIP}Voir</button>`
     : pieceRequise(e) ? `<button class="ejx-pj ko" onclick="attacherPiece('${e.id}')">${I_CLIP}À ajouter</button>` : "";
   const parMois = {}; list.forEach(e => (parMois[monthOf(e.date)] ??= []).push(e));
