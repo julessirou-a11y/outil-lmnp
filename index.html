@@ -1872,7 +1872,7 @@ document.addEventListener("click", e => document.querySelectorAll("details.menu3
 function carteContrat(l, idx){
   const edit = S.editPret === l.id || !l.capital, banque = !!lignesBanque(l), eb = l.echeancierBanque;
   const taux = (l.tauxAnnuel*100).toLocaleString("fr-FR",{maximumFractionDigits:3}) + " %";
-  const fiche = [["Banque", esc(l.banque)||"–"], ["Capital emprunté", eur(l.capital)], ["Taux annuel", taux], ["Durée", `${l.dureeMois} mois`], ["1re échéance", fmtDate(l.premiereEcheance)], ["Mensualité hors assurance", l.mensualite ? eur(l.mensualite) : "calculée"], ["Assurance mensuelle", l.assurance ? eur(l.assurance) : "aucune"]];
+  const fiche = [["Banque", esc(l.banque)||"–"], ["Capital emprunté", eur(l.capital)], ["Taux annuel", taux], ["Durée", `${l.dureeMois} mois`], ["1re échéance", fmtDate(l.premiereEcheance)], ["Mensualité hors assurance", l.mensualite ? eur(l.mensualite) : "calculée"], l.assurance > 0 && ["Assurance mensuelle", eur(l.assurance)]].filter(Boolean);
   const champ = (lib, k, v, type = "text") => `<label>${lib}<input data-k="${k}" ${type === "num" ? 'inputmode="decimal"' : `type="${type}"`} value="${v}"></label>`;
   const caract = edit ? `<div class="form" id="contrat${idx}">
       ${champ("Banque", "banque", esc(l.banque))}${champ("Capital emprunté", "capital", l.capital, "num")}${champ("Taux annuel (%)", "taux", r2(l.tauxAnnuel*10000)/100, "num")}
