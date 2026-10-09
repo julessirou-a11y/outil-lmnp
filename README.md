@@ -9,7 +9,7 @@ Petit outil web pour tenir la comptabilité d'une location meublée non professi
 - échéancier d'emprunt mois par mois ; le PDF de la banque, une fois déposé, est lu dans le navigateur et comparé à l'échéancier du dossier, avec la liste des corrections à faire sur l'année ;
 - calcul du résultat fiscal, avec report des amortissements non déductibles (art. 39 C du CGI) et des déficits ;
 - fiche de déclaration case par case (2033-A, B, C, D, 2031, 2042-C-PRO).
-- plan de comptes derrière chaque nature (affichage au choix), journal des écritures mois par mois (reçu, payé, justificatif manquant), balance des comptes avec solde N-1 et variation, grand livre avec solde progressif par compte et export FEC.
+- plan de comptes derrière chaque nature (affichage au choix), journal des écritures mois par mois (reçu, payé, justificatif manquant), balance des comptes avec solde N-1 et variation, grand livre avec solde progressif par compte et export FEC ; un clic sur un montant ou un numéro de compte ouvre, dans un nouvel onglet, le grand livre filtré sur ce montant exact ou ce compte.
 - reprise d'une année antérieure depuis l'ancien classeur Excel « Dossier de travail » (Paramètres du dossier > Années), lu sur l'ordinateur et contrôlé avec son compte de résultat et son bilan.
 
 ## Confidentialité
