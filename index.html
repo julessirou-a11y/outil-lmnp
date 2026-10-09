@@ -16,6 +16,7 @@
   --pos:#2F7D5B; --pos-soft:#E6F2EC; --neg:#B83A2B; --neg-soft:#FBE9E6; --warn:#8F5B00; --warn-soft:#FFF3DA;
   --seg-1:#C4B5BF; --seg-2:#DDD2D9; --seg-3:#9C8B96;
   --r-lg:14px; --r-md:9px; --r-sm:6px;
+  --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B5E67' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   --font:"IBM Plex Sans",-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
   color-scheme:light;
 }
@@ -24,6 +25,7 @@
   --line:#3A2E36; --accent:#B49FCC; --accent-ink:#2A1520; --accent-soft:#3A2634; --accent-2:#EAD7D7; --brand-deep:#412234;
   --pos:#7FD1A8; --pos-soft:#1C2E26; --neg:#F08A7C; --neg-soft:#3A201D; --warn:#E9B65C; --warn-soft:#33291A;
   --seg-1:#5A4A55; --seg-2:#463A42; --seg-3:#6E5D68; color-scheme:dark;
+  --chev:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23B5A8B1' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
 }
 *{box-sizing:border-box}
 html,body{margin:0;background:var(--bg);color:var(--text)}
@@ -150,6 +152,15 @@ code{font-size:.92em;background:var(--surface-2);padding:1px 5px;border-radius:5
 .btn:disabled{opacity:.45;cursor:default;filter:none}
 .btn.wide{width:100%;justify-content:center}
 select,input,textarea{font:inherit;font-size:14.5px;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:8px 10px;max-width:100%}
+/* Menus déroulants : flèche dessinée, identique partout (la flèche native collait au bord du cadre) ; !important pour passer devant les styles en ligne des listes en bouton */
+select{-webkit-appearance:none;appearance:none;background-image:var(--chev) !important;background-repeat:no-repeat !important;background-position:right 9px center !important;background-size:13px 13px !important;padding-right:30px !important;cursor:pointer}
+/* Montants et numéros de compte qui ouvrent le grand livre filtré dans un nouvel onglet */
+a.lgl{color:inherit;text-decoration:none;cursor:pointer;border-radius:4px}
+a.lgl:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+td.mt.in a.lgl:hover b{color:var(--accent)}
+a.lgl.glx-pill:hover{color:var(--accent-ink);text-decoration:none;filter:brightness(1.15)}
+td.cp a.lgl:hover span{border-color:var(--accent);color:var(--accent)}
+td.cp a.lgl{text-decoration:none}
 input:focus,select:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
 label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
 .form{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));align-items:end}
@@ -245,8 +256,14 @@ table.ejx td:last-child,table.ejx th:last-child{padding-right:14px}
 table.ejx tr.editing td{background:var(--accent-soft)}
 tr.ejx-h td{border-top:0;padding:18px 20px 8px}
 tbody.ejx-m:first-of-type tr.ejx-h td{padding-top:12px}
-tbody.ferme tr:not(.ejx-h){display:none}
+tbody.ejx-m.ferme tr:not(.ejx-h){display:none}
 tbody.ferme .glx-chev{transform:rotate(-90deg)}
+tbody.ejx-m.ferme tr.ejx-masq{display:table-row}
+tr.ejx-masq td{border-top:0;padding:0 20px 10px}
+tr.ejx-masq button{border:0;background:none;font:inherit;font-size:13px;color:var(--accent);cursor:pointer;padding:2px 0}
+tr.ejx-masq button:hover{text-decoration:underline}
+.ejx-rep{border:0;background:none;padding:4px;margin:-4px -4px -4px 0;border-radius:6px;cursor:pointer;display:inline-flex;color:var(--faint)}
+.ejx-rep:hover{background:var(--surface-2);color:var(--text)}
 .ejx-pill{text-transform:capitalize}
 .ejx-som{display:flex;gap:14px;font-size:13px;color:var(--muted);white-space:nowrap}
 .ejx-som b{font-weight:600;color:var(--text)} .ejx-som .in b{color:var(--pos)}
@@ -348,7 +365,7 @@ tbody.glx-c:first-of-type tr.glx-h td{padding-top:12px}
 .glx-solde b{font-size:14.5px;letter-spacing:0;text-transform:none;margin-left:4px;color:var(--text)}
 .glx-chev{color:var(--faint);transition:transform .15s;display:inline-flex}
 tbody.ferme .glx-chev{transform:rotate(-90deg)}
-tbody.ferme tr:not(.glx-h){display:none}
+tbody.glx-c.ferme tr:not(.glx-h){display:none}
 tbody.ferme tr.glx-h td{padding-bottom:10px}
 table.glx .sfx{font-size:11px;font-weight:600;margin-left:3px;color:var(--faint)}
 table.glx .anorm,table.glx .anorm .sfx{color:var(--neg)}
@@ -739,7 +756,7 @@ const COMPTES = {
 const CPT_IMMO = {construction:{brut:"213000", am:"281300"}, travaux:{brut:"213500", am:"281350"}, mobilier:{brut:"218400", am:"281840"}};
 const compteNature = n => NATURES[n]?.c || (NATURES[n] ? "" : "628000");
 /* Nature affichée, précédée de son compte si l'option « N° de comptes » est active */
-const libNature = n => (comptesVisibles() && compteNature(n) ? `<span class="cpt">${compteNature(n)}</span>` : "") + esc(n);
+const libNature = n => (comptesVisibles() && compteNature(n) ? lienGL({t:"compte", v:compteNature(n)}, compteNature(n), "cpt") : "") + esc(n);
 const optNature = (n, sel) => `<option value="${esc(n)}" ${n===sel?"selected":""}>${comptesVisibles()&&compteNature(n)?compteNature(n)+" · ":""}${esc(n)}</option>`;
 const CATEGORIES = {construction:"Logement (bâti + terrain)", travaux:"Travaux / agencements", mobilier:"Mobilier et équipements"};
 const DUREE_DEFICIT = 10;
@@ -986,8 +1003,37 @@ function chargerDonnees(obj, nom){
   S.data = normalize(obj); S.fileName = nom; S.autoMsg = ""; S.sauvegardeSession = false;
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
   S.year = ys.filter(y=>!isHistorique(y)).pop() ?? ys.pop();
+  appliquerLienGL();
   setDirty(false); renderAll();
 }
+/* Grand livre filtré dans un nouvel onglet : clic sur un montant (filtre « Montant exact ») ou un numéro de compte (filtre « Compte »).
+   L'adresse porte le filtre (?gl=1&an=2026&compte=… ou &montant=…) ; le nouvel onglet demande le dossier ouvert à l'onglet d'origine,
+   sinon il l'applique dès qu'on ouvre le dossier. */
+function urlGL(j){ const p = new URLSearchParams({gl:"1", an:S.year}); if(j.t === "compte") p.set("compte", j.v); else p.set("montant", r2(j.v).toFixed(2)); return location.pathname + "?" + p; }
+const lienGL = (j, html, cls = "", titre = "") => `<a class="lgl ${cls}" href="${urlGL(j)}" target="_blank" title="${esc(titre || (j.t === "compte" ? `${j.v} · ${COMPTES[j.v]||""}` : `Montant exact ${eur(j.v)}`))} : ouvrir le grand livre dans un nouvel onglet" onclick="return ouvrirGL(event, this.href)" onkeydown="event.stopPropagation()">${html}</a>`;
+const ONGLETS_GL = new Set();
+function ouvrirGL(ev, href){ ev.preventDefault(); ev.stopPropagation(); const w = window.open(href, "_blank"); if(w) ONGLETS_GL.add(w); return false; }
+const cibleMsg = () => location.origin === "null" ? "*" : location.origin;
+S.lienGL = (() => { const p = new URLSearchParams(location.search); if(!p.has("gl")) return null;
+  const v = parseFloat(p.get("montant")), j = p.get("compte") ? {t:"compte", v:p.get("compte")} : !isNaN(v) ? {t:"montant", op:"=", v:r2(v)} : null;
+  return j && {an:Number(p.get("an")), j}; })();
+function appliquerLienGL(){
+  const L = S.lienGL; if(!L) return; S.lienGL = null;
+  if(S.data.exercices[L.an] && !isHistorique(L.an)) S.year = L.an;
+  Object.assign(S, {tab:"ecritures", vueEcr:"grandlivre", fEcr:[L.j], lignesGL:"", glFerme:{}, qEcr:"", qType:null});
+  document.title = "Grand livre · " + (L.j.t === "compte" ? L.j.v : eur(L.j.v)) + " · Le Carnet";
+  try{ history.replaceState(null, "", location.pathname); }catch(_){}
+}
+addEventListener("message", ev => {
+  const d = ev.data || {};
+  if(d.lmnp === "demande" && ONGLETS_GL.has(ev.source) && S.data){
+    const msg = {lmnp:"dossier", data:S.data, fileName:S.fileName, dir:S.dir};
+    try{ ev.source.postMessage(msg, cibleMsg()); }catch(_){ ev.source.postMessage({...msg, dir:null}, cibleMsg()); }
+  } else if(d.lmnp === "dossier" && ev.source === window.opener && S.lienGL && !S.data){
+    S.dir = d.dir || null; chargerDonnees(d.data, d.fileName);
+  }
+});
+if(S.lienGL && window.opener){ try{ window.opener.postMessage({lmnp:"demande"}, cibleMsg()); }catch(_){} }
 async function ouvrirDossier(){
   try{
     const dir = await window.showDirectoryPicker({id:"lmnp", mode:"readwrite"});
@@ -1306,11 +1352,12 @@ function tableEcritures(list, lock, filtre){
     return `<tr class="${S.editId===e.id?"editing":""}"><td class="d"><span class="jr">${e.date.slice(8,10)}</span><span class="mo">${MOIS[monthOf(e.date)-1]}</span></td>
       <td><div class="ejx-op"><span class="ejx-ic ${inn?"in":""}" title="${inn?"Argent reçu":"Argent payé"}">${inn?IC_EJ.in:IC_EJ.out}</span><span class="ejx-t" ${e.libelleBanque?`title="Relevé : ${esc(e.libelleBanque)}"`:""}><b>${esc(e.tiers)||"–"}</b>${e.commentaire?`<small>${esc(e.commentaire)}</small>`:""}<span class="ejx-cm">${chipNature(e.nature)}</span></span></div></td>
       <td class="ca">${chipNature(e.nature)}</td><td class="pj noprint">${pj(e)}</td>
-      <td class="n mt ${inn?"in":""}"><b>${inn?"+":"−"}${num(e.montant)}</b> €${!e.piece && pieceRequise(e) ? `<span class="ejx-pjm noprint">${pj(e)}</span>` : ""}</td>
+      <td class="n mt ${inn?"in":""}">${lienGL({t:"montant", op:"=", v:e.montant}, `<b>${inn?"+":"−"}${num(e.montant)}</b> €`)}${!e.piece && pieceRequise(e) ? `<span class="ejx-pjm noprint">${pj(e)}</span>` : ""}</td>
       <td class="n ac noprint">${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();haut()">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</td></tr>`; };
   const corps = Object.keys(parMois).map(Number).sort((a,b)=>a-b).map(m => { const ls = parMois[m], ferme = !!(S.ecrFerme||{})[m];
-    return `<tbody class="ejx-m ${ferme?"ferme":""}"><tr class="ejx-h"><td colspan="6"><div class="glx-hd" role="button" tabindex="0" aria-expanded="${!ferme}" onclick="basculerMoisEcr(${m})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();basculerMoisEcr(${m})}">
-      <span class="glx-pill ejx-pill">${IC_EJ.cal}${MOIS_LONG[m-1]}</span><span class="glx-rule"></span>${som(ls)}<span class="glx-chev noprint">${IC_GL.chevron}</span></div></td></tr>${ls.map(ligne).join("")}</tbody>`; }).join("");
+    return `<tbody class="ejx-m ${ferme?"ferme":""}"><tr class="ejx-h"><td colspan="6"><div class="blx-hd">
+      <span class="glx-pill ejx-pill">${IC_EJ.cal}${MOIS_LONG[m-1]}</span><span class="glx-rule"></span>${som(ls)}<button class="ejx-rep noprint" aria-expanded="${!ferme}" title="${ferme?"Afficher":"Masquer"} les opérations de ${MOIS_LONG[m-1]}" onclick="basculerMoisEcr(${m})"><span class="glx-chev">${IC_GL.chevron}</span></button></div></td></tr>
+      ${ferme ? `<tr class="ejx-masq"><td colspan="6"><button onclick="basculerMoisEcr(${m})">Afficher les ${ls.length} opération${ls.length>1?"s":""} de ${MOIS_LONG[m-1]}</button></td></tr>` : ""}${ls.map(ligne).join("")}</tbody>`; }).join("");
   return `<div class="card glxw"><div class="tablewrap"><table class="ejx">
     <thead><tr><th class="d">Date</th><th>Opération</th><th class="ca">Catégorie</th><th class="pj noprint">Justificatif</th><th class="n mt">Montant</th><th class="ac noprint"></th></tr></thead>
     ${corps}
@@ -1590,7 +1637,7 @@ function vueBalanceVisuelle(y){
   const mob = (n, a, o, txt) => `<span class="blx-mob"><span>${y-1} : ${txt}</span>${pastilleVar(n, a, o)}</span>`;
   const CL = [["1","Capitaux"],["2","Immobilisations"],["4","Tiers"],["5","Banque"],["6","Charges"],["7","Produits"]];
   const ligne = c => { const n = N[c] ?? 0, a = avant ? (p[c] ?? 0) : null;
-    return `<tr><td class="cptl"><span class="glx-pill">${c}</span><span class="blx-l">${esc(COMPTES[c]||"")}</span></td><td class="lib">${esc(COMPTES[c]||"")}</td>
+    return `<tr><td class="cptl">${lienGL({t:"compte", v:c}, c, "glx-pill")}<span class="blx-l">${esc(COMPTES[c]||"")}</span></td><td class="lib">${esc(COMPTES[c]||"")}</td>
       <td class="n"><b>${solde(n, c)}</b>${avant ? mob(n, a, orient(c), num(Math.abs(a)) + " " + sens(a)) : ""}</td>
       <td class="n n1">${avant ? solde(a, c) : `<span class="blx-0">–</span>`}</td><td class="n va">${varTxt(n, a, orient(c))}</td></tr>`; };
   const corps = CL.map(([k, nom]) => { const cs = comptes.filter(c => c[0] === k); if(!cs.length) return "";
@@ -1643,10 +1690,10 @@ function vueGrandLivre(y){
     const ferme = !!(S.glFerme||{})[c];
     const rows = ls.map(l => { s += l.d - l.cr; let pre = "";
       if(l.j !== "AN" && !drapeau){ drapeau = true; if(ls[0].j === "AN") pre = `<tr class="glx-ex"><td colspan="8"><span class="glx-flag">${IC_GL.drapeau}Exercice ${y}</span></td></tr>`; }
-      const mv = `${num(l.d || l.cr)}<span class="sfx">${l.d ? "D" : "C"}</span>`;
+      const mt = v => lienGL({t:"montant", op:"=", v}, num(v)), mv = lienGL({t:"montant", op:"=", v:l.d || l.cr}, `${num(l.d || l.cr)}<span class="sfx">${l.d ? "D" : "C"}</span>`);
       return pre + `<tr class="${l.j==="AN"?"glx-an":""}"><td class="d"><span class="dl">${fmtDate(l.date)}</span><span class="dcrt">${fmtDate(l.date).slice(0,5)}</span></td><td class="j"><span>${l.j}</span></td>
-        <td class="cp"><span title="${esc(COMPTES[l.cp]||"Plusieurs comptes")}">${l.cp}</span></td><td class="lb2">${l.j==="AN" ? "Report à nouveau au 1er janvier" : esc(l.lib)}</td>
-        <td class="n dc">${l.d?num(l.d):""}</td><td class="n dc">${l.cr?num(l.cr):""}</td><td class="n mv">${mv}</td><td class="n">${solde(s, c)}</td></tr>`; }).join("");
+        <td class="cp">${l.cp === "Divers" ? `<span title="Plusieurs comptes">Divers</span>` : lienGL({t:"compte", v:l.cp}, `<span>${l.cp}</span>`, "", `${l.cp} · ${COMPTES[l.cp]||""}`)}</td><td class="lb2">${l.j==="AN" ? "Report à nouveau au 1er janvier" : esc(l.lib)}</td>
+        <td class="n dc">${l.d?mt(l.d):""}</td><td class="n dc">${l.cr?mt(l.cr):""}</td><td class="n mv">${mv}</td><td class="n">${solde(s, c)}</td></tr>`; }).join("");
     const tot = ls.length > 1 ? `<tr class="glx-tot"><td colspan="4" class="lb">Total ${c}</td><td class="n dc">${num(D)}</td><td class="n dc">${num(C)}</td><td class="n mv"></td><td class="n">${solde(sol, c)}</td></tr>` : "";
     return `<tbody class="glx-c ${ferme?"ferme":""}"><tr class="glx-h"><td colspan="8"><div class="glx-hd" role="button" tabindex="0" aria-expanded="${!ferme}" onclick="basculerCompteGL('${c}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();basculerCompteGL('${c}')}">
         <span class="glx-pill">${IC_GL.liste}${c}</span><span class="glx-lib">${esc(COMPTES[c]||"")}</span><span class="glx-nb">${ls.length} ligne${ls.length>1?"s":""}</span><span class="glx-rule"></span>
@@ -2349,7 +2396,7 @@ function vueBalance(y){
   const rows = balance(y), tot = rows.reduce((s,r)=>({d:s.d+r.d, cr:s.cr+r.cr}),{d:0,cr:0});
   return `<div class="card noprint"><h3 style="margin-top:0">Balance des comptes ${y}</h3><div class="tablewrap"><table>
     <tr><th>Compte</th><th>Libellé</th><th class="n">Débit</th><th class="n">Crédit</th><th class="n">Solde</th></tr>
-    ${rows.map(r=>`<tr><td>${r.c}</td><td>${esc(r.lib)}</td><td class="n">${eur(r.d)}</td><td class="n">${eur(r.cr)}</td><td class="n">${eur(Math.abs(r.solde))} ${r.solde>=0.005?"D":r.solde<=-0.005?"C":""}</td></tr>`).join("")}
+    ${rows.map(r=>`<tr><td>${lienGL({t:"compte", v:r.c}, r.c)}</td><td>${esc(r.lib)}</td><td class="n">${eur(r.d)}</td><td class="n">${eur(r.cr)}</td><td class="n">${eur(Math.abs(r.solde))} ${r.solde>=0.005?"D":r.solde<=-0.005?"C":""}</td></tr>`).join("")}
     <tr class="tot"><td></td><td>Total</td><td class="n">${eur(tot.d)}</td><td class="n">${eur(tot.cr)}</td><td></td></tr>
   </table></div><p class="sub" style="margin:8px 0 0">Reconstituée à partir des écritures : le compte 512 (banque) ne suit que les mouvements liés à la location, sans solde d'ouverture.</p></div>`;
 }
