@@ -162,6 +162,7 @@ td.cp a.lgl:hover span{border-color:var(--accent);color:var(--accent)}
 td.cp a.lgl{text-decoration:none}
 input:focus,select:focus{outline:2px solid var(--accent-soft);border-color:var(--accent)}
 label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted)}
+.contrat.edition{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
 .contrat-g{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:18px;align-items:start}
 @media (max-width:900px){ .contrat-g{grid-template-columns:1fr} }
 .contrat-pdf{display:flex;flex-direction:column;gap:8px} .contrat-pdf>.sub{margin:0;font-size:12.5px}
@@ -1872,14 +1873,11 @@ function carteContrat(l, idx){
   const edit = S.editPret === l.id || !l.capital, banque = !!lignesBanque(l), eb = l.echeancierBanque;
   const taux = (l.tauxAnnuel*100).toLocaleString("fr-FR",{maximumFractionDigits:3}) + " %";
   const fiche = [["Banque", esc(l.banque)||"–"], ["Capital emprunté", eur(l.capital)], ["Taux annuel", taux], ["Durée", `${l.dureeMois} mois`], ["1re échéance", fmtDate(l.premiereEcheance)], ["Mensualité hors assurance", l.mensualite ? eur(l.mensualite) : "calculée"]];
-  const caract = edit ? `${l.capital ? `<div class="alert warn">Ce sont les conditions de l'offre de prêt signée : ne les modifiez que pour corriger une erreur de saisie.</div>` : ""}<div class="form">
-      <label>Banque<input value="${esc(l.banque)}" onchange="majPret(${idx},'banque',this.value)"></label>
-      <label>Capital emprunté<input inputmode="decimal" value="${l.capital}" onchange="majPret(${idx},'capital',parseMontant(this.value))"></label>
-      <label>Taux annuel (%)<input inputmode="decimal" value="${r2(l.tauxAnnuel*10000)/100}" onchange="majPret(${idx},'tauxAnnuel',parseMontant(this.value)/100)"></label>
-      <label>Durée (mois)<input type="number" value="${l.dureeMois}" onchange="majPret(${idx},'dureeMois',parseInt(this.value,10))"></label>
-      <label>1re échéance<input type="date" value="${l.premiereEcheance}" onchange="majPret(${idx},'premiereEcheance',this.value)"></label>
-      <label>Mensualité hors assurance<input inputmode="decimal" value="${l.mensualite}" onchange="majPret(${idx},'mensualite',parseMontant(this.value))"></label>
-    </div><div class="row" style="justify-content:flex-end;margin-top:12px"><button class="btn small" onclick="S.editPret=null;renderAll()">Terminer</button></div>`
+  const champ = (lib, k, v, type = "text") => `<label>${lib}<input data-k="${k}" ${type === "num" ? 'inputmode="decimal"' : `type="${type}"`} value="${v}"></label>`;
+  const caract = edit ? `<div class="form" id="contrat${idx}">
+      ${champ("Banque", "banque", esc(l.banque))}${champ("Capital emprunté", "capital", l.capital, "num")}${champ("Taux annuel (%)", "taux", r2(l.tauxAnnuel*10000)/100, "num")}
+      ${champ("Durée (mois)", "dureeMois", l.dureeMois, "number")}${champ("1re échéance", "premiereEcheance", l.premiereEcheance, "date")}${champ("Mensualité hors assurance", "mensualite", l.mensualite, "num")}
+    </div><div class="row" style="justify-content:flex-end;margin-top:14px">${l.capital ? `<button class="btn small sec" onclick="S.editPret=null;renderAll()">Annuler</button>` : ""}<button class="btn small" onclick="validerContrat(${idx})">Valider</button></div>`
     : `<div class="fiche">${fiche.map(([k,v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("")}</div>`;
   // Échéancier de la banque : une vignette, ouverte d'un clic, actions dans « ⋯ »
   const doc = l.echeancierDoc && docs().find(d => d.id === l.echeancierDoc), lib = s => esc(s).replace(/'/g, "\\'");
@@ -1892,8 +1890,16 @@ function carteContrat(l, idx){
       <details class="coller"><summary>Le PDF ne se lit pas ? Coller le tableau</summary>
         <textarea id="echColle" rows="4" style="width:100%;margin-top:8px" placeholder="05/11/2016   729,86   122,00   607,86   119 392,14 …"></textarea>
         <button class="btn small" style="margin-top:6px" onclick="collerEcheancier(${idx})">Lire le tableau</button></details>`;
-  return `<div class="card contrat"><div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="margin:0">Contrat de prêt</h3>${edit ? "" : menu3([["Corriger une erreur de saisie…", `S.editPret='${l.id}';renderAll()`]])}</div>
+  const crayon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>`;
+  return `<div class="card contrat ${edit ? "edition" : ""}"><div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="margin:0">${edit ? "Édition du contrat de prêt" : "Contrat de prêt"}</h3>${edit ? "" : `<button class="btn small sec" onclick="S.editPret='${l.id}';renderAll()">${crayon} Modifier le contrat</button>`}</div>
     <div class="contrat-g"><div>${caract}</div><div class="contrat-pdf"><span class="sub">Échéancier de la banque</span>${pdf}</div></div></div>`;
+}
+/* Les caractéristiques ne changent qu'à la validation de l'édition */
+function validerContrat(idx){
+  const l = S.data.emprunts[idx], v = k => $(`#contrat${idx} [data-k="${k}"]`).value.trim();
+  const n = {banque:v("banque"), capital:parseMontant(v("capital")), tauxAnnuel:parseMontant(v("taux"))/100, dureeMois:parseInt(v("dureeMois"),10), premiereEcheance:v("premiereEcheance"), mensualite:parseMontant(v("mensualite"))||0};
+  if(!(n.capital > 0) || !(n.dureeMois > 0) || !n.premiereEcheance || isNaN(n.tauxAnnuel)) return alert("Renseignez au moins le capital, le taux, la durée et la 1re échéance.");
+  Object.assign(l, n); S.editPret = null; setDirty(); renderAll(); toast("Contrat de prêt mis à jour.");
 }
 async function telechargerChemin(chemin){
   if(!await dossierRequis()) return;
@@ -1925,7 +1931,6 @@ async function ajouterEcheancierPret(idx, ev){
   const l = S.data.emprunts[idx], id = await deposerDocument("echeancier", f, `Échéancier ${l.banque||"prêt"}`);
   if(id){ l.echeancierDoc = id; S.rattDoc = null; S.tab = "emprunt"; setDirty(); renderAll(); if(/\.pdf$/i.test(f.name)) await lireEcheancierPdf(idx, f); }
 }
-function majPret(i,k,v){ S.data.emprunts[i][k] = v; setDirty(); renderAll(); }
 
 /* ---- Échéancier de la banque : tableau lu dans le PDF (ou collé), comparé à celui du dossier ---- */
 /* Lecteur PDF chargé seulement au besoin ; le fichier, lui, reste lu dans le navigateur */
