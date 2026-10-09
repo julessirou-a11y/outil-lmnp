@@ -234,6 +234,50 @@ details summary{cursor:pointer;color:var(--accent);font-size:13.5px}
 table.journal td{padding:9px 10px}
 table.journal tr.editing td{background:var(--accent-soft)}
 td.act{white-space:nowrap}
+/* Écritures : un seul tableau par mois, lecture « argent reçu / argent payé » */
+table.ejx{table-layout:fixed;font-size:13.5px;font-variant-numeric:tabular-nums}
+table.ejx th.d{width:84px} table.ejx th.ca{width:210px} table.ejx th.pj{width:150px} table.ejx th.mt{width:130px} table.ejx th.ac{width:96px}
+table.ejx thead th{background:var(--surface-2);font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:10px;border-bottom:1px solid var(--line)}
+table.ejx th.n,table.ejx td.n{text-align:right;white-space:nowrap}
+table.ejx td{padding:9px 10px;border-top:1px solid var(--line);vertical-align:middle}
+table.ejx td:first-child,table.ejx th:first-child{padding-left:20px}
+table.ejx td:last-child,table.ejx th:last-child{padding-right:14px}
+table.ejx tr.editing td{background:var(--accent-soft)}
+tr.ejx-h td{border-top:0;padding:18px 20px 8px}
+tbody.ejx-m:first-of-type tr.ejx-h td{padding-top:12px}
+tbody.ferme tr:not(.ejx-h){display:none}
+tbody.ferme .glx-chev{transform:rotate(-90deg)}
+.ejx-pill{text-transform:capitalize}
+.ejx-som{display:flex;gap:14px;font-size:13px;color:var(--muted);white-space:nowrap}
+.ejx-som b{font-weight:600;color:var(--text)} .ejx-som .in b{color:var(--pos)}
+td.d .jr{font-weight:600;color:var(--text)} td.d .mo{color:var(--faint);font-size:12px;margin-left:3px}
+.ejx-op{display:flex;align-items:center;gap:11px;min-width:0}
+.ejx-ic{flex:none;width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;background:var(--surface-2);color:var(--muted)}
+.ejx-ic.in{background:var(--pos-soft);color:var(--pos)}
+.ejx-t{min-width:0} .ejx-t b{font-weight:600;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ejx-t small{display:block;color:var(--faint);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ejx-t .ejx-cm{display:none}
+td.mt b{font-weight:600} td.mt.in b{color:var(--pos)}
+.ejx-pj{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;border-radius:99px;padding:3px 10px;border:0;cursor:pointer;font-family:inherit}
+.ejx-pj.ok{background:none;color:var(--muted);font-weight:500;padding-left:0}
+.ejx-pj.ok:hover{color:var(--accent)}
+.ejx-pj.ko{background:var(--warn-soft);color:var(--warn)}
+.ejx-pjm{display:none}
+td.ac{white-space:nowrap} td.ac .btn{opacity:.35} tr:hover td.ac .btn,td.ac .btn:focus-visible{opacity:1}
+tbody.ejx-tot td{background:var(--warn-soft);font-weight:600}
+@media (max-width:700px){
+  table.ejx th.ca,table.ejx td.ca,table.ejx th.pj,table.ejx td.pj,table.ejx th.ac,table.ejx td.ac{display:none}
+  table.ejx{table-layout:auto} table.ejx th.d{width:auto} table.ejx th.mt{width:auto}
+  table.ejx td.d{white-space:nowrap;vertical-align:top} table.ejx td.mt{vertical-align:top}
+  .ejx-tu{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px} .ejx-tu .tuile{padding:12px 14px} .ejx-tu .tuile .tv{font-size:20px}
+  tr.ejx-h td{padding:16px 14px 8px} table.ejx td:first-child,table.ejx th:first-child{padding-left:14px}
+  .ejx-ic{display:none}
+  .ejx-t .ejx-cm{display:block;margin-top:3px}
+  .ejx-t b,.ejx-t small{white-space:normal} .ejx-t .chip{white-space:normal} table.ejx td.mt{padding-right:14px}
+  .ejx-pjm{display:block;margin-top:5px} .ejx-pjm .ejx-pj{font-size:11.5px;padding:2px 8px}
+  .ejx-som{gap:8px;font-size:12px} .ejx-som .net{display:none}
+  td.d .mo{display:block;margin-left:0}
+}
 /* Balance : même tableau que le grand livre, solde N, N-1 et variation */
 table.blx{table-layout:fixed;font-size:13.5px;font-variant-numeric:tabular-nums}
 table.blx th.cpt{width:118px} table.blx th.so{width:150px}
@@ -1202,11 +1246,6 @@ function verrouille(y){ return exercice(y)?.statut === "cloture" && !S.unlocked[
 const MOIS_LONG = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 const svgI = d => `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const I_EDIT = svgI('<path d="M5 19h3l10-10-3-3L5 16zM13 7l3 3"/>'), I_DEL = svgI('<path d="M6 7h12M10 7V5h4v2M8 7l1 12h6l1-12"/>'), I_CLIP = svgI('<path d="M16 8l-6.5 6.5a2 2 0 0 0 3 3L19 11a4 4 0 0 0-6-6l-7 7a6 6 0 0 0 9 9l5-5"/>');
-function piecesLigne(e){
-  if(e.piece) return `<button class="btn ghost small pj" style="color:var(--accent)" title="${esc(e.piece)}" onclick="ouvrirPiece('${e.id}')">${I_CLIP}Voir</button>`;
-  if(!pieceRequise(e)) return "";
-  return `<button class="btn ghost small pj" style="color:var(--warn)" onclick="attacherPiece('${e.id}')">${I_CLIP}Ajouter le justificatif</button>`;
-}
 /* Couleur d'une nature, pour les pastilles et graphiques */
 const COUL_GROUPE = {recette:"var(--pos)", charge:"var(--seg-3)", bilan:"var(--faint)"};
 const grpNature = e => NATURES[e.nature]?.g || (e.sens==="recette"?"recette":"charge");
@@ -1230,7 +1269,7 @@ function vueEcritures(){
   const natOpts = sel => Object.keys(NATURES).map(n=>optNature(n, sel)).join("");
   return tete + `
   ${lock ? `<div class="alert warn" style="align-items:center">Année clôturée : écritures verrouillées.<button class="btn small sec" style="margin-left:auto" onclick="S.unlocked[${y}]=true;renderAll()">Déverrouiller</button></div>` : ""}
-  <div class="tuiles">${tuile("Encaissé", eur0(t.recettes), {col:"var(--pos)"})}${tuile("Payé", eur0(t.c242+t.c244+t.c294+t.remb))}${tuile("Écritures", ex.ecritures.length)}${tuile("Sans justificatif", piecesManquantes(y).length, {page:"pieces", col:piecesManquantes(y).length?"var(--warn)":""})}</div>
+  <div class="tuiles ejx-tu">${tuile("Encaissé", eur0(t.recettes), {col:"var(--pos)"})}${tuile("Payé", eur0(t.c242+t.c244+t.c294+t.remb))}${tuile("Écritures", ex.ecritures.length)}${tuile("Sans justificatif", piecesManquantes(y).length, {page:"pieces", col:piecesManquantes(y).length?"var(--warn)":""})}</div>
   <div class="row noprint" style="margin-bottom:14px">
     ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"+ Écriture"}</button>
     <button class="btn sec" onclick="dupliquerMois()">Recopier le dernier mois</button>`}
@@ -1246,17 +1285,37 @@ function vueEcritures(){
   </div>
   <datalist id="tiersList">${[...new Set(ex.ecritures.map(e=>e.tiers).filter(Boolean))].map(t=>`<option value="${esc(t)}">`).join("")}</datalist></div>` : ""}
   ${jetonsActifs("journal", list.length)}
-  <div class="card" style="padding:8px 12px">${list.length ? `<div class="tablewrap"><table class="journal">
-    <tr><th>Date</th><th>Tiers</th><th>Nature</th>${comptesVisibles()?"<th>Compte</th>":""}<th class="n">Montant</th><th></th></tr>
-    ${list.map(e => { const g = grpNature(e); return `<tr class="${S.editId===e.id?"editing":""}">
-      <td style="white-space:nowrap">${fmtDate(e.date).slice(0,5)}</td>
-      <td ${e.libelleBanque?`title="Relevé : ${esc(e.libelleBanque)}"`:""}>${esc(e.tiers)||"–"}${e.commentaire?`<br><small style="color:var(--muted)">${esc(e.commentaire)}</small>`:""}</td>
-      <td>${chipNature(e.nature).replace(/<span class="cpt">.*?<\/span>/,"")}</td>${comptesVisibles()?`<td class="cpt">${compteNature(e.nature)}</td>`:""}
-      <td class="n" style="font-weight:500;color:${g==="recette"?"var(--pos)":"var(--text)"}">${g==="recette"?"+":"−"}${eur(e.montant)}</td>
-      <td class="n noprint act">${piecesLigne(e)}${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();haut()">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</td></tr>`; }).join("")}
-    ${nbF ? totalFiltre(list) : ""}
-  </table></div>` : nbF ? `<p class="sub" style="margin:14px 8px">Aucune écriture ne correspond aux filtres. <a href="#" onclick="event.preventDefault();viderFiltres()">Retirer les filtres</a></p>`
-    : `<p class="sub" style="margin:14px 8px">Aucune écriture. Importez le relevé (page Banque) ou ajoutez-en une.</p>`}</div>`;
+  ${list.length ? tableEcritures(list, lock, nbF) : `<div class="card">${nbF ? `<p class="sub" style="margin:4px 8px">Aucune écriture ne correspond aux filtres. <a href="#" onclick="event.preventDefault();viderFiltres()">Retirer les filtres</a></p>`
+    : `<p class="sub" style="margin:4px 8px">Aucune écriture. Importez le relevé (page Banque) ou ajoutez-en une.</p>`}</div>`}`;
+}
+/* Écritures pour un œil novice : un bloc par mois, ce qui est reçu et ce qui est payé */
+const IC_EJ = {
+  in:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 7L7 17M7 9v8h8"/></svg>',
+  out:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>',
+  cal:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>'};
+function basculerMoisEcr(m){ (S.ecrFerme ??= {})[m] = !S.ecrFerme[m]; renderAll(); }
+function tableEcritures(list, lock, filtre){
+  const num = x => eur(x).replace(/\s€$/, "");
+  const recu = l => l.filter(e => grpNature(e) === "recette").reduce((s,e)=>s+e.montant,0), paye = l => l.filter(e => grpNature(e) !== "recette").reduce((s,e)=>s+e.montant,0);
+  const som = l => { const r = recu(l), p = paye(l);
+    return `<span class="ejx-som"><span class="in">Reçu <b>+${num(r)}</b></span><span>Payé <b>−${num(p)}</b></span><span class="net">Solde <b>${r-p>=0?"+":"−"}${num(Math.abs(r-p))}</b></span></span>`; };
+  const pj = e => e.piece ? `<button class="ejx-pj ok" title="${esc(e.piece)}" onclick="ouvrirPiece('${e.id}')">${I_CLIP}Voir</button>`
+    : pieceRequise(e) ? `<button class="ejx-pj ko" onclick="attacherPiece('${e.id}')">${I_CLIP}À ajouter</button>` : "";
+  const parMois = {}; list.forEach(e => (parMois[monthOf(e.date)] ??= []).push(e));
+  const ligne = e => { const inn = grpNature(e) === "recette";
+    return `<tr class="${S.editId===e.id?"editing":""}"><td class="d"><span class="jr">${e.date.slice(8,10)}</span><span class="mo">${MOIS[monthOf(e.date)-1]}</span></td>
+      <td><div class="ejx-op"><span class="ejx-ic ${inn?"in":""}" title="${inn?"Argent reçu":"Argent payé"}">${inn?IC_EJ.in:IC_EJ.out}</span><span class="ejx-t" ${e.libelleBanque?`title="Relevé : ${esc(e.libelleBanque)}"`:""}><b>${esc(e.tiers)||"–"}</b>${e.commentaire?`<small>${esc(e.commentaire)}</small>`:""}<span class="ejx-cm">${chipNature(e.nature)}</span></span></div></td>
+      <td class="ca">${chipNature(e.nature)}</td><td class="pj noprint">${pj(e)}</td>
+      <td class="n mt ${inn?"in":""}"><b>${inn?"+":"−"}${num(e.montant)}</b> €${!e.piece && pieceRequise(e) ? `<span class="ejx-pjm noprint">${pj(e)}</span>` : ""}</td>
+      <td class="n ac noprint">${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();haut()">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</td></tr>`; };
+  const corps = Object.keys(parMois).map(Number).sort((a,b)=>a-b).map(m => { const ls = parMois[m], ferme = !!(S.ecrFerme||{})[m];
+    return `<tbody class="ejx-m ${ferme?"ferme":""}"><tr class="ejx-h"><td colspan="6"><div class="glx-hd" role="button" tabindex="0" aria-expanded="${!ferme}" onclick="basculerMoisEcr(${m})" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();basculerMoisEcr(${m})}">
+      <span class="glx-pill ejx-pill">${IC_EJ.cal}${MOIS_LONG[m-1]}</span><span class="glx-rule"></span>${som(ls)}<span class="glx-chev noprint">${IC_GL.chevron}</span></div></td></tr>${ls.map(ligne).join("")}</tbody>`; }).join("");
+  return `<div class="card glxw"><div class="tablewrap"><table class="ejx">
+    <thead><tr><th class="d">Date</th><th>Opération</th><th class="ca">Catégorie</th><th class="pj noprint">Justificatif</th><th class="n mt">Montant</th><th class="ac noprint"></th></tr></thead>
+    ${corps}
+    ${filtre ? `<tbody class="ejx-tot"><tr><td colspan="6"><div class="blx-hd"><span>Total filtré</span><span class="glx-rule"></span>${som(list)}</div></td></tr></tbody>` : ""}
+  </table></div></div>`;
 }
 /* ---- Filtres des écritures et du grand livre (façon Inqom) ----
    Une liste « Toutes les lignes » pour le tri rapide, et une barre « Filtrez par… » : on choisit un type de filtre
@@ -1485,11 +1544,6 @@ function ajouterJetons(js){
 }
 function retirerJeton(i){ S.fEcr = (S.fEcr || []).filter((_, k) => k !== i); renderAll(); }
 function viderFiltres(){ S.fEcr = []; S.qEcr = ""; S.qType = null; S.lignesEcr = ""; S.lignesGL = ""; renderAll(); }
-function totalFiltre(list){
-  const rec = list.filter(e => grpNature(e) === "recette").reduce((s,e)=>s+e.montant,0), dep = list.filter(e => grpNature(e) !== "recette").reduce((s,e)=>s+e.montant,0);
-  const span = comptesVisibles() ? 4 : 3;
-  return `<tr class="tot"><td colspan="${span-1}"></td><td>Total filtré</td><td class="n">${rec?`<span style="color:var(--pos)">+${eur(rec)}</span>`:""}${rec&&dep?"<br>":""}${dep?`−${eur(dep)}`:""}${!rec&&!dep?eur(0):""}</td><td></td></tr>`;
-}
 function enregistrerFiltre(){
   const J = S.fEcr || []; if(!J.length) return;
   const sugg = J.map(libJeton).join(", ").replace(/[«»]/g,"").replace(/\s+/g," ").trim();
@@ -1542,7 +1596,7 @@ function vueBalanceVisuelle(y){
   const corps = CL.map(([k, nom]) => { const cs = comptes.filter(c => c[0] === k); if(!cs.length) return "";
     const st = k === "6" || k === "7" ? (() => { const o = k === "7" ? -1 : 1, n = cs.reduce((s,c)=>s+(N[c]||0),0), a = avant ? cs.reduce((s,c)=>s+(p[c]||0),0) : null;
       return `<tr class="blx-st"><td class="cptl"><span class="blx-l">Total ${nom.toLowerCase()}</span></td><td class="lib">Total ${nom.toLowerCase()}</td><td class="n"><b>${num(Math.abs(n))}</b>${a==null ? "" : mob(n, a, o, num(Math.abs(a)))}</td><td class="n n1">${a==null?"–":num(Math.abs(a))}</td><td class="n va">${varTxt(n, a, o)}</td></tr>`; })() : "";
-    return `<tbody class="blx-c"><tr class="blx-h"><td colspan="5"><div class="blx-hd"><span class="blx-cl">${nom}</span><span class="glx-nb">${cs.length} compte${cs.length>1?"s":""}</span><span class="glx-rule"></span></div></td></tr>${cs.map(ligne).join("")}${st}</tbody>`; }).join("");
+    return `<tbody class="blx-c"><tr class="blx-h"><td colspan="5"><div class="blx-hd"><span class="blx-cl">${nom}</span><span class="glx-rule"></span></div></td></tr>${cs.map(ligne).join("")}${st}</tbody>`; }).join("");
   const res = M => { const t = Object.entries(M).reduce((s,[c,v]) => s + (c[0]==="7"||c[0]==="6" ? -v : 0), 0); return r2(t); };
   const rN = res(N), rA = avant ? res(p) : null;
   const tot = rows.reduce((s,r)=>({d:s.d+r.d, cr:s.cr+r.cr}),{d:0,cr:0});
