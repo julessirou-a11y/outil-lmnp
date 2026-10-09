@@ -76,7 +76,6 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .etape span{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-size:14px}
 details.formulaires{margin-top:30px}
 details.formulaires>summary{cursor:pointer;color:var(--accent);font-weight:600;margin-bottom:12px}
-.cpt{font-size:12px;font-weight:500;color:var(--faint);margin-right:6px;font-variant-numeric:tabular-nums}
 .topbar{display:none}
 main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
 
@@ -484,6 +483,16 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 .corr .cl{display:block} .corr .cl b{display:block} .corr .cl small{display:block;color:var(--muted);font-size:12.5px;margin-top:3px} .corr .cl .btn{margin-top:4px}
 .corr .cv{text-align:right} .corr .cv span{display:block;font-size:12px;color:var(--muted)} .corr .cv b{font-weight:600;white-space:nowrap} .corr .cv b small{display:block;font-weight:400;font-size:11.5px;color:var(--faint)}
 @media (max-width:700px){ .corr{grid-template-columns:repeat(3,minmax(0,1fr))} .corr .cl{grid-column:1/-1} .corr .cv{text-align:left} }
+/* Rapprochement emprunt : écritures bancaires contre échéancier */
+.rappro{border-color:var(--accent-soft);box-shadow:0 0 0 1px var(--accent-soft)}
+.rappro button.lien{border:0;background:none;padding:0;font:inherit;color:var(--accent);text-decoration:underline;text-underline-offset:2px;cursor:pointer}
+.rappro .echtab td.att{color:var(--muted)} .rappro .echtab tr.avenir td{color:var(--faint)}
+.rappro .echtab .ecart{font-weight:600}
+.rappro .alert{flex-wrap:wrap} .rappro .alert>span{flex:1 1 240px}
+.rappro-h{margin:18px 0 8px;font-size:14px;font-weight:600;color:var(--muted)}
+.corr .crdrel{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:6px;font-size:12.5px;color:var(--muted)}
+.corr .crdrel input{width:130px;padding:4px 8px;font-size:13px}
+.corr .cl small:has(.crdrel){display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
 /* ---------- Paramètres du dossier ---------- */
 .idcard{display:flex;align-items:center;gap:18px}
@@ -705,7 +714,6 @@ dialog#viewer::backdrop{background:rgba(10,15,25,.5)}
       <div class="status" id="dirty"></div>
       <button class="btn wide" id="saveBtn" disabled>Enregistrer</button>
       <div class="prefs">
-        <button id="cptBtn" aria-pressed="false" title="Vue comptable : numéros de comptes, balance, export FEC et formulaires détaillés">Vue comptable</button>
         <button id="themeBtn" aria-pressed="false" title="Basculer entre le thème clair et le thème sombre"></button>
       </div>
     </div>
@@ -756,8 +764,8 @@ const COMPTES = {
 const CPT_IMMO = {construction:{brut:"213000", am:"281300"}, travaux:{brut:"213500", am:"281350"}, mobilier:{brut:"218400", am:"281840"}};
 const compteNature = n => NATURES[n]?.c || (NATURES[n] ? "" : "628000");
 /* Nature affichée, précédée de son compte si l'option « N° de comptes » est active */
-const libNature = n => (comptesVisibles() && compteNature(n) ? lienGL({t:"compte", v:compteNature(n)}, compteNature(n), "cpt") : "") + esc(n);
-const optNature = (n, sel) => `<option value="${esc(n)}" ${n===sel?"selected":""}>${comptesVisibles()&&compteNature(n)?compteNature(n)+" · ":""}${esc(n)}</option>`;
+const libNature = n => esc(n);
+const optNature = (n, sel) => `<option value="${esc(n)}" ${n===sel?"selected":""}>${esc(n)}</option>`;
 const CATEGORIES = {construction:"Logement (bâti + terrain)", travaux:"Travaux / agencements", mobilier:"Mobilier et équipements"};
 const DUREE_DEFICIT = 10;
 
@@ -913,11 +921,11 @@ function totauxEcritures(y){
 function calculAnnee(y){
   const t = totauxEcritures(y);
   const lmnpActif = y >= yearOf(debutLMNP());
-  // Intérêts : réels si saisis, sinon échéancier
+  // Intérêts : seulement ceux saisis d'après la banque (l'échéancier ne sert qu'au rapprochement)
   let interetsEch = 0, capitalEch = 0, crd = 0;
   S.data.emprunts.forEach(l => { const a = empruntAnnee(l,y); interetsEch += a.interets; capitalEch += a.capital; crd += a.crdFin; });
   const interetsSaisis = (t.parNature["Intérêts emprunt"]||0) > 0;
-  const interets = interetsSaisis ? t.c294 : t.c294 + interetsEch;
+  const interets = t.c294;
   const ex = exercice(y) || {};
   const crdRetenu = (ex.crdBanque != null && ex.crdBanque !== "") ? Number(ex.crdBanque) : crd;
   // Amortissements
@@ -1119,7 +1127,6 @@ function renderAll(){
   $("#saveBtn").disabled = !S.data;
   const sombre = themeActuel() === "dark";
   $("#themeBtn").setAttribute("aria-pressed", sombre); $("#themeBtn").innerHTML = sombre ? "☀︎ Clair" : "☾ Sombre";
-  $("#cptBtn").setAttribute("aria-pressed", comptesVisibles());
   $("#tabs").style.setProperty("--n", $("#tabs").querySelectorAll("button").length);
   ajusterMenu();
   const m = $("#main");
@@ -1154,16 +1161,13 @@ if(/[?&]diag\b/.test(location.search)){
 }
 $("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b) allerA(b.dataset.tab); });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
-/* Thème : automatique, clair ou sombre (mémorisé sur cet appareil) */
-/* Thème clair par défaut, sombre sur demande ; numéros de comptes affichés ou non (mémorisés sur cet appareil) */
+/* Thème clair par défaut, sombre sur demande (mémorisé sur cet appareil) */
 function pref(k, d){ try{ return localStorage.getItem(k) ?? d; }catch(_){ return d; } }
 function setPref(k, v){ try{ localStorage.setItem(k, v); }catch(_){} }
 function themeActuel(){ return pref("theme","light") === "dark" ? "dark" : "light"; }
 function appliquerTheme(t){ if(t === "dark") document.documentElement.dataset.theme = "dark"; else document.documentElement.removeAttribute("data-theme"); }
 appliquerTheme(themeActuel());
 $("#themeBtn").addEventListener("click", () => { const t = themeActuel() === "dark" ? "light" : "dark"; setPref("theme", t); appliquerTheme(t); renderAll(); });
-function comptesVisibles(){ return pref("comptes","0") === "1"; }
-$("#cptBtn").addEventListener("click", () => { setPref("comptes", comptesVisibles() ? "0" : "1"); renderAll(); });
 function entete(titre, sous){ return `<div class="pagehead"><h1>${titre}</h1>${sous?`<p>${sous}</p>`:""}</div>`; }
 
 function vueBienvenue(){
@@ -1309,7 +1313,7 @@ function vueEcritures(){
   const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Écritures ${y}</h1></div>
     ${segments("vueEcr", [["journal","Écritures"],["balance","Balance"],["grandlivre","Grand livre"]], vue)}</div>`;
   if(vue === "balance") return tete + vueBalanceVisuelle(y);
-  if(vue === "grandlivre") return tete + `<div class="row noprint" style="margin-bottom:14px">${zoneFiltres("gl")}</div>` + vueGrandLivre(y);
+  if(vue === "grandlivre") return tete + `<div class="row noprint" style="margin-bottom:14px"><button class="btn sec" onclick="exporterFEC(${y})" title="Fichier des écritures comptables, à remettre en cas de contrôle">Exporter le FEC</button>${zoneFiltres("gl")}</div>` + vueGrandLivre(y);
   const J = S.fEcr || [], lignes = S.lignesEcr || "", nbF = J.length + (lignes ? 1 : 0);
   const list = [...ex.ecritures].filter(e => passeLignes(e, lignes) && passeFiltre(e, J, "journal")).sort((a,b)=> a.date.localeCompare(b.date));
   const natOpts = sel => Object.keys(NATURES).map(n=>optNature(n, sel)).join("");
@@ -1422,7 +1426,7 @@ function libJeton(j){
   switch(j.t){
     case "compte": return `${j.v} · ${COMPTES[j.v] || ""}`;
     case "nature": if(j.v.startsWith("g:")) return {recette:"Toutes les recettes", charge:"Toutes les charges", bilan:"Emprunt (capital)"}[j.v.slice(2)];
-      return (comptesVisibles() && compteNature(j.v) ? compteNature(j.v) + " · " : "") + j.v;
+      return j.v;
     case "du": case "au": return jjmm(j.v);
     case "periode": return j.l;
     case "journal": return `${j.v} · ${JOURNAUX[j.v]}`;
@@ -1754,7 +1758,7 @@ function vueImmos(){
   </div></div>` : "";
   const carte = x => { const {i, a, plan} = x, fait = a.cumulFin / (a.base||1), restant = a.base - a.cumulFin, col = COUL_CAT[i.categorie]||"var(--accent)";
     return `<div class="card immo">
-      <div class="ih">${svgI(IC_CAT[i.categorie]||IC_CAT.travaux).replace('width="17" height="17"','width="22" height="22"')}<div><b>${esc(i.libelle)}</b><small>${CATEGORIES[i.categorie]||i.categorie}${comptesVisibles()&&CPT_IMMO[i.categorie]?` · ${CPT_IMMO[i.categorie].brut}`:""}</small></div>
+      <div class="ih">${svgI(IC_CAT[i.categorie]||IC_CAT.travaux).replace('width="17" height="17"','width="22" height="22"')}<div><b>${esc(i.libelle)}</b><small>${CATEGORIES[i.categorie]||i.categorie}</small></div>
         <button class="btn small ghost noprint" style="margin-left:auto" onclick="S.editImmo='${i.id}';renderAll();haut()">${I_EDIT}</button></div>
       <div class="ib">${anneau(fait, pctTxt(fait), col, 96)}
         <div class="iv"><div><span>Prix</span><b>${eur0(i.valeurOrigine)}</b></div><div><span>Durée</span><b>${i.dureeAns} ans</b></div><div><span>Fin</span><b>${x.fin}</b></div>
@@ -1859,11 +1863,10 @@ function vueEmprunt(){
   if(!S.data.emprunts.length) return `<div class="pagehead"><h1>Emprunt</h1></div><div class="card"><button class="btn" onclick="S.data.emprunts.push({id:uid(),banque:'',capital:0,tauxAnnuel:0,dureeMois:240,premiereEcheance:'${y}-01-01',mensualite:0});S.vuePret='param';setDirty();renderAll()">+ Ajouter un emprunt</button></div>`;
   const vue = S.vuePret || "vue";
   return S.data.emprunts.map((l,idx) => {
-    const rows = echeancier(l), ans = [...new Set(rows.map(r=>r.annee))], der = rows[rows.length-1];
-    const c = !isHistorique(y) ? calculAnnee(y) : null, ex = exercice(y), a = empruntAnnee(l, y);
+    const rows = echeancier(l), der = rows[rows.length-1];
+    const c = !isHistorique(y) ? calculAnnee(y) : null, a = empruntAnnee(l, y);
     const crd = c ? c.crd : a.crdFin, rembourse = 1 - crd / (l.capital||1);
     const totInt = rows.reduce((s,r)=>s+r.interet,0), intPayes = rows.filter(r=>r.annee<=y).reduce((s,r)=>s+r.interet,0);
-    const doc = l.echeancierDoc && docs().find(d=>d.id===l.echeancierDoc);
     const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Emprunt ${esc(l.banque)}</h1></div>
       ${segments("vuePret", [["vue","Vue d'ensemble"],["param","Paramètres de l'emprunt"]], vue)}</div>`;
     if(vue === "param") return tete + `<div class="card"><h3>Caractéristiques</h3><div class="form">
@@ -1874,31 +1877,16 @@ function vueEmprunt(){
       <label>1re échéance<input type="date" value="${l.premiereEcheance}" onchange="majPret(${idx},'premiereEcheance',this.value)"></label>
       <label>Mensualité hors assurance<input inputmode="decimal" value="${l.mensualite}" onchange="majPret(${idx},'mensualite',parseMontant(this.value))"></label>
     </div></div>
-    <div class="card"><h3>Échéancier de la banque (PDF)</h3>
-      ${doc ? `<div class="doc"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"><path d="M14 3H6v18h12V7zM14 3v4h4"/><path d="M9 12h6M9 16h6"/></svg>
-        <div><b>${esc(doc.libelle)}</b><small>${ecrituresDuDoc(doc).length} écriture(s) rattachée(s)</small></div>
-        <div class="row" style="margin-left:auto;gap:4px"><button class="btn small sec" onclick="ouvrirChemin('${esc(doc.fichier)}','${esc(doc.libelle).replace(/'/g,"\\'")}')">Voir</button><button class="btn small" onclick="S.rattDoc='${doc.id}';allerA('pieces');S.rattDoc='${doc.id}';renderAll()">Rattacher aux écritures…</button><button class="btn small ghost" onclick="delete S.data.emprunts[${idx}].echeancierDoc;setDirty();renderAll()">Changer</button></div></div>`
-      : zoneDepot("Déposer l'échéancier PDF", "Tableau d'amortissement fourni par la banque", `ajouterEcheancierPret(${idx})`, `ajouterEcheancierPret(${idx},event)`)}
-    </div>`;
-    const capI = ans.map(an => { const e = empruntAnnee(l, an); return [an, e.interets, e.capital]; }), maxA = Math.max(1, ...capI.map(v=>v[1]+v[2]));
+    ${carteBanque(l, idx)}`;
     return tete + `
-    <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)"})}${tuile(`Intérêts ${y}`, eur0(c?c.interets:a.interets), {sous:"déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
+    <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)"})}${tuile(`Intérêts ${y} comptabilisés`, eur0(c?c.interets:a.interets), {sous: c && !c.interetsSaisis ? "aucune écriture bancaire" : "déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
+    ${carteRapprochement(l, idx, y)}
+    ${carteEcheancier(l, y)}
     <div class="dash2">
       <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Capital restant dû</h3>${lignesBanque(l) && l.source !== "banque" ? `<span class="leg"><i style="background:var(--accent)"></i>Dossier <i style="background:var(--warn)"></i>Banque</span>` : ""}</div>${courbeCRD(l, y)}</div>
       <div class="card centre"><h3>Remboursé fin ${y}</h3>${anneau(rembourse, pctTxt(rembourse), "var(--accent)", 140)}
         <div class="leg col" style="flex-direction:column;gap:4px"><span>Intérêts payés : <b>${eur0(intPayes)}</b></span><span>Coût total des intérêts : <b>${eur0(totInt)}</b></span></div></div>
-    </div>
-    <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Chaque année</h3><span class="leg"><i style="background:var(--warn)"></i>Intérêts (déductibles) <i style="background:var(--seg-2)"></i>Capital</span></div>
-      <div class="cbars ${capI.length>12?"serre":""}" style="height:150px;margin-top:10px">${capI.map(([an,i,k])=>`<div class="cb" style="max-width:40px"><div class="cbs ${an===y?"sel":""}" title="${an} : intérêts ${eur0(i)}, capital ${eur0(k)}"><i style="height:${(i/maxA*100).toFixed(1)}%;background:var(--warn)"></i><i style="height:${(k/maxA*100).toFixed(1)}%;background:${an===y?"var(--accent)":"var(--seg-2)"}"></i></div><span>${String(an).slice(2)}</span></div>`).join("")}</div></div>
-    ${carteEcheancier(l, y)}
-    ${carteCorrections(l, idx, y)}
-    ${carteBanque(l, idx)}
-    ${c && ex ? `<div class="card"><h3>${y} : contrôle avec la banque</h3><div class="cmp">
-      <div><span>Intérêts calculés</span><b>${eur(c.interetsEch)}</b></div>
-      <div><span>Intérêts saisis</span><b>${c.interetsSaisis?eur(c.t.c294):"–"}</b>${c.interetsSaisis&&Math.abs(c.t.c294-c.interetsEch)<=1?'<i class="okc">✓</i>':""}</div>
-      <div><span>Restant dû calculé</span><b>${eur(c.crdEch)}</b></div>
-      <div><span>Restant dû selon la banque</span><input inputmode="decimal" value="${ex.crdBanque??""}" placeholder="à saisir" onchange="majCrd(this.value)"></div>
-    </div></div>` : ""}`;
+    </div>`;
   }).join("");
 }
 async function ajouterEcheancierPret(idx, ev){
@@ -1982,7 +1970,7 @@ function lireTableauEcheancier(texte){
 }
 async function lireEcheancierPdf(idx, file){
   try{ toast("Lecture du tableau d'amortissement…"); appliquerEcheancierBanque(idx, await textePdf(file), "pdf"); }
-  catch(e){ alert(`Le tableau n'a pas pu être lu dans ce PDF : ${e.message}\n\nVous pouvez copier le tableau depuis l'aperçu du PDF et le coller dans « Coller le tableau » sur la page Emprunt.`); }
+  catch(e){ alert(`Le tableau n'a pas pu être lu dans ce PDF : ${e.message}\n\nVous pouvez copier le tableau depuis l'aperçu du PDF et le coller dans « Coller le tableau » (page Emprunt, Paramètres de l'emprunt).`); }
 }
 async function lireEcheancierDoc(idx){
   if(!await dossierRequis()) return;
@@ -1993,7 +1981,7 @@ async function lireEcheancierDoc(idx){
 function appliquerEcheancierBanque(idx, texte, origine){
   const res = lireTableauEcheancier(texte), l = S.data.emprunts[idx], L = res.lignes, a = L[0], z = L[L.length-1];
   l.echeancierBanque = {origine, lu:new Date().toISOString().slice(0,10), capital:res.capital, colonnes:res.colonnes, lignes:L};
-  S.echSrc = "comparer"; setDirty(); renderAll();
+  setDirty(); renderAll();
   toast(`${L.length} échéances lues, de ${MOIS[monthOf(a.date)-1]} ${yearOf(a.date)} à ${MOIS[monthOf(z.date)-1]} ${yearOf(z.date)}.`);
 }
 function collerEcheancier(idx){
@@ -2015,7 +2003,7 @@ const ecartTxt = (v, seuil=0.01) => Math.abs(v) < seuil ? `<span class="okv">✓
 /* Tableau d'amortissement : une année ou tout le prêt, dossier, banque ou les deux côte à côte */
 function carteEcheancier(l, y){
   const banque = lignesBanque(l), theo = echeancierTheorique(l);
-  const src = banque ? (S.echSrc || "comparer") : "dossier";
+  const src = banque ? (S.echSrc || "banque") : "dossier";
   const ans = [...new Set([...theo, ...(banque||[])].map(r => r.annee))].sort((a,b) => a - b);
   const an = S.echAn === "tout" ? "tout" : ans.includes(Number(S.echAn)) ? Number(S.echAn) : ans.includes(y) ? y : ans[0];
   const garde = r => an === "tout" || r.annee === an, cle = r => r.annee * 100 + r.mois;
@@ -2051,58 +2039,74 @@ function carteEcheancier(l, y){
     <p class="sub" style="margin:10px 0 0">Écart = banque − dossier. Les lignes en couleur diffèrent d'au moins un centime.</p></div>`;
 }
 
-/* Ce qu'il faut corriger sur l'année affichée, d'après l'échéancier de la banque */
-function carteCorrections(l, idx, y){
-  const banque = lignesBanque(l); if(!banque || isHistorique(y) || !exercice(y)) return "";
-  const B = banque.filter(r => r.annee === y); if(!B.length) return "";
-  const c = calculAnnee(y), ex = exercice(y), ass = l.echeancierBanque.colonnes?.assurance;
-  const NAT = {interet:"Intérêts emprunt", capital:"Remboursement emprunt", assurance:"Assurance emprunt"};
+/* Rapprochement de l'année : écritures bancaires d'emprunt (intérêts, capital, assurance) contre l'échéancier, mois par mois.
+   Seules les écritures comptent en comptabilité : un mois sans écriture n'a rien passé en charge. */
+function carteRapprochement(l, idx, y){
+  const banque = lignesBanque(l), ref = banque || echeancierTheorique(l), ass = !!(banque && l.echeancierBanque.colonnes?.assurance);
+  const titre = `<h3 style="margin:0">Rapprochement ${y} : comptabilité et échéancier</h3>`;
+  const origine = banque ? `Écritures bancaires comparées à l'échéancier de la banque.`
+    : `Écritures bancaires comparées à l'échéancier calculé d'après les paramètres. <button class="lien" onclick="S.vuePret='param';renderAll()">Déposer celui de la banque</button> pour comparer aux montants exacts.`;
+  const carte = corps => `<div class="card rappro" id="rapprochement">${corps}</div>`;
+  if(isHistorique(y) || !exercice(y)) return carte(`${titre}<p class="sub" style="margin:8px 0 0">${y} a été reprise de l'Excel : pas d'écritures détaillées à rapprocher.</p>`);
+  const B = ref.filter(r => r.annee === y);
+  if(!B.length) return carte(`${titre}<p class="sub" style="margin:8px 0 0">Aucune échéance en ${y}.</p>`);
+  const c = calculAnnee(y), ex = exercice(y);
+  const NAT = {interet:"Intérêts emprunt", capital:"Remboursement emprunt", assurance:"Assurance emprunt"}, K = ["interet","capital"].concat(ass ? ["assurance"] : []);
   const saisi = {}; (ex.ecritures||[]).forEach(e => { const k = Object.keys(NAT).find(k => NAT[k] === e.nature); if(k){ const m = monthOf(e.date); (saisi[m] ??= {interet:0, capital:0, assurance:0, n:0})[k] += e.montant; saisi[m].n++; } });
   const auj = new Date(), echu = r => y < auj.getFullYear() || (y === auj.getFullYear() && r.mois <= auj.getMonth() + 1);
   const somme = (a, k) => a.reduce((s,r) => s + (r[k]||0), 0);
   const Be = B.filter(echu), S0 = Object.values(saisi);
-  const debutD = crdRetenuFin(y - 1), debutB = crdBanqueFin(l, y - 1), finB = crdBanqueFin(l, y);
+  const crdRef = an => { const b = ref.filter(r => r.annee <= an); return b.length ? b[b.length-1].crd : yearOf(l.premiereEcheance) > an ? 0 : l.capital; };
+  const debutD = crdRetenuFin(y - 1), debutR = crdRef(y - 1), finR = crdRef(y);
   const crdSaisi = ex.crdBanque != null && ex.crdBanque !== "";
-  const nbSaisis = B.filter(r => saisi[r.mois]?.n).length, perio = Be.length && Be.length < B.length ? ` (${MOIS[B[0].mois-1]} à ${MOIS[Be[Be.length-1].mois-1]})` : "";
+  const perio = Be.length && Be.length < B.length ? ` (${MOIS[B[0].mois-1]} à ${MOIS[Be[Be.length-1].mois-1]})` : "";
+  const ecart = (a, b) => Math.abs(r2(a - b)) < 0.01 ? true : r2(a - b);
   const items = [];
-  const item = (lib, dossier, bq, ok, aFaire, nom="Dossier") => items.push(`<div class="corr ${ok === true ? "ok" : ""}"><div class="cl"><b>${lib}</b>${aFaire ? `<small>${aFaire}</small>` : ""}</div><div class="cv"><span>${nom}</span><b>${dossier}</b></div><div class="cv"><span>Banque</span><b>${bq}</b></div><div class="cv">${ok === true ? `<span class="okv">✓</span>` : `<span>Écart</span><b class="ecart">${ok > 0 ? "+" : "−"}${eur(Math.abs(ok))}</b>`}</div></div>`);
-  const ecart = (a, b) => Math.abs(r2(b - a)) < 0.01 ? true : r2(b - a);
-  // 1. Restant dû au 1er janvier
-  const e1 = ecart(debutD, debutB);
-  item(`Restant dû au 1er janvier ${y}`, eur(debutD), eur(debutB), e1, e1 === true ? "" : `Le bilan ${y-1} retenait ${eur(debutD)}. L'écart vient des années passées : on ne refait pas ${y-1}, on le rattrape en ${y} en retenant au 31/12/${y} le restant dû de la banque (dernière ligne).`);
-  // 2. à 4. Mouvements de l'année : saisis contre banque, sur les échéances déjà passées
-  const mouv = (k, lib) => {
-    const bq = somme(Be, k), sa = S0.reduce((s,m) => s + m[k], 0), e = ecart(sa, bq);
-    const mq = Be.filter(r => !saisi[r.mois]?.n).map(r => MOIS[r.mois-1]), fx = Be.filter(r => saisi[r.mois]?.n && Math.abs(saisi[r.mois][k] - r[k]) >= 0.01).map(r => MOIS[r.mois-1]);
-    const txt = [mq.length && `Sans écriture : ${mq.join(", ")} (saisir le prélèvement en le ventilant : intérêts, capital${ass?", assurance":""}).`, fx.length && `Montant à corriger : ${fx.join(", ")}.`].filter(Boolean).join(" ");
-    item(`${lib} ${y}${perio}`, sa ? eur(sa) : "non saisis", eur(bq), e, e === true ? "" : txt || `Corriger les écritures « ${NAT[k]} » d'après le détail ci-dessous.`, "Saisi");
-  };
-  mouv("interet", "Intérêts");
-  if(!c.interetsSaisis) items.push(`<p class="sub" style="margin:4px 0 8px">Tant qu'aucun intérêt n'est saisi, l'outil compte ceux de l'échéancier du dossier (${eur(c.interetsEch)} pour ${y}).</p>`);
-  mouv("capital", "Capital remboursé");
-  if(ass) mouv("assurance", "Assurance");
-  // 5. Restant dû au 31/12 retenu au bilan
-  const e5 = ecart(c.crd, finB);
-  item(`Restant dû au 31/12/${y}`, `${eur(c.crd)}<small>${crdSaisi ? "saisi" : "échéancier du dossier"}</small>`, eur(finB), e5,
-    e5 === true ? "" : `<button class="btn small" onclick="exercice(${y}).crdBanque=${finB};setDirty();renderAll()">Retenir ${eur(finB)} au bilan ${y}</button>`);
-  // Détail par échéance
-  const det = B.map(r => { const s = saisi[r.mois], fait = s?.n, okL = fait && ["interet","capital"].concat(ass ? ["assurance"] : []).every(k => Math.abs(s[k] - r[k]) < 0.01);
-    const st = !echu(r) ? `<span class="pill">à venir</span>` : !fait ? `<span class="pill warnp">à saisir</span>` : okL ? `<span class="okv">✓</span>` : `<span class="pill warnp">à corriger</span>`;
-    const cel = k => `<td class="n">${eur(r[k])}</td><td class="n">${fait ? `${eur(s[k])}` : "–"}</td>`;
-    return `<tr class="${echu(r) && !okL ? "diff" : ""}"><td>${MOIS[r.mois-1]}</td>${cel("interet")}${cel("capital")}${ass ? cel("assurance") : ""}<td>${st}</td></tr>`; }).join("");
-  const nOk = items.filter(x => x.includes('corr ok')).length, nTot = items.filter(x => x.includes('class="corr')).length;
-  return `<div class="card" id="corrections"><div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="margin:0">Corrections ${y} d'après la banque</h3>
-      <span class="pill ${nOk === nTot ? "okp" : "warnp"}">${nOk === nTot ? "Tout concorde" : `${nTot - nOk} point${nTot-nOk>1?"s":""} à corriger`}</span></div>
-    <div class="corrs">${items.join("")}</div>
-    <details style="margin-top:12px" ${nbSaisis && nOk !== nTot ? "open" : ""}><summary>Détail par échéance : banque contre écritures saisies</summary><div class="tablewrap echtab" style="margin-top:8px"><table>
-      <tr><th rowspan="2">Mois</th><th colspan="2" class="n grp">Intérêts</th><th colspan="2" class="n grp">Capital</th>${ass?`<th colspan="2" class="n grp">Assurance</th>`:""}<th rowspan="2"></th></tr>
-      <tr><th class="n">Banque</th><th class="n">Saisi</th><th class="n">Banque</th><th class="n">Saisi</th>${ass?`<th class="n">Banque</th><th class="n">Saisi</th>`:""}</tr>${det}</table></div></details></div>`;
+  const item = (lib, compta, attendu, ok, aFaire, nom = "Comptabilisé") => items.push(`<div class="corr ${ok === true ? "ok" : ""}"><div class="cl"><b>${lib}</b>${aFaire ? `<small>${aFaire}</small>` : ""}</div><div class="cv"><span>${nom}</span><b>${compta}</b></div><div class="cv"><span>Échéancier</span><b>${attendu}</b></div><div class="cv">${ok === true ? `<span class="okv">✓</span>` : `<span>Écart</span><b class="ecart">${ok > 0 ? "+" : "−"}${eur(Math.abs(ok))}</b>`}</div></div>`);
+  // Mouvements de l'année : écritures contre échéancier, sur les échéances déjà passées
+  const mq = Be.filter(r => !saisi[r.mois]?.n);
+  K.forEach(k => {
+    const lib = {interet:"Intérêts", capital:"Capital remboursé", assurance:"Assurance"}[k];
+    const att = somme(Be, k), sa = S0.reduce((s,m) => s + m[k], 0), e = ecart(sa, att);
+    const fx = Be.filter(r => saisi[r.mois]?.n && Math.abs(saisi[r.mois][k] - r[k]) >= 0.01).map(r => MOIS[r.mois-1]);
+    const liste = a => a.join(", ").replace(/\.$/, "") + ".";
+    const txt = [mq.length && `Sans écriture : ${liste(mq.map(r => MOIS[r.mois-1]))}`, fx.length && `Montant différent : ${liste(fx)}`].filter(Boolean).join(" ");
+    item(`${lib} ${y}${perio}`, sa ? eur(sa) : "aucune écriture", eur(att), e, e === true ? "" : txt);
+  });
+  // Restant dû : début et fin d'année
+  const e1 = ecart(debutD, debutR);
+  item(`Restant dû au 1er janvier ${y}`, eur(debutD), eur(debutR), e1, e1 === true ? "" : `Le bilan ${y-1} retenait ${eur(debutD)}. On ne refait pas ${y-1} : l'écart se rattrape en retenant au 31/12/${y} le restant dû de la banque.`, `Bilan ${y-1}`);
+  const e5 = ecart(c.crd, finR);
+  item(`Restant dû au 31/12/${y}`, `${eur(c.crd)}<small>${crdSaisi ? "relevé de la banque" : "échéancier"}</small>`, eur(finR), e5,
+    `<label class="crdrel">Relevé annuel de la banque<input inputmode="decimal" value="${crdSaisi ? ex.crdBanque : ""}" placeholder="à saisir" onchange="majCrd(this.value)"></label>${e5 !== true && banque ? `<button class="btn small" onclick="exercice(${y}).crdBanque=${finR};setDirty();renderAll()">Retenir ${eur(finR)}</button>` : ""}`, "Bilan");
+  // Mois par mois
+  let nManq = 0, nFaux = 0;
+  const det = B.map(r => { const s = saisi[r.mois], fait = s?.n, faux = k => fait && Math.abs(s[k] - r[k]) >= 0.01, okL = fait && K.every(k => !faux(k));
+    if(echu(r) && !fait) nManq++; else if(echu(r) && !okL) nFaux++;
+    const st = !echu(r) ? `<span class="pill">à venir</span>` : !fait ? `<span class="pill warnp">sans écriture</span>` : okL ? `<span class="okv">✓</span>` : `<span class="pill warnp">écart</span>`;
+    const cel = k => `<td class="n att">${eur(r[k])}</td><td class="n">${fait ? `<span class="${faux(k) ? "ecart" : ""}">${eur(s[k])}</span>` : "–"}</td>`;
+    return `<tr class="${echu(r) && !okL ? "diff" : ""}${echu(r) ? "" : " avenir"}"><td>${MOIS[r.mois-1]}</td>${K.map(cel).join("")}<td>${st}</td></tr>`; }).join("");
+  const tot = k => `<td class="n att">${eur(somme(Be, k))}</td><td class="n">${eur(S0.reduce((s,m) => s + m[k], 0))}</td>`;
+  const nOk = items.filter(x => x.includes('corr ok')).length, nTot = items.length;
+  const etat = nOk === nTot && !nManq && !nFaux ? `<span class="pill okp">Tout concorde</span>`
+    : `<span class="pill warnp">${[nManq && `${nManq} mois sans écriture`, nFaux && `${nFaux} mois avec écart`].filter(Boolean).join(" · ") || `${nTot - nOk} écart${nTot-nOk>1?"s":""}`}</span>`;
+  return carte(`<div class="row" style="justify-content:space-between">${titre}${etat}</div>
+    <p class="sub" style="margin:6px 0 14px">${origine}</p>
+    ${nManq ? `<div class="alert warn" style="align-items:center"><span>Seules les écritures bancaires sont comptabilisées : ${nManq === 1 ? "ce mois sans écriture ne passe" : `ces ${nManq} mois sans écriture ne passent`} rien en charge. Triez le prélèvement de la banque en le ventilant (intérêts, capital${ass ? ", assurance" : ""}).</span><button class="btn small sec" style="margin-left:auto" onclick="allerA('banque')">Opérations bancaires</button></div>` : ""}
+    <div class="tablewrap echtab"><table>
+      <tr><th rowspan="2">${y}</th><th colspan="2" class="n grp">Intérêts</th><th colspan="2" class="n grp">Capital</th>${ass?`<th colspan="2" class="n grp">Assurance</th>`:""}<th rowspan="2"></th></tr>
+      <tr><th class="n">Échéancier</th><th class="n">Comptabilisé</th><th class="n">Échéancier</th><th class="n">Comptabilisé</th>${ass?`<th class="n">Échéancier</th><th class="n">Comptabilisé</th>`:""}</tr>
+      ${det}
+      <tr class="tot"><td>Échu${perio ? ` ${perio.trim()}` : ""}</td>${K.map(tot).join("")}<td></td></tr></table></div>
+    <h4 class="rappro-h">Synthèse ${y}</h4>
+    <div class="corrs">${items.join("")}</div>`);
 }
 
-/* Dépôt et lecture du PDF de la banque */
+/* Paramètres : dépôt et lecture du PDF de la banque */
 function carteBanque(l, idx){
   const eb = l.echeancierBanque, doc = l.echeancierDoc && docs().find(d => d.id === l.echeancierDoc);
   const autresDocs = docs().filter(d => d.type === "echeancier" && d.id !== l.echeancierDoc);
+  const voir = doc ? `<button class="btn small sec" onclick="ouvrirChemin('${esc(doc.fichier)}','${esc(doc.libelle).replace(/'/g,"\\'")}')">Voir le PDF</button><button class="btn small sec" onclick="S.rattDoc='${doc.id}';allerA('pieces');S.rattDoc='${doc.id}';renderAll()">Rattacher aux écritures…</button>` : "";
   const coller = `<details style="margin-top:12px"><summary>Le PDF ne se lit pas ? Coller le tableau</summary>
     <p class="sub" style="margin:8px 0">Ouvrez le PDF, sélectionnez tout le tableau (⌘A), copiez-le puis collez-le ici.</p>
     <textarea id="echColle" rows="5" style="width:100%" placeholder="05/11/2016   729,86   122,00   607,86   119 392,14 …"></textarea>
@@ -2110,14 +2114,14 @@ function carteBanque(l, idx){
   if(eb?.lignes?.length){
     const a = eb.lignes[0], z = eb.lignes[eb.lignes.length-1], cols = ["intérêts","capital", eb.colonnes?.assurance && "assurance","restant dû"].filter(Boolean).join(", ");
     return `<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Échéancier de la banque</h3>
-        <div class="row">${doc ? `<button class="btn small sec" onclick="ouvrirChemin('${esc(doc.fichier)}','${esc(doc.libelle).replace(/'/g,"\\'")}')">Voir le PDF</button>` : ""}<button class="btn small ghost" onclick="retirerEcheancierBanque(${idx})">Retirer</button></div></div>
-      <p class="sub" style="margin:8px 0 12px">${eb.lignes.length} échéances lues${eb.origine === "colle" ? " (tableau collé)" : ""}, de ${MOIS[monthOf(a.date)-1]} ${yearOf(a.date)} à ${MOIS[monthOf(z.date)-1]} ${yearOf(z.date)}, sur ${eur(eb.capital)} emprunté · colonnes : ${cols}.</p>
-      <div class="row"><span style="font-size:13.5px;color:var(--muted)">Calculs de l'outil (intérêts non saisis, restant dû non saisi, simulations) :</span>
+        <div class="row">${voir}<button class="btn small ghost" onclick="retirerEcheancierBanque(${idx})">Retirer</button></div></div>
+      <p class="sub" style="margin:8px 0 12px">${eb.lignes.length} échéances lues${eb.origine === "colle" ? " (tableau collé)" : ""}, de ${MOIS[monthOf(a.date)-1]} ${yearOf(a.date)} à ${MOIS[monthOf(z.date)-1]} ${yearOf(z.date)}, sur ${eur(eb.capital)} emprunté · colonnes : ${cols}. Le rapprochement de la vue d'ensemble s'appuie sur ce tableau.</p>
+      <div class="row"><span style="font-size:13.5px;color:var(--muted)">Restant dû au bilan (sans relevé saisi) et simulations :</span>
         <div class="seg noprint" role="tablist">${[["dossier","Échéancier du dossier"],["banque","Échéancier de la banque"]].map(([k,t]) => { const on = (l.source === "banque" ? "banque" : "dossier") === k; return `<button role="tab" aria-selected="${on}" class="${on?"on":""}" onclick="majPret(${idx},'source','${k}')">${t}</button>`; }).join("")}</div></div></div>`;
   }
   return `<div class="card"><h3>Échéancier de la banque</h3>
-    <p class="sub" style="margin:0 0 12px">L'échéancier affiché est pour l'instant celui calculé avec les paramètres du dossier. Déposez le tableau d'amortissement de la banque : l'outil le lit, le compare mois par mois et liste les corrections à faire.</p>
-    ${doc ? `<div class="row"><span>« ${esc(doc.libelle)} » est déjà rangé.</span><button class="btn small" onclick="lireEcheancierDoc(${idx})">Lire son tableau</button></div>`
+    <p class="sub" style="margin:0 0 12px">Déposez le tableau d'amortissement de la banque : l'outil le lit et rapproche vos écritures de ses montants exacts. En attendant, il se sert de l'échéancier calculé avec les caractéristiques ci-dessus.</p>
+    ${doc ? `<div class="row"><span>« ${esc(doc.libelle)} » est déjà rangé.</span><button class="btn small" onclick="lireEcheancierDoc(${idx})">Lire son tableau</button>${voir}<button class="btn small ghost" onclick="delete S.data.emprunts[${idx}].echeancierDoc;setDirty();renderAll()">Changer</button></div>`
       : zoneDepot("Déposer l'échéancier PDF de la banque", "Tableau d'amortissement · lu dans le navigateur, rien n'est envoyé", `ajouterEcheancierPret(${idx})`, `ajouterEcheancierPret(${idx},event)`).replace('class="depot noprint"','class="depot noprint" style="margin:0"')}
     ${!doc && autresDocs.length ? `<div class="row" style="margin-top:10px"><span class="sub" style="margin:0">Ou un échéancier déjà déposé :</span>${autresDocs.map(d => `<button class="btn small sec" onclick="S.data.emprunts[${idx}].echeancierDoc='${d.id}';setDirty();lireEcheancierDoc(${idx})">${esc(d.libelle)}</button>`).join("")}</div>` : ""}
     ${coller}</div>`;
@@ -2274,8 +2278,7 @@ function vueDeclaration(){
   ${ex.statut!=="cloture" && y >= new Date().getFullYear() ? `<div class="alert warn noprint">Année en cours : chiffres provisoires.</div>`:""}
   <div class="parcours noprint">${ETAPES.map(([k,l,s,st])=>`<button class="pe ${k===et?"on":""} ${st}" onclick="S.declEtape='${k}';renderAll()"><span class="pn">${st==="ok"?"✓":st==="bad"?"!":k}</span><b>${l}</b><small>${s}</small></button>`).join('<i class="pl"></i>')}</div>
   <div class="resume noprint">${tuile("Loyers", eur0(L.p218))}${tuile("Charges et intérêts", eur0(L.c242+L.c244+L.c294))}${tuile("Amortissements", eur0(L.c254))}${tuile(L.rf>=0?"Résultat fiscal":"Déficit", eur0(Math.abs(L.rf)), {cls:"fort"})}</div>
-  ${corps}
-  ${comptesVisibles() ? `<div class="row noprint" style="margin-top:16px"><button class="btn sec" onclick="exporterFEC(${y})">Exporter le FEC</button></div>${vueBalance(y)}` : ""}`;
+  ${corps}`;
 }
 
 /* ---- États financiers : comptes annuels présentables (page de garde, bilan, compte de résultat, annexe) ---- */
@@ -2343,7 +2346,7 @@ function etatsFinanciers(y){
       ${immos.map(x=>`<tr><td>${esc(x.i.libelle)}</td><td>${fmtDate(x.i.miseEnService)}</td><td class="n">${eur0(x.i.valeurOrigine)}</td><td class="n">${x.i.dureeAns} ans</td><td class="n">${eur0(x.a.dotation)}</td><td class="n">${eur0(x.a.cumulFin)}</td><td class="n">${eur0(x.i.valeurOrigine - x.a.cumulFin)}</td></tr>`).join("")}
       <tr class="tot"><td>Total</td><td></td><td class="n">${eur0(L.brut)}</td><td></td><td class="n">${eur0(L.c254)}</td><td class="n">${eur0(L.am)}</td><td class="n">${eur0(L.net)}</td></tr></table>
     ${emp.length?`<h3>Emprunts</h3><table><tr><th>Banque</th><th class="n">Capital</th><th class="n">Taux</th><th class="n">Restant dû début</th><th class="n">Intérêts ${y}</th><th class="n">Restant dû fin</th></tr>
-      ${emp.map(l=>`<tr><td>${esc(l.banque)}</td><td class="n">${eur0(l.capital)}</td><td class="n">${(l.tauxAnnuel*100).toLocaleString("fr-FR",{maximumFractionDigits:2})} %</td><td class="n">${eur0(empruntAnnee(l,y-1).crdFin||l.capital)}</td><td class="n">${eur0(empruntAnnee(l,y).interets)}</td><td class="n">${eur0(empruntAnnee(l,y).crdFin)}</td></tr>`).join("")}</table>`:""}
+      ${emp.map(l=>`<tr><td>${esc(l.banque)}</td><td class="n">${eur0(l.capital)}</td><td class="n">${(l.tauxAnnuel*100).toLocaleString("fr-FR",{maximumFractionDigits:2})} %</td><td class="n">${eur0(empruntAnnee(l,y-1).crdFin||l.capital)}</td><td class="n">${eur0(emp.length === 1 ? L.c294 : empruntAnnee(l,y).interets)}</td><td class="n">${eur0(empruntAnnee(l,y).crdFin)}</td></tr>`).join("")}</table>`:""}
     <h3>Déficits et amortissements reportés</h3>
     <table><tr><th></th><th class="n">Début</th><th class="n">Fin</th></tr>
       <tr><td>Déficits reportables</td><td class="n">${eur0(L.f.deficitsDebut.reduce((s,x)=>s+x.montant,0))}</td><td class="n">${eur0(L.f.deficitsFin.reduce((s,x)=>s+x.montant,0))}</td></tr>
@@ -2379,8 +2382,6 @@ function ecrituresComptables(y){
     const recette = (NATURES[e.nature]?.g || (e.sens==="recette"?"recette":"charge")) === "recette";
     add("BQ", e.date, lib, recette ? [{c:"512000", d:m}, {c:k, cr:m}] : [{c:k, d:m}, {c:"512000", cr:m}], e.piece ? e.piece.split("/").pop() : e.id, e);
   });
-  if(S.data.emprunts.length && !c.interetsSaisis && c.interetsEch > 0.004)
-    add("OD", fin, "Intérêts d'emprunt selon l'échéancier", [{c:"661160", d:r2(c.interetsEch)}, {c:"512000", cr:r2(c.interetsEch)}]);
   // Dotations aux amortissements, par catégorie
   const dot = {};
   c.immos.forEach(x => { if(x.entree <= y && x.a.dotation > 0){ const k = (CPT_IMMO[x.i.categorie] || CPT_IMMO.travaux).am; dot[k] = (dot[k]||0) + x.a.dotation; } });
@@ -2391,14 +2392,6 @@ function balance(y){
   const b = {};
   ecrituresComptables(y).forEach(e => e.lignes.forEach(l => { const x = b[l.c] ??= {d:0, cr:0}; x.d += l.d||0; x.cr += l.cr||0; }));
   return Object.entries(b).sort((a,b)=>a[0].localeCompare(b[0])).map(([c,x]) => ({c, lib:COMPTES[c]||"", d:r2(x.d), cr:r2(x.cr), solde:r2(x.d-x.cr)}));
-}
-function vueBalance(y){
-  const rows = balance(y), tot = rows.reduce((s,r)=>({d:s.d+r.d, cr:s.cr+r.cr}),{d:0,cr:0});
-  return `<div class="card noprint"><h3 style="margin-top:0">Balance des comptes ${y}</h3><div class="tablewrap"><table>
-    <tr><th>Compte</th><th>Libellé</th><th class="n">Débit</th><th class="n">Crédit</th><th class="n">Solde</th></tr>
-    ${rows.map(r=>`<tr><td>${lienGL({t:"compte", v:r.c}, r.c)}</td><td>${esc(r.lib)}</td><td class="n">${eur(r.d)}</td><td class="n">${eur(r.cr)}</td><td class="n">${eur(Math.abs(r.solde))} ${r.solde>=0.005?"D":r.solde<=-0.005?"C":""}</td></tr>`).join("")}
-    <tr class="tot"><td></td><td>Total</td><td class="n">${eur(tot.d)}</td><td class="n">${eur(tot.cr)}</td><td></td></tr>
-  </table></div><p class="sub" style="margin:8px 0 0">Reconstituée à partir des écritures : le compte 512 (banque) ne suit que les mouvements liés à la location, sans solde d'ouverture.</p></div>`;
 }
 /* Fichier des écritures comptables (art. A.47 A-1 du LPF) : 18 colonnes, tabulations, ISO-8859-15 */
 function exporterFEC(y){
@@ -2605,7 +2598,7 @@ function controles(y){
   const gros = es.filter(e => e.nature === "Petit équipement (< 500 € HT)" && e.montant > 600);
   chk(!gros.length, "Aucun petit équipement au-dessus du seuil.", "warn", `${gros.length} « petit équipement » de plus de 600 € TTC : au-delà de 500 € HT par élément, il faut l'amortir (page Logement et meubles).`, "immos");
   if(S.data.emprunts.length){
-    chk(c.interetsSaisis, "Intérêts d'emprunt saisis d'après la banque.", "warn", `Intérêts non saisis : l'échéancier théorique (${eur(c.interetsEch)}) est utilisé. Saisissez les montants réellement prélevés.`, "ecritures");
+    chk(c.interetsSaisis, "Intérêts d'emprunt saisis d'après la banque.", "warn", `Aucun intérêt d'emprunt comptabilisé : seuls les prélèvements de la banque comptent (${eur(c.interetsEch)} attendus selon l'échéancier). Voir le rapprochement de la page Emprunt.`, "emprunt");
     const crdB = ex.crdBanque != null && ex.crdBanque !== "";
     chk(crdB, "Capital restant dû au 31/12 saisi d'après la banque.", "warn", "Capital restant dû au 31/12 non saisi : le bilan utilise l'échéancier théorique.", "emprunt");
     if(crdB && Math.abs(Number(ex.crdBanque) - c.crdEch) > 50) out.push(["warn", `Écart de ${eur(Math.abs(Number(ex.crdBanque) - c.crdEch))} entre le capital restant dû de la banque et l'échéancier : vérifiez les paramètres de l'emprunt.`, "emprunt"]);
