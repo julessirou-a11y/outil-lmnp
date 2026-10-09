@@ -319,6 +319,17 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 .cmp input{width:100%;margin-top:4px}
 .cbars.serre{gap:3px} .cbars.serre .cb:nth-child(even) span{visibility:hidden}
 .okc{position:absolute;right:12px;top:12px;color:var(--pos);font-style:normal;font-weight:700}
+.echtab{overflow:auto} .echtab.long{max-height:560px} .echtab table{font-size:13.5px} .echtab th,.echtab td{padding:7px 9px}
+.echtab th{position:sticky;top:0;background:var(--surface);z-index:1} .echtab tr:nth-child(2) th{top:31px} .echtab th.grp{text-align:center;border-bottom:1px solid var(--line)}
+.echtab tr.diff td{background:var(--warn-soft)} .echtab td:first-child{white-space:nowrap}
+.ecart{color:var(--warn);font-weight:600} .okv{color:var(--pos);font-weight:700}
+.pill.warnp{background:var(--warn-soft);color:var(--warn)} .pill.okp{background:var(--pos-soft);color:var(--pos)}
+.corrs{display:flex;flex-direction:column;gap:8px}
+.corr{display:grid;grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));gap:12px;align-items:center;padding:10px 14px;border-radius:var(--r-md);background:var(--warn-soft)}
+.corr.ok{background:var(--surface-2)}
+.corr .cl{display:block} .corr .cl b{display:block} .corr .cl small{display:block;color:var(--muted);font-size:12.5px;margin-top:3px} .corr .cl .btn{margin-top:4px}
+.corr .cv{text-align:right} .corr .cv span{display:block;font-size:12px;color:var(--muted)} .corr .cv b{font-weight:600;white-space:nowrap} .corr .cv b small{display:block;font-weight:400;font-size:11.5px;color:var(--faint)}
+@media (max-width:700px){ .corr{grid-template-columns:repeat(3,minmax(0,1fr))} .corr .cl{grid-column:1/-1} .corr .cv{text-align:left} }
 
 /* ---------- Paramètres du dossier ---------- */
 .idcard{display:flex;align-items:center;gap:18px}
@@ -666,7 +677,13 @@ function amortAnnee(i, y){
 function anneeEntreeBilan(i){ return Math.max(yearOf(i.miseEnService), yearOf(debutLMNP())); }
 
 /* ============ Calculs : emprunt ============ */
-function echeancier(l){
+/* Échéancier retenu pour les calculs : celui de la banque si l'utilisateur l'a choisi, sinon celui calculé d'après les paramètres du dossier */
+function echeancier(l){ const b = l.source === "banque" && lignesBanque(l); return b && b.length ? b : echeancierTheorique(l); }
+function lignesBanque(l){
+  const L = l.echeancierBanque?.lignes; if(!L?.length) return null;
+  return L.map((r,k) => ({n:k+1, date:r.date, annee:yearOf(r.date), mois:monthOf(r.date), interet:r.interet, capital:r.capital, assurance:r.assurance||0, crd:r.crd}));
+}
+function echeancierTheorique(l){
   const r = l.tauxAnnuel / 12;
   let m = l.mensualite;
   if(!m) m = r ? l.capital * r / (1 - Math.pow(1+r, -l.dureeMois)) : l.capital / l.dureeMois;
@@ -678,7 +695,7 @@ function echeancier(l){
     if(k === l.dureeMois-1 || capital > crd) capital = crd;
     crd -= capital;
     const mm = m0 - 1 + k;
-    rows.push({n:k+1, annee: y0 + Math.floor(mm/12), mois: (mm%12)+1, interet, capital, crd});
+    rows.push({n:k+1, annee: y0 + Math.floor(mm/12), mois: (mm%12)+1, interet, capital, crd, mensualite: interet + capital});
   }
   return rows;
 }
@@ -1280,10 +1297,13 @@ function courbeCRD(l, y){
   const x0 = pts[0][0], x1 = pts[pts.length-1][0], X = a => px + (a - x0) / (x1 - x0 || 1) * (W - px - 8), Y = v => py + (1 - v / (l.capital||1)) * (H - py - 24);
   const d = pts.map((p,k)=>`${k?"L":"M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
   const yc = Math.min(Math.max(y+1, x0), x1), vc = empruntAnnee(l, y).crdFin;
+  const B = l.source !== "banque" && lignesBanque(l), bans = B ? [...new Set(B.map(r=>r.annee))] : [];
+  const bq = B && [[B[0].annee - 0.001, l.echeancierBanque.capital], ...bans.map(a => [a + 1, crdBanqueFin(l, a)])].filter(p => p[0] >= x0 && p[0] <= x1).map((p,k)=>`${k?"L":"M"}${X(p[0]).toFixed(1)},${Y(p[1]).toFixed(1)}`).join(" ");
   return `<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Capital restant dû">
     <path d="${d} L${X(x1)},${H-24} L${X(x0)},${H-24}Z" fill="var(--accent-soft)"/><path d="${d}" fill="none" stroke="var(--accent)" stroke-width="2.5"/>
     <line x1="${X(x0)}" x2="${X(x1)}" y1="${H-24}" y2="${H-24}" stroke="var(--line)"/>
     ${ans.filter((a,k)=>ans.length<=12||k%3===0||a===y).map(a=>`<text x="${X(a+0.5).toFixed(1)}" y="${H-7}" text-anchor="middle" font-size="11" fill="var(--faint)">${a}</text>`).join("")}
+    ${bq ? `<path d="${bq}" fill="none" stroke="var(--warn)" stroke-width="2" stroke-dasharray="5 4"/>` : ""}
     <circle cx="${X(yc).toFixed(1)}" cy="${Y(vc).toFixed(1)}" r="6" fill="var(--accent)" stroke="var(--surface)" stroke-width="2.5"/>
     <text x="${Math.min(X(yc)+10, W-90).toFixed(1)}" y="${(Y(vc)-10).toFixed(1)}" font-size="12.5" font-weight="600" fill="var(--text)">${eur0(vc)}</text>
   </svg>`;
@@ -1318,12 +1338,15 @@ function vueEmprunt(){
     return tete + `
     <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)"})}${tuile(`Intérêts ${y}`, eur0(c?c.interets:a.interets), {sous:"déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
     <div class="dash2">
-      <div class="card"><h3>Capital restant dû</h3>${courbeCRD(l, y)}</div>
+      <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Capital restant dû</h3>${lignesBanque(l) && l.source !== "banque" ? `<span class="leg"><i style="background:var(--accent)"></i>Dossier <i style="background:var(--warn)"></i>Banque</span>` : ""}</div>${courbeCRD(l, y)}</div>
       <div class="card centre"><h3>Remboursé fin ${y}</h3>${anneau(rembourse, pctTxt(rembourse), "var(--accent)", 140)}
         <div class="leg col" style="flex-direction:column;gap:4px"><span>Intérêts payés : <b>${eur0(intPayes)}</b></span><span>Coût total des intérêts : <b>${eur0(totInt)}</b></span></div></div>
     </div>
     <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Chaque année</h3><span class="leg"><i style="background:var(--warn)"></i>Intérêts (déductibles) <i style="background:var(--seg-2)"></i>Capital</span></div>
       <div class="cbars ${capI.length>12?"serre":""}" style="height:150px;margin-top:10px">${capI.map(([an,i,k])=>`<div class="cb" style="max-width:40px"><div class="cbs ${an===y?"sel":""}" title="${an} : intérêts ${eur0(i)}, capital ${eur0(k)}"><i style="height:${(i/maxA*100).toFixed(1)}%;background:var(--warn)"></i><i style="height:${(k/maxA*100).toFixed(1)}%;background:${an===y?"var(--accent)":"var(--seg-2)"}"></i></div><span>${String(an).slice(2)}</span></div>`).join("")}</div></div>
+    ${carteEcheancier(l, y)}
+    ${carteCorrections(l, idx, y)}
+    ${carteBanque(l, idx)}
     ${c && ex ? `<div class="card"><h3>${y} : contrôle avec la banque</h3><div class="cmp">
       <div><span>Intérêts calculés</span><b>${eur(c.interetsEch)}</b></div>
       <div><span>Intérêts saisis</span><b>${c.interetsSaisis?eur(c.t.c294):"–"}</b>${c.interetsSaisis&&Math.abs(c.t.c294-c.interetsEch)<=1?'<i class="okc">✓</i>':""}</div>
@@ -1334,11 +1357,225 @@ function vueEmprunt(){
 }
 async function ajouterEcheancierPret(idx, ev){
   let f = null; if(ev){ ev.preventDefault(); ev.currentTarget.classList.remove("survol"); f = ev.dataTransfer.files[0]; if(!f) return; }
+  if(!await dossierRequis()) return;
+  f ??= await choisirFichier(); if(!f) return;
   const l = S.data.emprunts[idx], id = await deposerDocument("echeancier", f, `Échéancier ${l.banque||"prêt"}`);
-  if(id){ l.echeancierDoc = id; S.rattDoc = null; S.tab = "emprunt"; setDirty(); renderAll(); }
+  if(id){ l.echeancierDoc = id; S.rattDoc = null; S.tab = "emprunt"; setDirty(); renderAll(); if(/\.pdf$/i.test(f.name)) await lireEcheancierPdf(idx, f); }
 }
 function majPret(i,k,v){ S.data.emprunts[i][k] = v; setDirty(); renderAll(); }
 function majCrd(v){ const ex = exercice(S.year); if(v.trim()==="") delete ex.crdBanque; else ex.crdBanque = r2(parseMontant(v)); setDirty(); renderAll(); }
+
+/* ---- Échéancier de la banque : tableau lu dans le PDF (ou collé), comparé à celui du dossier ---- */
+/* Lecteur PDF chargé seulement au besoin ; le fichier, lui, reste lu dans le navigateur */
+const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/";
+async function textePdf(file){
+  const pdfjs = await import(PDFJS + "pdf.min.mjs");
+  pdfjs.GlobalWorkerOptions.workerSrc = PDFJS + "pdf.worker.min.mjs";
+  const doc = await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  let out = "";
+  for(let p = 1; p <= doc.numPages; p++){
+    const items = (await (await doc.getPage(p)).getTextContent()).items.filter(i => i.str && i.str.trim()).map(i => ({s:i.str, x:i.transform[4], y:i.transform[5]}));
+    // Une ligne du tableau = des morceaux à la même hauteur, lus de gauche à droite
+    const lignes = [];
+    items.sort((a,b) => b.y - a.y).forEach(it => { const L = lignes.find(l => Math.abs(l.y - it.y) < 2.5); L ? L.items.push(it) : lignes.push({y:it.y, items:[it]}); });
+    out += lignes.map(l => l.items.sort((a,b) => a.x - b.x).map(i => i.s).join("\t")).join("\n") + "\n";
+  }
+  return out;
+}
+/* Repère les échéances (une date suivie de montants) et le rôle de chaque colonne :
+   le restant dû baisse, le capital est ce qui le fait baisser, les intérêts suivent le restant dû, l'échéance en est la somme */
+function lireTableauEcheancier(texte){
+  const RXD = /(?<!\d)(\d{1,2})[\/.](\d{1,2})[\/.](\d{4}|\d{2})(?!\d)/g;
+  const RXM = /(?<![\d,.])-?(?:\d{1,3}(?:[   .]\d{3})*,\d{2}|\d{1,3}(?:,\d{3})*\.\d{2}|\d+[.,]\d{2})(?![\d])/g;
+  const montant = t => { let v = t.replace(/[   ]/g, ""); v = /,\d{2}$/.test(v) ? v.replace(/\./g, "").replace(",", ".") : v.replace(/,/g, ""); return Number(v); };
+  const rows = []; let cur = null;
+  for(const [nl, ligne] of String(texte).split(/\r?\n/).entries()) for(const cell of ligne.split(/\t| {2,}/)){
+    const toks = [];
+    const sans = cell.replace(RXD, (m, d, mo, an, pos) => { if(+mo >= 1 && +mo <= 12 && +d >= 1 && +d <= 31){ an = an.length === 2 ? "20" + an : an; toks.push({pos, d:`${an}-${String(mo).padStart(2,"0")}-${String(d).padStart(2,"0")}`}); } return "#".repeat(m.length); });
+    for(const m of sans.matchAll(RXM)) toks.push({pos:m.index, m:montant(m[0])});
+    toks.sort((a,b) => a.pos - b.pos).forEach(t => {
+      if(t.d){ if(!cur || cur.v.length || cur.nl !== nl) rows.push(cur = {date:t.d, nl, v:[]}); }  // deux dates sur une ligne (échéance, valeur) : on garde la première
+      else if(cur) cur.v.push(t.m);
+    });
+  }
+  const freq = {}; rows.forEach(r => { if(r.v.length >= 3) freq[r.v.length] = (freq[r.v.length]||0) + 1; });
+  const k = Number(Object.keys(freq).sort((a,b) => freq[b] - freq[a] || b - a)[0]);
+  if(!k) throw new Error("Aucun tableau d'échéances trouvé (une date suivie d'au moins trois montants par ligne).");
+  const vus = new Set(), R = rows.filter(r => r.v.length >= k && !vus.has(r.date) && vus.add(r.date)).map(r => ({date:r.date, v:r.v.slice(0, k)})).sort((a,b) => a.date.localeCompare(b.date));
+  if(R.length < 3) throw new Error("Trop peu d'échéances reconnues.");
+  const n = R.length, col = j => R.map(r => r.v[j]), moy = a => a.reduce((s,x) => s + x, 0) / (a.length || 1), J = [...Array(k).keys()];
+  const decroit = a => a.slice(1).filter((x,i) => x <= a[i] + 0.005).length >= 0.9 * (n - 1);
+  const crdJ = J.filter(j => decroit(col(j)) && moy(col(j)) > 0).sort((a,b) => moy(col(b)) - moy(col(a)))[0];
+  if(crdJ == null) throw new Error("Colonne du capital restant dû introuvable.");
+  const crd = col(crdJ);
+  // Restant dû après l'échéance (le plus courant) ou avant
+  let cap = null;
+  for(const j of J) if(j !== crdJ) for(const avant of [false, true]){
+    let e = 0; for(let i = 1; i < n; i++) e += Math.abs(crd[i-1] - crd[i] - R[avant ? i-1 : i].v[j]);
+    e /= n - 1; if(!cap || e < cap.e) cap = {j, avant, e};
+  }
+  if(!cap || cap.e > 0.05) throw new Error("Colonne du capital remboursé introuvable : le restant dû ne baisse pas du capital de chaque échéance.");
+  const C = col(cap.j), fin = cap.avant ? crd.map((c,i) => c - C[i]) : crd, debut = fin.map((c,i) => c + C[i]);
+  const reste = J.filter(j => j !== crdJ && j !== cap.j);
+  const dispersion = j => { const q = R.map((r,i) => debut[i] > 100 && r.v[j] > 0 ? r.v[j] / debut[i] : null).filter(x => x != null); if(q.length < 0.7 * n) return Infinity; const m = moy(q); return m > 0.02 ? Infinity : Math.sqrt(moy(q.map(x => (x - m) ** 2))) / m; };
+  const intJ = reste.slice().sort((a,b) => dispersion(a) - dispersion(b))[0];
+  if(intJ == null || dispersion(intJ) > 0.3) throw new Error("Colonne des intérêts introuvable.");
+  const I = col(intJ), autres = reste.filter(j => j !== intJ);
+  let totJ = null, assJ = null;
+  for(const t of autres){
+    const d = R.map((r,i) => r.v[t] - C[i] - I[i]);
+    if(moy(d.map(Math.abs)) < 0.02){ totJ = t; break; }
+    const a = autres.find(a => a !== t && moy(d.map((x,i) => Math.abs(x - R[i].v[a]))) < 0.02);
+    if(a != null){ totJ = t; assJ = a; break; }
+  }
+  // Assurance sans colonne « échéance » pour la vérifier : seulement si le document en parle
+  if(assJ == null && /assurance/i.test(texte)) assJ = autres.find(a => a !== totJ && moy(col(a)) > 0 && Math.max(...col(a)) < moy(I) + moy(C)) ?? null;
+  const A = assJ == null ? R.map(() => 0) : col(assJ);
+  return {capital:r2(debut[0]), colonnes:{interets:true, capital:true, assurance:assJ != null, restantDu:true, echeance:totJ != null},
+    lignes:R.map((r,i) => ({date:r.date, interet:I[i], capital:C[i], assurance:A[i], crd:r2(fin[i])}))};
+}
+async function lireEcheancierPdf(idx, file){
+  try{ toast("Lecture du tableau d'amortissement…"); appliquerEcheancierBanque(idx, await textePdf(file), "pdf"); }
+  catch(e){ alert(`Le tableau n'a pas pu être lu dans ce PDF : ${e.message}\n\nVous pouvez copier le tableau depuis l'aperçu du PDF et le coller dans « Coller le tableau » sur la page Emprunt.`); }
+}
+async function lireEcheancierDoc(idx){
+  if(!await dossierRequis()) return;
+  const d = docs().find(x => x.id === S.data.emprunts[idx].echeancierDoc);
+  try{ await lireEcheancierPdf(idx, await (await handleDepuisChemin(d.fichier)).getFile()); }
+  catch(_){ alert(`Fichier introuvable : « ${d.fichier} ».`); }
+}
+function appliquerEcheancierBanque(idx, texte, origine){
+  const res = lireTableauEcheancier(texte), l = S.data.emprunts[idx], L = res.lignes, a = L[0], z = L[L.length-1];
+  l.echeancierBanque = {origine, lu:new Date().toISOString().slice(0,10), capital:res.capital, colonnes:res.colonnes, lignes:L};
+  S.echSrc = "comparer"; setDirty(); renderAll();
+  toast(`${L.length} échéances lues, de ${MOIS[monthOf(a.date)-1]} ${yearOf(a.date)} à ${MOIS[monthOf(z.date)-1]} ${yearOf(z.date)}.`);
+}
+function collerEcheancier(idx){
+  const t = $("#echColle").value; if(!t.trim()) return;
+  try{ appliquerEcheancierBanque(idx, t, "colle"); } catch(e){ alert(e.message); }
+}
+function retirerEcheancierBanque(idx){
+  if(!confirm("Retirer le tableau lu de la banque ? Les calculs reprennent l'échéancier du dossier (le PDF reste rangé).")) return;
+  const l = S.data.emprunts[idx]; delete l.echeancierBanque; delete l.source; setDirty(); renderAll();
+}
+/* Restant dû retenu au 31/12 : bilan de l'année s'il existe, sinon échéancier */
+function crdRetenuFin(y){
+  if(exercice(y)){ const v = Number(bilan(y).crd); if(!isNaN(v)) return v; }
+  return S.data.emprunts.reduce((s,l) => s + empruntAnnee(l, y).crdFin, 0);
+}
+const crdBanqueFin = (l, y) => { const b = lignesBanque(l).filter(r => r.annee <= y); return b.length ? b[b.length-1].crd : l.echeancierBanque.capital; };
+const ecartTxt = (v, seuil=0.01) => Math.abs(v) < seuil ? `<span class="okv">✓</span>` : `<span class="ecart">${v > 0 ? "+" : "−"}${eur(Math.abs(v))}</span>`;
+
+/* Tableau d'amortissement : une année ou tout le prêt, dossier, banque ou les deux côte à côte */
+function carteEcheancier(l, y){
+  const banque = lignesBanque(l), theo = echeancierTheorique(l);
+  const src = banque ? (S.echSrc || "comparer") : "dossier";
+  const ans = [...new Set([...theo, ...(banque||[])].map(r => r.annee))].sort((a,b) => a - b);
+  const an = S.echAn === "tout" ? "tout" : ans.includes(Number(S.echAn)) ? Number(S.echAn) : ans.includes(y) ? y : ans[0];
+  const garde = r => an === "tout" || r.annee === an, cle = r => r.annee * 100 + r.mois;
+  const date = r => `${MOIS[r.mois-1]} ${r.annee}`;
+  const choixAn = `<select class="btn small sec" aria-label="Année" onchange="S.echAn=this.value;renderAll()">${ans.map(a => `<option value="${a}" ${a===an?"selected":""}>${a}</option>`).join("")}<option value="tout" ${an==="tout"?"selected":""}>Tout le prêt</option></select>`;
+  const tete = `<div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">Échéancier</h3>
+    <div class="row">${banque ? segments("echSrc", [["dossier","Dossier"],["banque","Banque"],["comparer","Comparer"]], src) : `<span class="pill">calculé d'après les paramètres du dossier</span>`}${choixAn}</div></div>`;
+  const parAn = (rows, ligne, total) => { const out = []; let cour = null, acc = [];
+    const ferme = () => { if(acc.length && an === "tout") out.push(total(cour, acc)); acc = []; };
+    rows.forEach(r => { if(r.annee !== cour){ ferme(); cour = r.annee; } acc.push(r); out.push(ligne(r)); }); ferme();
+    return out.join(""); };
+  const somme = (a, k) => a.reduce((s,r) => s + (r[k]||0), 0);
+  if(src !== "comparer"){
+    const rows = (src === "banque" ? banque : theo).filter(garde), ass = src === "banque" && l.echeancierBanque.colonnes?.assurance;
+    const ligne = r => `<tr><td>${date(r)}</td><td class="n">${eur(r.interet + r.capital + (ass ? r.assurance : 0))}</td><td class="n">${eur(r.interet)}</td><td class="n">${eur(r.capital)}</td>${ass?`<td class="n">${eur(r.assurance)}</td>`:""}<td class="n">${eur(r.crd)}</td></tr>`;
+    const total = (a, g) => `<tr class="tot"><td>${a}</td><td class="n">${eur(somme(g,"interet") + somme(g,"capital") + (ass ? somme(g,"assurance") : 0))}</td><td class="n">${eur(somme(g,"interet"))}</td><td class="n">${eur(somme(g,"capital"))}</td>${ass?`<td class="n">${eur(somme(g,"assurance"))}</td>`:""}<td class="n">${g.length ? eur(g[g.length-1].crd) : ""}</td></tr>`;
+    const corps = an === "tout" ? parAn(rows, ligne, (a,g) => total(`Total ${a}`, g)) : rows.map(ligne).join("") + (rows.length ? total(`Total ${an}`, rows) : "");
+    return `<div class="card" id="echeancier">${tete}<div class="tablewrap echtab ${an === "tout" ? "long" : ""}"><table><tr><th>Échéance</th><th class="n">Mensualité</th><th class="n">Intérêts</th><th class="n">Capital</th>${ass?`<th class="n">Assurance</th>`:""}<th class="n">Restant dû</th></tr>
+      ${corps || `<tr><td colspan="6" class="sub">Aucune échéance en ${an}.</td></tr>`}</table></div></div>`;
+  }
+  // Comparaison mois par mois
+  const B = new Map(banque.map(r => [cle(r), r])), T = new Map(theo.map(r => [cle(r), r]));
+  const cles = [...new Set([...T.keys(), ...B.keys()])].sort((a,b) => a - b).filter(c => an === "tout" || Math.floor(c/100) === an);
+  const lignes = cles.map(c => ({annee:Math.floor(c/100), mois:c%100, t:T.get(c), b:B.get(c)}));
+  const v = (x, k) => x ? eur(x[k]) : "–", d = (r, k) => r.t && r.b ? ecartTxt(r.b[k] - r.t[k]) : "";
+  const ligne = r => `<tr class="${r.t && r.b && (Math.abs(r.b.interet - r.t.interet) >= 0.01 || Math.abs(r.b.crd - r.t.crd) >= 0.01) ? "diff" : ""}"><td>${date(r)}</td><td class="n">${v(r.t,"interet")}</td><td class="n">${v(r.b,"interet")}</td><td class="n">${d(r,"interet")}</td><td class="n">${v(r.t,"crd")}</td><td class="n">${v(r.b,"crd")}</td><td class="n">${d(r,"crd")}</td></tr>`;
+  const total = (a, g) => { const it = g.reduce((s,r) => s + (r.t?.interet||0), 0), ib = g.reduce((s,r) => s + (r.b?.interet||0), 0), dt = g.filter(r => r.t).pop()?.t, db = g.filter(r => r.b).pop()?.b;
+    return `<tr class="tot"><td>${a}</td><td class="n">${eur(it)}</td><td class="n">${eur(ib)}</td><td class="n">${ecartTxt(ib - it)}</td><td class="n">${dt?eur(dt.crd):"–"}</td><td class="n">${db?eur(db.crd):"–"}</td><td class="n">${dt&&db?ecartTxt(db.crd - dt.crd):""}</td></tr>`; };
+  const corps = an === "tout" ? parAn(lignes, ligne, (a,g) => total(`Total ${a}`, g)) : lignes.map(ligne).join("") + (lignes.length ? total(`Total ${an}`, lignes) : "");
+  return `<div class="card" id="echeancier">${tete}<div class="tablewrap echtab ${an === "tout" ? "long" : ""}"><table><tr><th rowspan="2">Échéance</th><th colspan="3" class="n grp">Intérêts</th><th colspan="3" class="n grp">Restant dû</th></tr>
+    <tr><th class="n">Dossier</th><th class="n">Banque</th><th class="n">Écart</th><th class="n">Dossier</th><th class="n">Banque</th><th class="n">Écart</th></tr>
+    ${corps || `<tr><td colspan="7" class="sub">Aucune échéance en ${an}.</td></tr>`}</table></div>
+    <p class="sub" style="margin:10px 0 0">Écart = banque − dossier. Les lignes en couleur diffèrent d'au moins un centime.</p></div>`;
+}
+
+/* Ce qu'il faut corriger sur l'année affichée, d'après l'échéancier de la banque */
+function carteCorrections(l, idx, y){
+  const banque = lignesBanque(l); if(!banque || isHistorique(y) || !exercice(y)) return "";
+  const B = banque.filter(r => r.annee === y); if(!B.length) return "";
+  const c = calculAnnee(y), ex = exercice(y), ass = l.echeancierBanque.colonnes?.assurance;
+  const NAT = {interet:"Intérêts emprunt", capital:"Remboursement emprunt", assurance:"Assurance emprunt"};
+  const saisi = {}; (ex.ecritures||[]).forEach(e => { const k = Object.keys(NAT).find(k => NAT[k] === e.nature); if(k){ const m = monthOf(e.date); (saisi[m] ??= {interet:0, capital:0, assurance:0, n:0})[k] += e.montant; saisi[m].n++; } });
+  const auj = new Date(), echu = r => y < auj.getFullYear() || (y === auj.getFullYear() && r.mois <= auj.getMonth() + 1);
+  const somme = (a, k) => a.reduce((s,r) => s + (r[k]||0), 0);
+  const Be = B.filter(echu), S0 = Object.values(saisi);
+  const debutD = crdRetenuFin(y - 1), debutB = crdBanqueFin(l, y - 1), finB = crdBanqueFin(l, y);
+  const crdSaisi = ex.crdBanque != null && ex.crdBanque !== "";
+  const nbSaisis = B.filter(r => saisi[r.mois]?.n).length, perio = Be.length && Be.length < B.length ? ` (${MOIS[B[0].mois-1]} à ${MOIS[Be[Be.length-1].mois-1]})` : "";
+  const items = [];
+  const item = (lib, dossier, bq, ok, aFaire, nom="Dossier") => items.push(`<div class="corr ${ok === true ? "ok" : ""}"><div class="cl"><b>${lib}</b>${aFaire ? `<small>${aFaire}</small>` : ""}</div><div class="cv"><span>${nom}</span><b>${dossier}</b></div><div class="cv"><span>Banque</span><b>${bq}</b></div><div class="cv">${ok === true ? `<span class="okv">✓</span>` : `<span>Écart</span><b class="ecart">${ok > 0 ? "+" : "−"}${eur(Math.abs(ok))}</b>`}</div></div>`);
+  const ecart = (a, b) => Math.abs(r2(b - a)) < 0.01 ? true : r2(b - a);
+  // 1. Restant dû au 1er janvier
+  const e1 = ecart(debutD, debutB);
+  item(`Restant dû au 1er janvier ${y}`, eur(debutD), eur(debutB), e1, e1 === true ? "" : `Le bilan ${y-1} retenait ${eur(debutD)}. L'écart vient des années passées : on ne refait pas ${y-1}, on le rattrape en ${y} en retenant au 31/12/${y} le restant dû de la banque (dernière ligne).`);
+  // 2. à 4. Mouvements de l'année : saisis contre banque, sur les échéances déjà passées
+  const mouv = (k, lib) => {
+    const bq = somme(Be, k), sa = S0.reduce((s,m) => s + m[k], 0), e = ecart(sa, bq);
+    const mq = Be.filter(r => !saisi[r.mois]?.n).map(r => MOIS[r.mois-1]), fx = Be.filter(r => saisi[r.mois]?.n && Math.abs(saisi[r.mois][k] - r[k]) >= 0.01).map(r => MOIS[r.mois-1]);
+    const txt = [mq.length && `Sans écriture : ${mq.join(", ")} (saisir le prélèvement en le ventilant : intérêts, capital${ass?", assurance":""}).`, fx.length && `Montant à corriger : ${fx.join(", ")}.`].filter(Boolean).join(" ");
+    item(`${lib} ${y}${perio}`, sa ? eur(sa) : "non saisis", eur(bq), e, e === true ? "" : txt || `Corriger les écritures « ${NAT[k]} » d'après le détail ci-dessous.`, "Saisi");
+  };
+  mouv("interet", "Intérêts");
+  if(!c.interetsSaisis) items.push(`<p class="sub" style="margin:4px 0 8px">Tant qu'aucun intérêt n'est saisi, l'outil compte ceux de l'échéancier du dossier (${eur(c.interetsEch)} pour ${y}).</p>`);
+  mouv("capital", "Capital remboursé");
+  if(ass) mouv("assurance", "Assurance");
+  // 5. Restant dû au 31/12 retenu au bilan
+  const e5 = ecart(c.crd, finB);
+  item(`Restant dû au 31/12/${y}`, `${eur(c.crd)}<small>${crdSaisi ? "saisi" : "échéancier du dossier"}</small>`, eur(finB), e5,
+    e5 === true ? "" : `<button class="btn small" onclick="exercice(${y}).crdBanque=${finB};setDirty();renderAll()">Retenir ${eur(finB)} au bilan ${y}</button>`);
+  // Détail par échéance
+  const det = B.map(r => { const s = saisi[r.mois], fait = s?.n, okL = fait && ["interet","capital"].concat(ass ? ["assurance"] : []).every(k => Math.abs(s[k] - r[k]) < 0.01);
+    const st = !echu(r) ? `<span class="pill">à venir</span>` : !fait ? `<span class="pill warnp">à saisir</span>` : okL ? `<span class="okv">✓</span>` : `<span class="pill warnp">à corriger</span>`;
+    const cel = k => `<td class="n">${eur(r[k])}</td><td class="n">${fait ? `${eur(s[k])}` : "–"}</td>`;
+    return `<tr class="${echu(r) && !okL ? "diff" : ""}"><td>${MOIS[r.mois-1]}</td>${cel("interet")}${cel("capital")}${ass ? cel("assurance") : ""}<td>${st}</td></tr>`; }).join("");
+  const nOk = items.filter(x => x.includes('corr ok')).length, nTot = items.filter(x => x.includes('class="corr')).length;
+  return `<div class="card" id="corrections"><div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="margin:0">Corrections ${y} d'après la banque</h3>
+      <span class="pill ${nOk === nTot ? "okp" : "warnp"}">${nOk === nTot ? "Tout concorde" : `${nTot - nOk} point${nTot-nOk>1?"s":""} à corriger`}</span></div>
+    <div class="corrs">${items.join("")}</div>
+    <details style="margin-top:12px" ${nbSaisis && nOk !== nTot ? "open" : ""}><summary>Détail par échéance : banque contre écritures saisies</summary><div class="tablewrap echtab" style="margin-top:8px"><table>
+      <tr><th rowspan="2">Mois</th><th colspan="2" class="n grp">Intérêts</th><th colspan="2" class="n grp">Capital</th>${ass?`<th colspan="2" class="n grp">Assurance</th>`:""}<th rowspan="2"></th></tr>
+      <tr><th class="n">Banque</th><th class="n">Saisi</th><th class="n">Banque</th><th class="n">Saisi</th>${ass?`<th class="n">Banque</th><th class="n">Saisi</th>`:""}</tr>${det}</table></div></details></div>`;
+}
+
+/* Dépôt et lecture du PDF de la banque */
+function carteBanque(l, idx){
+  const eb = l.echeancierBanque, doc = l.echeancierDoc && docs().find(d => d.id === l.echeancierDoc);
+  const autresDocs = docs().filter(d => d.type === "echeancier" && d.id !== l.echeancierDoc);
+  const coller = `<details style="margin-top:12px"><summary>Le PDF ne se lit pas ? Coller le tableau</summary>
+    <p class="sub" style="margin:8px 0">Ouvrez le PDF, sélectionnez tout le tableau (⌘A), copiez-le puis collez-le ici.</p>
+    <textarea id="echColle" rows="5" style="width:100%" placeholder="05/11/2016   729,86   122,00   607,86   119 392,14 …"></textarea>
+    <button class="btn small" style="margin-top:8px" onclick="collerEcheancier(${idx})">Lire le tableau</button></details>`;
+  if(eb?.lignes?.length){
+    const a = eb.lignes[0], z = eb.lignes[eb.lignes.length-1], cols = ["intérêts","capital", eb.colonnes?.assurance && "assurance","restant dû"].filter(Boolean).join(", ");
+    return `<div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Échéancier de la banque</h3>
+        <div class="row">${doc ? `<button class="btn small sec" onclick="ouvrirChemin('${esc(doc.fichier)}','${esc(doc.libelle).replace(/'/g,"\\'")}')">Voir le PDF</button>` : ""}<button class="btn small ghost" onclick="retirerEcheancierBanque(${idx})">Retirer</button></div></div>
+      <p class="sub" style="margin:8px 0 12px">${eb.lignes.length} échéances lues${eb.origine === "colle" ? " (tableau collé)" : ""}, de ${MOIS[monthOf(a.date)-1]} ${yearOf(a.date)} à ${MOIS[monthOf(z.date)-1]} ${yearOf(z.date)}, sur ${eur(eb.capital)} emprunté · colonnes : ${cols}.</p>
+      <div class="row"><span style="font-size:13.5px;color:var(--muted)">Calculs de l'outil (intérêts non saisis, restant dû non saisi, simulations) :</span>
+        <div class="seg noprint" role="tablist">${[["dossier","Échéancier du dossier"],["banque","Échéancier de la banque"]].map(([k,t]) => { const on = (l.source === "banque" ? "banque" : "dossier") === k; return `<button role="tab" aria-selected="${on}" class="${on?"on":""}" onclick="majPret(${idx},'source','${k}')">${t}</button>`; }).join("")}</div></div></div>`;
+  }
+  return `<div class="card"><h3>Échéancier de la banque</h3>
+    <p class="sub" style="margin:0 0 12px">L'échéancier affiché est pour l'instant celui calculé avec les paramètres du dossier. Déposez le tableau d'amortissement de la banque : l'outil le lit, le compare mois par mois et liste les corrections à faire.</p>
+    ${doc ? `<div class="row"><span>« ${esc(doc.libelle)} » est déjà rangé.</span><button class="btn small" onclick="lireEcheancierDoc(${idx})">Lire son tableau</button></div>`
+      : zoneDepot("Déposer l'échéancier PDF de la banque", "Tableau d'amortissement · lu dans le navigateur, rien n'est envoyé", `ajouterEcheancierPret(${idx})`, `ajouterEcheancierPret(${idx},event)`).replace('class="depot noprint"','class="depot noprint" style="margin:0"')}
+    ${!doc && autresDocs.length ? `<div class="row" style="margin-top:10px"><span class="sub" style="margin:0">Ou un échéancier déjà déposé :</span>${autresDocs.map(d => `<button class="btn small sec" onclick="S.data.emprunts[${idx}].echeancierDoc='${d.id}';setDirty();lireEcheancierDoc(${idx})">${esc(d.libelle)}</button>`).join("")}</div>` : ""}
+    ${coller}</div>`;
+}
 
 /* ---- Déclaration ---- */
 /* ---- Déclaration : formulaires présentés comme sur impots.gouv, montants à copier d'un clic ---- */
