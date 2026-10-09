@@ -468,6 +468,19 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 .ecr .c{grid-column:2 / -1;font-size:13px;color:var(--muted)}
 @media (max-width:600px){ .ecr{grid-template-columns:38px minmax(0,1fr) auto} .ecr .a{grid-column:2 / -1;justify-content:flex-start} }
 .composer{border:1px dashed var(--line);background:var(--surface-2)}
+.filtres{background:var(--surface-2);border:1px solid var(--line)}
+.filtres .form{grid-template-columns:repeat(auto-fit,minmax(min(150px,40%),1fr))}
+.filtres label{min-width:0} .filtres input,.filtres select{width:100%;min-width:0}
+.filtres .bas{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:14px}
+.fchips{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+.fchip{display:inline-flex;align-items:center;gap:4px;font-size:13px;border-radius:99px;padding:3px 4px 3px 11px;background:var(--accent-soft);color:var(--accent);border:0;font-family:inherit}
+.fchip button{border:0;background:none;color:inherit;font:inherit;cursor:pointer;border-radius:99px;width:20px;height:20px;line-height:1;padding:0}
+.fchip button:hover{background:var(--surface)}
+.fsave{display:inline-flex;align-items:center;border:1px solid var(--line);border-radius:99px;background:var(--surface);font-size:13px;overflow:hidden}
+.fsave>button{border:0;background:none;font:inherit;color:var(--text);cursor:pointer;padding:4px 6px 4px 12px}
+.fsave>button.x{color:var(--faint);padding:4px 9px 4px 4px}
+.fsave.on{border-color:var(--accent);background:var(--accent-soft)} .fsave.on>button:first-child{color:var(--accent);font-weight:600}
+.btn .nb{display:inline-block;min-width:18px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-size:11.5px;padding:0 5px;margin-left:6px;text-align:center}
 .pj{white-space:nowrap}
 
 /* ---------- Visionneuse ---------- */
@@ -643,6 +656,7 @@ function normalize(d){
   d.documents ??= [];
   d.banque.regles ??= []; d.banque.aTrier ??= []; d.banque.ignorees ??= [];
   d.factures ??= []; d.facturesLues ??= [];
+  d.filtresEcritures ??= [];
   return d;
 }
 function newDossier(){
@@ -1104,7 +1118,8 @@ function vueEcritures(){
   if(vue === "balance") return tete + vueBalanceVisuelle(y);
   if(vue === "grandlivre") return tete + vueGrandLivre(y);
   const mois = S.moisEcr || 0;
-  const list = [...ex.ecritures].filter(e => !mois || monthOf(e.date) === mois).sort((a,b)=> a.date.localeCompare(b.date));
+  const F = S.fEcr || {}, nbF = nbFiltres(F);
+  const list = [...ex.ecritures].filter(e => (!mois || monthOf(e.date) === mois) && passeFiltre(e, F, y)).sort((a,b)=> a.date.localeCompare(b.date));
   const natOpts = sel => Object.keys(NATURES).map(n=>optNature(n, sel)).join("");
   const nbMois = m => ex.ecritures.filter(e=>monthOf(e.date)===m).length;
   return tete + `
@@ -1113,6 +1128,7 @@ function vueEcritures(){
   <div class="row noprint" style="margin-bottom:14px">
     ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"+ Écriture"}</button>
     <button class="btn sec" onclick="dupliquerMois()">Recopier le dernier mois</button>`}
+    <button class="btn sec" aria-expanded="${!!S.filtresOuverts}" onclick="S.filtresOuverts=!S.filtresOuverts;renderAll()">${I_FILTRE}Filtres${nbF?`<span class="nb">${nbF}</span>`:""}</button>
     <div class="mois noprint">${["Tout",...MOIS].map((l,i)=>`<button class="${i===mois?"on":""}" ${i&&!nbMois(i)?'style="opacity:.45"':""} onclick="S.moisEcr=${i};renderAll()">${l.replace(".","")}</button>`).join("")}</div>
   </div>
   ${ouvert ? `<div class="card composer noprint"><div class="form">
@@ -1124,6 +1140,8 @@ function vueEcritures(){
     <div class="row"><button class="btn" onclick="saveEcriture()">${ed?"Enregistrer":"Ajouter"}</button><button class="btn ghost" onclick="S.editId=null;S.composer=false;renderAll()">Annuler</button></div>
   </div>
   <datalist id="tiersList">${[...new Set(ex.ecritures.map(e=>e.tiers).filter(Boolean))].map(t=>`<option value="${esc(t)}">`).join("")}</datalist></div>` : ""}
+  ${S.filtresOuverts ? panneauFiltres(F, y) : ""}
+  ${nbF || (S.data.filtresEcritures||[]).length ? barreFiltres(F, list) : ""}
   <div class="card" style="padding:8px 12px">${list.length ? `<div class="tablewrap"><table class="journal">
     <tr><th>Date</th><th>Tiers</th><th>Nature</th>${comptesVisibles()?"<th>Compte</th>":""}<th class="n">Montant</th><th></th></tr>
     ${list.map(e => { const g = grpNature(e); return `<tr class="${S.editId===e.id?"editing":""}">
@@ -1132,7 +1150,112 @@ function vueEcritures(){
       <td>${chipNature(e.nature).replace(/<span class="cpt">.*?<\/span>/,"")}</td>${comptesVisibles()?`<td class="cpt">${compteNature(e.nature)}</td>`:""}
       <td class="n" style="font-weight:500;color:${g==="recette"?"var(--pos)":"var(--text)"}">${g==="recette"?"+":"−"}${eur(e.montant)}</td>
       <td class="n noprint act">${piecesLigne(e)}${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();haut()">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</td></tr>`; }).join("")}
-  </table></div>` : `<p class="sub" style="margin:14px 8px">Aucune écriture${mois?" ce mois-ci":""}. Importez le relevé (page Banque) ou ajoutez-en une.</p>`}</div>`;
+    ${nbF ? totalFiltre(list) : ""}
+  </table></div>` : nbF ? `<p class="sub" style="margin:14px 8px">Aucune écriture ne correspond aux filtres${mois?" ce mois-ci":""}. <a href="#" onclick="event.preventDefault();viderFiltres()">Retirer les filtres</a></p>`
+    : `<p class="sub" style="margin:14px 8px">Aucune écriture${mois?" ce mois-ci":""}. Importez le relevé (page Banque) ou ajoutez-en une.</p>`}</div>`;
+}
+/* ---- Filtres des écritures : combinables, et enregistrables sous un nom dans le fichier du dossier ----
+   Les dates sont gardées sans l'année (MM-JJ) pour qu'un filtre enregistré serve d'une année sur l'autre. */
+const I_FILTRE = svgI('<path d="M4 5h16l-6 7v6l-4 2v-8z"/>');
+const GROUPES_F = {recette:"Toutes les recettes", charge:"Toutes les charges", bilan:"Emprunt (capital)"};
+const sansAccents = s => String(s||"").normalize("NFD").replace(/[\u0300-\u036f]/g,"").toLowerCase();
+function nbFiltres(F){ return ["du","au","nature","texte","min","max","banque","piece"].filter(k => F[k] !== undefined && F[k] !== "").length; }
+function passeFiltre(e, F, y){
+  const md = e.date.slice(5);
+  if(F.du && md < F.du) return false;
+  if(F.au && md > F.au) return false;
+  if(F.nature){
+    if(F.nature.startsWith("g:")){ if(grpNature(e) !== F.nature.slice(2)) return false; }
+    else if(e.nature !== F.nature) return false;
+  }
+  if(F.min !== undefined && F.min !== "" && e.montant < F.min - 0.004) return false;
+  if(F.max !== undefined && F.max !== "" && e.montant > F.max + 0.004) return false;
+  if(F.banque === "oui" && !e.banque) return false;
+  if(F.banque === "non" && e.banque) return false;
+  if(F.piece === "avec" && !e.piece) return false;
+  if(F.piece === "manquant" && (e.piece || !pieceRequise(e))) return false;
+  if(F.piece === "inutile" && (e.piece || pieceRequise(e))) return false;
+  if(F.texte){
+    const h = sansAccents([e.tiers, e.commentaire, e.libelleBanque, e.nature, compteNature(e.nature), e.piece].join(" "));
+    if(!sansAccents(F.texte).split(/\s+/).filter(Boolean).every(m => h.includes(m))) return false;
+  }
+  return true;
+}
+function setFiltre(k, v){
+  const F = {...(S.fEcr || {})};
+  if(k === "du" || k === "au") v = v ? v.slice(5) : "";
+  if(k === "min" || k === "max"){ v = String(v).trim() === "" ? "" : parseMontant(v); if(v !== "" && isNaN(v)) v = ""; }
+  if(v === "" || v == null) delete F[k]; else F[k] = v;
+  S.fEcr = F; S.filtreNom = null; renderAll();
+}
+/* Recherche au fil de la frappe : on remet le curseur dans le champ après le rendu */
+function chercherEcr(el){
+  const pos = el.selectionStart; S.fEcr = {...(S.fEcr||{}), texte:el.value}; if(!el.value) delete S.fEcr.texte; S.filtreNom = null; renderAll();
+  const n = $("#fTexte"); if(n){ n.focus(); n.setSelectionRange(pos, pos); }
+}
+function viderFiltres(){ S.fEcr = {}; S.filtreNom = null; renderAll(); }
+function panneauFiltres(F, y){
+  const d = k => F[k] ? `${y}-${F[k]}` : "", m = k => F[k] === undefined || F[k] === "" ? "" : String(F[k]).replace(".",",");
+  const opt = (v, l, cur) => `<option value="${esc(v)}" ${v===(cur||"")?"selected":""}>${l}</option>`;
+  const natures = Object.keys(NATURES).map(n => opt(n, (comptesVisibles()?compteNature(n)+" · ":"")+esc(n), F.nature)).join("");
+  return `<div class="card filtres noprint"><div class="form">
+    <label>Du<input type="date" min="${y}-01-01" max="${y}-12-31" value="${d("du")}" onchange="setFiltre('du',this.value)"></label>
+    <label>Au<input type="date" min="${y}-01-01" max="${y}-12-31" value="${d("au")}" onchange="setFiltre('au',this.value)"></label>
+    <label>Nature ou compte<select onchange="setFiltre('nature',this.value)">${opt("","Toutes",F.nature)}<optgroup label="Groupes">${Object.entries(GROUPES_F).map(([g,l])=>opt("g:"+g,l,F.nature)).join("")}</optgroup><optgroup label="Natures">${natures}</optgroup></select></label>
+    <label style="grid-column:span 2">Tiers, libellé ou commentaire<input id="fTexte" type="search" value="${esc(F.texte||"")}" placeholder="Syndic, EDF, 616…" oninput="chercherEcr(this)"></label>
+    <label>Montant min<input inputmode="decimal" value="${m("min")}" placeholder="0,00" onchange="setFiltre('min',this.value)"></label>
+    <label>Montant max<input inputmode="decimal" value="${m("max")}" placeholder="0,00" onchange="setFiltre('max',this.value)"></label>
+    <label>Relevé bancaire<select onchange="setFiltre('banque',this.value)">${opt("","Toutes",F.banque)}${opt("oui","Pointées sur le relevé",F.banque)}${opt("non","Non pointées",F.banque)}</select></label>
+    <label>Justificatif<select onchange="setFiltre('piece',this.value)">${opt("","Tous",F.piece)}${opt("avec","Joint",F.piece)}${opt("manquant","Manquant",F.piece)}${opt("inutile","Non requis ou classé ailleurs",F.piece)}</select></label>
+  </div>
+  <div class="bas"><button class="btn small" ${nbFiltres(F)?"":"disabled"} onclick="enregistrerFiltre()">Enregistrer ce filtre…</button>
+    <button class="btn small ghost" ${nbFiltres(F)?"":"disabled"} onclick="viderFiltres()">Tout effacer</button>
+    <span class="sub" style="margin:0;font-size:13px">Les filtres se combinent. Un filtre enregistré est gardé dans le dossier et sert pour toutes les années.</span></div></div>`;
+}
+/* Libellés courts des filtres actifs, chacun retirable */
+function libellesFiltres(F){
+  const md = v => { const [mm, jj] = v.split("-"); return `${jj}/${mm}`; }, out = [];
+  if(F.du && F.au) out.push(["du", `du ${md(F.du)} au ${md(F.au)}`, ["du","au"]]);
+  else if(F.du) out.push(["du", `à partir du ${md(F.du)}`]); else if(F.au) out.push(["au", `jusqu'au ${md(F.au)}`]);
+  if(F.nature) out.push(["nature", F.nature.startsWith("g:") ? GROUPES_F[F.nature.slice(2)] : esc(F.nature)]);
+  if(F.texte) out.push(["texte", `« ${esc(F.texte)} »`]);
+  const has = k => F[k] !== undefined && F[k] !== "";
+  if(has("min") && has("max")) out.push(["min", `${eur(F.min)} à ${eur(F.max)}`, ["min","max"]]);
+  else if(has("min")) out.push(["min", `≥ ${eur(F.min)}`]); else if(has("max")) out.push(["max", `≤ ${eur(F.max)}`]);
+  if(F.banque) out.push(["banque", F.banque === "oui" ? "pointées" : "non pointées"]);
+  if(F.piece) out.push(["piece", {avec:"justificatif joint", manquant:"justificatif manquant", inutile:"sans justificatif requis"}[F.piece]]);
+  return out;
+}
+function barreFiltres(F, list){
+  const sv = S.data.filtresEcritures || [];
+  const actifs = libellesFiltres(F).map(([k, l, ks]) => `<span class="fchip">${l}<button aria-label="Retirer ce filtre" title="Retirer" onclick="${(ks||[k]).map(x=>`setFiltre('${x}','')`).join(";")}">×</button></span>`).join("");
+  const enreg = sv.map(f => `<span class="fsave ${S.filtreNom===f.id?"on":""}"><button onclick="appliquerFiltre('${f.id}')">${esc(f.nom)}</button><button class="x" aria-label="Supprimer le filtre ${esc(f.nom)}" title="Supprimer" onclick="supprimerFiltre('${f.id}')">×</button></span>`).join("");
+  return `<div class="fchips">${sv.length ? `<span class="sub" style="margin:0 4px 0 0">Filtres enregistrés</span>${enreg}` : ""}
+    ${nbFiltres(F) ? `${sv.length?'<span style="width:12px"></span>':""}<span class="sub" style="margin:0 4px 0 0">${list.length} écriture${list.length>1?"s":""}</span>${actifs}<button class="btn ghost small noprint" onclick="viderFiltres()">Effacer</button>` : ""}</div>`;
+}
+function totalFiltre(list){
+  const rec = list.filter(e => grpNature(e) === "recette").reduce((s,e)=>s+e.montant,0), dep = list.filter(e => grpNature(e) !== "recette").reduce((s,e)=>s+e.montant,0);
+  const span = comptesVisibles() ? 4 : 3;
+  return `<tr class="tot"><td colspan="${span-1}"></td><td>Total filtré</td><td class="n">${rec?`<span style="color:var(--pos)">+${eur(rec)}</span>`:""}${rec&&dep?"<br>":""}${dep?`−${eur(dep)}`:""}${!rec&&!dep?eur(0):""}</td><td></td></tr>`;
+}
+function enregistrerFiltre(){
+  const F = S.fEcr || {}; if(!nbFiltres(F)) return;
+  const sugg = libellesFiltres(F).map(x => x[1].replace(/<[^>]+>/g,"").replace(/&[a-z#0-9]+;/g, c => ({"&amp;":"&","&quot;":'"',"&#39;":"'","&lt;":"<","&gt;":">"})[c]||c)).join(", ");
+  const nom = (prompt("Nom du filtre :", sugg.charAt(0).toUpperCase() + sugg.slice(1)) || "").trim(); if(!nom) return;
+  const sv = S.data.filtresEcritures ??= [], deja = sv.find(f => f.nom.toLowerCase() === nom.toLowerCase());
+  if(deja){ if(!confirm(`Un filtre « ${nom} » existe déjà. Le remplacer ?`)) return; deja.filtre = {...F}; S.filtreNom = deja.id; }
+  else { const f = {id:uid(), nom, filtre:{...F}}; sv.push(f); S.filtreNom = f.id; }
+  setDirty(); renderAll(); toast(`Filtre « ${nom} » enregistré.`);
+}
+function appliquerFiltre(id){
+  const f = (S.data.filtresEcritures||[]).find(x => x.id === id); if(!f) return;
+  if(S.filtreNom === id){ viderFiltres(); return; }
+  S.fEcr = {...f.filtre}; S.filtreNom = id; S.moisEcr = 0; renderAll();
+}
+function supprimerFiltre(id){
+  const f = (S.data.filtresEcritures||[]).find(x => x.id === id); if(!f || !confirm(`Supprimer le filtre « ${f.nom} » ?`)) return;
+  S.data.filtresEcritures = S.data.filtresEcritures.filter(x => x.id !== id); if(S.filtreNom === id) S.filtreNom = null;
+  setDirty(); renderAll();
 }
 /* Balance : soldes par compte, avec une barre proportionnelle */
 function vueBalanceVisuelle(y){
@@ -2827,7 +2950,7 @@ function vueBanque(){
       ${jauge([[classes,"var(--pos)"]], list.length, 8)}
       <div style="margin-top:14px">${list.map(ligneOp).join("")}</div></div>`
     : `<div class="vide">✓ Tout est imputé</div>`}
-  ${postes.length ? `<div class="card"><h3>Postes ${y}</h3><div class="barresh">${postes.map(([n,v])=>`<div class="bh" role="button" onclick="S.vueEcr='journal';allerA('ecritures')"><span>${libNature(n)}</span><div>${jauge([[v, COUL_GROUPE[NATURES[n]?.g||"charge"]]], maxP, 10)}</div><b>${eur0(v)}</b></div>`).join("")}</div></div>` : ""}
+  ${postes.length ? `<div class="card"><h3>Postes ${y}</h3><div class="barresh">${postes.map(([n,v])=>`<div class="bh" role="button" title="Voir ces écritures" onclick="S.vueEcr='journal';S.fEcr={nature:'${esc(n).replace(/'/g,"\\'")}'};S.filtreNom=null;S.moisEcr=0;allerA('ecritures')"><span>${libNature(n)}</span><div>${jauge([[v, COUL_GROUPE[NATURES[n]?.g||"charge"]]], maxP, 10)}</div><b>${eur0(v)}</b></div>`).join("")}</div></div>` : ""}
   <div class="card"><details><summary>Règles automatiques (${B.regles.length})</summary>
   ${B.regles.length ? `<div class="tablewrap" style="margin-top:10px"><table><tr><th>Si le libellé contient</th><th>Sens</th><th>Poste</th><th>Tiers</th><th></th></tr>
     ${B.regles.map(r=>`<tr><td><input value="${esc(r.motCle)}" style="width:100%;min-width:120px" onchange="majRegle('${r.id}','motCle',this.value)"></td><td>${r.sens==="credit"?"Crédit":"Débit"}</td><td>${libNat(r.nature)}</td>

@@ -2,7 +2,7 @@
 
 Petit outil web pour tenir la comptabilité d'une location meublée non professionnelle (LMNP) au régime réel simplifié :
 
-- saisie des recettes et dépenses ;
+- saisie des recettes et dépenses, avec des filtres combinables (période, nature ou compte, texte, montant, pointage sur le relevé, justificatif) que l'on peut enregistrer sous un nom ;
 - import du relevé bancaire CSV, avec tri des opérations, règles mémorisées par mot-clé et détection des doublons ;
 - une seule zone de dépôt pour les pièces : PDF, photos, échéanciers et factures électroniques de la plateforme agréée (Factur-X, UBL, CII, ZIP), lues et rattachées automatiquement au paiement de même montant ;
 - amortissements par composant (logement hors terrain, travaux, mobilier) ;
