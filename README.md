@@ -6,7 +6,7 @@ Petit outil web pour tenir la comptabilité d'une location meublée non professi
 - import du relevé bancaire CSV, avec tri des opérations, règles mémorisées par mot-clé et détection des doublons ;
 - une seule zone de dépôt pour les pièces : PDF, photos, échéanciers et factures électroniques de la plateforme agréée (Factur-X, UBL, CII, ZIP), lues et rattachées automatiquement au paiement de même montant ;
 - amortissements par composant (logement hors terrain, travaux, mobilier) ;
-- échéancier d'emprunt ;
+- échéancier d'emprunt mois par mois ; le PDF de la banque, une fois déposé, est lu dans le navigateur et comparé à l'échéancier du dossier, avec la liste des corrections à faire sur l'année ;
 - calcul du résultat fiscal, avec report des amortissements non déductibles (art. 39 C du CGI) et des déficits ;
 - fiche de déclaration case par case (2033-A, B, C, D, 2031, 2042-C-PRO).
 - plan de comptes derrière chaque nature (affichage au choix), balance des comptes et export FEC.
