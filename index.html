@@ -468,29 +468,33 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 .ecr .c{grid-column:2 / -1;font-size:13px;color:var(--muted)}
 @media (max-width:600px){ .ecr{grid-template-columns:38px minmax(0,1fr) auto} .ecr .a{grid-column:2 / -1;justify-content:flex-start} }
 .composer{border:1px dashed var(--line);background:var(--surface-2)}
-.qwrap{position:relative;margin:0 0 14px}
-.qbar{display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:6px 8px 6px 12px;min-height:46px;cursor:text}
+.fzone{display:flex;gap:8px;align-items:center;margin-left:auto;flex:0 1 560px;min-width:min(100%,300px)}
+.fzone>select{flex:none;width:auto;padding:8px 30px 8px 10px}
+.qwrap{position:relative;flex:1 1 auto;min-width:0}
+.qbar{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:0 8px 0 10px;height:40px;cursor:text}
 .qbar:focus-within{border-color:var(--accent);outline:2px solid var(--accent-soft)}
 .qbar>svg{color:var(--faint);flex:none}
-.qbar input{border:0;outline:0;padding:6px 2px;flex:1 1 140px;min-width:120px;background:none;font-size:14.5px}
+.qbar input{border:0;outline:0;padding:6px 2px;flex:1 1 auto;min-width:60px;background:none;font-size:14.5px}
 .qbar input:focus{outline:0}
+.qtype{flex:none;font-size:12.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:3px 8px;white-space:nowrap}
+.qmenu{position:absolute;z-index:30;left:0;right:0;min-width:300px;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:0 10px 30px rgba(40,20,35,.14);padding:6px;max-height:min(440px,62vh);overflow:auto}
+.qmenu .h{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);padding:8px 10px 4px}
+.qmenu .it{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:14px}
+.qmenu .it>svg{color:var(--muted);flex:none}
+.qmenu .it>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 0 auto;max-width:70%}
+.qmenu .it i{font-style:normal;color:var(--muted);font-size:12.5px;margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 100 auto;max-width:55%;padding-left:8px}
+.qmenu .it.on{background:var(--accent-soft);color:var(--accent)} .qmenu .it.on>svg{color:var(--accent)}
+.qmenu .it .x{border:0;background:none;color:var(--faint);cursor:pointer;font:inherit;border-radius:5px;padding:0 6px}
+.qmenu .it .x:hover{background:var(--surface-2);color:var(--text)}
+.qmenu .qvide{padding:10px;color:var(--muted);font-size:12.5px}
+.ftoks{display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
 .qtok{display:inline-flex;align-items:center;gap:5px;font-size:13px;border-radius:7px;padding:3px 3px 3px 9px;background:var(--accent-soft);color:var(--accent);max-width:100%}
 .qtok i{font-style:normal;color:var(--muted);font-size:12px}
 .qtok b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.qtok.off{opacity:.5}
 .qtok button{border:0;background:none;color:inherit;font:inherit;cursor:pointer;border-radius:5px;width:20px;height:20px;line-height:1;padding:0;flex:none}
 .qtok button:hover{background:var(--surface)}
-.qact{display:flex;align-items:center;gap:2px;margin-left:auto;flex:none}
-.qnb{font-size:12.5px;color:var(--muted);white-space:nowrap;padding:0 6px}
-.qmenu{position:absolute;z-index:30;left:0;right:0;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:0 10px 30px rgba(40,20,35,.14);padding:6px;max-height:min(420px,60vh);overflow:auto}
-.qmenu .h{font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;color:var(--faint);padding:8px 10px 4px}
-.qmenu .it{display:flex;align-items:center;gap:10px;padding:7px 10px;border-radius:7px;cursor:pointer;font-size:14px}
-.qmenu .it i{font-style:normal;color:var(--muted);font-size:12.5px;min-width:86px}
-.qmenu .it.on{background:var(--accent-soft);color:var(--accent)}
-.qmenu .it .x{margin-left:auto;border:0;background:none;color:var(--faint);cursor:pointer;font:inherit;border-radius:5px;padding:0 6px}
-.qmenu .it .x:hover{background:var(--surface-2);color:var(--text)}
-.qmenu .qvide{padding:10px;color:var(--muted);font-size:13.5px}
-@media print{ [data-print]{display:block!important} }
-.qmenu kbd{font:inherit;font-size:11.5px;border:1px solid var(--line);border-radius:4px;padding:0 4px;color:var(--muted)}
+@media (max-width:700px){ .fzone{flex-basis:100%;margin-left:0;flex-wrap:wrap} .fzone>select,.qwrap{flex:1 1 100%;width:100%} .qmenu{min-width:0} }
 .pj{white-space:nowrap}
 
 /* ---------- Visionneuse ---------- */
@@ -1127,19 +1131,17 @@ function vueEcritures(){
   const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Écritures ${y}</h1></div>
     ${segments("vueEcr", [["journal","Écritures"],["balance","Balance"],["grandlivre","Grand livre"]], vue)}</div>`;
   if(vue === "balance") return tete + vueBalanceVisuelle(y);
-  if(vue === "grandlivre") return tete + vueGrandLivre(y);
-  const mois = S.moisEcr || 0;
-  const J = S.fEcr || [], nbF = J.length;
-  const list = [...ex.ecritures].filter(e => (!mois || monthOf(e.date) === mois) && passeFiltre(e, J)).sort((a,b)=> a.date.localeCompare(b.date));
+  if(vue === "grandlivre") return tete + `<div class="row noprint" style="margin-bottom:14px">${zoneFiltres("gl")}</div>` + vueGrandLivre(y);
+  const J = S.fEcr || [], lignes = S.lignesEcr || "", nbF = J.length + (lignes ? 1 : 0);
+  const list = [...ex.ecritures].filter(e => passeLignes(e, lignes) && passeFiltre(e, J, "journal")).sort((a,b)=> a.date.localeCompare(b.date));
   const natOpts = sel => Object.keys(NATURES).map(n=>optNature(n, sel)).join("");
-  const nbMois = m => ex.ecritures.filter(e=>monthOf(e.date)===m).length;
   return tete + `
   ${lock ? `<div class="alert warn" style="align-items:center">Année clôturée : écritures verrouillées.<button class="btn small sec" style="margin-left:auto" onclick="S.unlocked[${y}]=true;renderAll()">Déverrouiller</button></div>` : ""}
   <div class="tuiles">${tuile("Encaissé", eur0(t.recettes), {col:"var(--pos)"})}${tuile("Payé", eur0(t.c242+t.c244+t.c294+t.remb))}${tuile("Écritures", ex.ecritures.length)}${tuile("Sans justificatif", piecesManquantes(y).length, {page:"pieces", col:piecesManquantes(y).length?"var(--warn)":""})}</div>
   <div class="row noprint" style="margin-bottom:14px">
     ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"+ Écriture"}</button>
     <button class="btn sec" onclick="dupliquerMois()">Recopier le dernier mois</button>`}
-    <div class="mois noprint">${["Tout",...MOIS].map((l,i)=>`<button class="${i===mois?"on":""}" ${i&&!nbMois(i)?'style="opacity:.45"':""} onclick="S.moisEcr=${i};renderAll()">${l.replace(".","")}</button>`).join("")}</div>
+    ${zoneFiltres("journal")}
   </div>
   ${ouvert ? `<div class="card composer noprint"><div class="form">
     <label>Date<input type="date" id="eDate" value="${ed?ed.date:(list.length?list[list.length-1].date:y+"-01-01")}"></label>
@@ -1150,7 +1152,7 @@ function vueEcritures(){
     <div class="row"><button class="btn" onclick="saveEcriture()">${ed?"Enregistrer":"Ajouter"}</button><button class="btn ghost" onclick="S.editId=null;S.composer=false;renderAll()">Annuler</button></div>
   </div>
   <datalist id="tiersList">${[...new Set(ex.ecritures.map(e=>e.tiers).filter(Boolean))].map(t=>`<option value="${esc(t)}">`).join("")}</datalist></div>` : ""}
-  ${barreRecherche(J, list)}
+  ${jetonsActifs("journal", list.length)}
   <div class="card" style="padding:8px 12px">${list.length ? `<div class="tablewrap"><table class="journal">
     <tr><th>Date</th><th>Tiers</th><th>Nature</th>${comptesVisibles()?"<th>Compte</th>":""}<th class="n">Montant</th><th></th></tr>
     ${list.map(e => { const g = grpNature(e); return `<tr class="${S.editId===e.id?"editing":""}">
@@ -1160,134 +1162,202 @@ function vueEcritures(){
       <td class="n" style="font-weight:500;color:${g==="recette"?"var(--pos)":"var(--text)"}">${g==="recette"?"+":"−"}${eur(e.montant)}</td>
       <td class="n noprint act">${piecesLigne(e)}${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();haut()">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</td></tr>`; }).join("")}
     ${nbF ? totalFiltre(list) : ""}
-  </table></div>` : nbF ? `<p class="sub" style="margin:14px 8px">Aucune écriture ne correspond aux filtres${mois?" ce mois-ci":""}. <a href="#" onclick="event.preventDefault();viderFiltres()">Retirer les filtres</a></p>`
-    : `<p class="sub" style="margin:14px 8px">Aucune écriture${mois?" ce mois-ci":""}. Importez le relevé (page Banque) ou ajoutez-en une.</p>`}</div>`;
+  </table></div>` : nbF ? `<p class="sub" style="margin:14px 8px">Aucune écriture ne correspond aux filtres. <a href="#" onclick="event.preventDefault();viderFiltres()">Retirer les filtres</a></p>`
+    : `<p class="sub" style="margin:14px 8px">Aucune écriture. Importez le relevé (page Banque) ou ajoutez-en une.</p>`}</div>`;
 }
-/* ---- Barre de recherche des écritures (façon Inqom) ----
-   On tape, la barre propose des filtres (nature, tiers, montant, période, pointage, justificatif, filtres enregistrés) ;
-   chaque choix devient un jeton, et les jetons se cumulent. Jetons de même type : nature, tiers et période s'additionnent
-   (l'un OU l'autre) ; texte et montant se resserrent (l'un ET l'autre). Les dates sont gardées sans l'année (MM-JJ)
-   pour qu'un filtre enregistré dans le dossier serve d'une année sur l'autre. */
+/* ---- Filtres des écritures et du grand livre (façon Inqom) ----
+   Une liste « Toutes les lignes » pour le tri rapide, et une barre « Filtrez par… » : on choisit un type de filtre
+   (compte, libellé contient, montant exact…) puis sa valeur ; on peut aussi taper directement, la barre devine.
+   Chaque filtre devient un jeton ; les jetons se cumulent. Jetons de même type : compte, nature, tiers, période et
+   journal s'additionnent (l'un OU l'autre), les autres se resserrent (l'un ET l'autre). Les dates sont gardées sans
+   l'année (MM-JJ) pour qu'un filtre enregistré dans le dossier serve d'une année sur l'autre. */
 const I_LOUPE = svgI('<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/>');
-const GROUPES_F = {recette:"Toutes les recettes", charge:"Toutes les charges", bilan:"Emprunt (capital)"};
 const sansAccents = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();
-const TYPES_J = {nature:"Nature", tiers:"Tiers", texte:"Contient", montant:"Montant", periode:"Période", banque:"Relevé", piece:"Justificatif"};
-const OU_J = ["nature","tiers","periode"], UNIQUE_J = ["banque","piece"];
+const FIN_MOIS = [31,29,31,30,31,30,31,31,30,31,30,31], p2 = n => String(n).padStart(2,"0");
+const jjmm = md => md.split("-").reverse().join("/");
+const IC_F = {
+  liste:'<path d="M9 6h11M9 12h11M9 18h11M4 6h1M4 12h1M4 18h1"/>', diese:'<path d="M5 9h14M5 15h14M10 4L8 20M16 4l-2 16"/>',
+  du:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M10 13l3 2.5-3 2.5"/>', au:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M14 13l-3 2.5 3 2.5"/>',
+  cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>', livre:'<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3zM5 17a3 3 0 0 1 3-3h11"/>',
+  texte:'<path d="M5 6V4h14v2M12 4v16M9 20h6"/>', euro:'<path d="M17 6.5A6 6 0 1 0 17 17.5M4 10.5h9M4 13.5h9"/>', min:'<path d="M5 18h14M7 14l5-8 5 8"/>', max:'<path d="M5 6h14M7 10l5 8 5-8"/>',
+  coche:'<path d="M5 12l4 4 10-10"/>', clip:'<path d="M16 8l-6.5 6.5a2 2 0 0 0 3 3L19 11a4 4 0 0 0-6-6l-7 7a6 6 0 0 0 9 9l5-5"/>',
+  tiers:'<circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/>', etoile:'<path d="M12 4l2.4 5 5.6.6-4.2 3.8 1.2 5.6L12 16.2 7 19l1.2-5.6L4 9.6 9.6 9z"/>',
+  nature:'<path d="M4 12l8-8h7v7l-8 8z"/><circle cx="15.5" cy="8.5" r="1"/>'
+};
+const icF = k => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC_F[k]}</svg>`;
+const LIB_BANQUE = {oui:"pointées sur le relevé", non:"non pointées"}, LIB_PIECE = {avec:"joint", manquant:"manquant", inutile:"non requis"};
+const JOURNAUX = {AN:"À-nouveaux", BQ:"Banque", OD:"Opérations diverses"};
+const comptesUtilises = () => [...new Set([...Object.keys(NATURES).map(compteNature), ...(S.vueEcr === "grandlivre" ? Object.keys(COMPTES) : [])])].filter(Boolean).sort();
+const tiersSaisis = () => [...new Map(Object.values(S.data.exercices).flatMap(ex => ex.ecritures || []).filter(e => e.tiers).map(e => [sansAccents(e.tiers), e.tiers])).values()].sort((a,b)=>a.localeCompare(b));
+function parseJJMM(q){ const m = String(q).trim().match(/^(\d{1,2})[\/.-](\d{1,2})(?:[\/.-]\d{2,4})?$/); return m && +m[2] >= 1 && +m[2] <= 12 && +m[1] >= 1 && +m[1] <= FIN_MOIS[+m[2]-1] ? `${p2(m[2])}-${p2(m[1])}` : null; }
+function parseMontantQ(q){ const v = parseMontant(String(q).replace(/€/g,"")); return String(q).trim() && !isNaN(v) && v >= 0 ? r2(v) : null; }
+function periodes(){
+  return [...MOIS_LONG.map((m, i) => ({t:"periode", du:`${p2(i+1)}-01`, au:`${p2(i+1)}-${FIN_MOIS[i]}`, l:m})),
+    ...[1,2,3,4].map(k => ({t:"periode", du:`${p2(3*k-2)}-01`, au:`${p2(3*k)}-${FIN_MOIS[3*k-1]}`, l:`${k}${k===1?"er":"e"} trimestre`})),
+    {t:"periode", du:"01-01", au:"06-30", l:"1er semestre"}, {t:"periode", du:"07-01", au:"12-31", l:"2e semestre"}];
+}
+/* Types de filtres proposés, dans l'ordre d'Inqom quand ils ont un sens ici.
+   liste : valeurs à choisir ; saisie : valeur tapée, convertie en jeton (null si invalide) */
+const FILTRES = [
+  {k:"compte", lib:"Compte", ic:"liste", liste:() => comptesUtilises().map(c => ({t:"compte", v:c}))},
+  {k:"comptePref", lib:"Compte commençant par…", ic:"diese", aide:"Par exemple 6, 61 ou 512", saisie:q => /^\d{1,6}$/.test(q.trim()) ? {t:"comptePref", v:q.trim()} : null},
+  {k:"du", lib:"Datées à partir du…", ic:"du", aide:"jj/mm", saisie:q => parseJJMM(q) && {t:"du", v:parseJJMM(q)}},
+  {k:"au", lib:"Datées jusqu'au…", ic:"au", aide:"jj/mm", saisie:q => parseJJMM(q) && {t:"au", v:parseJJMM(q)}},
+  {k:"periode", lib:"Période", ic:"cal", liste:periodes},
+  {k:"journal", lib:"Journal", ic:"livre", vue:"gl", liste:() => Object.keys(JOURNAUX).map(v => ({t:"journal", v}))},
+  {k:"banque", lib:"Pointage sur le relevé", ic:"coche", liste:() => ["oui","non"].map(v => ({t:"banque", v}))},
+  {k:"libPref", lib:"Libellé commençant par…", ic:"diese", saisie:q => q.trim() ? {t:"libPref", v:q.trim()} : null},
+  {k:"texte", lib:"Libellé contient…", ic:"texte", saisie:q => q.trim() ? {t:"texte", v:q.trim()} : null},
+  {k:"montant", lib:"Montant exact…", ic:"euro", aide:"0,00", saisie:q => parseMontantQ(q) != null ? {t:"montant", op:"=", v:parseMontantQ(q)} : null},
+  {k:"montantMin", lib:"Montant minimum…", ic:"min", aide:"0,00", saisie:q => parseMontantQ(q) != null ? {t:"montant", op:">=", v:parseMontantQ(q)} : null},
+  {k:"montantMax", lib:"Montant maximum…", ic:"max", aide:"0,00", saisie:q => parseMontantQ(q) != null ? {t:"montant", op:"<=", v:parseMontantQ(q)} : null},
+  {k:"nature", lib:"Nature", ic:"nature", liste:() => Object.keys(NATURES).map(v => ({t:"nature", v}))},
+  {k:"tiers", lib:"Tiers", ic:"tiers", liste:() => tiersSaisis().map(v => ({t:"tiers", v}))},
+  {k:"piece", lib:"Justificatif", ic:"clip", liste:() => ["manquant","avec","inutile"].map(v => ({t:"piece", v}))}
+];
+const TYPES_J = {compte:"Compte", comptePref:"Compte commençant par", du:"À partir du", au:"Jusqu'au", periode:"Période", journal:"Journal", banque:"Relevé",
+  libPref:"Libellé commençant par", texte:"Libellé contient", montant:"Montant", nature:"Nature", tiers:"Tiers", piece:"Justificatif"};
+const OU_J = ["compte","comptePref","nature","tiers","periode","journal"], UNIQUE_J = ["du","au","banque","piece"];
 const OPS_J = {"=":"=", ">=":"≥", "<=":"≤"};
-const LIB_BANQUE = {oui:"pointées", non:"non pointées"}, LIB_PIECE = {avec:"joint", manquant:"manquant", inutile:"non requis"};
 function libJeton(j){
-  if(j.t === "nature") return j.v.startsWith("g:") ? GROUPES_F[j.v.slice(2)] : (comptesVisibles() && compteNature(j.v) ? compteNature(j.v) + " · " : "") + j.v;
-  if(j.t === "texte") return `« ${j.v} »`;
-  if(j.t === "montant") return j.op === "entre" ? `${eur(j.v)} à ${eur(j.v2)}` : `${OPS_J[j.op]} ${eur(j.v)}`;
-  if(j.t === "periode") return j.l;
-  if(j.t === "banque") return LIB_BANQUE[j.v];
-  if(j.t === "piece") return LIB_PIECE[j.v];
+  switch(j.t){
+    case "compte": return `${j.v} · ${COMPTES[j.v] || ""}`;
+    case "nature": if(j.v.startsWith("g:")) return {recette:"Toutes les recettes", charge:"Toutes les charges", bilan:"Emprunt (capital)"}[j.v.slice(2)];
+      return (comptesVisibles() && compteNature(j.v) ? compteNature(j.v) + " · " : "") + j.v;
+    case "du": case "au": return jjmm(j.v);
+    case "periode": return j.l;
+    case "journal": return `${j.v} · ${JOURNAUX[j.v]}`;
+    case "banque": return LIB_BANQUE[j.v];
+    case "piece": return LIB_PIECE[j.v];
+    case "montant": return j.op === "entre" ? `${eur(j.v)} à ${eur(j.v2)}` : `${OPS_J[j.op]} ${eur(j.v)}`;
+    case "texte": case "libPref": return `« ${j.v} »`;
+  }
   return j.v;
 }
 const cleJeton = j => JSON.stringify([j.t, j.v, j.op, j.v2, j.du, j.au]);
-function testJeton(e, j){
+/* Un jeton s'applique à une écriture saisie (vue Écritures) ou à une ligne du grand livre ;
+   en grand livre, les critères propres aux saisies (tiers, pointage, justificatif, nature) écartent les à-nouveaux et les OD. */
+function testJeton(x, j, vue){
+  const gl = vue === "gl", e = gl ? x.src : x;
+  const compte = gl ? x.c : compteNature(x.nature), lib = gl ? x.lib : [x.tiers, x.nature].filter(Boolean).join(" - ");
+  switch(j.t){
+    case "compte": return compte === j.v;
+    case "comptePref": return String(compte).startsWith(j.v);
+    case "du": return x.date.slice(5) >= j.v;
+    case "au": return x.date.slice(5) <= j.v;
+    case "periode": { const md = x.date.slice(5); return md >= j.du && md <= j.au; }
+    case "journal": return (gl ? x.j : "BQ") === j.v;
+    case "libPref": return sansAccents(lib).startsWith(sansAccents(j.v)) || (!!e && sansAccents(e.libelleBanque).startsWith(sansAccents(j.v)));
+    case "texte": { const h = sansAccents([lib, e?.commentaire, e?.libelleBanque, e?.piece].join(" "));
+      return sansAccents(j.v).split(/\s+/).filter(Boolean).every(m => h.includes(m)); }
+    case "montant": { const m = gl ? (x.d || x.cr) : x.montant;
+      return j.op === "=" ? Math.abs(m - j.v) < 0.005 : j.op === ">=" ? m >= j.v - 0.004 : j.op === "<=" ? m <= j.v + 0.004 : m >= j.v - 0.004 && m <= j.v2 + 0.004; }
+  }
+  if(!e) return false;
   switch(j.t){
     case "nature": return j.v.startsWith("g:") ? grpNature(e) === j.v.slice(2) : e.nature === j.v;
     case "tiers": return sansAccents(e.tiers) === sansAccents(j.v);
-    case "texte": { const h = sansAccents([e.tiers, e.commentaire, e.libelleBanque, e.nature, compteNature(e.nature), e.piece].join(" "));
-      return sansAccents(j.v).split(/\s+/).filter(Boolean).every(m => h.includes(m)); }
-    case "montant": return j.op === "=" ? Math.abs(e.montant - j.v) < 0.005 : j.op === ">=" ? e.montant >= j.v - 0.004 : j.op === "<=" ? e.montant <= j.v + 0.004 : e.montant >= j.v - 0.004 && e.montant <= j.v2 + 0.004;
-    case "periode": { const md = e.date.slice(5); return md >= j.du && md <= j.au; }
     case "banque": return j.v === "oui" ? !!e.banque : !e.banque;
     case "piece": return j.v === "avec" ? !!e.piece : j.v === "manquant" ? !e.piece && pieceRequise(e) : !e.piece && !pieceRequise(e);
   }
   return true;
 }
-function passeFiltre(e, J){
+function passeFiltre(x, J, vue){
   const parType = {}; J.forEach(j => (parType[j.t] ??= []).push(j));
-  return Object.entries(parType).every(([t, js]) => OU_J.includes(t) ? js.some(j => testJeton(e, j)) : js.every(j => testJeton(e, j)));
+  return Object.entries(parType).every(([t, js]) => OU_J.includes(t) ? js.some(j => testJeton(x, j, vue)) : js.every(j => testJeton(x, j, vue)));
 }
+/* Liste « Toutes les lignes » : tri rapide, à côté de la barre */
+const LIGNES = {journal:[["","Toutes les lignes"],["recette","Recettes"],["depense","Dépenses"],["nonpointees","Non pointées"],["sanspiece","Justificatif manquant"]],
+  gl:[["","Tous les comptes"],["bilan","Comptes de bilan (1 à 5)"],["charges","Charges (6)"],["produits","Produits (7)"]]};
+function passeLignes(e, v){
+  if(!v) return true;
+  if(v === "recette") return grpNature(e) === "recette";
+  if(v === "depense") return grpNature(e) !== "recette";
+  if(v === "nonpointees") return !e.banque;
+  if(v === "sanspiece") return !e.piece && pieceRequise(e);
+  return true;
+}
+const passeLignesGL = (l, v) => !v || (v === "bilan" ? "12345".includes(l.c[0]) : v === "charges" ? l.c[0] === "6" : l.c[0] === "7");
 /* Ancienne forme des filtres enregistrés (un objet de critères) */
 function jetonsDepuisObjet(F){
-  const J = [], has = k => F[k] !== undefined && F[k] !== "", md = v => v.split("-").reverse().join("/");
-  if(F.du || F.au){ const du = F.du || "01-01", au = F.au || "12-31"; J.push({t:"periode", du, au, l:`du ${md(du)} au ${md(au)}`}); }
+  const J = [], has = k => F[k] !== undefined && F[k] !== "";
+  if(F.du) J.push({t:"du", v:F.du}); if(F.au) J.push({t:"au", v:F.au});
   if(F.nature) J.push({t:"nature", v:F.nature});
   if(F.texte) J.push({t:"texte", v:F.texte});
-  if(has("min") && has("max")) J.push({t:"montant", op:"entre", v:F.min, v2:F.max});
-  else if(has("min")) J.push({t:"montant", op:">=", v:F.min}); else if(has("max")) J.push({t:"montant", op:"<=", v:F.max});
+  if(has("min")) J.push({t:"montant", op:">=", v:F.min}); if(has("max")) J.push({t:"montant", op:"<=", v:F.max});
   if(F.banque) J.push({t:"banque", v:F.banque});
   if(F.piece) J.push({t:"piece", v:F.piece});
   return J;
 }
-/* Périodes reconnues dans la saisie : mois, trimestres, semestres, une date ou deux */
-const FIN_MOIS = [31,29,31,30,31,30,31,31,30,31,30,31], p2 = n => String(n).padStart(2,"0");
-function periodesTapees(q){
-  const out = [], n = sansAccents(q).trim();
-  if(!n) return out;
-  MOIS_LONG.forEach((m, i) => { if(sansAccents(m).startsWith(n) && n.length >= 2) out.push({t:"periode", du:`${p2(i+1)}-01`, au:`${p2(i+1)}-${FIN_MOIS[i]}`, l:m}); });
-  let r = n.match(/^t([1-4])$/) || n.match(/^([1-4])(?:er|e|eme)? ?trim/);
-  if(r){ const k = +r[1]; out.push({t:"periode", du:`${p2(3*k-2)}-01`, au:`${p2(3*k)}-${FIN_MOIS[3*k-1]}`, l:`${k}${k===1?"er":"e"} trimestre`}); }
-  r = n.match(/^s([12])$/) || n.match(/^([12])(?:er|e|eme)? ?sem/);
-  if(r){ const k = +r[1]; out.push({t:"periode", du:k===1?"01-01":"07-01", au:k===1?"06-30":"12-31", l:`${k}${k===1?"er":"e"} semestre`}); }
-  const d = x => { const m = x.match(/^(\d{1,2})[\/.-](\d{1,2})$/); return m && +m[2] >= 1 && +m[2] <= 12 && +m[1] >= 1 && +m[1] <= FIN_MOIS[+m[2]-1] ? `${p2(m[2])}-${p2(m[1])}` : null; };
-  const fmt = v => v.split("-").reverse().join("/");
-  r = n.replace(/^du /,"").split(/\s*(?:au|a|-|→)\s+|\s+-\s*|\s*–\s*/);
-  if(r.length === 2 && d(r[0]) && d(r[1])){ const [a, b] = [d(r[0]), d(r[1])].sort(); out.push({t:"periode", du:a, au:b, l:`du ${fmt(a)} au ${fmt(b)}`}); }
-  else if(d(n)) out.push({t:"periode", du:d(n), au:d(n), l:`le ${fmt(d(n))}`});
+/* Saisie directe sans type choisi : la barre devine (montant, date, période, compte, nature, tiers…) */
+function devine(q){
+  const n = sansAccents(q).trim(), out = []; if(!n) return out;
+  const mt = n.replace(/\s/g,"").replace(/€$/,"").match(/^(>=|<=|>|<|=)?(\d+(?:[.,]\d{1,2})?)(?:(?:-|a)(\d+(?:[.,]\d{1,2})?))?$/);
+  if(mt){ const v = parseMontant(mt[2]), op = {">":">=", "<":"<=", ">=":">=", "<=":"<=", "=":"="}[mt[1]||""];
+    if(mt[3]) out.push({t:"montant", op:"entre", v:Math.min(v, parseMontant(mt[3])), v2:Math.max(v, parseMontant(mt[3]))});
+    else (op ? [op] : ["="]).forEach(o => out.push({t:"montant", op:o, v})); }
+  // Un ou deux chiffres : plutôt un début de compte qu'un montant
+  if(/^\d{1,6}$/.test(n)){ const cs = [...(n.length < 6 ? [{t:"comptePref", v:n}] : []), ...comptesUtilises().filter(c => c.startsWith(n)).slice(0, 4).map(c => ({t:"compte", v:c}))];
+    if(n.length <= 2) out.unshift(...cs); else out.push(...cs); }
+  if(parseJJMM(n)){ out.push({t:"du", v:parseJJMM(n)}, {t:"au", v:parseJJMM(n)}); }
+  const tr = n.match(/^t([1-4])$/), se = n.match(/^s([12])$/);
+  periodes().filter(p => (n.length >= 3 && sansAccents(p.l).startsWith(n)) || (tr && p.l.startsWith(tr[1]) && p.l.includes("trim")) || (se && p.l.startsWith(se[1]) && p.l.includes("sem"))).forEach(p => out.push(p));
+  if(n.length >= 2){
+    Object.keys(NATURES).filter(k => sansAccents(k).includes(n)).slice(0, 4).forEach(v => out.push({t:"nature", v}));
+    tiersSaisis().filter(t => sansAccents(t).includes(n)).slice(0, 4).forEach(v => out.push({t:"tiers", v}));
+  }
+  if(n.length >= 3 && "pointees pointage releve".split(" ").some(k => k.startsWith(n) || n.startsWith(k.slice(0,5)))) out.push({t:"banque", v:"oui"}, {t:"banque", v:"non"});
+  if(n.length >= 3 && "justificatif piece manquant".split(" ").some(k => k.startsWith(n))) out.push({t:"piece", v:"manquant"}, {t:"piece", v:"avec"});
+  if(!mt) out.push({t:"texte", v:q.trim()});
   return out;
 }
-/* Suggestions pour la saisie en cours : [{titre, items:[{jetons|filtre, type, lib}]}] */
-function suggestions(q){
-  const n = sansAccents(q).trim(), sv = S.data.filtresEcritures || [], groupes = [];
-  const J = S.fEcr || [], deja = new Set(J.map(cleJeton));
-  const it = (j, extra) => ({jetons:[j], type:TYPES_J[j.t], lib:esc(libJeton(j)), ...extra});
-  const neuf = x => x.filtre || x.jetons.some(j => !deja.has(cleJeton(j)));
-  const push = (titre, items) => { items = items.filter(neuf); if(items.length) groupes.push({titre, items}); };
-  const ecr = Object.values(S.data.exercices).flatMap(ex => ex.ecritures || []);
-  if(!n){
-    push("Filtres enregistrés", sv.map(f => ({filtre:f.id, type:"Enregistré", lib:`<b>${esc(f.nom)}</b> <small style="color:var(--muted)">${esc(f.jetons.map(libJeton).join(", "))}</small>`})));
-    push("Filtrer par", [it({t:"nature", v:"g:recette"}), it({t:"nature", v:"g:charge"}), it({t:"banque", v:"non"}), it({t:"piece", v:"manquant"})]);
+/* Contenu de la liste déroulante : [{titre, items:[{jetons|type|filtre, ic, lib, aide}]}] */
+function suggestions(vue){
+  const q = S.qEcr || "", n = sansAccents(q).trim(), groupes = [], sv = S.data.filtresEcritures || [];
+  const deja = new Set((S.fEcr || []).map(cleJeton)), ty = FILTRES.find(f => f.k === S.qType);
+  const itJ = j => ({jetons:[j], ic:(FILTRES.find(f => f.k === j.t) || {ic:j.t==="montant"?"euro":"texte"}).ic, lib:esc(libJeton(j)), aide:TYPES_J[j.t]});
+  const push = (titre, items) => { items = items.filter(x => !x.jetons || x.jetons.some(j => !deja.has(cleJeton(j)))); if(items.length) groupes.push({titre, items}); };
+  if(ty){
+    if(ty.liste) push(ty.lib, ty.liste().filter(j => !n || sansAccents(libJeton(j)).includes(n)).map(j => ({...itJ(j), aide:""})));
+    else { const j = ty.saisie(q); push(ty.lib, j ? [{...itJ(j), lib:`Ajouter <b>${esc(libJeton(j))}</b>`, aide:"Entrée"}] : []); }
     return groupes;
   }
-  push("Filtres enregistrés", sv.filter(f => sansAccents(f.nom).includes(n)).map(f => ({filtre:f.id, type:"Enregistré", lib:`<b>${esc(f.nom)}</b>`})));
-  // Montants : « 300 », « >300 », « <= 50 », « 100-500 »
-  const m = n.replace(/\s/g,"").replace(/€$/,"").match(/^(>=|<=|>|<|=)?(\d+(?:[.,]\d{1,2})?)(?:(?:-|a|à)(\d+(?:[.,]\d{1,2})?))?$/);
-  if(m){ const v = parseMontant(m[2]), op = {">":">=", "<":"<=", ">=":">=", "<=":"<=", "=":"="}[m[1]||""];
-    if(m[3]) push("Montant", [it({t:"montant", op:"entre", v:Math.min(v, parseMontant(m[3])), v2:Math.max(v, parseMontant(m[3]))})]);
-    else push("Montant", (op ? [op] : ["=", ">=", "<="]).map(o => it({t:"montant", op:o, v})));
-  }
-  // Natures et groupes, par nom ou par numéro de compte
-  const nat = [...Object.entries(GROUPES_F).filter(([g,l]) => sansAccents(l).includes(n) || sansAccents(g).startsWith(n)).map(([g]) => "g:"+g),
-    ...Object.keys(NATURES).filter(k => sansAccents(k).includes(n) || compteNature(k).startsWith(n.replace(/\s/g,"")))];
-  push("Nature ou compte", nat.slice(0, 6).map(v => it({t:"nature", v})));
-  // Tiers déjà saisis
-  const tiers = [...new Map(ecr.filter(e => e.tiers && sansAccents(e.tiers).includes(n)).map(e => [sansAccents(e.tiers), e.tiers])).values()];
-  push("Tiers", tiers.slice(0, 5).map(v => it({t:"tiers", v})));
-  push("Période", periodesTapees(q).map(j => it(j)));
-  // Pointage et justificatif, par mot-clé
-  const mot = (...ks) => ks.some(k => k.startsWith(n) || (n.length >= 3 && k.includes(n)));
-  push("Relevé bancaire", mot("pointees","pointage","releve","rapprochees","banque","non pointees") ? ["oui","non"].map(v => it({t:"banque", v})) : []);
-  push("Justificatif", mot("justificatif","piece","manquant","joint","facture","sans justificatif") ? ["manquant","avec","inutile"].map(v => it({t:"piece", v})) : []);
-  // Recherche libre : en tête si rien d'autre ne correspond (c'est alors ce que fait Entrée)
-  push("Rechercher", [it({t:"texte", v:q.trim()}, {lib:`Tout ce qui contient <b>« ${esc(q.trim())} »</b>`})]);
+  push("Filtres enregistrés", sv.filter(f => !n || sansAccents(f.nom).includes(n)).map(f => ({filtre:f.id, ic:"etoile", lib:`<b>${esc(f.nom)}</b>`, aide:esc(f.jetons.map(libJeton).join(", "))})));
+  if(n) push("Suggestions", devine(q).map(itJ));
+  push("Filtrez par", FILTRES.filter(f => (!f.vue || f.vue === vue) && (!n || sansAccents(f.lib).includes(n))).map(f => ({type:f.k, ic:f.ic, lib:f.lib})));
   return groupes;
 }
-function barreRecherche(J, list){
-  const toks = J.map((j, i) => `<span class="qtok"><i>${TYPES_J[j.t]}</i><b>${esc(libJeton(j))}</b><button aria-label="Retirer ce filtre" title="Retirer" onclick="event.stopPropagation();retirerJeton(${i})">×</button></span>`).join("");
-  return `<div class="qwrap noprint"><div class="qbar" onclick="$('#qEcr').focus()">${I_LOUPE}${toks}
-    <input id="qEcr" type="text" autocomplete="off" spellcheck="false" aria-label="Filtrer les écritures" placeholder="${J.length ? "Ajouter un filtre…" : "Filtrer : nature, tiers, montant, mois, « pointées », « justificatif »…"}"
-      value="${esc(S.qEcr||"")}" onfocus="ouvrirMenu()" oninput="S.qEcr=this.value;S.qSel=0;majMenu()" onkeydown="toucheRecherche(event)" onblur="setTimeout(fermerMenu,120)">
-    ${J.length ? `<span class="qact"><span class="qnb">${list.length} écriture${list.length>1?"s":""}</span><button class="btn ghost small" title="Enregistrer cette recherche sous un nom" onclick="event.stopPropagation();enregistrerFiltre()">☆ Enregistrer</button><button class="btn ghost small" onclick="event.stopPropagation();viderFiltres()">Effacer</button></span>` : ""}
-  </div><div id="qMenu" class="qmenu hide" role="listbox"></div></div>
-  ${J.length ? `<div class="sub" style="margin:-8px 0 12px;display:none" data-print>${J.map(j => `${TYPES_J[j.t]} ${esc(libJeton(j))}`).join(" · ")}</div>` : ""}`;
+function zoneFiltres(vue){
+  const cle = vue === "gl" ? "lignesGL" : "lignesEcr", ty = FILTRES.find(f => f.k === S.qType);
+  return `<div class="fzone noprint">
+    <select aria-label="Lignes affichées" onchange="S['${cle}']=this.value;renderAll()">${LIGNES[vue].map(([k,l]) => `<option value="${k}" ${(S[cle]||"")===k?"selected":""}>${l}</option>`).join("")}</select>
+    <div class="qwrap"><div class="qbar" onclick="$('#qEcr').focus()">${I_LOUPE}${ty ? `<span class="qtype">${esc(ty.lib.replace("…",""))}</span>` : ""}
+      <input id="qEcr" type="text" autocomplete="off" spellcheck="false" aria-label="Filtrer" placeholder="${ty ? esc(ty.aide || (ty.liste ? "Chercher…" : "Valeur…")) : "Filtrez par…"}"
+        value="${esc(S.qEcr||"")}" onfocus="ouvrirMenu()" oninput="S.qEcr=this.value;S.qSel=0;majMenu()" onkeydown="toucheRecherche(event)" onblur="setTimeout(fermerMenu,120)">
+    </div><div id="qMenu" class="qmenu hide" role="listbox"></div></div></div>`;
+}
+function jetonsActifs(vue, nb){
+  const J = S.fEcr || [], cle = vue === "gl" ? "lignesGL" : "lignesEcr", lg = S[cle] || "";
+  if(!J.length && !lg) return "";
+  const lgLib = lg ? LIGNES[vue].find(x => x[0] === lg)[1] : "";
+  return `<div class="ftoks"><span class="sub" style="margin:0 4px 0 0">${nb} ${vue === "gl" ? "ligne" : "écriture"}${nb>1?"s":""}</span>
+    ${lg ? `<span class="qtok"><b>${esc(lgLib)}</b><button aria-label="Retirer" title="Retirer" onclick="S['${cle}']='';renderAll()">×</button></span>` : ""}
+    ${J.map((j, i) => `<span class="qtok"><i>${TYPES_J[j.t]}</i><b>${esc(libJeton(j))}</b><button aria-label="Retirer ce filtre" title="Retirer" onclick="retirerJeton(${i})">×</button></span>`).join("")}
+    <span class="noprint" style="margin-left:auto;display:flex;gap:2px">${J.length ? `<button class="btn ghost small" title="Enregistrer ces filtres sous un nom" onclick="enregistrerFiltre()">☆ Enregistrer</button>` : ""}<button class="btn ghost small" onclick="viderFiltres()">Tout effacer</button></span></div>`;
 }
 function ouvrirMenu(){ S.qOuvert = true; S.qSel ??= 0; majMenu(); }
 function fermerMenu(force){ if(!force && document.activeElement?.id === "qEcr") return; S.qOuvert = false; $("#qMenu")?.classList.add("hide"); }
 function majMenu(){
   const menu = $("#qMenu"); if(!menu) return;
   if(!S.qOuvert){ menu.classList.add("hide"); return; }
-  const gs = suggestions(S.qEcr || ""); S.qItems = gs.flatMap(g => g.items);
+  const gs = suggestions(S.vueEcr === "grandlivre" ? "gl" : "journal"); S.qItems = gs.flatMap(g => g.items);
   if(S.qSel >= S.qItems.length) S.qSel = 0;
+  const ty = FILTRES.find(f => f.k === S.qType);
   let k = 0;
-  menu.innerHTML = gs.length ? gs.map(g => `<div class="h">${g.titre}</div>` + g.items.map(x => { const i = k++;
-    return `<div class="it ${i===S.qSel?"on":""}" role="option" aria-selected="${i===S.qSel}" onmousedown="event.preventDefault();choisirSugg(${i})" onmousemove="if(S.qSel!==${i}){S.qSel=${i};majMenu()}"><i>${x.type}</i><span>${x.lib}</span>${x.filtre?`<button class="x" title="Supprimer ce filtre enregistré" onmousedown="event.preventDefault();event.stopPropagation();supprimerFiltre('${x.filtre}')">×</button>`:""}</div>`; }).join("")).join("")
-    + `<div class="qvide" style="font-size:12px">${(S.qEcr||"").trim() ? "" : "Tapez une nature, un tiers, un compte, un mois, T1 à T4, un montant (300, &gt;300, 100-500) ou une date (15/03 au 30/04). "}<kbd>↑</kbd> <kbd>↓</kbd> pour choisir, <kbd>Entrée</kbd> pour ajouter, <kbd>⌫</kbd> retire le dernier filtre</div>`
-    : `<div class="qvide">Aucune suggestion. Entrée cherche le texte tel quel.</div>`;
+  menu.innerHTML = gs.map(g => `<div class="h">${g.titre}</div>` + g.items.map(x => { const i = k++;
+    return `<div class="it ${i===S.qSel?"on":""}" role="option" aria-selected="${i===S.qSel}" onmousedown="event.preventDefault();choisirSugg(${i})" onmousemove="if(S.qSel!==${i}){S.qSel=${i};majMenu()}">${icF(x.ic)}<span>${x.lib}</span>${x.aide?`<i>${x.aide}</i>`:""}${x.filtre?`<button class="x" title="Supprimer ce filtre enregistré" onmousedown="event.preventDefault();event.stopPropagation();supprimerFiltre('${x.filtre}')">×</button>`:""}</div>`; }).join("")).join("")
+    || `<div class="qvide">${ty ? (ty.liste ? "Aucune valeur ne correspond." : `Tapez la valeur${ty.aide ? ` (${esc(ty.aide)})` : ""}, puis Entrée.`) : "Aucune suggestion."}</div>`;
+  if(ty) menu.innerHTML += `<div class="qvide">⌫ sur la barre vide ou Échap pour changer de type de filtre.</div>`;
   menu.classList.remove("hide");
   menu.querySelector(".it.on")?.scrollIntoView({block:"nearest"});
 }
@@ -1295,16 +1365,22 @@ function toucheRecherche(ev){
   const n = (S.qItems || []).length;
   if(ev.key === "ArrowDown"){ ev.preventDefault(); if(!S.qOuvert) return ouvrirMenu(); S.qSel = n ? (S.qSel + 1) % n : 0; majMenu(); }
   else if(ev.key === "ArrowUp"){ ev.preventDefault(); S.qSel = n ? (S.qSel - 1 + n) % n : 0; majMenu(); }
-  else if(ev.key === "Enter"){ ev.preventDefault(); if(n) choisirSugg(S.qSel || 0); else if((S.qEcr||"").trim()) ajouterJetons([{t:"texte", v:S.qEcr.trim()}]); }
-  else if(ev.key === "Escape"){ if(S.qEcr){ S.qEcr = ""; ev.target.value = ""; majMenu(); } else { fermerMenu(true); ev.target.blur(); } }
-  else if(ev.key === "Backspace" && !ev.target.value && (S.fEcr||[]).length){ ev.preventDefault(); retirerJeton(S.fEcr.length - 1); }
+  else if(ev.key === "Enter"){ ev.preventDefault(); if(n) choisirSugg(S.qSel || 0); }
+  else if(ev.key === "Escape"){
+    if(S.qEcr){ S.qEcr = ""; ev.target.value = ""; majMenu(); }
+    else if(S.qType){ S.qType = null; renderAll(); refocusBarre(); }
+    else { fermerMenu(true); ev.target.blur(); } }
+  else if(ev.key === "Backspace" && !ev.target.value){
+    if(S.qType){ ev.preventDefault(); S.qType = null; renderAll(); refocusBarre(); }
+    else if((S.fEcr||[]).length){ ev.preventDefault(); retirerJeton(S.fEcr.length - 1); } }
 }
 function choisirSugg(i){
   const x = (S.qItems || [])[i]; if(!x) return;
-  if(x.filtre){ const f = S.data.filtresEcritures.find(f => f.id === x.filtre); if(f) ajouterJetons(f.jetons); }
-  else ajouterJetons(x.jetons);
+  if(x.type){ S.qType = x.type; S.qEcr = ""; S.qSel = 0; renderAll(); refocusBarre(); return; }
+  if(x.filtre){ const f = S.data.filtresEcritures.find(f => f.id === x.filtre); if(f) ajouterJetons(f.jetons); return; }
+  ajouterJetons(x.jetons);
 }
-/* Après un rendu complet, on remet le curseur dans la barre, menu ouvert */
+/* Après un rendu complet, on remet le curseur dans la barre, liste ouverte */
 function refocusBarre(){ const el = $("#qEcr"); if(el){ el.focus(); S.qOuvert = true; majMenu(); } }
 function ajouterJetons(js){
   let J = [...(S.fEcr || [])];
@@ -1312,10 +1388,10 @@ function ajouterJetons(js){
     if(UNIQUE_J.includes(j.t)) J = J.filter(x => x.t !== j.t);
     if(!J.some(x => cleJeton(x) === cleJeton(j))) J.push({...j});
   });
-  S.fEcr = J; S.qEcr = ""; S.qSel = 0; renderAll(); refocusBarre();
+  S.fEcr = J; S.qEcr = ""; S.qType = null; S.qSel = 0; renderAll(); refocusBarre();
 }
-function retirerJeton(i){ S.fEcr = (S.fEcr || []).filter((_, k) => k !== i); renderAll(); refocusBarre(); }
-function viderFiltres(){ S.fEcr = []; S.qEcr = ""; renderAll(); }
+function retirerJeton(i){ S.fEcr = (S.fEcr || []).filter((_, k) => k !== i); renderAll(); }
+function viderFiltres(){ S.fEcr = []; S.qEcr = ""; S.qType = null; S.lignesEcr = ""; S.lignesGL = ""; renderAll(); }
 function totalFiltre(list){
   const rec = list.filter(e => grpNature(e) === "recette").reduce((s,e)=>s+e.montant,0), dep = list.filter(e => grpNature(e) !== "recette").reduce((s,e)=>s+e.montant,0);
   const span = comptesVisibles() ? 4 : 3;
@@ -1323,19 +1399,19 @@ function totalFiltre(list){
 }
 function enregistrerFiltre(){
   const J = S.fEcr || []; if(!J.length) return;
-  const sugg = J.map(libJeton).join(", ");
+  const sugg = J.map(libJeton).join(", ").replace(/[«»]/g,"").replace(/\s+/g," ").trim();
   const nom = (prompt("Nom de ce filtre :", sugg.charAt(0).toUpperCase() + sugg.slice(1)) || "").trim(); if(!nom) return;
   const sv = S.data.filtresEcritures ??= [], deja = sv.find(f => f.nom.toLowerCase() === nom.toLowerCase());
   if(deja){ if(!confirm(`Un filtre « ${nom} » existe déjà. Le remplacer ?`)) return; deja.jetons = J.map(j => ({...j})); }
   else sv.push({id:uid(), nom, jetons:J.map(j => ({...j}))});
-  setDirty(); renderAll(); toast(`Filtre « ${nom} » enregistré : tapez son nom dans la barre pour le rappeler.`);
+  setDirty(); renderAll(); toast(`Filtre « ${nom} » enregistré : il apparaît en tête de la liste « Filtrez par… ».`);
 }
 function supprimerFiltre(id){
   const f = (S.data.filtresEcritures||[]).find(x => x.id === id); if(!f || !confirm(`Supprimer le filtre enregistré « ${f.nom} » ?`)) return;
   S.data.filtresEcritures = S.data.filtresEcritures.filter(x => x.id !== id);
   setDirty(); renderAll(); refocusBarre();
 }
-/* « / » place le curseur dans la barre de recherche depuis la page Écritures */
+/* « / » place le curseur dans la barre de filtres */
 document.addEventListener("keydown", ev => {
   if(ev.key !== "/" || ev.metaKey || ev.ctrlKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) return;
   const el = $("#qEcr"); if(el){ ev.preventDefault(); el.focus(); }
@@ -1356,13 +1432,15 @@ function vueBalanceVisuelle(y){
 }
 /* Grand livre : mouvements par compte avec solde progressif */
 function vueGrandLivre(y){
-  const parC = {};
-  ecrituresComptables(y).forEach(e => e.lignes.forEach(l => (parC[l.c] ??= []).push({date:e.date, j:e.journal, lib:e.lib, d:l.d||0, cr:l.cr||0})));
-  const ouvert = S.glOuvert || {};
-  return Object.keys(parC).sort().map(c => {
+  const parC = {}, J = S.fEcr || [], lignes = S.lignesGL || "", filtre = J.length || lignes;
+  ecrituresComptables(y).forEach(e => e.lignes.forEach(l => { const x = {c:l.c, date:e.date, j:e.journal, lib:e.lib, d:l.d||0, cr:l.cr||0, src:e.src};
+    if(passeLignesGL(x, lignes) && passeFiltre(x, J, "gl")) (parC[l.c] ??= []).push(x); }));
+  const ouvert = S.glOuvert || {}, n = Object.values(parC).reduce((s,ls)=>s+ls.length,0);
+  if(filtre && !n) return jetonsActifs("gl", 0) + `<p class="sub" style="margin:14px 8px">Aucune ligne ne correspond aux filtres. <a href="#" onclick="event.preventDefault();viderFiltres()">Retirer les filtres</a></p>`;
+  return (filtre ? jetonsActifs("gl", n) : "") + Object.keys(parC).sort().map(c => {
     const ls = parC[c].sort((a,b)=>a.date.localeCompare(b.date)); let s = 0;
     const D = ls.reduce((x,l)=>x+l.d,0), C = ls.reduce((x,l)=>x+l.cr,0), solde = D - C;
-    return `<details class="card gl" ${ouvert[c]?"open":""} ontoggle="(S.glOuvert??={})['${c}']=this.open"><summary><span class="cpt">${c}</span><b>${esc(COMPTES[c]||"")}</b><span class="pill">${ls.length}</span><span style="margin-left:auto;font-weight:600">${eur(Math.abs(solde))} ${solde>=0.005?"D":solde<=-0.005?"C":""}</span></summary>
+    return `<details class="card gl" ${ouvert[c]||filtre?"open":""} ontoggle="(S.glOuvert??={})['${c}']=this.open"><summary><span class="cpt">${c}</span><b>${esc(COMPTES[c]||"")}</b><span class="pill">${ls.length}</span><span style="margin-left:auto;font-weight:600">${eur(Math.abs(solde))} ${solde>=0.005?"D":solde<=-0.005?"C":""}</span></summary>
       <div class="tablewrap"><table><tr><th>Date</th><th>Jnl</th><th>Libellé</th><th class="n">Débit</th><th class="n">Crédit</th><th class="n">Solde</th></tr>
       ${ls.map(l => { s += l.d - l.cr; return `<tr><td style="white-space:nowrap">${fmtDate(l.date)}</td><td><span class="pill">${l.j}</span></td><td>${esc(l.lib)}</td><td class="n">${l.d?eur(l.d):""}</td><td class="n">${l.cr?eur(l.cr):""}</td><td class="n">${eur(Math.abs(s))} ${s>=0.005?"D":s<=-0.005?"C":""}</td></tr>`; }).join("")}
       <tr class="tot"><td></td><td></td><td>Total</td><td class="n">${eur(D)}</td><td class="n">${eur(C)}</td><td class="n">${eur(Math.abs(solde))}</td></tr></table></div></details>`;
@@ -2018,7 +2096,7 @@ function etatsFinanciers(y){
 /* Reconstitue les écritures comptables d'un exercice à partir des saisies (rien n'est stocké en plus) */
 function ecrituresComptables(y){
   const out = [], c = calculAnnee(y), fin = `${y}-12-31`, debut = `${y}-01-01`;
-  const add = (journal, date, lib, lignes, piece) => { lignes = lignes.filter(l => Math.abs(l.d||0) > 0.004 || Math.abs(l.cr||0) > 0.004); if(lignes.length) out.push({journal, date, lib, lignes, piece}); };
+  const add = (journal, date, lib, lignes, piece, src) => { lignes = lignes.filter(l => Math.abs(l.d||0) > 0.004 || Math.abs(l.cr||0) > 0.004); if(lignes.length) out.push({journal, date, lib, lignes, piece, src}); };
   // À-nouveaux : immobilisations, amortissements antérieurs, emprunt ; le compte de l'exploitant équilibre
   const an = [];
   S.data.immobilisations.forEach(i => {
@@ -2037,7 +2115,7 @@ function ecrituresComptables(y){
   [...(exercice(y).ecritures||[])].sort((a,b)=>a.date.localeCompare(b.date)).forEach(e => {
     const k = compteNature(e.nature), m = r2(e.montant), lib = [e.tiers, e.nature].filter(Boolean).join(" - ");
     const recette = (NATURES[e.nature]?.g || (e.sens==="recette"?"recette":"charge")) === "recette";
-    add("BQ", e.date, lib, recette ? [{c:"512000", d:m}, {c:k, cr:m}] : [{c:k, d:m}, {c:"512000", cr:m}], e.piece ? e.piece.split("/").pop() : e.id);
+    add("BQ", e.date, lib, recette ? [{c:"512000", d:m}, {c:k, cr:m}] : [{c:k, d:m}, {c:"512000", cr:m}], e.piece ? e.piece.split("/").pop() : e.id, e);
   });
   if(S.data.emprunts.length && !c.interetsSaisis && c.interetsEch > 0.004)
     add("OD", fin, "Intérêts d'emprunt selon l'échéancier", [{c:"661160", d:r2(c.interetsEch)}, {c:"512000", cr:r2(c.interetsEch)}]);
@@ -3033,7 +3111,7 @@ function vueBanque(){
       ${jauge([[classes,"var(--pos)"]], list.length, 8)}
       <div style="margin-top:14px">${list.map(ligneOp).join("")}</div></div>`
     : `<div class="vide">✓ Tout est imputé</div>`}
-  ${postes.length ? `<div class="card"><h3>Postes ${y}</h3><div class="barresh">${postes.map(([n,v])=>`<div class="bh" role="button" title="Voir ces écritures" onclick="S.vueEcr='journal';S.fEcr=[{t:'nature',v:'${esc(n).replace(/'/g,"\\'")}'}];S.moisEcr=0;allerA('ecritures')"><span>${libNature(n)}</span><div>${jauge([[v, COUL_GROUPE[NATURES[n]?.g||"charge"]]], maxP, 10)}</div><b>${eur0(v)}</b></div>`).join("")}</div></div>` : ""}
+  ${postes.length ? `<div class="card"><h3>Postes ${y}</h3><div class="barresh">${postes.map(([n,v])=>`<div class="bh" role="button" title="Voir ces écritures" onclick="S.vueEcr='journal';S.fEcr=[{t:'nature',v:'${esc(n).replace(/'/g,"\\'")}'}];S.lignesEcr='';allerA('ecritures')"><span>${libNature(n)}</span><div>${jauge([[v, COUL_GROUPE[NATURES[n]?.g||"charge"]]], maxP, 10)}</div><b>${eur0(v)}</b></div>`).join("")}</div></div>` : ""}
   <div class="card"><details><summary>Règles automatiques (${B.regles.length})</summary>
   ${B.regles.length ? `<div class="tablewrap" style="margin-top:10px"><table><tr><th>Si le libellé contient</th><th>Sens</th><th>Poste</th><th>Tiers</th><th></th></tr>
     ${B.regles.map(r=>`<tr><td><input value="${esc(r.motCle)}" style="width:100%;min-width:120px" onchange="majRegle('${r.id}','motCle',this.value)"></td><td>${r.sens==="credit"?"Crédit":"Débit"}</td><td>${libNat(r.nature)}</td>
