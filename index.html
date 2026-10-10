@@ -82,6 +82,11 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .prefs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:inherit;font-size:12.5px;padding:5px 6px;border-radius:var(--r-md);cursor:pointer}
 .prefs button:hover{color:var(--text)}
 .prefs button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+.rv summary{cursor:pointer;list-style:none;display:flex;align-items:center}.rv summary::-webkit-details-marker{display:none}
+.rv ul{list-style:none;padding:0;margin:10px 0 0}.rv li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}
+.rv-txt{width:100%;margin-top:6px;font:inherit;font-size:13.5px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);resize:vertical}
+.rv-com{margin-top:4px;font-size:13.5px;color:var(--muted);font-style:italic}
+.printonly{display:none}@media print{.printonly{display:block}.rv{break-inside:avoid}.rv ul{display:block!important}}
 .todo ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px}
 .todo li{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
 .todo li:last-child{border-bottom:0}
@@ -2313,17 +2318,17 @@ function vueDeclaration(){
   const f = fiscalJusqua(y);
   if(!f?.c.lmnpActif) return tete + `<div class="card vide">Pas de location meublée en ${y}.</div>`;
   if(vue === "etats") return tete + etatsFinanciers(y);
-  const L = liasse(y), P = n1(y), ex = exercice(y), ctl = controles(y), bad = ctl.filter(x=>x[0]==="bad").length, warn = ctl.filter(x=>x[0]==="warn").length;
+  const L = liasse(y), P = n1(y), ex = exercice(y), rst = restantRevision(y), bad = rst.filter(x=>x.etat==="bloque").length, warn = rst.length - bad;
   const et = S.declEtape || (bad ? "1" : "2"), clos = ex.statut === "cloture";
   const ETAPES = [
-    ["1", "Vérifier", bad ? `${bad} à corriger` : warn ? `${warn} à regarder` : "tout est bon", bad ? "bad" : warn ? "warn" : "ok"],
+    ["1", "Réviser", bad ? `${bad} à corriger` : warn ? `${warn} à traiter` : "complète", bad ? "bad" : warn ? "warn" : "ok"],
     ["2", "Résultat", "espace professionnel", clos ? "ok" : ""],
     ["3", "Revenus", "espace particulier", clos ? "ok" : ""],
     ["4", "Clôturer", clos ? "fait" : "après l'envoi", clos ? "ok" : ""]];
   const FORMS = [["2033-A","2033-A Bilan"],["2033-B","2033-B Résultat"],["2033-C","2033-C Immobilisations"],["2033-D","2033-D Reports"],["2031","2031"]];
   const fo = S.formDecl || "2033-A", idx = FORMS.findIndex(x=>x[0]===fo);
   let corps = "";
-  if(et === "1") corps = vueControles(y);
+  if(et === "1") corps = vueRevision(y);
   else if(et === "2") corps = `<div class="fil noprint">impots.gouv.fr › Espace professionnel › Déclarer › Résultat <span>· cliquez sur un montant pour le copier</span></div>
     <div class="ftabs noprint">${FORMS.map(([k,l],i)=>`<button class="${k===fo?"on":""}" onclick="S.formDecl='${k}';renderAll()"><span>${i+1}</span>${l}</button>`).join("")}</div>
     ${({"2033-A":()=>form2033A(y,L,P), "2033-B":()=>form2033B(y,L,P), "2033-C":()=>form2033C(y,L), "2033-D":()=>form2033D(y,L), "2031":()=>form2031(y,L)})[fo]()}
@@ -2664,59 +2669,160 @@ function vueSimulations(){
    et la page où régler le point (facultatif) */
 function controles(y){
   const ex = exercice(y), es = ex.ecritures || [], c = calculAnnee(y), out = [];
-  const chk = (cond, okTxt, niveau, koTxt, page) => out.push(cond ? ["ok", okTxt] : [niveau, koTxt, page]);
+  const chk = (id, cycle, cond, okTxt, niveau, koTxt, page) => out.push(cond ? ["ok", okTxt, null, id, cycle] : [niveau, koTxt, page, id, cycle]);
   const hors = es.filter(e => yearOf(e.date) !== y);
-  chk(!hors.length, "Toutes les écritures sont datées de l'exercice.", "bad", `${hors.length} écriture${pl(hors.length)} datée${pl(hors.length)} hors de ${y} : corrigez leur date.`, "ecritures");
+  chk("dates", "pieces", !hors.length, "Toutes les écritures sont datées de l'exercice.", "bad", `${hors.length} écriture${pl(hors.length)} datée${pl(hors.length)} hors de ${y} : corrigez leur date.`, "ecritures");
   const nuls = es.filter(e => !(e.montant > 0));
-  chk(!nuls.length, "Aucun montant nul ou négatif.", "bad", `${nuls.length} écriture${pl(nuls.length)} à montant nul ou négatif.`, "ecritures");
-  chk(!c.t.inconnues, "Toutes les natures sont reconnues.", "bad", `${c.t.inconnues} écriture${pl(c.t.inconnues)} à nature inconnue, classées par défaut en charges externes.`, "ecritures");
+  chk("montants", "pieces", !nuls.length, "Aucun montant nul ou négatif.", "bad", `${nuls.length} écriture${pl(nuls.length)} à montant nul ou négatif.`, "ecritures");
+  chk("natures", "pieces", !c.t.inconnues, "Toutes les natures sont reconnues.", "bad", `${c.t.inconnues} écriture${pl(c.t.inconnues)} à nature inconnue, classées par défaut en charges externes.`, "ecritures");
   const moisLoyer = new Set(es.filter(e => e.nature === "Loyer").map(e => monthOf(e.date)));
   const debut = y === yearOf(debutLMNP()) ? monthOf(debutLMNP()) : 1;
   const attendus = [...Array(13 - debut).keys()].map(i => i + debut).filter(m => y < new Date().getFullYear() || m <= new Date().getMonth()+1);
   const manq = attendus.filter(m => !moisLoyer.has(m));
-  chk(!manq.length, `Un loyer saisi pour chacun des ${attendus.length} mois.`, "warn", `Loyer${pl(manq.length)} manquant${pl(manq.length)} : ${manq.map(m=>MOIS[m-1]).join(", ").replace(/\.$/, "")}.`, "ecritures");
-  if(c.produits > 5000) chk(!!c.t.parNature["CFE"], "CFE saisie.", "warn", "Aucune CFE saisie alors que les recettes dépassent 5 000 € : vérifiez l'avis dans l'espace professionnel impots.gouv, puis saisissez-la comme dépense.", "ecritures");
+  chk("loyers-mois", "recettes", !manq.length, `Un loyer saisi pour chacun des ${attendus.length} mois.`, "warn", `Loyer${pl(manq.length)} manquant${pl(manq.length)} : ${manq.map(m=>MOIS[m-1]).join(", ").replace(/\.$/, "")}.`, "ecritures");
+  if(c.produits > 5000) chk("cfe", "impots", !!c.t.parNature["CFE"], "CFE saisie.", "warn", "Aucune CFE saisie alors que les recettes dépassent 5 000 € : vérifiez l'avis dans l'espace professionnel impots.gouv, puis saisissez-la comme dépense.", "ecritures");
   const pm = piecesManquantes(y).length;
-  chk(!pm, "Toutes les pièces justificatives sont rattachées.", "warn", `${pm} justificatif${pl(pm)} manquant${pl(pm)}.`, "pieces");
+  chk("justificatifs", "pieces", !pm, "Toutes les pièces justificatives sont rattachées.", "warn", `${pm} justificatif${pl(pm)} manquant${pl(pm)}.`, "pieces");
   const aTrier = (S.data.banque?.aTrier || []).filter(o => yearOf(o.date) === y).length;
-  chk(!aTrier, "Aucune opération bancaire de l'année en attente de tri.", "warn", `${aTrier} opération${pl(aTrier)} bancaire${pl(aTrier)} de ${y} encore à trier.`, "banque");
+  chk("banque-tri", "tresorerie", !aTrier, "Aucune opération bancaire de l'année en attente de tri.", "warn", `${aTrier} opération${pl(aTrier)} bancaire${pl(aTrier)} de ${y} encore à trier.`, "banque");
   const vus = {}, dbl = [];
   es.forEach(e => { const k = `${e.date}|${e.nature}|${e.montant}`; if(vus[k]) dbl.push(e); vus[k] = true; });
-  chk(!dbl.length, "Aucun doublon apparent.", "warn", `${dbl.length} écriture${pl(dbl.length)} en double apparent (même date, nature et montant) : vérifiez qu'il ne s'agit pas d'une saisie répétée.`, "ecritures");
+  chk("doublons", "pieces", !dbl.length, "Aucun doublon apparent.", "warn", `${dbl.length} écriture${pl(dbl.length)} en double apparent (même date, nature et montant) : vérifiez qu'il ne s'agit pas d'une saisie répétée.`, "ecritures");
   const gros = es.filter(e => e.nature === "Petit équipement (< 500 € HT)" && e.montant > 600);
-  chk(!gros.length, "Aucun petit équipement au-dessus du seuil.", "warn", `${gros.length} « petit équipement » de plus de 600 € TTC : au-delà de 500 € HT par élément, il faut l'amortir (page Immobilisations).`, "immos");
+  chk("petit-equipement", "immos", !gros.length, "Aucun petit équipement au-dessus du seuil.", "warn", `${gros.length} « petit équipement » de plus de 600 € TTC : au-delà de 500 € HT par élément, il faut l'amortir (page Immobilisations).`, "immos");
   if(S.data.emprunts.length){
-    chk(c.interetsSaisis, "Intérêts d'emprunt saisis d'après la banque.", "warn", `Aucun intérêt d'emprunt comptabilisé : seuls les prélèvements de la banque comptent (${eur(c.interetsEch)} attendus selon l'échéancier). L'échéancier de la page Emprunt montre les mois à rapprocher.`, "emprunt");
-    chk(S.data.emprunts.every(l => lignesBanque(l)), "Échéancier de la banque déposé : il sert à contrôler le restant dû.", "warn", "Échéancier de la banque non déposé : le restant dû comptable est contrôlé avec l'échéancier calculé d'après le contrat. Déposez-le sur la page Emprunt.", "emprunt");
+    chk("interets-saisis", "emprunt", c.interetsSaisis, "Intérêts d'emprunt saisis d'après la banque.", "warn", `Aucun intérêt d'emprunt comptabilisé : seuls les prélèvements de la banque comptent (${eur(c.interetsEch)} attendus selon l'échéancier). L'échéancier de la page Emprunt montre les mois à rapprocher.`, "emprunt");
+    chk("echeancier-banque", "emprunt", S.data.emprunts.every(l => lignesBanque(l)), "Échéancier de la banque déposé : il sert à contrôler le restant dû.", "warn", "Échéancier de la banque non déposé : le restant dû comptable est contrôlé avec l'échéancier calculé d'après le contrat. Déposez-le sur la page Emprunt.", "emprunt");
     const sansPret = S.data.emprunts.length > 1 ? es.filter(e => NAT_PRET[e.nature] && !pretDe(e)) : [];
-    chk(!sansPret.length, "Chaque écriture d'emprunt est rattachée à son prêt.", "warn", `${sansPret.length} écriture${pl(sansPret.length)} d'emprunt sans prêt reconnu (montant différent de l'échéance de chaque prêt) : choisissez le prêt en modifiant l'écriture.`, "ecritures");
+    chk("pret-rattache", "emprunt", !sansPret.length, "Chaque écriture d'emprunt est rattachée à son prêt.", "warn", `${sansPret.length} écriture${pl(sansPret.length)} d'emprunt sans prêt reconnu (montant différent de l'échéance de chaque prêt) : choisissez le prêt en modifiant l'écriture.`, "ecritures");
     const parPret = S.data.emprunts.map((l, i) => [l, i, etatsRapprochement(l, y).filter(e => e.c !== "ok")]).filter(x => x[2].length), rp = parPret.flatMap(x => x[2]);
     const moisRp = a => a.map(e => MOIS[e.r.mois-1]).join(", ").replace(/\.$/, "");
-    chk(!rp.length, "Échéances du prêt rapprochées des écritures bancaires.", "warn", `${rp.length} échéance${pl(rp.length)} de prêt sans écriture ou avec un écart : ${S.data.emprunts.length > 1 ? parPret.map(([l, i, a]) => `${nomPret(l, i)} (${moisRp(a)})`).join(", ") : moisRp(rp)}. L'échéancier de la page Emprunt détaille chaque mois.`, "emprunt");
+    chk("echeances", "emprunt", !rp.length, "Échéances du prêt rapprochées des écritures bancaires.", "warn", `${rp.length} échéance${pl(rp.length)} de prêt sans écriture ou avec un écart : ${S.data.emprunts.length > 1 ? parPret.map(([l, i, a]) => `${nomPret(l, i)} (${moisRp(a)})`).join(", ") : moisRp(rp)}. L'échéancier de la page Emprunt détaille chaque mois.`, "emprunt");
     const ec = ecartCRD(y);
-    chk(Math.abs(ec) < 1, "Grand livre de l'emprunt conforme à l'échéancier de la banque.", "warn", `Le grand livre donne ${eur(soldeGL164(y))} de restant dû au 31/12, l'échéancier de la banque ${eur(crdEcheancier(y))} : écart de ${eur(Math.abs(ec))} à expliquer, et à régulariser le cas échéant sur la page Emprunt.`, "emprunt");
+    chk("crd", "emprunt", Math.abs(ec) < 1, "Grand livre de l'emprunt conforme à l'échéancier de la banque.", "warn", `Le grand livre donne ${eur(soldeGL164(y))} de restant dû au 31/12, l'échéancier de la banque ${eur(crdEcheancier(y))} : écart de ${eur(Math.abs(ec))} à expliquer, et à régulariser le cas échéant sur la page Emprunt.`, "emprunt");
   }
   const prec = exercice(y-1);
-  if(y > yearOf(debutLMNP())) chk(!!prec && (!isHistorique(y-1) || prec.chiffres?.immobilisationsNettes != null), `Colonne N-1 (${y-1}) disponible pour la 2033-A.`, "warn", `Chiffres ${y-1} incomplets : la colonne « année précédente » du bilan (2033-A) sera à remplir à la main lors de la déclaration.`);
+  if(y > yearOf(debutLMNP())) chk("n1", "capitaux", !!prec && (!isHistorique(y-1) || prec.chiffres?.immobilisationsNettes != null), `Colonne N-1 (${y-1}) disponible pour la 2033-A.`, "warn", `Chiffres ${y-1} incomplets : la colonne « année précédente » du bilan (2033-A) sera à remplir à la main lors de la déclaration.`);
   const xl = ex.reprise?.chiffres?.resultat;
-  if(xl != null) chk(Math.abs(c.resultatComptable - xl) < 1, `Résultat comptable identique à l'Excel repris (${eur(xl)}).`, "warn", `Résultat comptable de ${eur(c.resultatComptable)} contre ${eur(xl)} dans l'Excel repris : vérifiez les écritures et les immobilisations.`, "ecritures");
+  if(xl != null) chk("excel", "fiscal", Math.abs(c.resultatComptable - xl) < 1, `Résultat comptable identique à l'Excel repris (${eur(xl)}).`, "warn", `Résultat comptable de ${eur(c.resultatComptable)} contre ${eur(xl)} dans l'Excel repris : vérifiez les écritures et les immobilisations.`, "ecritures");
   const f = fiscalJusqua(y);
-  if(f.perimes?.length) out.push(["warn", `Déficit${pl(f.perimes.length)} de plus de 10 ans perdu${pl(f.perimes.length)} cette année : ${f.perimes.map(d=>d.annee+" ("+eur(d.montant)+")").join(", ")}.`]);
+  if(f.perimes?.length) out.push(["warn", `Déficit${pl(f.perimes.length)} de plus de 10 ans perdu${pl(f.perimes.length)} cette année : ${f.perimes.map(d=>d.annee+" ("+eur(d.montant)+")").join(", ")}.`, null, "deficits-perimes", "fiscal"]);
+  controlesRevision(y, c, chk);
   return out;
+}
+/* ============ Révision ============ */
+/* Chaque poste est révisé avant la clôture : contrôles calculés (controles), questions à attester, revue N/N−1.
+   Un point « à vérifier » est traité par une explication, une question par une réponse ; les deux sont gardés
+   dans exercice.revision[id] = {statut, commentaire, texte, date}. Une explication ne vaut que pour la situation
+   expliquée : si le texte du contrôle change (un nouveau mois manquant…), le point est à revoir. */
+const CYCLES = [["statut","Statut et régime"],["tresorerie","Trésorerie et banque"],["recettes","Recettes"],["charges","Charges externes"],["impots","Impôts et taxes"],
+  ["immos","Immobilisations et amortissements"],["emprunt","Emprunt"],["capitaux","Capitaux propres et à-nouveaux"],["fiscal","Résultat fiscal"],["pieces","Saisie et justificatifs"]];
+const SEUIL_LMP = 23000, SEUIL_MICRO = 77700, REVUE_PCT = 0.20, REVUE_MIN = 150;
+const NAT_PONCTUELLES = new Set(["Petit équipement (< 500 € HT)","Entretien et réparations","Honoraires","Autre charge","Autre recette","Remboursement emprunt"]);
+const DUREES = {construction:[25,80], travaux:[5,30], mobilier:[3,10]};
+/* Questions à attester : [id, cycle, question, condition] */
+const ATTEST = [
+  ["meuble", "statut", "Le logement est loué meublé, avec au moins le mobilier minimum du décret n° 2015-981 (literie, plaques, réfrigérateur, vaisselle, table et chaises…).", () => true],
+  ["perso-banque", "tresorerie", "Les opérations personnelles ont été écartées du relevé importé, ou le compte est dédié à la location.", () => true],
+  ["charges-refact", "recettes", "Les charges refacturées au locataire correspondent aux provisions du bail, et la régularisation annuelle est passée.", (y, c) => (c.t.parNature["Loyer"]||0) > 0],
+  ["caution", "recettes", "Aucun dépôt de garantie encaissé n'est classé en recette (il est rendu au départ du locataire).", (y, c) => (c.t.parNature["Loyer"]||0) > 0],
+  ["travaux", "charges", "Aucune amélioration, transformation ou agrandissement n'est passé en entretien et réparations : ces travaux s'amortissent.", (y, c) => (c.t.parNature["Entretien et réparations"]||0) > 0],
+  ["alur", "charges", "Copropriété : la cotisation au fonds de travaux (loi ALUR) et les travaux votés non réalisés ne sont pas déduits cette année.", (y, c) => (c.t.parNature["Copropriété"]||0) > 0],
+  ["perso", "charges", "Aucune dépense personnelle n'est déduite (taxe d'habitation, frais de la résidence principale, ameublement personnel…).", () => true],
+  ["teom", "impots", "La taxe d'ordures ménagères refacturée au locataire est comptée en recette (charges refacturées).", (y, c) => (c.t.parNature["Taxe foncière"]||0) > 0],
+  ["sorties", "immos", "Aucun bien de l'inventaire n'a été vendu, détruit ou remplacé sans être sorti des immobilisations.", () => S.data.immobilisations.length > 0],
+  ["frais-pret", "emprunt", "Les frais de dossier et de garantie du prêt sont comptés, en charge l'année du prêt ou étalés.", () => S.data.emprunts.length > 0]
+];
+/* Contrôles calculés propres à la révision, ajoutés à controles(y) */
+function controlesRevision(y, c, chk){
+  const es = exercice(y).ecritures || [], pn = c.t.parNature;
+  // Statut
+  chk("seuil-lmp", "statut", c.produits <= SEUIL_LMP, `Recettes de ${eur0(c.produits)}, sous le seuil de ${eur0(SEUIL_LMP)} : statut de loueur non professionnel.`, "warn",
+    `Recettes de ${eur0(c.produits)}, au-dessus de ${eur0(SEUIL_LMP)} : le statut devient professionnel (LMP) si elles dépassent aussi les autres revenus d'activité du foyer. Indiquez pourquoi le statut LMNP reste acquis.`);
+  if(c.produits > SEUIL_MICRO) chk("seuil-micro", "statut", false, "", "warn", `Recettes au-dessus de ${eur0(SEUIL_MICRO)} : le régime réel est obligatoire. Vérifiez qu'aucune option n'est à revoir.`);
+  // Recettes : loyers réguliers
+  const parMois = {}; es.filter(e => e.nature === "Loyer").forEach(e => parMois[monthOf(e.date)] = r2((parMois[monthOf(e.date)]||0) + e.montant));
+  const vals = Object.values(parMois).sort((a,b) => a-b), med = vals.length ? vals[Math.floor(vals.length/2)] : 0;
+  const irr = Object.entries(parMois).filter(([, v]) => med && Math.abs(v - med) > med * 0.10).map(([m, v]) => `${MOIS[m-1].replace(/\.$/, "")} (${eur(v)})`);
+  if(vals.length > 2) chk("loyers-reguliers", "recettes", !irr.length, `Loyers réguliers (${eur(med)} par mois).`, "warn", `Loyer différent de plus de 10 % du loyer habituel (${eur(med)}) : ${irr.join(", ")}. Expliquez l'écart (révision IRL, vacance, régularisation, double encaissement).`, "ecritures");
+  // Revue N/N−1 et charges récurrentes
+  const ex1 = exercice(y-1);
+  if(ex1 && !isHistorique(y-1)){
+    const c1 = calculAnnee(y-1), p1 = c1.t.parNature;
+    const absentes = Object.keys(p1).filter(n => NATURES[n]?.g === "charge" && !NAT_PONCTUELLES.has(n) && p1[n] > 0 && !(pn[n] > 0));
+    chk("recurrentes", "charges", !absentes.length, `Les charges récurrentes de ${y-1} sont toutes présentes.`, "warn", `Charge${pl(absentes.length)} présente${pl(absentes.length)} en ${y-1} et absente${pl(absentes.length)} cette année : ${absentes.join(", ")}. Oubli de saisie, ou charge arrêtée ?`, "ecritures");
+    for(const n of new Set([...Object.keys(pn), ...Object.keys(p1)])){
+      const g = NATURES[n]?.g; if(!g || g === "bilan") continue;
+      const v = pn[n]||0, v1 = p1[n]||0, d = v - v1;
+      if(!v1 || !v || Math.abs(d) <= REVUE_MIN || Math.abs(d) <= v1 * REVUE_PCT) continue;
+      const cyc = g === "recette" ? "recettes" : NATURES[n].l === "244" ? "impots" : NATURES[n].l === "294" ? "emprunt" : "charges";
+      chk(`revue-${slug(n)}`, cyc, false, "", "warn", `${n} : ${eur(v)} contre ${eur(v1)} en ${y-1} (${d > 0 ? "+" : "−"}${Math.round(Math.abs(d) / v1 * 100)} %). Expliquez la variation.`, "ecritures");
+    }
+  }
+  // Impôts
+  if(c.lmnpActif) chk("taxe-fonciere", "impots", pn["Taxe foncière"] > 0, "Taxe foncière saisie.", "warn", "Aucune taxe foncière saisie : elle est due par le propriétaire au 1er janvier. Saisissez-la, ou expliquez son absence (exonération, payée par un autre compte).", "ecritures");
+  // Immobilisations
+  const constr = S.data.immobilisations.filter(i => i.categorie === "construction" && yearOf(i.miseEnService) <= y);
+  const terr = constr.filter(i => !(i.quotePartTerrain >= 0.10 && i.quotePartTerrain <= 0.30));
+  if(constr.length) chk("terrain", "immos", !terr.length, "Part du terrain isolée, non amortie (entre 10 et 30 % du prix).", "warn", `Part du terrain inhabituelle pour ${terr.map(i => `« ${esc(i.libelle)} » (${Math.round((i.quotePartTerrain||0)*100)} %)`).join(", ")} : elle se situe en général entre 10 et 30 % du prix. Justifiez-la (acte, évaluation).`, "immos");
+  const hd = S.data.immobilisations.filter(i => DUREES[i.categorie] && yearOf(i.miseEnService) <= y && (i.dureeAns < DUREES[i.categorie][0] || i.dureeAns > DUREES[i.categorie][1]));
+  if(S.data.immobilisations.length) chk("durees", "immos", !hd.length, "Durées d'amortissement dans les fourchettes usuelles.", "warn", `Durée inhabituelle : ${hd.map(i => `« ${esc(i.libelle)} » ${i.dureeAns} ans (usuel ${DUREES[i.categorie].join(" à ")} ans)`).join(", ")}. Justifiez-la.`, "immos");
+  // Emprunt : intérêts comptabilisés et échéancier
+  if(S.data.emprunts.length && c.interetsSaisis){
+    const ecart = r2((pn["Intérêts emprunt"]||0) - c.interetsEch);
+    chk("interets-montant", "emprunt", Math.abs(ecart) < 1, `Intérêts comptabilisés égaux à l'échéancier (${eur(c.interetsEch)}).`, "warn", `Intérêts comptabilisés ${eur(pn["Intérêts emprunt"]||0)}, échéancier ${eur(c.interetsEch)} : écart de ${eur(Math.abs(ecart))} à expliquer.`, "emprunt");
+  }
+}
+const revision = y => exercice(y)?.revision || {};
+/* État d'un point : "ok" (rien à faire), "fait" (expliqué ou attesté), "afaire", "bloque" (à corriger) */
+function etatPoint(y, x){
+  const r = revision(y)[x.id];
+  if(x.type === "q") return r?.statut === "vu" || r?.statut === "na" ? "fait" : "afaire";
+  if(x.niveau === "ok") return "ok";
+  if(x.niveau === "bad") return "bloque";
+  return r?.commentaire && r.texte === x.texte ? "fait" : "afaire";
+}
+function pointsRevision(y){
+  const c = calculAnnee(y);
+  const auto = controles(y).map(([niveau, texte, page, id, cycle]) => ({type:"auto", niveau, texte, page, id:id || slug(texte), cycle:cycle || "fiscal"}));
+  const q = ATTEST.filter(a => a[3](y, c)).map(([id, cycle, texte]) => ({type:"q", id:"q-" + id, cycle, texte}));
+  return [...auto, ...q].map(x => ({...x, etat:etatPoint(y, x)}));
+}
+addEventListener("beforeprint", () => document.querySelectorAll("details.rv").forEach(d => d.open = true));
+const restantRevision = y => pointsRevision(y).filter(x => x.etat === "afaire" || x.etat === "bloque");
+function majRevision(y, id, champs){
+  if(verrouille(y)) return;
+  const ex = exercice(y), rev = (ex.revision ??= {}), r = {...(rev[id] || {}), ...champs, date:new Date().toISOString().slice(0,10)};
+  if(!r.statut && !r.commentaire) delete rev[id]; else rev[id] = r;
+  if(!Object.keys(rev).length) delete ex.revision;
+  setDirty(); renderAll();
+}
+function expliquerPoint(y, id, el){ const x = pointsRevision(y).find(p => p.id === id); majRevision(y, id, {commentaire:el.value.trim(), texte:x.texte}); }
+function vueRevision(y){
+  const pts = pointsRevision(y), clos = verrouille(y), rev = revision(y);
+  const reste = pts.filter(x => x.etat === "afaire" || x.etat === "bloque"), bloq = pts.filter(x => x.etat === "bloque").length;
+  const enCours = y >= new Date().getFullYear();
+  const sym = {ok:["✓","var(--pos)"], fait:["✓","var(--pos)"], afaire:["!","var(--warn)"], bloque:["✕","var(--neg)"]};
+  const point = x => { const r = rev[x.id] || {}, [s, col] = sym[x.etat], ancien = x.type === "auto" && r.commentaire && r.texte !== x.texte;
+    const boutonsQ = x.type === "q" ? `<div class="row noprint" style="gap:6px;margin-top:6px">${[["vu","Vérifié"],["na","Non applicable"],["regul","À régulariser"]].map(([k,l]) => `<button class="btn small ${r.statut===k?"":"sec"}" ${clos?"disabled":""} onclick="majRevision(${y},'${x.id}',{statut:${r.statut===k?"null":`'${k}'`}})">${l}</button>`).join("")}</div>` : "";
+    const zone = x.etat === "ok" ? "" : clos ? (r.commentaire ? `<div class="rv-com">${esc(r.commentaire)}</div>` : "")
+      : (x.type === "q" || x.niveau === "warn") ? `<textarea class="rv-txt noprint" rows="1" placeholder="${x.type === "q" ? "Commentaire (facultatif)" : "Explication (gardée dans le dossier)"}" onchange="${x.type === "q" ? `majRevision(${y},'${x.id}',{commentaire:this.value.trim()})` : `expliquerPoint(${y},'${x.id}',this)`}">${esc(r.commentaire||"")}</textarea>${r.commentaire ? `<div class="rv-com printonly">${esc(r.commentaire)}</div>` : ""}` : "";
+    return `<li class="rv-${x.etat}"><b style="color:${col}">${s}</b><div style="flex:1;min-width:0"><span style="${x.etat==="ok"?"color:var(--muted)":""}">${x.texte}</span>
+      ${ancien ? `<div class="sub" style="margin:4px 0 0;color:var(--warn)">La situation a changé depuis l'explication du ${fmtDate(r.date)} : relisez-la et validez-la à nouveau.</div>` : ""}
+      ${boutonsQ}${zone}${x.etat === "fait" && r.date ? `<small class="sub" style="display:block;margin-top:2px">Traité le ${fmtDate(r.date)}</small>` : ""}</div>${x.page && (x.etat === "afaire" || x.etat === "bloque") ? lienPage(x.page) : ""}</li>`; };
+  const cycles = CYCLES.map(([k, l]) => { const p = pts.filter(x => x.cycle === k); if(!p.length) return "";
+    const r = p.filter(x => x.etat === "afaire" || x.etat === "bloque").length, ord = {bloque:0, afaire:1, fait:2, ok:3};
+    return `<details class="card rv" ${r && !clos ? "open" : ""}><summary><h3 style="display:inline;margin:0">${l}</h3><span class="pill" style="margin-left:8px;${r?"":"color:var(--pos)"}">${r ? `${r} à traiter` : `✓ ${p.length}/${p.length}`}</span></summary>
+      <ul>${p.sort((a,b) => ord[a.etat] - ord[b.etat]).map(point).join("")}</ul></details>`; }).join("");
+  const tete = clos ? (exercice(y).revision ? `Révision ${y} figée avec la clôture.` : `${y} a été clôturé avant le module de révision : les points ci-dessous sont indicatifs.`) : bloq ? `${bloq} point${pl(bloq)} à corriger et ${reste.length - bloq} à traiter avant de clôturer` : reste.length ? `${reste.length} point${pl(reste.length)} à traiter avant de clôturer` : "Révision complète : prêt à déclarer";
+  return `<div class="card noprint"><h3 style="margin:0 0 4px;color:${clos ? "var(--text)" : bloq ? "var(--neg)" : reste.length ? "var(--warn)" : "var(--pos)"}">${tete}</h3>
+    <p class="sub" style="margin:0">${pts.length - reste.length}/${pts.length} points traités. Un point « à vérifier » se traite en l'expliquant, ou en corrigeant la saisie ; une question, en y répondant.${enCours && !clos ? ` La révision se fait une fois l'année ${y} terminée.` : ""}</p>
+    <div class="row" style="margin-top:10px"><button class="btn small sec" onclick="window.print()">Imprimer la feuille de révision</button></div></div>
+  <h2 class="printonly">Feuille de révision ${y} · ${esc(S.data.dossier.nom||"")}</h2>${cycles}`;
 }
 const NOM_PAGE = Object.fromEntries(TABS.filter(t=>t[0]!=="h"&&t[0]!=="sep"));
 function allerA(pg){ S.tab = pg; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; S.reprise=null; document.body.classList.remove("menu-open"); renderAll(); haut(); }
 const lienPage = pg => `<button class="btn ghost small noprint" style="margin-left:auto;flex:none;color:var(--accent)" onclick="allerA('${pg}')">${NOM_PAGE[pg]} →</button>`;
-function vueControles(y){
-  const l = controles(y), nb = k => l.filter(x => x[0] === k).length;
-  const bad = nb("bad"), warn = nb("warn"), oks = l.filter(x => x[0] === "ok");
-  const tete = bad ? `${bad} point${pl(bad)} à corriger${warn?` et ${warn} à vérifier`:""}` : warn ? `${warn} point${pl(warn)} à vérifier avant de déclarer` : "Tout est vérifié : prêt à déclarer";
-  const sym = {ok:"✓", warn:"!", bad:"✕"}, col = {ok:"var(--pos)", warn:"var(--warn)", bad:"var(--neg)"};
-  const li = ([k,t,pg]) => `<li><b style="color:${col[k]}">${sym[k]}</b><span style="${k==="ok"?"color:var(--muted)":""}">${t}</span>${pg&&k!=="ok"?lienPage(pg):""}</li>`;
-  return `<div class="card todo noprint"><h3 style="margin-top:0;color:${bad?col.bad:warn?col.warn:col.ok}">${tete}</h3>
-    ${bad||warn ? `<ul>${l.filter(x=>x[0]!=="ok").sort((a,b)=>"bw".indexOf(a[0][0])-"bw".indexOf(b[0][0])).map(li).join("")}</ul>` : ""}
-    <details style="margin-top:10px"><summary class="sub" style="cursor:pointer">Voir les ${oks.length} points déjà validés</summary><ul style="margin-top:6px">${oks.map(li).join("")}</ul></details></div>`;
-}
 
 /* ---- Dossier ---- */
 /* Champs du dossier : tous optionnels dans le fichier, servent à l'en-tête des déclarations et des états financiers */
@@ -3557,12 +3663,12 @@ function changementsAnnee(y){
   return out;
 }
 function vueCloture(y){
-  const ex = exercice(y), l = controles(y), bad = l.filter(x=>x[0]==="bad"), warn = l.filter(x=>x[0]==="warn");
+  const ex = exercice(y), rst = restantRevision(y), bad = rst.filter(x=>x.etat==="bloque"), warn = rst.filter(x=>x.etat==="afaire");
   const f = fiscalJusqua(y), c = f.c, chg = changementsAnnee(y);
   const step = (n, titre, corps) => `<div class="card"><h3><span class="case" style="margin-right:8px">${n}</span>${titre}</h3>${corps}</div>`;
   return entete(`Clôturer ${y}`, "Vérifier, figer les chiffres déclarés, puis ouvrir l'année suivante. La clôture verrouille les saisies ; vous pourrez rouvrir l'année si besoin.") +
-  step(1, "Contrôles", bad.length ? `<div class="alert bad">${bad.length} point${pl(bad.length)} à corriger avant de clôturer :</div><ul>${bad.map(x=>`<li>${x[1]}${x[2]?lienPage(x[2]):""}</li>`).join("")}</ul>`
-    : warn.length ? `<div class="alert warn">${warn.length} point${pl(warn.length)} à vérifier. Vous pouvez clôturer si vous les avez regardés.</div><ul>${warn.map(x=>`<li>${x[1]}${x[2]?lienPage(x[2]):""}</li>`).join("")}</ul>` : `<div class="alert ok">Tous les contrôles sont validés.</div>`) +
+  step(1, "Révision", rst.length ? `<div class="alert ${bad.length?"bad":"warn"}">${bad.length ? `${bad.length} point${pl(bad.length)} à corriger${warn.length?` et ${warn.length} à traiter`:""}` : `${warn.length} point${pl(warn.length)} de révision à traiter`} avant de clôturer :</div><ul>${rst.map(x=>`<li>${x.texte}${x.page?lienPage(x.page):""}</li>`).join("")}</ul>
+      <button class="btn small" onclick="S.cloture=null;S.declEtape='1';allerA('declaration')">Ouvrir la révision →</button>` : `<div class="alert ok">Révision complète : chaque point est validé, expliqué ou attesté.</div>`) +
   step(2, "Sommes dues et à recevoir au 31/12", `<p class="sub" style="margin:0 0 10px">En comptabilité super-simplifiée, seules les sommes dues ou à recevoir au 31 décembre s'ajoutent à la trésorerie. Par exemple : un loyer de décembre encaissé en janvier, une facture de décembre payée en janvier. Saisissez-les comme écritures datées du 31/12/${y}.</p>
     <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" id="clRegul"> J'ai vérifié les sommes dues et à recevoir au 31/12/${y}.</label>`) +
   step(3, "Chiffres figés à la clôture", `<table>
@@ -3573,7 +3679,7 @@ function vueCloture(y){
     <div class="form" style="margin-top:14px"><label>Date d'envoi de la déclaration (facultatif)<input type="date" id="clDecl" value="${ex.dateDeclaration||""}"></label></div>
     <p class="sub" style="margin:8px 0 0">Ces chiffres sont mémorisés : si une modification ultérieure les change, le tableau de bord vous préviendra.</p>`) +
   step(4, `Ce qui change en ${y+1}`, chg.length ? `<ul style="margin:0">${chg.map(t=>`<li>${t}</li>`).join("")}</ul>` : `<p class="sub" style="margin:0">Rien de particulier : mêmes amortissements et même emprunt.</p>`) +
-  `<div class="row"><button class="btn" onclick="cloturer(${y})" ${bad.length?"disabled":""}>Clôturer ${y}${exercice(y+1)?"":` et ouvrir ${y+1}`}</button><button class="btn ghost" onclick="S.cloture=null;renderAll()">Annuler</button></div>`;
+  `<div class="row"><button class="btn" onclick="cloturer(${y})" ${rst.length?"disabled":""}>Clôturer ${y}${exercice(y+1)?"":` et ouvrir ${y+1}`}</button><button class="btn ghost" onclick="S.cloture=null;renderAll()">Annuler</button></div>`;
 }
 /* Réouverture d'un exercice clôturé : la plus récente seulement, confirmée par la saisie de l'année, motif conservé dans le dossier */
 function rouvrirExercice(y){
@@ -3589,6 +3695,7 @@ function rouvrirExercice(y){
   setDirty(); renderAll(); toast(`${y} est rouvert. Pensez à le clôturer à nouveau une fois la correction faite.`);
 }
 function cloturer(y){
+  if(restantRevision(y).length) return alert("La révision n'est pas complète : traitez chaque point avant de clôturer.");
   if(!$("#clRegul").checked) return alert("Cochez d'abord la vérification des sommes dues et à recevoir au 31/12 (étape 2).");
   const ex = exercice(y), f = fiscalJusqua(y), d = $("#clDecl").value;
   ex.statut = "cloture";
