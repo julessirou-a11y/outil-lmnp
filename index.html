@@ -83,6 +83,16 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .prefs button:hover{color:var(--text)}
 .prefs button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
 .rv summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap}.rv summary::-webkit-details-marker{display:none}.rv summary h3{margin:0}
+.rv-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
+.rv-tuile{display:flex;align-items:center;gap:12px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,transform .15s}
+.rv-tuile:hover{border-color:var(--accent);transform:translateY(-1px)}.rt-bloque{border-left:4px solid var(--neg)}.rt-afaire{border-left:4px solid var(--warn)}.rt-ok{border-left:4px solid var(--pos)}
+.rv-sym{flex:none;width:28px;height:28px;border-radius:50%;color:#fff;display:grid;place-items:center;font-weight:700;font-size:14px}
+.rv-tt{flex:1;min-width:0}.rv-tt b{display:block}.rv-tt small{color:var(--muted)}.rv-lib{font-size:12.5px;font-weight:600;white-space:nowrap}
+.rv-voile{position:fixed;inset:0;z-index:300;background:#0007;display:flex;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow:auto}
+.rv-fen{background:var(--bg);border-radius:16px;width:min(980px,100%);box-shadow:0 20px 60px #0005;display:flex;flex-direction:column;max-height:90vh}
+.rv-fh{display:flex;align-items:center;gap:12px;padding:16px 20px;border-bottom:1px solid var(--line);flex-wrap:wrap}.rv-fh h2{margin:0;font-size:20px}
+.rv-fc{padding:12px 20px 20px;overflow:auto}.rv-g{margin-top:10px}.rv-g>summary{cursor:pointer;font-weight:600;padding:6px 0}
+.rv-p{font-weight:600;font-size:13px;white-space:nowrap}.rv-imp h3{margin:16px 0 4px}.rv-imp div{font-size:12px;padding:2px 0}
 .rl{display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 110px 92px;gap:4px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
 .rv summary+.rl,.rv p+.rl{margin-top:8px}.rl-lib b{display:block;font-weight:600}.rl-lib small,.rl-n small{display:block;color:var(--muted);font-size:12px}
 .rl-n{text-align:right;font-variant-numeric:tabular-nums}.rl-n b.neg{color:var(--neg)}.rl-s{text-align:right;display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
@@ -2328,7 +2338,7 @@ function vueDeclaration(){
   const L = liasse(y), P = n1(y), ex = exercice(y), rst = restantRevision(y), bad = rst.filter(x=>x.etat==="bloque").length, warn = rst.length - bad;
   const et = S.declEtape || (bad ? "1" : "2"), clos = ex.statut === "cloture";
   const ETAPES = [
-    ["1", "Réviser", bad ? `${bad} à corriger` : warn ? `${warn} à traiter` : "complète", bad ? "bad" : warn ? "warn" : "ok"],
+    ["1", "Réviser", bad ? `${bad} bloquant${pl(bad)}` : warn ? `${warn} à vérifier` : "validée", bad ? "bad" : warn ? "warn" : "ok"],
     ["2", "Résultat", "espace professionnel", clos ? "ok" : ""],
     ["3", "Revenus", "espace particulier", clos ? "ok" : ""],
     ["4", "Clôturer", clos ? "fait" : "après l'envoi", clos ? "ok" : ""]];
@@ -2789,6 +2799,7 @@ function rapprochements(y){
       out.push({type:"revue", id:`revue-${slug(n)}`, cycle:"charges", lib:`${n} (${NATURES[n].c.slice(0,3)})`, compta:v, attendu:v1, source:"", gl:NATURES[n].c, page:"ecritures", significatif: ecart > REVUE_MIN && (!v1 || ecart > v1 * REVUE_PCT)});
     }
   }
+  out.filter(x => x.id === "loyers" || x.id === "provisions").forEach(x => x.nonBloquant = true); // vacance, révision du loyer : à regarder, sans bloquer
   return out;
 }
 const revision = y => exercice(y)?.revision || {};
@@ -2799,7 +2810,7 @@ function etatPoint(y, x){
   if(x.type === "calc" || x.type === "revue"){
     if(x.attendu == null) return x.extra === "releve" && r?.statut === "na" ? "fait" : x.id === "acquisitions" ? (r?.statut === "vu" ? "fait" : "afaire") : "afaire";
     const ok = x.type === "revue" ? !x.significatif : Math.abs(x.compta - x.attendu) < 0.005;
-    return ok ? "ok" : r?.commentaire && r.texte === sigCalc(x) ? "fait" : "afaire";
+    return ok ? "ok" : r?.commentaire && r.texte === sigCalc(x) ? "fait" : x.type === "revue" || x.nonBloquant ? "afaire" : "bloque";
   }
   if(x.niveau === "ok") return "ok";
   if(x.niveau === "bad") return "bloque";
@@ -2823,43 +2834,60 @@ function majRevision(y, id, champs){
 }
 function expliquerPoint(y, id, el){ const x = pointsRevision(y).find(p => p.id === id); majRevision(y, id, {commentaire:el.value.trim(), texte:x.type === "auto" ? x.texte : sigCalc(x)}); }
 function majReleve(y, k, v){ if(verrouille(y)) return; const ex = exercice(y), n = parseMontant(v); ex.releve ??= {}; if(v === "" || isNaN(n)) delete ex.releve[k]; else ex.releve[k] = n; if(!Object.keys(ex.releve).length) delete ex.releve; setDirty(); renderAll(); }
+const NIV = {bloque:["bloquant","✕","var(--neg)"], afaire:["à vérifier","!","var(--warn)"], fait:["validé","✓","var(--pos)"], ok:["validé","✓","var(--pos)"]};
+const niveauPoste = p => p.some(x => x.etat === "bloque") ? "bloque" : p.some(x => x.etat === "afaire") ? "afaire" : "ok";
+function ouvrirPoste(k){ S.revPoste = k; renderAll(); }
+function fermerPoste(){ S.revPoste = null; renderAll(); }
+addEventListener("keydown", e => { if(e.key === "Escape" && S.revPoste){ fermerPoste(); } });
 function vueRevision(y){
   const pts = pointsRevision(y), clos = verrouille(y), rev = revision(y), ex = exercice(y);
-  const reste = pts.filter(x => x.etat === "afaire" || x.etat === "bloque"), bloq = pts.filter(x => x.etat === "bloque").length;
+  const bloq = pts.filter(x => x.etat === "bloque").length, nb = pts.filter(x => x.etat === "afaire").length;
   const montant = (v, gl) => v == null ? `<span class="sub">–</span>` : gl ? lienGL({t:"compte", v:gl}, eur(v)) : eur(v);
   const explication = (x, r) => clos ? (r.commentaire ? `<div class="rv-com">${esc(r.commentaire)}</div>` : "")
-    : `<textarea class="rv-txt noprint" rows="1" placeholder="Expliquer l'écart (gardé dans le dossier)…" onchange="expliquerPoint(${y},'${x.id}',this)">${esc(r.commentaire && (r.texte === sigCalc(x) || r.texte === x.texte) ? r.commentaire : "")}</textarea>${r.commentaire ? `<div class="rv-com printonly">${esc(r.commentaire)}</div>` : ""}`;
-  const pastille = x => ({ok:`<span class="rv-ok">✓</span>`, fait:`<span class="rv-ok" title="Écart expliqué">✓ expliqué</span>`, afaire:`<span class="rv-ko">${x.attendu == null && x.type === "calc" ? "à compléter" : "écart"}</span>`, bloque:`<span class="rv-ko">à corriger</span>`})[x.etat];
+    : `<textarea class="rv-txt" rows="2" placeholder="${x.etat === "bloque" ? "Expliquer l'écart pour le valider (gardé dans le dossier)…" : "Explication (gardée dans le dossier)…"}" onchange="expliquerPoint(${y},'${x.id}',this)">${esc(r.commentaire && (r.texte === sigCalc(x) || r.texte === x.texte) ? r.commentaire : "")}</textarea>`;
+  const pastille = x => { const [l, s, col] = NIV[x.etat]; return `<span class="rv-p" style="color:${col}">${s} ${x.etat === "fait" ? "validé (expliqué)" : x.etat === "afaire" && x.attendu === null && x.type === "calc" ? "à compléter" : l}</span>`; };
   const ligneCalc = x => { const r = rev[x.id] || {}, ecart = x.attendu == null ? null : r2(x.compta - x.attendu), ko = x.etat === "afaire" || x.etat === "bloque";
     const ancien = r.commentaire && r.texte !== sigCalc(x) && x.etat !== "ok";
     let suite = "";
-    if(x.extra === "releve" && !clos) suite = `<div class="row noprint rv-rel"><label>Solde du relevé au 1/1<input inputmode="decimal" value="${ex.releve?.debut ?? ""}" onchange="majReleve(${y},'debut',this.value)"></label><label>au 31/12<input inputmode="decimal" value="${ex.releve?.fin ?? ""}" onchange="majReleve(${y},'fin',this.value)"></label>
+    if(x.extra === "releve" && !clos) suite = `<div class="row rv-rel"><label>Solde du relevé au 1/1<input inputmode="decimal" value="${ex.releve?.debut ?? ""}" onchange="majReleve(${y},'debut',this.value)"></label><label>au 31/12<input inputmode="decimal" value="${ex.releve?.fin ?? ""}" onchange="majReleve(${y},'fin',this.value)"></label>
       <button class="btn small ${r.statut === "na" ? "" : "sec"}" onclick="majRevision(${y},'releve',{statut:${r.statut === "na" ? "null" : "'na'"}})">Compte non dédié à la location</button></div>`;
-    else if(x.id === "acquisitions" && !clos) suite = `<div class="row noprint" style="margin-top:6px"><button class="btn small ${r.statut === "vu" ? "" : "sec"}" onclick="majRevision(${y},'acquisitions',{statut:${r.statut === "vu" ? "null" : "'vu'"}})">Factures vérifiées</button></div>`;
-    else if(x.id === "crd" && ko && !clos) suite = `<div class="row noprint" style="margin-top:6px"><button class="btn small sec" onclick="allerA('emprunt')">Voir l'échéancier mois par mois</button><button class="btn small sec" onclick="S.year=${y};regulariserCRD()">Régulariser l'écart…</button></div>`;
-    else if(x.attendu == null && x.page === "dossier" && !clos) suite = `<div class="row noprint" style="margin-top:6px"><button class="btn small sec" onclick="allerA('dossier')">Renseigner le bail dans les paramètres</button></div>`;
-    else if(ko && x.page && !clos) suite = `<div class="row noprint" style="margin-top:6px"><button class="btn small sec" onclick="allerA('${x.page}')">${x.page === "emprunt" ? "Voir l'échéancier mois par mois" : `Vérifier dans ${NOM_PAGE[x.page]}`} →</button></div>`;
+    else if(x.id === "acquisitions" && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small ${r.statut === "vu" ? "" : "sec"}" onclick="majRevision(${y},'acquisitions',{statut:${r.statut === "vu" ? "null" : "'vu'"}})">Factures vérifiées</button></div>`;
+    else if(x.id === "crd" && ko && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('emprunt')">Voir l'échéancier mois par mois</button><button class="btn small sec" onclick="S.year=${y};regulariserCRD()">Régulariser l'écart…</button></div>`;
+    else if(x.attendu == null && x.page === "dossier" && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('dossier')">Renseigner le bail dans les paramètres</button></div>`;
+    else if(ko && x.page && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('${x.page}')">${x.page === "emprunt" ? "Voir l'échéancier mois par mois" : `Corriger dans ${NOM_PAGE[x.page]}`} →</button></div>`;
     return `<div class="rl rs-${x.etat}"><div class="rl-lib"><b>${x.lib}</b><small>${esc(x.source || "")}${x.extra && x.extra !== "releve" ? ` · ${esc(x.extra)}` : ""}</small></div>
       <div class="rl-n"><small>${x.type === "revue" ? y : "Comptabilité"}</small>${montant(x.compta, x.gl)}</div><div class="rl-n"><small>${x.type === "revue" ? y-1 : "Attendu"}</small>${montant(x.attendu)}</div>
-      <div class="rl-n"><small>Écart</small>${ecart == null ? "–" : `<b class="${Math.abs(ecart) < 0.005 ? "" : x.type === "revue" && !x.significatif ? "" : "neg"}">${ecart > 0 ? "+" : ecart < 0 ? "−" : ""}${eur(Math.abs(ecart))}</b>`}</div>
+      <div class="rl-n"><small>Écart</small>${ecart == null ? "–" : `<b style="color:${Math.abs(ecart) < 0.005 ? "inherit" : NIV[x.etat][2]}">${ecart > 0 ? "+" : ecart < 0 ? "−" : ""}${eur(Math.abs(ecart))}</b>`}</div>
       <div class="rl-s">${pastille(x)}</div>
       ${ko || x.etat === "fait" ? `<div class="rl-suite">${ancien ? `<div class="sub" style="margin:0 0 4px;color:var(--warn)">Les montants ont changé depuis l'explication du ${fmtDate(r.date)} : relisez-la et validez-la à nouveau.</div>` : ""}${suite}${x.attendu != null ? explication(x, r) : ""}</div>` : ""}</div>`; };
   const ligneAuto = x => { const r = rev[x.id] || {};
     return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s">${pastille(x)}</div>
-      ${x.etat === "afaire" || x.etat === "bloque" || x.etat === "fait" ? `<div class="rl-suite">${x.page ? `<button class="btn small sec noprint" style="margin-bottom:6px" onclick="allerA('${x.page}')">Corriger dans ${NOM_PAGE[x.page]} →</button>` : ""}${x.niveau === "warn" ? explication(x, r) : ""}</div>` : ""}</div>`; };
+      ${x.etat === "afaire" || x.etat === "bloque" || x.etat === "fait" ? `<div class="rl-suite">${x.page && x.etat !== "fait" && !clos ? `<button class="btn small sec" style="margin-bottom:6px" onclick="S.revPoste=null;allerA('${x.page}')">Corriger dans ${NOM_PAGE[x.page]} →</button>` : ""}${x.niveau === "warn" ? explication(x, r) : ""}</div>` : ""}</div>`; };
   const ligneQ = x => { const r = rev[x.id] || {};
-    return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s noprint">${[["vu","Oui"],["na","Sans objet"]].map(([k,l]) => `<button class="btn small ${r.statut===k?"":"sec"}" ${clos?"disabled":""} onclick="majRevision(${y},'${x.id}',{statut:${r.statut===k?"null":`'${k}'`}})">${l}</button>`).join("")}</div>
-      <div class="rl-s printonly">${r.statut === "vu" ? "Oui" : r.statut === "na" ? "Sans objet" : "–"}</div></div>`; };
-  const cycles = CYCLES.map(([k, l, pg]) => { const p = pts.filter(x => x.cycle === k); if(!p.length) return "";
-    const r = p.filter(x => x.etat === "afaire" || x.etat === "bloque").length;
-    const corps = p.map(x => x.type === "calc" || x.type === "revue" ? ligneCalc(x) : x.type === "q" ? ligneQ(x) : ligneAuto(x)).join("");
-    return `<details class="card rv" ${r && !clos ? "open" : ""}><summary><h3>${l}</h3><span class="pill" style="${r?"":"color:var(--pos)"}">${r ? `${r} à traiter` : "✓ rapproché"}</span>${pg && pg !== "declaration" ? `<button class="btn ghost small noprint" style="margin-left:auto;color:var(--accent)" onclick="event.preventDefault();allerA('${pg}')">${NOM_PAGE[pg]} →</button>` : ""}</summary>
-      ${k === "charges" ? `<p class="sub" style="margin:8px 0 0">Une variation de plus de ${Math.round(REVUE_PCT*100)} % et de plus de ${eur0(REVUE_MIN)} est à expliquer.</p>` : ""}${corps}</details>`; }).join("");
-  const tete = clos ? (ex.revision ? `Révision ${y} figée avec la clôture.` : `${y} a été clôturé avant le module de révision : les points ci-dessous sont indicatifs.`) : bloq ? `${bloq} point${pl(bloq)} à corriger et ${reste.length - bloq} à traiter avant de clôturer` : reste.length ? `${reste.length} point${pl(reste.length)} à traiter avant de clôturer` : "Révision complète : prêt à déclarer";
-  return `<div class="card noprint"><h3 style="margin:0 0 4px;color:${clos ? "var(--text)" : bloq ? "var(--neg)" : reste.length ? "var(--warn)" : "var(--pos)"}">${tete}</h3>
-    <p class="sub" style="margin:0">Chaque poste est rapproché d'une source indépendante (échéancier, bail, relevé, tableau d'amortissement, clôture ${y-1}). Un écart se corrige dans le module concerné, ou s'explique.</p>
-    <div class="row" style="margin-top:10px"><button class="btn small sec" onclick="window.print()">Imprimer la feuille de révision</button></div></div>
-  <h2 class="printonly">Feuille de révision ${y} · ${esc(S.data.dossier.nom||"")}</h2>${cycles}`;
+    return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s">${[["vu","Oui"],["na","Sans objet"]].map(([k,l]) => `<button class="btn small ${r.statut===k?"":"sec"}" ${clos?"disabled":""} onclick="majRevision(${y},'${x.id}',{statut:${r.statut===k?"null":`'${k}'`}})">${l}</button>`).join("")}</div></div>`; };
+  const ligne = x => x.type === "calc" || x.type === "revue" ? ligneCalc(x) : x.type === "q" ? ligneQ(x) : ligneAuto(x);
+  const postes = CYCLES.map(([k, l, pg]) => ({k, l, pg, p:pts.filter(x => x.cycle === k)})).filter(c => c.p.length);
+  const resume = c => { const b = c.p.filter(x => x.etat === "bloque").length, a = c.p.filter(x => x.etat === "afaire").length, v = c.p.length - b - a;
+    return [b && `${b} erreur${pl(b)} bloquante${pl(b)}`, a && `${a} à vérifier`, !b && !a && `${v} contrôle${pl(v)} validé${pl(v)}`].filter(Boolean).join(" · "); };
+  const tuiles = postes.map(c => { const n = niveauPoste(c.p), [lib, sym, col] = NIV[n];
+    return `<button class="rv-tuile rt-${n}" onclick="ouvrirPoste('${c.k}')"><span class="rv-sym" style="background:${col}">${sym}</span><span class="rv-tt"><b>${c.l}</b><small>${resume(c)}</small></span><span class="rv-lib" style="color:${col}">${lib}</span></button>`; }).join("");
+  const c = postes.find(c => c.k === S.revPoste);
+  const ord = {bloque:0, afaire:1, fait:2, ok:3};
+  const groupe = (titre, liste, ouvert) => liste.length ? `<details class="rv-g" ${ouvert ? "open" : ""}><summary>${titre} · ${liste.length}</summary>${liste.map(ligne).join("")}</details>` : "";
+  const fenetre = c ? (() => { const n = niveauPoste(c.p), [lib, sym, col] = NIV[n], tri = c.p.slice().sort((a,b) => ord[a.etat] - ord[b.etat]);
+    return `<div class="rv-voile noprint" onclick="if(event.target===this)fermerPoste()"><div class="rv-fen" role="dialog" aria-modal="true" aria-label="${esc(c.l)}">
+      <div class="rv-fh"><span class="rv-sym" style="background:${col}">${sym}</span><div style="flex:1;min-width:0"><h2>${c.l}</h2><small style="color:${col}">${resume(c)}</small></div>
+        ${c.pg && c.pg !== "declaration" ? `<button class="btn small sec" onclick="S.revPoste=null;allerA('${c.pg}')">${NOM_PAGE[c.pg]} →</button>` : ""}<button class="btn small" onclick="fermerPoste()">Fermer</button></div>
+      <div class="rv-fc">${c.k === "charges" ? `<p class="sub" style="margin:0 0 6px">Une variation de plus de ${Math.round(REVUE_PCT*100)} % et de plus de ${eur0(REVUE_MIN)} est à vérifier.</p>` : ""}
+        ${groupe("Erreurs bloquantes", tri.filter(x => x.etat === "bloque"), true)}${groupe("À vérifier, non bloquant", tri.filter(x => x.etat === "afaire"), true)}${groupe("Validé", tri.filter(x => x.etat === "ok" || x.etat === "fait"), !tri.some(x => x.etat === "bloque" || x.etat === "afaire"))}</div></div></div>`; })() : "";
+  const tete = clos ? (ex.revision ? `Révision ${y} figée avec la clôture.` : `${y} a été clôturé avant le module de révision : les points ci-dessous sont indicatifs.`)
+    : bloq ? `${bloq} erreur${pl(bloq)} bloquante${pl(bloq)} : la clôture attend qu'elles soient corrigées ou expliquées` : nb ? `Plus d'erreur bloquante : la clôture est possible (${nb} point${pl(nb)} à vérifier)` : "Révision validée : prêt à clôturer";
+  const imprimer = postes.map(c => `<div class="printonly rv-imp"><h3>${c.l} · ${NIV[niveauPoste(c.p)][0]}</h3>${c.p.map(x => `<div>${NIV[x.etat][1]} ${x.lib || x.texte}${x.type === "calc" && x.attendu != null ? ` : ${eur(x.compta)} / ${eur(x.attendu)}` : ""}${rev[x.id]?.commentaire ? ` · <i>${esc(rev[x.id].commentaire)}</i>` : ""}</div>`).join("")}</div>`).join("");
+  return `<div class="card noprint"><h3 style="margin:0 0 4px;color:${clos ? "var(--text)" : bloq ? "var(--neg)" : nb ? "var(--warn)" : "var(--pos)"}">${tete}</h3>
+    <p class="sub" style="margin:0">Chaque poste rapproche la comptabilité d'une source indépendante (échéancier, bail, relevé, tableau d'amortissement, clôture ${y-1}). Touchez un poste pour voir le détail.</p>
+    <div class="row" style="margin-top:10px;gap:14px;flex-wrap:wrap"><span class="sub" style="margin:0"><b style="color:var(--neg)">✕</b> bloquant · <b style="color:var(--warn)">!</b> à vérifier, non bloquant · <b style="color:var(--pos)">✓</b> validé</span><button class="btn small sec" style="margin-left:auto" onclick="window.print()">Imprimer la feuille de révision</button></div></div>
+  <div class="rv-grille noprint">${tuiles}</div>
+  <h2 class="printonly">Feuille de révision ${y} · ${esc(S.data.dossier.nom||"")}</h2>${imprimer}${fenetre}`;
 }
 const NOM_PAGE = Object.fromEntries(TABS.filter(t=>t[0]!=="h"&&t[0]!=="sep"));
 function allerA(pg){ S.tab = pg; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; S.reprise=null; document.body.classList.remove("menu-open"); renderAll(); haut(); }
@@ -3708,8 +3736,9 @@ function vueCloture(y){
   const f = fiscalJusqua(y), c = f.c, chg = changementsAnnee(y);
   const step = (n, titre, corps) => `<div class="card"><h3><span class="case" style="margin-right:8px">${n}</span>${titre}</h3>${corps}</div>`;
   return entete(`Clôturer ${y}`, "Vérifier, figer les chiffres déclarés, puis ouvrir l'année suivante. La clôture verrouille les saisies ; vous pourrez rouvrir l'année si besoin.") +
-  step(1, "Révision", rst.length ? `<div class="alert ${bad.length?"bad":"warn"}">${bad.length ? `${bad.length} point${pl(bad.length)} à corriger${warn.length?` et ${warn.length} à traiter`:""}` : `${warn.length} point${pl(warn.length)} de révision à traiter`} avant de clôturer :</div><ul>${rst.map(x=>`<li>${x.texte}${x.page?lienPage(x.page):""}</li>`).join("")}</ul>
-      <button class="btn small" onclick="S.cloture=null;S.declEtape='1';allerA('declaration')">Ouvrir la révision →</button>` : `<div class="alert ok">Révision complète : chaque point est validé, expliqué ou attesté.</div>`) +
+  step(1, "Révision", (bad.length ? `<div class="alert bad">${bad.length} erreur${pl(bad.length)} bloquante${pl(bad.length)} : à corriger ou expliquer avant de clôturer.</div><ul>${bad.map(x=>`<li>${x.texte}${x.page?lienPage(x.page):""}</li>`).join("")}</ul>` : `<div class="alert ok">Aucune erreur bloquante.</div>`)
+      + (warn.length ? `<p class="sub" style="margin:10px 0 6px">${warn.length} point${pl(warn.length)} non bloquant${pl(warn.length)}, à regarder si ce n'est pas fait :</p><ul class="sub">${warn.map(x=>`<li>${x.texte}</li>`).join("")}</ul>` : "")
+      + (rst.length ? `<button class="btn small" onclick="S.cloture=null;S.declEtape='1';allerA('declaration')">Ouvrir la révision →</button>` : "")) +
   step(2, "Sommes dues et à recevoir au 31/12", `<p class="sub" style="margin:0 0 10px">En comptabilité super-simplifiée, seules les sommes dues ou à recevoir au 31 décembre s'ajoutent à la trésorerie. Par exemple : un loyer de décembre encaissé en janvier, une facture de décembre payée en janvier. Saisissez-les comme écritures datées du 31/12/${y}.</p>
     <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" id="clRegul"> J'ai vérifié les sommes dues et à recevoir au 31/12/${y}.</label>`) +
   step(3, "Chiffres figés à la clôture", `<table>
@@ -3720,7 +3749,7 @@ function vueCloture(y){
     <div class="form" style="margin-top:14px"><label>Date d'envoi de la déclaration (facultatif)<input type="date" id="clDecl" value="${ex.dateDeclaration||""}"></label></div>
     <p class="sub" style="margin:8px 0 0">Ces chiffres sont mémorisés : si une modification ultérieure les change, le tableau de bord vous préviendra.</p>`) +
   step(4, `Ce qui change en ${y+1}`, chg.length ? `<ul style="margin:0">${chg.map(t=>`<li>${t}</li>`).join("")}</ul>` : `<p class="sub" style="margin:0">Rien de particulier : mêmes amortissements et même emprunt.</p>`) +
-  `<div class="row"><button class="btn" onclick="cloturer(${y})" ${rst.length?"disabled":""}>Clôturer ${y}${exercice(y+1)?"":` et ouvrir ${y+1}`}</button><button class="btn ghost" onclick="S.cloture=null;renderAll()">Annuler</button></div>`;
+  `<div class="row"><button class="btn" onclick="cloturer(${y})" ${bad.length?"disabled":""}>Clôturer ${y}${exercice(y+1)?"":` et ouvrir ${y+1}`}</button><button class="btn ghost" onclick="S.cloture=null;renderAll()">Annuler</button></div>`;
 }
 /* Réouverture d'un exercice clôturé : la plus récente seulement, confirmée par la saisie de l'année, motif conservé dans le dossier */
 function rouvrirExercice(y){
@@ -3736,7 +3765,7 @@ function rouvrirExercice(y){
   setDirty(); renderAll(); toast(`${y} est rouvert. Pensez à le clôturer à nouveau une fois la correction faite.`);
 }
 function cloturer(y){
-  if(restantRevision(y).length) return alert("La révision n'est pas complète : traitez chaque point avant de clôturer.");
+  if(restantRevision(y).some(x => x.etat === "bloque")) return alert("Il reste des erreurs bloquantes dans la révision : corrigez-les ou expliquez-les avant de clôturer.");
   if(!$("#clRegul").checked) return alert("Cochez d'abord la vérification des sommes dues et à recevoir au 31/12 (étape 2).");
   const ex = exercice(y), f = fiscalJusqua(y), d = $("#clDecl").value;
   ex.statut = "cloture";
