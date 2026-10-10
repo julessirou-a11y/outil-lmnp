@@ -463,6 +463,9 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 
 /* ---------- Pièces ---------- */
 .pieces-top{display:grid;grid-template-columns:220px 1fr;gap:20px;margin-bottom:20px;align-items:stretch}
+.depot-btn{display:flex;align-items:center;gap:14px;width:100%;margin:0 0 14px;padding:16px 18px;border:1.5px dashed var(--accent);border-radius:14px;background:var(--surface);color:var(--text);font:inherit;text-align:left;cursor:pointer}
+.depot-btn svg{width:28px;height:28px;color:var(--accent);flex:none}.depot-btn b{display:block;font-size:16px}.depot-btn small{color:var(--muted)}
+.pc.dp{grid-template-columns:44px minmax(0,1fr) auto!important}.pc.dp .a{grid-column:auto!important}.pc.dp .t{min-width:0;overflow:hidden}.pc.dp .t .m{display:block;text-align:left;font-weight:600}
 .pc{display:grid;grid-template-columns:48px minmax(0,1fr) 110px auto;gap:10px;align-items:center;padding:10px 6px;border-top:1px solid var(--line);border-radius:8px}
 .pc.survol{background:var(--accent-soft);outline:2px dashed var(--accent)}
 .pc .d{color:var(--faint);font-size:13px} .pc .t{display:flex;gap:10px;align-items:center;flex-wrap:wrap} .pc .t b{font-weight:500}
@@ -822,6 +825,9 @@ const MOIS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.
 const fmtDate = d => d ? d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4) : "";
 
 function setDirty(v=true){
+  if(DEPOT && S.data){ if(v){ S.data = JSON.parse(S.instantane); S.editId = S.editImmo = null; S.composer = false; S.cloture = S.reprise = null; setTimeout(renderAll, 0);
+    toast("Sur iPhone, l'outil sert à déposer les pièces et à consulter : faites cette modification sur ordinateur."); }
+    S.dirty = false; statut(S.autoMsg); $("#saveBtn").disabled = true; return; }
   if(S.consultation){ S.dirty = false; statut(v ? "Onglet de consultation : modification non enregistrée, faites-la dans l'onglet d'origine" : "Onglet de consultation (lecture seule)", v); $("#saveBtn").disabled = true; return; }
   S.dirty=v; if(v) S.version = (S.version||0) + 1;
   statut(v ? (S.dir ? "Enregistrement…" : "Modifications non enregistrées") : (S.autoMsg||""), v && !S.dir);
@@ -1074,12 +1080,10 @@ function bilan(y){
 
 /* ============ Fichiers : ouverture / enregistrement ============ */
 const FS = "showDirectoryPicker" in window;
-/* iPhone, iPad (Safari) : pas d'accès au dossier ; on enregistre par la feuille de partage d'iOS (« Enregistrer dans Fichiers ») */
+/* iPhone, iPad (Safari) : aucun site ne peut écrire dans iCloud Drive. L'outil y sert à déposer les pièces (feuille de partage
+   d'iOS, « Enregistrer dans Fichiers ») et à consulter ; il ne modifie jamais le fichier de données, l'ordinateur rattache les pièces. */
 const PARTAGE = !FS && !!navigator.canShare;
-function fichierPartageable(contenu, nom, types){
-  for(const type of types){ const f = new File([contenu], nom, {type}); try{ if(navigator.canShare({files:[f]})) return f; }catch(_){} }
-  return null;
-}
+const DEPOT = PARTAGE;
 const FILE = "lmnp-donnees.json";
 const idb = {
   db(){ return new Promise((ok,ko)=>{ try{ const r = indexedDB.open("outil-lmnp",1); r.onupgradeneeded=()=>r.result.createObjectStore("k"); r.onsuccess=()=>ok(r.result); r.onerror=()=>ko(r.error);}catch(e){ko(e)} }); },
@@ -1088,10 +1092,11 @@ const idb = {
 };
 function chargerDonnees(obj, nom){
   if(!obj || obj.format !== "outil-lmnp") throw new Error("Ce fichier n'est pas un dossier de l'outil LMNP.");
-  S.data = normalize(obj); S.fileName = nom; S.autoMsg = ""; S.sauvegardeSession = false; S.versionLue = obj.derniereModification || null; S.conflit = false;
+  S.data = normalize(obj); S.fileName = nom; S.autoMsg = DEPOT ? "Lecture seule · dépôt de pièces" : ""; S.sauvegardeSession = false; S.versionLue = obj.derniereModification || null; S.conflit = false;
   rattacherEcheanciers(); // à l'ouverture : rattaché en mémoire, sans marquer le dossier comme modifié
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
   S.year = ys.filter(y=>!isHistorique(y)).pop() ?? ys.pop();
+  if(DEPOT){ S.instantane = JSON.stringify(S.data); S.tab = "depot"; memoriserDossier(obj, nom); }
   appliquerLienGL();
   setDirty(false); renderAll();
 }
@@ -1140,6 +1145,7 @@ async function lireDepuisDossier(){
     const fh = await S.dir.getFileHandle(FILE);
     const txt = await (await fh.getFile()).text();
     chargerDonnees(JSON.parse(txt), S.dir.name + "/" + FILE);
+    scanOuverture();
   }catch(e){
     if(e.name === "NotFoundError"){
       // Pourquoi le fichier manque : resté dans iCloud (non téléchargé sur ce Mac), ou présent sous un autre nom
@@ -1164,6 +1170,7 @@ $("#fileInput").addEventListener("change", async ev => {
 function horodatage(){ const d=new Date(), p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}h${p(d.getMinutes())}`; }
 async function enregistrer(){
   if(!S.data) return;
+  if(DEPOT) return;
   if(S.consultation) return alert("Cet onglet sert à consulter le grand livre : il n'enregistre rien. Faites vos modifications dans l'onglet d'origine du Carnet.");
   S.data.derniereModification = new Date().toISOString();
   const txt = JSON.stringify(S.data, null, 2);
@@ -1176,18 +1183,6 @@ async function enregistrer(){
       return;
     }catch(e){ alert("Enregistrement dans le dossier impossible ("+e.message+"). Le fichier va être téléchargé à la place."); }
   }
-  if(PARTAGE && !S.dir){
-    const f = fichierPartageable(txt, FILE, ["application/json", "text/plain", "application/octet-stream"]);
-    if(f){
-      try{ await navigator.share({files:[f]}); }
-      catch(e){ if(e.name === "AbortError") return; alert("Partage impossible (" + e.message + "). Le fichier va être téléchargé à la place."); f.echec = true; }
-      if(!f.echec){
-        S.autoMsg = "✓ Partagé à " + new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
-        setDirty(false); toast("Si ce n'est pas fait : « Enregistrer dans Fichiers », dossier LMNP d'iCloud Drive, puis « Remplacer ».");
-        return;
-      }
-    }
-  }
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([txt],{type:"application/json"}));
   a.download = FILE; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000);
@@ -1199,6 +1194,7 @@ function toast(msg){ const el = document.createElement("div"); el.className="ale
 
 /* ============ Rendu ============ */
 const IC = {
+  depot:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
   accueil:'<path d="M4 13h4v7H4zM10 8h4v12h-4zM16 4h4v16h-4z"/>',
   ecritures:'<path d="M6 4h12v16H6zM9 9h6M9 13h6M9 17h3"/>',
   banque:'<path d="M4 9l8-5 8 5zM6 9v8M10 9v8M14 9v8M18 9v8M4 20h16"/>',
@@ -1221,23 +1217,23 @@ function renderAll(){
     const ys = new Set(Object.keys(S.data.exercices).map(Number));
     sel.innerHTML = [...ys].sort((a,b)=>b-a).map(y => `<option value="${y}" ${y===S.year?"selected":""}>${y}${isHistorique(y)?" (historique)":""}</option>`).join("");
   } else sel.innerHTML = "";
-  $("#tabs").innerHTML = S.data ? TABS.map(([k,l]) => {
+  $("#tabs").innerHTML = S.data ? (DEPOT ? [["depot","Pièces à déposer"], ...TABS.filter(([k]) => k !== "pieces")] : TABS).map(([k,l]) => {
     if(k==="sep") return '<div class="sep"></div>';
     if(k==="h") return `<div class="grp">${l}</div>`;
-    const n = k==="pieces" ? piecesManquantes(S.year).length : k==="banque" ? S.data.banque.aTrier.filter(o => yearOf(o.date) === S.year).length : 0;
-    const bt = k==="banque" ? `Opérations bancaires ${S.year} à trier` : "Justificatifs manquants";
+    const n = k==="depot" ? aDeposer(S.year).length : k==="pieces" ? piecesManquantes(S.year).length : k==="banque" ? S.data.banque.aTrier.filter(o => yearOf(o.date) === S.year).length : 0;
+    const bt = k==="banque" ? `Opérations bancaires ${S.year} à trier` : k==="depot" ? "Pièces à déposer" : "Justificatifs manquants";
     return `<button data-tab="${k}" class="${S.tab===k?"on":""}" ${S.tab===k?'aria-current="page"':""}>${icon(k)}<span>${l}</span>${n?`<span class="badge" title="${bt}">${n}</span>`:""}</button>`; }).join("") : "";
-  $("#saveBtn").disabled = !S.data || !!S.consultation;
+  $("#saveBtn").disabled = !S.data || !!S.consultation || DEPOT;
   const sombre = themeActuel() === "dark";
   $("#themeBtn").setAttribute("aria-pressed", sombre); $("#themeBtn").innerHTML = sombre ? "☀︎ Clair" : "☾ Sombre";
   $("#tabs").style.setProperty("--n", $("#tabs").querySelectorAll("button").length);
   ajusterMenu();
   const m = $("#main");
   if(!S.data){ m.innerHTML = vueBienvenue(); return; }
-  m.innerHTML = bandeauPieceIPhone() + ({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, simulations:vueSimulations, dossier:vueDossier, pieces:vuePieces})[S.tab]();
+  m.innerHTML = bandeauPieceIPhone() + ({depot:vueDepot, accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, simulations:vueSimulations, dossier:vueDossier, pieces:vuePieces})[S.tab]();
   if(S.tab === "pieces") scanPieces(S.year);
 }
-document.querySelectorAll(".logolink").forEach(a => a.addEventListener("click", e => { e.preventDefault(); allerA("accueil"); }));
+document.querySelectorAll(".logolink").forEach(a => a.addEventListener("click", e => { e.preventDefault(); allerA(DEPOT ? "depot" : "accueil"); }));
 function ajusterMenu(){
   const side = $(".side"), niveaux = ["c1","c2","c3"];
   side.classList.remove(...niveaux);
@@ -1281,10 +1277,14 @@ function vueBienvenue(){
     ${FS ? `<div class="row"><button class="btn hide" id="resume"></button>
       <button class="btn" onclick="ouvrirDossier()">Ouvrir le dossier LMNP…</button></div>
       <p class="sub" style="margin:14px 0 0">Choisissez le dossier qui contient <code>${FILE}</code>. Les modifications y sont enregistrées automatiquement, avec une copie datée dans « Sauvegardes ».</p>`
+    : DEPOT ? `${dossierMemorise() ? `<div class="row" style="margin-bottom:12px"><button class="btn" onclick="reprendreMemorise()">Reprendre « ${esc(dossierMemorise().nom)} »</button></div>
+        <p class="sub" style="margin:0 0 12px">Version ouverte le ${esc(dossierMemorise().le)}. Si le dossier a changé depuis sur l'ordinateur, rouvrez le fichier.</p>` : ""}
+      <div class="row"><button class="btn ${dossierMemorise() ? "sec" : ""}" onclick="ouvrirFichier()">Ouvrir ${FILE}…</button></div>
+      <p class="sub" style="margin:14px 0 0">Sur iPhone, le Carnet sert à <b>déposer les pièces</b> et à consulter. Choisissez <code>${FILE}</code> dans le dossier LMNP d'iCloud Drive. Les pièces déposées sont rattachées à la prochaine ouverture du dossier sur l'ordinateur.</p>`
     : `<div class="alert info">Ce navigateur permet de consulter et d'imprimer. Pour modifier et enregistrer dans iCloud, ouvrez l'outil dans Chrome ou Edge sur Mac.</div>`}
     </div>
-    <div class="row"><button class="btn ghost" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button>
-      <button class="btn ghost" onclick="chargerDonnees(newDossier(),'nouveau dossier');setDirty(true)">Créer un dossier vide</button></div></div>`;
+    ${DEPOT ? "" : `<div class="row"><button class="btn ghost" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button>
+      <button class="btn ghost" onclick="chargerDonnees(newDossier(),'nouveau dossier');setDirty(true)">Créer un dossier vide</button></div>`}</div>`;
 }
 
 /* ============ Graphiques (SVG, sans bibliothèque) ============ */
@@ -2842,13 +2842,17 @@ async function attacherPiece(id){
   e.piece = `Justificatifs/${y}/${nom}`; delete e.sansPiece;
   setDirty(); renderAll(); toast(dejaLa ? "Justificatif rattaché." : `Copié dans Justificatifs/${y}/ sous le nom « ${nom} ».`);
 }
-/* iPhone : on choisit la photo ou le PDF, puis un second toucher l'envoie dans Fichiers (iOS exige un geste pour partager) */
+/* iPhone : on choisit la photo ou le PDF, puis un second toucher l'envoie dans Fichiers (iOS exige un geste pour partager).
+   Le nom date_tiers_nature permet à l'ordinateur de rattacher la pièce seul (scanPieces) ; sans écriture, il la propose au rattachement. */
+const nomPiece = e => `${e.date}_${slug(e.tiers)}_${slug(e.nature)}`;
 function choisirPieceIPhone(id){
+  const e = id && findEcr(id), libelle = !e && prompt("Quelle pièce ? (par exemple « Ticket Ikea »)");
+  if(!e && libelle == null) return;
   const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*,.pdf";
-  inp.onchange = () => { const file = inp.files[0]; if(!file) return; const e = findEcr(id);
+  inp.onchange = () => { const file = inp.files[0]; if(!file) return;
     const ext = (file.name.match(/\.[A-Za-z0-9]+$/)||[file.type === "application/pdf" ? ".pdf" : ".jpg"])[0].toLowerCase();
-    const nom = `${e.date}_${slug(e.tiers)}_${slug(e.nature)}${ext}`;
-    S.pieceIPhone = {id, nom, annee:yearOf(e.date), file:new File([file], nom, {type:file.type || "application/octet-stream"})};
+    const jour = new Date().toISOString().slice(0,10), nom = (e ? nomPiece(e) : `${jour}_${slug(libelle)}`) + ext;
+    S.pieceIPhone = {id, nom, annee:e ? yearOf(e.date) : Number(jour.slice(0,4)), file:new File([file], nom, {type:file.type || "application/octet-stream"})};
     renderAll(); haut(); };
   inp.click();
 }
@@ -2856,10 +2860,26 @@ async function rangerPieceIPhone(){
   const P = S.pieceIPhone; if(!P) return;
   try{ if(!navigator.canShare({files:[P.file]})) throw new Error("ce type de fichier ne peut pas être partagé"); await navigator.share({files:[P.file]}); }
   catch(err){ if(err.name !== "AbortError") alert("Partage impossible (" + err.message + ")."); return; }
-  const e = findEcr(P.id); e.piece = `Justificatifs/${P.annee}/${P.nom}`; delete e.sansPiece;
-  S.pieceIPhone = null; setDirty(); renderAll(); toast(`Rattaché. Pensez aussi à enregistrer le dossier.`);
+  if(P.id){ const d = deposees(); d[P.id] = P.nom; setPref("deposees", JSON.stringify(d)); }
+  S.pieceIPhone = null; renderAll(); toast("Pièce déposée. Elle sera rattachée à la prochaine ouverture du dossier sur l'ordinateur.");
 }
 const bandeauPieceIPhone = () => S.pieceIPhone ? `<div class="alert warn noprint" style="align-items:center;flex-wrap:wrap;gap:8px"><span>« ${esc(S.pieceIPhone.nom)} » est prêt. Touchez « Ranger », puis « Enregistrer dans Fichiers » et choisissez le dossier <b>Justificatifs/${S.pieceIPhone.annee}</b> du dossier LMNP.</span><span class="row" style="margin-left:auto;gap:6px"><button class="btn small" onclick="rangerPieceIPhone()">Ranger</button><button class="btn small ghost" onclick="S.pieceIPhone=null;renderAll()">Annuler</button></span></div>` : "";
+/* Pièces déjà déposées depuis cet iPhone (le fichier de données, lui, n'est pas modifié) */
+function deposees(){ try{ return JSON.parse(pref("deposees", "{}")) || {}; }catch(_){ return {}; } }
+const aDeposer = y => piecesManquantes(y).filter(e => !deposees()[e.id]);
+function memoriserDossier(obj, nom){ try{ localStorage.setItem("dossierIPhone", JSON.stringify({nom:obj.dossier?.nom || nom, fichier:nom, le:new Date().toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}), obj})); }catch(_){} }
+function dossierMemorise(){ try{ return JSON.parse(localStorage.getItem("dossierIPhone")); }catch(_){ return null; } }
+function reprendreMemorise(){ const m = dossierMemorise(); if(!m) return; try{ chargerDonnees(m.obj, m.fichier); }catch(e){ alert(e.message); } }
+function vueDepot(){
+  const y = S.year, dep = deposees();
+  const manq = piecesManquantes(y).sort((a,b)=>b.date.localeCompare(a.date)), reste = manq.filter(e => !dep[e.id]), faites = manq.filter(e => dep[e.id]);
+  const ligne = (e, act) => `<div class="pc dp"><span class="d">${fmtDate(e.date).slice(0,5)}</span><span class="t"><b>${esc(e.tiers)||"–"}</b>${chipNature(e.nature)}<span class="m">${eur(e.montant)}</span></span><span class="a">${act}</span></div>`;
+  return `<div class="pagehead"><h1>Pièces à déposer</h1><p>${reste.length ? `${reste.length} écriture${pl(reste.length)} ${y} sans justificatif` : `Tout est déposé pour ${y}`}</p></div>
+  ${S.pieceIPhone ? "" : `<button class="depot-btn" onclick="choisirPieceIPhone()">${icon("depot")}<span><b>Déposer une pièce</b><small>Ticket, facture… sans écriture à rattacher</small></span></button>`}
+  <div class="card">${reste.length ? reste.map(e => ligne(e, `<button class="btn small" onclick="choisirPieceIPhone('${e.id}')">${I_CLIP} Joindre</button>`)).join("") : `<div class="blx-0" style="margin:6px 0 0">✓ Rien à déposer</div>`}</div>
+  ${faites.length ? `<div class="card"><h3>Déposées depuis cet iPhone · ${faites.length}</h3><p class="sub" style="margin:0 0 6px">Rattachées à la prochaine ouverture du dossier sur l'ordinateur.</p>${faites.map(e => ligne(e, `<span class="pill">✓ déposée</span>`)).join("")}</div>` : ""}
+  <p class="sub">Version du dossier ouverte : ${esc(dossierMemorise()?.le || "–")}. Rouvrez <code>${FILE}</code> après une saisie sur l'ordinateur.</p>`;
+}
 async function ouvrirPiece(id){
   const e = findEcr(id);
   if(!await dossierRequis()) return;
@@ -2951,7 +2971,7 @@ function vuePieces(){
       <div class="row"><button class="btn small sec" onclick="document.querySelectorAll('#ratt .sugg input').forEach(i=>i.checked=true)">Cocher les lignes du prêt</button><button class="btn small" onclick="enregistrerRattachement('${rd.id}')">Enregistrer</button><button class="btn small ghost" onclick="S.rattDoc=null;renderAll()">Fermer</button></div></div>
       <div class="ratt">${(ex.ecritures||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)).map(e=>`<label class="${["Intérêts emprunt","Remboursement emprunt","Assurance emprunt"].includes(e.nature)?"sugg":""}"><input type="checkbox" value="${e.id}" ${e.piece===rd.fichier?"checked":""}><span>${fmtDate(e.date).slice(0,5)}</span><span>${esc(e.tiers)||"–"}</span>${chipNature(e.nature)}<span class="m">${eur(e.montant)}</span></label>`).join("")}</div></div>` : "";
   return `<div class="pagehead"><h1>Pièces ${y}</h1></div>
-  ${!S.dir ? (PARTAGE ? `<div class="alert info">Sur iPhone, « Ajouter » prend une photo ou un PDF et le range dans Fichiers ; les pièces déjà rangées se consultent sur ordinateur, dans Chrome.</div>` : `<div class="alert warn">Ouvrez le dossier LMNP dans Chrome pour déposer ou consulter les pièces.</div>`) : ""}
+  ${!S.dir ? (PARTAGE ? `<div class="alert info">Sur iPhone, les pièces se déposent depuis « Pièces à déposer » ; celles déjà rangées se consultent sur ordinateur, dans Chrome.</div>` : `<div class="alert warn">Ouvrez le dossier LMNP dans Chrome pour déposer ou consulter les pièces.</div>`) : ""}
   <div class="pieces-top">
     <div class="card centre" style="margin:0">${anneau(all.length?ok.length/all.length:1, all.length?`${ok.length}/${all.length}`:"✓", ok.length===all.length?"var(--pos)":"var(--warn)", 120)}<span class="sub" style="margin:6px 0 0">écritures justifiées</span></div>
     ${zoneDepot("Déposer des pièces", "Factures (PDF, Factur-X, UBL), échéanciers, photos… · un ou plusieurs fichiers, ou le ZIP de la plateforme", "$('#pieceInput').click()", "deposerPiecesDrop(event)").replace('class="depot noprint"','class="depot noprint" style="margin:0"')}
@@ -2979,6 +2999,14 @@ async function scanPieces(y){
     const lies = cheminsLies(), lus = new Set(S.data.facturesLues), libres = [], fichiers = {};
     for await (const [nom, h] of dir.entries()) if(h.kind === "file" && !nom.startsWith(".") && !lies.has(`Justificatifs/${y}/${nom}`)) fichiers[nom] = h;
     let n = 0;
+    // Déposés depuis l'iPhone sous le nom date_tiers_nature : rattachés à la seule écriture sans pièce qui porte ce nom
+    // (iOS ajoute « 2 » ou « -2 » quand le nom existe déjà)
+    const sansPiece = (exercice(y)?.ecritures || []).filter(e => !e.piece);
+    for(const nom of Object.keys(fichiers)){
+      const base = nom.replace(/\.[^.]+$/, "").replace(/[ -]\d+$/, ""), c = sansPiece.filter(e => !e.piece && nomPiece(e) === base);
+      if(c.length === 1){ c[0].piece = `Justificatifs/${y}/${nom}`; delete c[0].sansPiece; delete fichiers[nom]; n++; }
+    }
+    if(n) setDirty();
     // Déposés depuis l'iPhone (app Fichiers) : on regarde une seule fois chaque PDF ou XML
     const aLire = [];
     for(const [nom, h] of Object.entries(fichiers)){
@@ -2996,9 +3024,15 @@ async function scanPieces(y){
     libres.sort();
     const avant = JSON.stringify(S.libres);
     S.libres = {y, noms:libres};
+    if(n) toast(`${n} pièce${pl(n)} déposée${pl(n)} depuis l'iPhone ou la plateforme rattachée${pl(n)}.`);
     if(n || avant !== JSON.stringify(S.libres)) renderAll();
   }catch(_){ }
   finally{ S.scanPieces = false; }
+}
+/* À l'ouverture du dossier : pièces déposées depuis l'iPhone ou la plateforme, sur les exercices encore ouverts (l'exercice affiché en dernier) */
+async function scanOuverture(){
+  const ys = Object.keys(S.data.exercices).map(Number).filter(y => !isHistorique(y) && !verrouille(y) && y !== S.year);
+  for(const y of [...ys, S.year]) if(!verrouille(y)){ while(S.scanPieces) await new Promise(r => setTimeout(r, 50)); await scanPieces(y); }
 }
 /* Chemins déjà pris par une écriture, une facture électronique ou un document */
 const cheminsLies = () => new Set([...Object.values(S.data.exercices).flatMap(ex=>(ex.ecritures||[]).map(e=>e.piece)), ...factures().flatMap(f=>[f.fichier, f.xml]), ...docs().map(d=>d.fichier)].filter(Boolean));
