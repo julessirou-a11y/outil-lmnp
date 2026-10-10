@@ -2749,7 +2749,7 @@ function controlesRevision(y, c, chk){
   const ex1 = exercice(y-1);
   if(ex1 && !isHistorique(y-1)){
     const c1 = calculAnnee(y-1), p1 = c1.t.parNature;
-    const absentes = Object.keys(p1).filter(n => NATURES[n]?.g === "charge" && !NAT_PONCTUELLES.has(n) && p1[n] > 0 && !(pn[n] > 0));
+    const absentes = Object.keys(p1).filter(n => NATURES[n]?.g === "charge" && !NAT_PONCTUELLES.has(n) && p1[n] > 0 && !(pn[n] > 0) && !(n === "CFE" && c.produits > 5000)); // CFE : contrôle dédié
     chk("recurrentes", "charges", !absentes.length, `Les charges récurrentes de ${y-1} sont toutes présentes.`, "warn", `Charge${pl(absentes.length)} présente${pl(absentes.length)} en ${y-1} et absente${pl(absentes.length)} cette année : ${absentes.join(", ")}. Oubli de saisie, ou charge arrêtée ?`, "ecritures");
     for(const n of new Set([...Object.keys(pn), ...Object.keys(p1)])){
       const g = NATURES[n]?.g; if(!g || g === "bilan") continue;
