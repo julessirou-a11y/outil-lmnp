@@ -1132,7 +1132,7 @@ async function lireDepuisDossier(){
       const proches = noms.filter(n => /^lmnp-donnees.*\.json$/i.test(n));
       if(nuage) return alert(`« ${FILE} » est dans iCloud mais pas encore téléchargé sur cet ordinateur.\n\nDans le Finder, ouvrez le dossier « ${S.dir.name} », faites un clic droit sur « ${FILE} » › « Télécharger maintenant », puis cliquez à nouveau sur « Reprendre ».`);
       if(proches.length) return alert(`Pas de fichier « ${FILE} » dans « ${S.dir.name} », mais ${proches.length > 1 ? "ces fichiers ressemblent" : "ce fichier ressemble"} à un dossier du Carnet : ${proches.join(", ")}.\n\nDans le Finder, renommez le bon en « ${FILE} » (gardez les autres de côté), puis cliquez à nouveau sur « Reprendre ».`);
-      if(noms.length) return alert(`Pas de fichier « ${FILE} » dans « ${S.dir.name} ». Vérifiez que c'est bien le dossier du Carnet, ou utilisez « Créer un dossier vide » pour en commencer un nouveau.`);
+      if(noms.length) return alert(`Pas de fichier « ${FILE} » dans « ${S.dir.name} ». Si votre dossier a changé de place, choisissez-le avec « Ouvrir le dossier LMNP… » : l'outil s'en souviendra ensuite.`);
       if(confirm(`Le dossier « ${S.dir.name} » est vide. Y créer un dossier comptable vide ?`)){
         chargerDonnees(newDossier(), S.dir.name + "/" + FILE); await enregistrer();
       }
