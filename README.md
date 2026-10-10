@@ -18,6 +18,8 @@ Ce dépôt ne contient **que le code**. Les données comptables sont dans un fic
 
 **Ne jamais ajouter de fichier `.json` de données dans ce dépôt.**
 
+La police (IBM Plex Sans, licence SIL OFL 1.1) est servie depuis `polices/` : la page ne contacte aucun service tiers à l'ouverture. Seule la lecture d'un PDF charge la bibliothèque pdf.js depuis jsDelivr (le PDF lui-même reste sur l'appareil). Le site demande aux moteurs de recherche de ne pas l'indexer (`noindex`).
+
 ## Utilisation
 
 - **Mac, Chrome ou Edge** : bouton « Ouvrir le dossier LMNP… », puis choisir le dossier iCloud. Chaque enregistrement met à jour le fichier et ajoute une copie datée dans `Sauvegardes/`.
