@@ -806,6 +806,8 @@ const S = {data:null, dirty:false, dir:null, fileName:null, year:null, tab:"accu
 const $ = s => document.querySelector(s);
 function haut(){ window.scrollTo(0,0); const m = document.getElementById("main"); m.scrollTop = 0; m.focus({preventScroll:true}); }
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+/* Texte placé en argument JS dans un attribut on…="…" : chaîne JSON (guillemets et antislashs échappés) puis esc, que le navigateur défait avant d'exécuter */
+const jsq = s => esc(JSON.stringify(String(s ?? "")));
 const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
 const eur = n => (n==null||isNaN(n)) ? "–" : n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
 const eur0 = n => (n==null||isNaN(n)) ? "–" : Math.round(n).toLocaleString("fr-FR") + " €";
@@ -1063,6 +1065,7 @@ function appliquerLienGL(){
   try{ history.replaceState(null, "", location.pathname); }catch(_){}
 }
 addEventListener("message", ev => {
+  if(ev.origin !== location.origin) return; // seuls les onglets du Carnet lui-même échangent le dossier
   const d = ev.data || {};
   if(d.lmnp === "demande" && ONGLETS_GL.has(ev.source) && S.data){
     const msg = {lmnp:"dossier", data:S.data, fileName:S.fileName, dir:S.dir};
@@ -1900,12 +1903,12 @@ function carteContrat(l, idx){
     </div><div class="row" style="justify-content:flex-end;margin-top:14px">${l.capital ? `<button class="btn small sec" onclick="S.editPret=null;renderAll()">Annuler</button>` : ""}<button class="btn small" onclick="validerContrat(${idx})">Valider</button></div>`
     : `<div class="fiche">${fiche.map(([k,v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("")}</div>`;
   // Échéancier de la banque : une vignette, ouverte d'un clic, actions dans « ⋯ »
-  const doc = l.echeancierDoc && docs().find(d => d.id === l.echeancierDoc), lib = s => esc(s).replace(/'/g, "\\'");
-  const ouvrir = doc ? `ouvrirChemin('${esc(doc.fichier)}','${lib(doc.libelle)}')` : "";
+  const doc = l.echeancierDoc && docs().find(d => d.id === l.echeancierDoc);
+  const ouvrir = doc ? `ouvrirChemin(${jsq(doc.fichier)},${jsq(doc.libelle)})` : "";
   const PDF = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6v18h12V7zM14 3v4h4"/><path d="M8.5 13h7M8.5 16.5h7"/></svg>`;
   const pdf = doc || eb?.lignes?.length ? `<div class="pdfdoc">
       <button class="pdfopen" ${doc ? `onclick="${ouvrir}" title="Ouvrir l'échéancier en PDF"` : "disabled"}>${PDF}<span><b>${doc ? esc(doc.libelle) : "Échéancier de la banque"}</b><small>${banque ? `${eb.lignes.length} échéances lues${eb.origine === "colle" ? " (tableau collé)" : ""}` : "Tableau non lu"}${doc?.date ? ` · déposé le ${fmtDate(doc.date)}` : ""}</small></span></button>
-      ${menu3([doc && ["Ouvrir", ouvrir], doc && ["Télécharger", `telechargerChemin('${esc(doc.fichier)}')`], doc && !banque && ["Lire le tableau", `lireEcheancierDoc(${idx})`], ["Supprimer", `supprimerEcheancierBanque(${idx})`, "danger"]])}</div>`
+      ${menu3([doc && ["Ouvrir", ouvrir], doc && ["Télécharger", `telechargerChemin(${jsq(doc.fichier)})`], doc && !banque && ["Lire le tableau", `lireEcheancierDoc(${idx})`], ["Supprimer", `supprimerEcheancierBanque(${idx})`, "danger"]])}</div>`
     : `${zoneDepot("Déposer l'échéancier de la banque", "PDF · il remplace l'échéancier calculé", `ajouterEcheancierPret(${idx})`, `ajouterEcheancierPret(${idx},event)`).replace('class="depot noprint"','class="depot noprint compact"')}
       <details class="coller"><summary>Le PDF ne se lit pas ? Coller le tableau</summary>
         <textarea id="echColle" rows="4" style="width:100%;margin-top:8px" placeholder="05/11/2016   729,86   122,00   607,86   119 392,14 …"></textarea>
@@ -2811,7 +2814,7 @@ function vuePieces(){
   ${dd.length ? `<div class="card"><h3>Échéanciers et documents</h3><div class="docs">${dd.map(d => { const n = ecrituresDuDoc(d).length; return `<div class="doc">
       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"><path d="M14 3H6v18h12V7zM14 3v4h4"/><path d="M9 12h6M9 16h6"/></svg>
       <div><b>${esc(d.libelle)}</b><small>${TYPES_DOC[d.type]||d.type} · ${n} écriture${n>1?"s":""}</small></div>
-      <div class="row noprint" style="margin-left:auto;gap:4px"><button class="btn small sec" onclick="ouvrirChemin('${esc(d.fichier)}','${esc(d.libelle).replace(/'/g,"\\'")}')">Voir</button><button class="btn small" onclick="S.rattDoc='${d.id}';renderAll()">Rattacher…</button><button class="btn small ghost" aria-label="Retirer" onclick="supprimerDocument('${d.id}')">${I_DEL}</button></div></div>`; }).join("")}</div></div>` : ""}
+      <div class="row noprint" style="margin-left:auto;gap:4px"><button class="btn small sec" onclick="ouvrirChemin(${jsq(d.fichier)},${jsq(d.libelle)})">Voir</button><button class="btn small" onclick="S.rattDoc='${d.id}';renderAll()">Rattacher…</button><button class="btn small ghost" aria-label="Retirer" onclick="supprimerDocument('${d.id}')">${I_DEL}</button></div></div>`; }).join("")}</div></div>` : ""}
   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">À fournir · ${manq.length}</h3>
     ${manq.length>3?`<button class="btn small ghost noprint" onclick="if(confirm('Marquer les ${manq.length} écritures comme justifiées ailleurs ?')){piecesManquantes(${y}).forEach(e=>e.sansPiece=true);setDirty();renderAll()}">Tout marquer « classé ailleurs »</button>`:""}</div>
     ${manq.length ? manq.map(e=>ligne(e, `<button class="btn small" onclick="attacherPiece('${e.id}')">Ajouter</button>${dd.length?`<select class="btn small sec" style="padding:4px 6px" onchange="if(this.value){const d=docs().find(x=>x.id===this.value);findEcr('${e.id}').piece=d.fichier;setDirty();renderAll()}"><option value="">Document…</option>${dd.map(d=>`<option value="${d.id}">${esc(d.libelle)}</option>`).join("")}</select>`:""}<button class="btn small ghost" title="Pas besoin de justificatif" onclick="marquerSansPiece('${e.id}',true)">Non requis</button>`)).join("")
@@ -3341,7 +3344,7 @@ function vueBanque(){
       ${jauge([[classes,"var(--pos)"]], list.length, 8)}
       <div style="margin-top:14px">${list.map(ligneOp).join("")}</div></div>`
     : `<div class="blx-0">✓ Tout est imputé</div>`}
-  ${postes.length ? `<div class="card"><h3>Postes ${y}</h3><div class="barresh">${postes.map(([n,v])=>`<div class="bh" role="button" title="Voir ces écritures" onclick="S.vueEcr='journal';S.fEcr=[{t:'nature',v:'${esc(n).replace(/'/g,"\\'")}'}];S.lignesEcr='';allerA('ecritures')"><span>${libNature(n)}</span><div>${jauge([[v, COUL_GROUPE[NATURES[n]?.g||"charge"]]], maxP, 10)}</div><b>${eur0(v)}</b></div>`).join("")}</div></div>` : ""}
+  ${postes.length ? `<div class="card"><h3>Postes ${y}</h3><div class="barresh">${postes.map(([n,v])=>`<div class="bh" role="button" title="Voir ces écritures" onclick="S.vueEcr='journal';S.fEcr=[{t:'nature',v:${jsq(n)}}];S.lignesEcr='';allerA('ecritures')"><span>${libNature(n)}</span><div>${jauge([[v, COUL_GROUPE[NATURES[n]?.g||"charge"]]], maxP, 10)}</div><b>${eur0(v)}</b></div>`).join("")}</div></div>` : ""}
   <div class="card"><details><summary>Règles automatiques (${B.regles.length})</summary>
   ${B.regles.length ? `<div class="tablewrap" style="margin-top:10px"><table><tr><th>Si le libellé contient</th><th>Sens</th><th>Poste</th><th>Tiers</th><th></th></tr>
     ${B.regles.map(r=>`<tr><td><input value="${esc(r.motCle)}" style="width:100%;min-width:120px" onchange="majRegle('${r.id}','motCle',this.value)"></td><td>${r.sens==="credit"?"Crédit":"Débit"}</td><td>${libNat(r.nature)}</td>
