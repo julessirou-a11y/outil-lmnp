@@ -145,6 +145,10 @@ html,body{overflow-x:clip;overscroll-behavior-x:none}
 h2{font-size:20px;font-weight:600;letter-spacing:-.01em;margin:0 0 4px}
 h3{font-size:16px;font-weight:600;margin:0 0 12px}
 p.sub{color:var(--muted);margin:0 0 16px;max-width:70ch}
+.apropos summary{cursor:pointer;font-weight:600}
+.apropos h4{margin:16px 0 4px;font-size:14px}
+.apropos p{margin:0 0 8px;max-width:70ch;color:var(--muted)}
+.apropos a{color:var(--accent)}
 code{font-size:.92em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
 
 /* ---------- Blocs ---------- */
@@ -2648,7 +2652,20 @@ function vueDossier(){
   <div class="card"><details><summary>Plan de comptes</summary>
     <div class="tablewrap" style="margin-top:10px"><table><tr><th>Compte</th><th>Libellé</th><th>Natures</th></tr>
     ${Object.entries(COMPTES).map(([c,l])=>`<tr><td>${c}</td><td>${esc(l)}</td><td>${Object.keys(NATURES).filter(n=>NATURES[n].c===c).map(esc).join(", ")}</td></tr>`).join("")}
-    </table></div></details></div>`;
+    </table></div></details></div>
+  <div class="card apropos"><details><summary>À propos du Carnet</summary>
+    <h4>Éditeur</h4>
+    <p>Le Carnet est un outil personnel et non commercial, tenu par un particulier pour la comptabilité de sa location meublée.</p>
+    <h4>Hébergeur</h4>
+    <p>GitHub, Inc. (GitHub Pages), 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis.</p>
+    <h4>Confidentialité</h4>
+    <p>Le Carnet n'a ni compte, ni serveur, ni cookie, ni mesure d'audience. Les données du dossier restent dans le fichier <code>lmnp-donnees.json</code>, sur votre appareil ou dans votre dossier iCloud : elles ne sont jamais envoyées sur internet.</p>
+    <p>Comme tout hébergeur, GitHub voit l'adresse IP de qui ouvre la page (<a href="https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">sa déclaration de confidentialité</a>). Au premier PDF déposé, le lecteur de PDF est chargé depuis jsDelivr, qui voit alors aussi l'adresse IP ; le PDF lui-même reste sur l'appareil.</p>
+    <p>Le navigateur garde sur cet appareil le thème choisi et l'accès au dossier ouvert, pour ne pas les redemander.</p>
+    <h4>Responsabilité</h4>
+    <p>Les montants produits sont à vérifier avant chaque déclaration. Le Carnet ne remplace pas l'avis d'un expert-comptable.</p>
+    <p class="sub">Police IBM Plex Sans, licence SIL Open Font License 1.1.</p>
+  </details></div>`;
 }
 /* ============ Justificatifs ============ */
 function pieceRequise(e){ return !e.sansPiece && (NATURES[e.nature]?.piece !== false); }
