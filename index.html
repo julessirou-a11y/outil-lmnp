@@ -2786,7 +2786,7 @@ function rapprochements(y){
     const p = c.t.parNature, p1 = calculAnnee(y-1).t.parNature;
     for(const n of Object.keys(NATURES).filter(n => NATURES[n].g !== "bilan" && ((p[n]||0) || (p1[n]||0)))){
       const v = r2(p[n]||0), v1 = r2(p1[n]||0), ecart = Math.abs(v - v1);
-      out.push({type:"revue", id:`revue-${slug(n)}`, cycle:"charges", lib:`${n} (${NATURES[n].c.slice(0,3)})`, compta:v, attendu:v1, source:`${y-1}`, gl:NATURES[n].c, page:"ecritures", significatif: ecart > REVUE_MIN && (!v1 || ecart > v1 * REVUE_PCT)});
+      out.push({type:"revue", id:`revue-${slug(n)}`, cycle:"charges", lib:`${n} (${NATURES[n].c.slice(0,3)})`, compta:v, attendu:v1, source:"", gl:NATURES[n].c, page:"ecritures", significatif: ecart > REVUE_MIN && (!v1 || ecart > v1 * REVUE_PCT)});
     }
   }
   return out;
@@ -2840,7 +2840,7 @@ function vueRevision(y){
     else if(x.attendu == null && x.page === "dossier" && !clos) suite = `<div class="row noprint" style="margin-top:6px"><button class="btn small sec" onclick="allerA('dossier')">Renseigner le bail dans les paramètres</button></div>`;
     else if(ko && x.page && !clos) suite = `<div class="row noprint" style="margin-top:6px"><button class="btn small sec" onclick="allerA('${x.page}')">${x.page === "emprunt" ? "Voir l'échéancier mois par mois" : `Vérifier dans ${NOM_PAGE[x.page]}`} →</button></div>`;
     return `<div class="rl rs-${x.etat}"><div class="rl-lib"><b>${x.lib}</b><small>${esc(x.source || "")}${x.extra && x.extra !== "releve" ? ` · ${esc(x.extra)}` : ""}</small></div>
-      <div class="rl-n"><small>Comptabilité</small>${montant(x.compta, x.gl)}</div><div class="rl-n"><small>${x.type === "revue" ? x.source : "Attendu"}</small>${montant(x.attendu)}</div>
+      <div class="rl-n"><small>${x.type === "revue" ? y : "Comptabilité"}</small>${montant(x.compta, x.gl)}</div><div class="rl-n"><small>${x.type === "revue" ? y-1 : "Attendu"}</small>${montant(x.attendu)}</div>
       <div class="rl-n"><small>Écart</small>${ecart == null ? "–" : `<b class="${Math.abs(ecart) < 0.005 ? "" : x.type === "revue" && !x.significatif ? "" : "neg"}">${ecart > 0 ? "+" : ecart < 0 ? "−" : ""}${eur(Math.abs(ecart))}</b>`}</div>
       <div class="rl-s">${pastille(x)}</div>
       ${ko || x.etat === "fait" ? `<div class="rl-suite">${ancien ? `<div class="sub" style="margin:0 0 4px;color:var(--warn)">Les montants ont changé depuis l'explication du ${fmtDate(r.date)} : relisez-la et validez-la à nouveau.</div>` : ""}${suite}${x.attendu != null ? explication(x, r) : ""}</div>` : ""}</div>`; };
