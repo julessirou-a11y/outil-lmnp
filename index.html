@@ -99,8 +99,8 @@ main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
   .app{grid-template-columns:1fr;background:var(--bg)}
   .topbar{display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:20;padding:10px 16px;background:var(--surface);border-bottom:1px solid var(--line)}
   .topbar .brand{padding:0;margin-right:auto}
-  .side{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:30;transform:translateX(-100%);transition:transform .22s ease;box-shadow:0 0 40px rgba(0,0,0,.25)}
-  body.menu-open .side{transform:none}
+  .side{position:fixed;inset:0 auto 0 0;width:min(300px,86vw);z-index:30;transform:translateX(-100%);transition:transform .22s ease}
+  body.menu-open .side{transform:none;box-shadow:0 0 40px rgba(0,0,0,.25)}
   body.menu-open .scrim{display:block}
   .scrim{display:none;position:fixed;inset:0;background:rgba(10,15,25,.4);z-index:25}
   main{padding:22px 16px 60px}
@@ -608,13 +608,13 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 .coche{display:flex;align-items:center;gap:10px;font-size:13.5px;padding:8px 0}
 .coche .box{width:20px;height:20px;border:2px solid #000091;border-radius:3px;display:grid;place-items:center;color:#000091;font-weight:700;font-size:13px}
 @media (max-width:700px){ .pe{min-width:0;padding:4px} .pe small{display:none} .pl{margin-bottom:20px} .resume{grid-template-columns:1fr 1fr}
-  .cl{flex-wrap:wrap} .cl .lib{flex:1 1 100%;min-width:0} .cl.th .lib{display:none} .cell{width:auto;flex:1 1 0;min-width:0} .idents{grid-template-columns:1fr} }
+  .cl{flex-wrap:wrap} .cl .lib{flex:1 1 100%;min-width:0} .cl.th .lib{display:none} .cell{width:auto;flex:1 1 0;min-width:0;gap:4px} .val{padding:0 5px;font-size:13px;letter-spacing:-.01em} .cell i{min-width:0} .idents{grid-template-columns:1fr} }
 /* ---------- États financiers ---------- */
 .ef{display:flex;flex-direction:column;gap:22px;align-items:center}
 .feuille{background:var(--surface);width:100%;max-width:820px;min-height:1080px;padding:52px 58px 28px;box-shadow:0 2px 14px rgba(0,0,0,.08);border:1px solid var(--line);display:flex;flex-direction:column;position:relative}
 .feuille h2{font-size:22px;color:var(--accent);border-bottom:2px solid var(--accent);padding-bottom:8px;margin:0 0 20px}
 .feuille h3{font-size:14px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin:24px 0 8px}
-.feuille table{width:100%} .feuille td.n1,.feuille th.n1{color:var(--faint)}
+.feuille table{width:100%} .feuille td.n1,.feuille th.n1{color:var(--faint)} .feuille td.n,.feuille th.n{width:118px}
 .feuille tr.sous td{font-size:12.5px;color:var(--muted);padding-top:3px;padding-bottom:3px} .ind{padding-left:16px!important}
 .ef-pied{margin-top:auto;padding-top:24px;display:flex;justify-content:space-between;font-size:11px;color:var(--faint);border-top:1px solid var(--line)}
 .ef-2{display:grid;grid-template-columns:1fr;gap:22px}
@@ -800,7 +800,7 @@ const CATEGORIES = {construction:"Logement (bâti + terrain)", travaux:"Travaux 
 const DUREE_DEFICIT = 10;
 
 /* ============ État ============ */
-const S = {data:null, dirty:false, dir:null, fileName:null, year:null, tab:"accueil", editId:null, editImmo:null, unlocked:{}};
+const S = {data:null, dirty:false, dir:null, fileName:null, year:null, tab:"accueil", editId:null, editImmo:null};
 
 /* ============ Utilitaires ============ */
 const $ = s => document.querySelector(s);
@@ -809,8 +809,10 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt
 /* Texte placé en argument JS dans un attribut on…="…" : chaîne JSON (guillemets et antislashs échappés) puis esc, que le navigateur défait avant d'exécuter */
 const jsq = s => esc(JSON.stringify(String(s ?? "")));
 const r2 = n => Math.round((n + Number.EPSILON) * 100) / 100;
-const eur = n => (n==null||isNaN(n)) ? "–" : n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2}) + " €";
-const eur0 = n => (n==null||isNaN(n)) ? "–" : Math.round(n).toLocaleString("fr-FR") + " €";
+/* Vrai signe moins ; « -0 » ou « -0,00 » (arrondi d'un très petit négatif) s'affiche sans signe */
+const moins = t => /^-0(,0+)?$/.test(t) ? t.slice(1) : t.replace(/^-/, "−");
+const eur = n => (n==null||isNaN(n)) ? "–" : moins(n.toLocaleString("fr-FR",{minimumFractionDigits:2,maximumFractionDigits:2})) + " €";
+const eur0 = n => (n==null||isNaN(n)) ? "–" : moins(Math.round(n).toLocaleString("fr-FR")) + " €";
 const uid = () => Math.random().toString(36).slice(2,10);
 const yearOf = d => parseInt(String(d).slice(0,4),10);
 const monthOf = d => parseInt(String(d).slice(5,7),10);
@@ -818,6 +820,7 @@ const MOIS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.
 const fmtDate = d => d ? d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4) : "";
 
 function setDirty(v=true){
+  if(S.consultation){ S.dirty = false; statut(v ? "Onglet de consultation : modification non enregistrée, faites-la dans l'onglet d'origine" : "Onglet de consultation (lecture seule)", v); $("#saveBtn").disabled = true; return; }
   S.dirty=v; if(v) S.version = (S.version||0) + 1;
   statut(v ? (S.dir ? "Enregistrement…" : "Modifications non enregistrées") : (S.autoMsg||""), v && !S.dir);
   $("#saveBtn").disabled = !S.data;
@@ -922,6 +925,17 @@ function echeancierTheorique(l){
   }
   return rows;
 }
+/* Capital restant dû retenu au 31/12, le même partout (bilan, à-nouveaux, annexe, clôture) :
+   figé tel que déclaré pour une année reprise de l'Excel ou clôturée, sinon celui de l'échéancier
+   (celui de la banque dès que son PDF est déposé, sinon celui calculé d'après le contrat) */
+function crdEcheancier(y){ return S.data.emprunts.reduce((s,l) => s + empruntAnnee(l, y).crdFin, 0); }
+function crdAu31(y){
+  const ex = exercice(y);
+  if(ex && ex.statut === "historique"){ const v = Number(ex.chiffres?.capitalRestantDu); if(ex.chiffres?.capitalRestantDu != null && !isNaN(v)) return v; }
+  if(ex && ex.statut === "cloture" && ex.cloture?.crdFin != null) return Number(ex.cloture.crdFin);
+  if(!ex || ex.statut === "historique") return crdEcheancier(y);
+  return soldeGL164(y); // exercice ouvert : ce qui est passé en comptabilité, l'échéancier de la banque sert de contrôle (ecartCRD)
+}
 function empruntAnnee(l, y){
   const rows = echeancier(l);
   const inY = rows.filter(r => r.annee === y);
@@ -958,8 +972,7 @@ function calculAnnee(y){
   S.data.emprunts.forEach(l => { const a = empruntAnnee(l,y); interetsEch += a.interets; capitalEch += a.capital; crd += a.crdFin; });
   const interetsSaisis = (t.parNature["Intérêts emprunt"]||0) > 0;
   const interets = t.c294;
-  const ex = exercice(y) || {};
-  const crdRetenu = (ex.crdBanque != null && ex.crdBanque !== "") ? Number(ex.crdBanque) : crd;
+  const crdRetenu = crdAu31(y);
   // Amortissements
   const immos = S.data.immobilisations.map(i => ({i, a: amortAnnee(i,y), entree: anneeEntreeBilan(i)}));
   const dotations = immos.reduce((s,x)=> s + (x.entree <= y ? x.a.dotation : 0), 0);
@@ -1041,6 +1054,7 @@ const idb = {
 function chargerDonnees(obj, nom){
   if(!obj || obj.format !== "outil-lmnp") throw new Error("Ce fichier n'est pas un dossier de l'outil LMNP.");
   S.data = normalize(obj); S.fileName = nom; S.autoMsg = ""; S.sauvegardeSession = false;
+  rattacherEcheanciers(); // à l'ouverture : rattaché en mémoire, sans marquer le dossier comme modifié
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
   S.year = ys.filter(y=>!isHistorique(y)).pop() ?? ys.pop();
   appliquerLienGL();
@@ -1068,10 +1082,10 @@ addEventListener("message", ev => {
   if(ev.origin !== location.origin) return; // seuls les onglets du Carnet lui-même échangent le dossier
   const d = ev.data || {};
   if(d.lmnp === "demande" && ONGLETS_GL.has(ev.source) && S.data){
-    const msg = {lmnp:"dossier", data:S.data, fileName:S.fileName, dir:S.dir};
-    try{ ev.source.postMessage(msg, cibleMsg()); }catch(_){ ev.source.postMessage({...msg, dir:null}, cibleMsg()); }
+    // Sans l'accès au dossier : l'onglet du grand livre consulte une copie et n'enregistre rien
+    ev.source.postMessage({lmnp:"dossier", data:S.data, fileName:S.fileName}, cibleMsg());
   } else if(d.lmnp === "dossier" && ev.source === window.opener && S.lienGL && !S.data){
-    S.dir = d.dir || null; chargerDonnees(d.data, d.fileName);
+    S.dir = null; S.consultation = true; chargerDonnees(d.data, d.fileName);
   }
 });
 if(S.lienGL && window.opener){ try{ window.opener.postMessage({lmnp:"demande"}, cibleMsg()); }catch(_){} }
@@ -1108,6 +1122,7 @@ $("#fileInput").addEventListener("change", async ev => {
 function horodatage(){ const d=new Date(), p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}h${p(d.getMinutes())}`; }
 async function enregistrer(){
   if(!S.data) return;
+  if(S.consultation) return alert("Cet onglet sert à consulter le grand livre : il n'enregistre rien. Faites vos modifications dans l'onglet d'origine du Carnet.");
   S.data.derniereModification = new Date().toISOString();
   const txt = JSON.stringify(S.data, null, 2);
   if(S.dir){
@@ -1158,7 +1173,7 @@ function renderAll(){
     const n = k==="pieces" ? piecesManquantes(S.year).length : k==="banque" ? S.data.banque.aTrier.length : 0;
     const bt = k==="banque" ? "Opérations bancaires à trier" : "Justificatifs manquants";
     return `<button data-tab="${k}" class="${S.tab===k?"on":""}" ${S.tab===k?'aria-current="page"':""}>${icon(k)}<span>${l}</span>${n?`<span class="badge" title="${bt}">${n}</span>`:""}</button>`; }).join("") : "";
-  $("#saveBtn").disabled = !S.data;
+  $("#saveBtn").disabled = !S.data || !!S.consultation;
   const sombre = themeActuel() === "dark";
   $("#themeBtn").setAttribute("aria-pressed", sombre); $("#themeBtn").innerHTML = sombre ? "☀︎ Clair" : "☾ Sombre";
   $("#tabs").style.setProperty("--n", $("#tabs").querySelectorAll("button").length);
@@ -1286,7 +1301,7 @@ function vueAccueil(){
     <div class="tuiles">
       ${tuile("Loyers encaissés", eur0(c.produits), {col:"var(--pos)", page:"ecritures"})}
       ${tuile("Charges", eur0(charges), {page:"ecritures", sous:`dont intérêts ${eur0(c.interets)}`})}
-      ${tuile("Amortissements", eur0(amortDeduits), {col:"var(--accent)", page:"immos", sous:f.ardFin>0.5?`+ ${eur0(f.ardFin)} en réserve`:"déduits cette année"})}
+      ${tuile("Amortissements déduits", eur0(amortDeduits), {col:"var(--accent)", page:"immos", sous:f.ardFin>0.5?`+ ${eur0(f.ardFin)} en réserve`:`sur ${eur0(c.dotations)} de dotations`})}
       ${tuile(rf<0?"Déficit":"Revenu imposable", eur0(rf), {cls:"fort", col:rf<0?"var(--neg)":"", page:"declaration", sous:rf>0?`impôt ≈ ${eur0(impot)}`:"aucun impôt"})}
     </div>
     <div class="dash2">
@@ -1318,7 +1333,10 @@ function aFaire(y){
   const fa = facturesEnAttente().length;
   if(fa) out.push(["warn", `${fa} facture${fa>1?"s":""} reçue${fa>1?"s":""} à rattacher`, "pieces"]);
   if(c.produits > 5000 && !c.t.parNature["CFE"]) out.push(["warn", "CFE à saisir", "ecritures"]);
-  if(S.data.emprunts.length && (ex.crdBanque == null || ex.crdBanque === "") && y < new Date().getFullYear()) out.push(["warn", "Capital restant dû à saisir", "emprunt"]);
+  if(S.data.emprunts.some(l => !lignesBanque(l))) out.push(["warn", "Échéancier de la banque à déposer", "emprunt"]);
+  const rp = S.data.emprunts.reduce((n,l) => n + etatsRapprochement(l, y).filter(e => e.c !== "ok").length, 0);
+  if(rp) out.push(["warn", `${rp} échéance${rp>1?"s":""} de prêt à rapprocher`, "emprunt"]);
+  else if(Math.abs(ecartCRD(y)) >= 1) out.push(["warn", "Restant dû à régulariser", "emprunt"]);
   if(y < new Date().getFullYear() && ex.statut !== "cloture") out.push(["go", `Déclarer ${y}`, "declaration"]);
   if(!out.length) return "";
   return `<div class="pastilles">${out.map(([k,t,pg])=>`<button class="pastille ${k}" onclick="allerA('${pg}')">${t} →</button>`).join("")}</div>`;
@@ -1326,7 +1344,7 @@ function aFaire(y){
 function kpi(l,v,signe){ return `<div class="card kpi"><div class="l">${l}</div><div class="v" style="${signe&&v<0?'color:var(--neg)':''}">${eur(v)}</div></div>`; }
 
 /* ---- Écritures ---- */
-function verrouille(y){ return exercice(y)?.statut === "cloture" && !S.unlocked[y]; }
+function verrouille(y){ return exercice(y)?.statut === "cloture"; }
 const MOIS_LONG = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 const svgI = d => `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const I_EDIT = svgI('<path d="M5 19h3l10-10-3-3L5 16zM13 7l3 3"/>'), I_DEL = svgI('<path d="M6 7h12M10 7V5h4v2M8 7l1 12h6l1-12"/>'), I_CLIP = svgI('<path d="M16 8l-6.5 6.5a2 2 0 0 0 3 3L19 11a4 4 0 0 0-6-6l-7 7a6 6 0 0 0 9 9l5-5"/>');
@@ -1352,11 +1370,10 @@ function vueEcritures(){
   const list = [...ex.ecritures].filter(e => passeLignes(e, lignes) && passeFiltre(e, J, "journal")).sort((a,b)=> a.date.localeCompare(b.date));
   const natOpts = sel => Object.keys(NATURES).map(n=>optNature(n, sel)).join("");
   return tete + `
-  ${lock ? `<div class="alert warn" style="align-items:center">Année clôturée : écritures verrouillées.<button class="btn small sec" style="margin-left:auto" onclick="S.unlocked[${y}]=true;renderAll()">Déverrouiller</button></div>` : ""}
+  ${lock ? `<div class="alert warn" style="align-items:center">Année clôturée : écritures verrouillées. Pour les modifier, rouvrez l'année dans les paramètres du dossier.</div>` : ""}
   <div class="tuiles ejx-tu">${tuile("Encaissé", eur0(t.recettes), {col:"var(--pos)"})}${tuile("Payé", eur0(t.c242+t.c244+t.c294+t.remb))}${tuile("Écritures", ex.ecritures.length)}${tuile("Sans justificatif", piecesManquantes(y).length, {page:"pieces", col:piecesManquantes(y).length?"var(--warn)":""})}</div>
   <div class="row noprint" style="margin-bottom:14px">
-    ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"+ Écriture"}</button>
-    <button class="btn sec" onclick="dupliquerMois()">Recopier le dernier mois</button>`}
+    ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"+ Écriture"}</button>`}
     ${zoneFiltres("journal")}
   </div>
   ${ouvert ? `<div class="card composer noprint"><div class="form">
@@ -1760,17 +1777,6 @@ function saveEcriture(){
   setDirty(); renderAll(); setTimeout(()=>$("#eMont")?.focus(),0);
 }
 function delEcriture(id){ if(!confirm("Supprimer cette écriture ?")) return; const ex = exercice(S.year); ex.ecritures = ex.ecritures.filter(e=>e.id!==id); setDirty(); renderAll(); }
-function dupliquerMois(){
-  const ex = exercice(S.year); if(!ex.ecritures.length) return alert("Aucune écriture à recopier.");
-  const last = ex.ecritures.map(e=>monthOf(e.date)).reduce((a,b)=>Math.max(a,b));
-  if(last === 12) return alert("Le dernier mois saisi est décembre.");
-  const src = ex.ecritures.filter(e=>monthOf(e.date)===last);
-  if(!confirm(`Recopier ${src.length} écriture(s) de ${MOIS[last-1]} sur ${MOIS[last]} ? Pensez à ajuster les montants qui changent (intérêts, eau…).`)) return;
-  src.forEach(e => { const d = `${S.year}-${String(last+1).padStart(2,"0")}-${e.date.slice(8,10)}`;
-    const valid = new Date(d).getMonth()+1 === last+1 ? d : `${S.year}-${String(last+1).padStart(2,"0")}-28`;
-    ex.ecritures.push({...e, id:uid(), date:valid}); });
-  setDirty(); renderAll();
-}
 
 /* ---- Immobilisations ---- */
 const IC_CAT = {construction:'<path d="M4 11l8-6 8 6v9H4zM10 20v-5h4v5"/>', travaux:'<path d="M4 20l8-8M13 5a4 4 0 0 0 6 6l-3 1-4-4z"/>', mobilier:'<path d="M5 11V7h14v4M4 11h16v5H4zM6 16v3M18 16v3"/>'};
@@ -1785,7 +1791,7 @@ function vueImmos(){
   const y0 = Math.min(y, ...immos.map(x=>yearOf(x.i.miseEnService))), y1 = Math.max(y+1, ...immos.map(x=>x.fin)), span = y1 - y0 + 1;
   const pos = a => ((a - y0) / span * 100).toFixed(2) + "%";
   const frise = immos.length ? `<div class="card"><h3>Frise des amortissements</h3><div class="frise">
-    <div class="axe">${[...Array(span).keys()].map(k=>y0+k).filter((a,k,arr)=>span<=16||a%5===0||a===y).map(a=>`<span style="left:${pos(a)}">${a}</span>`).join("")}</div>
+    <div class="axe">${[...Array(span).keys()].map(k=>y0+k).filter(a => span<=16 || a===y || (a%5===0 && Math.abs(a-y) > 2)).map(a=>`<span style="left:${pos(a)}">${a}</span>`).join("")}</div>
     ${immos.map(x => { const d = yearOf(x.i.miseEnService) + (monthOf(x.i.miseEnService)-1)/12, f = x.fin + 1, fait = Math.min(1, x.a.cumulFin / (x.a.base||1));
       return `<div class="fl"><span class="fn">${esc(x.i.libelle)}</span><div class="fb"><div class="fbar" style="left:${pos(d)};width:${((f-d)/span*100).toFixed(2)}%;--c:${COUL_CAT[x.i.categorie]||"var(--accent)"}"><i style="width:${(fait*100).toFixed(1)}%"></i></div></div></div>`; }).join("")}
     <div class="today" style="left:calc(150px + (100% - 150px) * ${((y + 1 - y0)/span).toFixed(4)})"><span>fin ${y}</span></div>
@@ -1885,7 +1891,17 @@ function vueEmprunt(){
     <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)"})}${tuile(`Intérêts ${y} comptabilisés`, eur0(c?c.interets:a.interets), {sous: c && !c.interetsSaisis ? "aucune écriture bancaire" : "déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
     ${carteContrat(l, idx)}
     ${carteEcheancier(l, y)}`;
-  }).join("");
+  }).join("") + carteRegulCRD(y);
+}
+/* Écart entre le grand livre (164) et l'échéancier de la banque, et sa régularisation enregistrée dans le dossier */
+function carteRegulCRD(y){
+  const ex = exercice(y); if(!ex || isHistorique(y)) return "";
+  const e = ecartCRD(y), rg = ex.regulCRD, lock = verrouille(y);
+  if(Math.abs(e) < 0.005 && !rg) return "";
+  return `<div class="card"><h3>Régularisation du restant dû</h3>
+    ${Math.abs(e) >= 0.005 ? `<div class="alert warn" style="align-items:center">Le grand livre donne ${eur(soldeGL164(y))} de restant dû au 31/12/${y}, l'échéancier de la banque ${eur(crdEcheancier(y))} : écart de ${eur(Math.abs(e))}.${lock ? "" : `<button class="btn small" style="margin-left:auto" onclick="regulariserCRD()">Régulariser</button>`}</div>` : ""}
+    ${rg ? `<div class="row" style="align-items:center"><span>Régularisation passée au 31/12/${y} : <b>${eur(rg.montant)}</b> ${rg.montant > 0 ? "de restant dû en plus" : "de restant dû en moins"}${rg.motif ? ` · ${esc(rg.motif)}` : ""}</span>${lock ? "" : `<button class="btn small ghost" style="margin-left:auto" onclick="supprimerRegulCRD()">Supprimer</button>`}</div>` : ""}
+    <p class="sub" style="margin:8px 0 0">L'écriture va de l'emprunt (164) au compte de l'exploitant (108), sans opération bancaire.</p></div>`;
 }
 /* Menu « ⋯ » : actions secondaires d'une carte */
 const menu3 = (items, label = "Plus d'actions") => `<details class="menu3 noprint"><summary aria-label="${label}" title="${label}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></summary>
@@ -1942,7 +1958,7 @@ function rattacherEcheanciers(){
   (S.data?.emprunts||[]).forEach(l => {
     const d = l.echeancierDoc && docs().find(x => x.id === l.echeancierDoc), B = lignesBanque(l); if(!d || !B) return;
     const mois = new Set(B.map(r => r.annee * 100 + r.mois));
-    Object.values(S.data.exercices).forEach(ex => (ex.ecritures||[]).forEach(e => {
+    Object.entries(S.data.exercices).filter(([y]) => !isHistorique(+y) && !verrouille(+y)).forEach(([, ex]) => (ex.ecritures||[]).forEach(e => {
       if(!e.piece && NAT.has(e.nature) && mois.has(yearOf(e.date) * 100 + monthOf(e.date))){ e.piece = d.fichier; n++; } }));
   });
   return n;
@@ -2044,11 +2060,6 @@ function collerEcheancier(idx){
   const t = $("#echColle").value; if(!t.trim()) return;
   try{ appliquerEcheancierBanque(idx, t, "colle"); } catch(e){ alert(e.message); }
 }
-/* Restant dû retenu au 31/12 : bilan de l'année s'il existe, sinon échéancier */
-function crdRetenuFin(y){
-  if(exercice(y)){ const v = Number(bilan(y).crd); if(!isNaN(v)) return v; }
-  return S.data.emprunts.reduce((s,l) => s + empruntAnnee(l, y).crdFin, 0);
-}
 const IC_RP = {
   ok:'<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--pos)"/><path d="M6 10.3l2.6 2.6L14.2 7.4" fill="none" stroke="var(--surface)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   part:'<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="8.2" fill="none" stroke="var(--mid)" stroke-width="1.8"/><path d="M10 1.8a8.2 8.2 0 0 1 0 16.4z" fill="var(--mid)"/></svg>',
@@ -2056,26 +2067,30 @@ const IC_RP = {
 /* Échéancier, une année ou tout le prêt, avec l'état du rapprochement de chaque échéance passée :
    vert = intérêts, capital (et assurance) comptabilisés au bon montant, jaune = en partie, rouge = aucune écriture ou un écart.
    Seules les écritures bancaires comptent en comptabilité : un mois sans écriture n'a rien passé en charge. */
+/* État du rapprochement d'une échéance passée avec les écritures bancaires du mois (null si à venir ou année non tenue) */
+function etatEcheance(l, r, cache = {}){
+  const banque = lignesBanque(l), ass = banque ? !!l.echeancierBanque.colonnes?.assurance : l.assurance > 0;
+  const NAT = {interet:"Intérêts emprunt", capital:"Remboursement emprunt", assurance:"Assurance emprunt"}, LIB = {interet:"intérêts", capital:"capital", assurance:"assurance"};
+  const K = ["interet","capital"].concat(ass ? ["assurance"] : []);
+  const auj = new Date();
+  if(r.annee * 100 + r.mois > auj.getFullYear() * 100 + auj.getMonth() + 1 || !exercice(r.annee) || isHistorique(r.annee)) return null;
+  const saisi = cache[r.annee] ??= (exercice(r.annee).ecritures||[]).reduce((m, e) => { const k = Object.keys(NAT).find(k => NAT[k] === e.nature); if(k){ const s = m[monthOf(e.date)] ??= {interet:0, capital:0, assurance:0, n:0}; s[k] += e.montant; s.n++; } return m; }, {});
+  const s = saisi[r.mois];
+  if(!s?.n) return {c:"ko", t:"Aucune écriture bancaire pour cette échéance : rien n'est passé en charge"};
+  const faux = K.filter(k => Math.abs(s[k]) > 0.004 && Math.abs(s[k] - r[k]) >= 0.01), manq = K.filter(k => Math.abs(s[k]) <= 0.004 && r[k] > 0.004);
+  if(faux.length) return {c:"ko", t:"Écart : " + faux.map(k => `${LIB[k]} ${eur(s[k])} au lieu de ${eur(r[k])}`).join(", ")};
+  if(manq.length) return {c:"part", t:"Sans écriture : " + manq.map(k => LIB[k]).join(", ")};
+  return {c:"ok", t:"Rapprochée : écritures conformes à l'échéancier"};
+}
+/* Échéances passées d'une année avec leur état */
+function etatsRapprochement(l, y){ const cache = {}; return echeancier(l).filter(r => r.annee === y).map(r => ({r, ...etatEcheance(l, r, cache)})).filter(e => e.c); }
 function carteEcheancier(l, y){
   const banque = lignesBanque(l), rows0 = echeancier(l), ass = banque ? !!l.echeancierBanque.colonnes?.assurance : l.assurance > 0;
   const ans = [...new Set(rows0.map(r => r.annee))];
   const an = S.echAn === "tout" ? "tout" : ans.includes(Number(S.echAn)) ? Number(S.echAn) : ans.includes(y) ? y : ans[0];
   const choixAn = `<select class="btn small sec" aria-label="Année" onchange="S.echAn=this.value;renderAll()">${ans.map(a => `<option value="${a}" ${a===an?"selected":""}>${a}</option>`).join("")}<option value="tout" ${an==="tout"?"selected":""}>Tout le prêt</option></select>`;
-  // Écritures d'emprunt de chaque mois, par exercice tenu dans l'outil
-  const NAT = {interet:"Intérêts emprunt", capital:"Remboursement emprunt", assurance:"Assurance emprunt"}, LIB = {interet:"intérêts", capital:"capital", assurance:"assurance"};
-  const K = ["interet","capital"].concat(ass ? ["assurance"] : []), cache = {};
-  const tenu = a => !!exercice(a) && !isHistorique(a);
-  const saisi = a => cache[a] ??= (exercice(a).ecritures||[]).reduce((m, e) => { const k = Object.keys(NAT).find(k => NAT[k] === e.nature); if(k){ const s = m[monthOf(e.date)] ??= {interet:0, capital:0, assurance:0, n:0}; s[k] += e.montant; s.n++; } return m; }, {});
-  const auj = new Date(), echu = r => r.annee * 100 + r.mois <= auj.getFullYear() * 100 + auj.getMonth() + 1;
-  const etat = r => {
-    if(!echu(r) || !tenu(r.annee)) return null;
-    const s = saisi(r.annee)[r.mois];
-    if(!s?.n) return {c:"ko", t:"Aucune écriture bancaire pour cette échéance : rien n'est passé en charge"};
-    const faux = K.filter(k => Math.abs(s[k]) > 0.004 && Math.abs(s[k] - r[k]) >= 0.01), manq = K.filter(k => Math.abs(s[k]) <= 0.004 && r[k] > 0.004);
-    if(faux.length) return {c:"ko", t:"Écart : " + faux.map(k => `${LIB[k]} ${eur(s[k])} au lieu de ${eur(r[k])}`).join(", ")};
-    if(manq.length) return {c:"part", t:"Sans écriture : " + manq.map(k => LIB[k]).join(", ")};
-    return {c:"ok", t:"Rapprochée : écritures conformes à l'échéancier"};
-  };
+  // État de chaque échéance passée, par exercice tenu dans l'outil
+  const cache = {}, etat = r => etatEcheance(l, r, cache);
   const somme = (a, k) => a.reduce((s,r) => s + (r[k]||0), 0), mens = r => r.interet + r.capital + (ass ? r.assurance : 0);
   const icone = (c, t) => `<span class="rpi ${c}" tabindex="0" role="img" aria-label="${t}" data-tip="${t}">${IC_RP[c]}</span>`;
   const vus = rows0.filter(r => an === "tout" || r.annee === an), etats = vus.map(etat).filter(Boolean);
@@ -2094,7 +2109,7 @@ function carteEcheancier(l, y){
 
 /* ---- Déclaration ---- */
 /* ---- Déclaration : formulaires présentés comme sur impots.gouv, montants à copier d'un clic ---- */
-const fmtC = v => v == null || v === "" || isNaN(v) ? "" : Math.round(v).toLocaleString("fr-FR");
+const fmtC = v => v == null || v === "" || isNaN(v) ? "" : moins(Math.round(v).toLocaleString("fr-FR"));
 function copier(v){ try{ navigator.clipboard.writeText(String(v)); }catch(_){} toast(`Copié : ${Number(v).toLocaleString("fr-FR")}`); }
 /* Ligne de formulaire : cellules [[case, valeur, calculée]] ; valeur null = case laissée vide */
 function lc(lib, cells, o = {}){
@@ -2242,7 +2257,7 @@ function vueDeclaration(){
   return tete + `
   ${ex.statut!=="cloture" && y >= new Date().getFullYear() ? `<div class="alert warn noprint">Année en cours : chiffres provisoires.</div>`:""}
   <div class="parcours noprint">${ETAPES.map(([k,l,s,st])=>`<button class="pe ${k===et?"on":""} ${st}" onclick="S.declEtape='${k}';renderAll()"><span class="pn">${st==="ok"?"✓":st==="bad"?"!":k}</span><b>${l}</b><small>${s}</small></button>`).join('<i class="pl"></i>')}</div>
-  <div class="resume noprint">${tuile("Loyers", eur0(L.p218))}${tuile("Charges et intérêts", eur0(L.c242+L.c244+L.c294))}${tuile("Amortissements", eur0(L.c254))}${tuile(L.rf>=0?"Résultat fiscal":"Déficit", eur0(Math.abs(L.rf)), {cls:"fort"})}</div>
+  <div class="resume noprint">${tuile("Loyers", eur0(L.p218))}${tuile("Charges et intérêts", eur0(L.c242+L.c244+L.c294))}${tuile("Dotations aux amortissements", eur0(L.c254))}${tuile(L.rf>=0?"Résultat fiscal":"Déficit", eur0(Math.abs(L.rf)), {cls:"fort"})}</div>
   ${corps}`;
 }
 
@@ -2311,7 +2326,7 @@ function etatsFinanciers(y){
       ${immos.map(x=>`<tr><td>${esc(x.i.libelle)}</td><td>${fmtDate(x.i.miseEnService)}</td><td class="n">${eur0(x.i.valeurOrigine)}</td><td class="n">${x.i.dureeAns} ans</td><td class="n">${eur0(x.a.dotation)}</td><td class="n">${eur0(x.a.cumulFin)}</td><td class="n">${eur0(x.i.valeurOrigine - x.a.cumulFin)}</td></tr>`).join("")}
       <tr class="tot"><td>Total</td><td></td><td class="n">${eur0(L.brut)}</td><td></td><td class="n">${eur0(L.c254)}</td><td class="n">${eur0(L.am)}</td><td class="n">${eur0(L.net)}</td></tr></table>
     ${emp.length?`<h3>Emprunts</h3><table><tr><th>Banque</th><th class="n">Capital</th><th class="n">Taux</th><th class="n">Restant dû début</th><th class="n">Intérêts ${y}</th><th class="n">Restant dû fin</th></tr>
-      ${emp.map(l=>`<tr><td>${esc(l.banque)}</td><td class="n">${eur0(l.capital)}</td><td class="n">${(l.tauxAnnuel*100).toLocaleString("fr-FR",{maximumFractionDigits:2})} %</td><td class="n">${eur0(empruntAnnee(l,y-1).crdFin||l.capital)}</td><td class="n">${eur0(emp.length === 1 ? L.c294 : empruntAnnee(l,y).interets)}</td><td class="n">${eur0(empruntAnnee(l,y).crdFin)}</td></tr>`).join("")}</table>`:""}
+      ${emp.map(l=>`<tr><td>${esc(l.banque)}</td><td class="n">${eur0(l.capital)}</td><td class="n">${(l.tauxAnnuel*100).toLocaleString("fr-FR",{maximumFractionDigits:2})} %</td><td class="n">${eur0(emp.length === 1 ? crdAu31(y-1) : empruntAnnee(l,y-1).crdFin)}</td><td class="n">${eur0(emp.length === 1 ? L.c294 : empruntAnnee(l,y).interets)}</td><td class="n">${eur0(emp.length === 1 ? L.crd : empruntAnnee(l,y).crdFin)}</td></tr>`).join("")}</table>`:""}
     <h3>Déficits et amortissements reportés</h3>
     <table><tr><th></th><th class="n">Début</th><th class="n">Fin</th></tr>
       <tr><td>Déficits reportables</td><td class="n">${eur0(L.f.deficitsDebut.reduce((s,x)=>s+x.montant,0))}</td><td class="n">${eur0(L.f.deficitsFin.reduce((s,x)=>s+x.montant,0))}</td></tr>
@@ -2335,8 +2350,7 @@ function ecrituresComptables(y){
     if(terrain > 0) an.push({c:"211000", d:terrain});
     an.push({c:k.brut, d:baseAmort(i)}, {c:k.am, cr:r2(a.cumulDebut)});
   });
-  const crdPrec = exercice(y-1) ? Number(bilan(y-1).crd) : NaN;
-  const crdDebut = crdPrec >= 0 ? crdPrec : S.data.emprunts.reduce((s,l)=>s+empruntAnnee(l,y-1).crdFin,0);
+  const crdDebut = soldeGL164(y-1);
   if(crdDebut > 0) an.push({c:"164000", cr:r2(crdDebut)});
   const solde = r2(an.reduce((s,l)=>s+(l.d||0)-(l.cr||0),0));
   an.push(solde >= 0 ? {c:"108000", cr:solde} : {c:"108000", d:-solde});
@@ -2351,8 +2365,34 @@ function ecrituresComptables(y){
   const dot = {};
   c.immos.forEach(x => { if(x.entree <= y && x.a.dotation > 0){ const k = (CPT_IMMO[x.i.categorie] || CPT_IMMO.travaux).am; dot[k] = (dot[k]||0) + x.a.dotation; } });
   Object.entries(dot).forEach(([k,v]) => add("OD", fin, "Dotation aux amortissements " + y, [{c:"681120", d:r2(v)}, {c:k, cr:r2(v)}]));
+  // Régularisation du restant dû saisie dans le dossier (page Emprunt) : écart entre le 164 et l'échéancier de la banque
+  const rg = regulCRD(y);
+  if(rg) add("OD", fin, "Régularisation du capital restant dû selon l'échéancier" + (exercice(y).regulCRD.motif ? " - " + exercice(y).regulCRD.motif : ""), rg > 0 ? [{c:"108000", d:rg}, {c:"164000", cr:rg}] : [{c:"164000", d:-rg}, {c:"108000", cr:-rg}]);
   return out;
 }
+/* Solde du compte 164 au 31/12, repris au bilan : figé pour une année clôturée ou reprise, sinon celui de l'an passé moins le capital remboursé
+   saisi en banque, plus la régularisation éventuelle */
+const regulCRD = y => r2(Number(exercice(y)?.regulCRD?.montant) || 0);
+function soldeGL164(y){
+  const ex = exercice(y);
+  if(!ex || ex.statut === "historique" || (ex.statut === "cloture" && ex.cloture?.crdFin != null)) return crdAu31(y);
+  const rembourse = (ex.ecritures||[]).filter(e => e.nature === "Remboursement emprunt").reduce((s,e) => s + e.montant, 0);
+  return r2(soldeGL164(y-1) - rembourse + regulCRD(y));
+}
+/* Écart à expliquer : restant dû de l'échéancier de la banque moins le solde du 164 au 31/12 (le bilan reprend le 164) */
+function ecartCRD(y){
+  const ex = exercice(y);
+  if(!S.data.emprunts.length || !ex || ex.statut === "historique" || ex.statut === "cloture") return 0;
+  return r2(crdEcheancier(y) - soldeGL164(y));
+}
+function regulariserCRD(){
+  const y = S.year, ex = exercice(y), e = ecartCRD(y); if(verrouille(y) || Math.abs(e) < 0.005) return;
+  const motif = prompt(`Régulariser ${eur(Math.abs(e))} au 31/12/${y} entre l'emprunt (164) et le compte de l'exploitant (108), pour que le grand livre retombe sur l'échéancier de la banque.\n\nMotif (facultatif) :`, ex.regulCRD?.motif || "Restant dû des bilans antérieurs");
+  if(motif === null) return;
+  ex.regulCRD = {montant:r2(regulCRD(y) + e), motif:motif.trim(), date:new Date().toISOString().slice(0,10)};
+  setDirty(); renderAll();
+}
+function supprimerRegulCRD(){ const ex = exercice(S.year); if(verrouille(S.year) || !confirm("Supprimer la régularisation du restant dû ?")) return; delete ex.regulCRD; setDirty(); renderAll(); }
 function balance(y){
   const b = {};
   ecrituresComptables(y).forEach(e => e.lignes.forEach(l => { const x = b[l.c] ??= {d:0, cr:0}; x.d += l.d||0; x.cr += l.cr||0; }));
@@ -2561,12 +2601,14 @@ function controles(y){
   es.forEach(e => { const k = `${e.date}|${e.nature}|${e.montant}`; if(vus[k]) dbl.push(e); vus[k] = true; });
   chk(!dbl.length, "Aucun doublon apparent.", "warn", `${dbl.length} écriture(s) en double apparent (même date, nature et montant) : vérifiez qu'il ne s'agit pas d'une saisie répétée.`, "ecritures");
   const gros = es.filter(e => e.nature === "Petit équipement (< 500 € HT)" && e.montant > 600);
-  chk(!gros.length, "Aucun petit équipement au-dessus du seuil.", "warn", `${gros.length} « petit équipement » de plus de 600 € TTC : au-delà de 500 € HT par élément, il faut l'amortir (page Logement et meubles).`, "immos");
+  chk(!gros.length, "Aucun petit équipement au-dessus du seuil.", "warn", `${gros.length} « petit équipement » de plus de 600 € TTC : au-delà de 500 € HT par élément, il faut l'amortir (page Immobilisations).`, "immos");
   if(S.data.emprunts.length){
     chk(c.interetsSaisis, "Intérêts d'emprunt saisis d'après la banque.", "warn", `Aucun intérêt d'emprunt comptabilisé : seuls les prélèvements de la banque comptent (${eur(c.interetsEch)} attendus selon l'échéancier). L'échéancier de la page Emprunt montre les mois à rapprocher.`, "emprunt");
-    const crdB = ex.crdBanque != null && ex.crdBanque !== "";
-    chk(crdB || S.data.emprunts.every(l => lignesBanque(l)), "Capital restant dû au 31/12 d'après la banque.", "warn", "Échéancier de la banque non déposé : le restant dû au 31/12 vient de l'échéancier saisi. Déposez-le sur la page Emprunt.", "emprunt");
-    if(crdB && Math.abs(Number(ex.crdBanque) - c.crdEch) > 50) out.push(["warn", `Écart de ${eur(Math.abs(Number(ex.crdBanque) - c.crdEch))} entre le capital restant dû de la banque et l'échéancier : vérifiez les paramètres de l'emprunt.`, "emprunt"]);
+    chk(S.data.emprunts.every(l => lignesBanque(l)), "Échéancier de la banque déposé : il sert à contrôler le restant dû.", "warn", "Échéancier de la banque non déposé : le restant dû comptable est contrôlé avec l'échéancier calculé d'après le contrat. Déposez-le sur la page Emprunt.", "emprunt");
+    const rp = S.data.emprunts.flatMap(l => etatsRapprochement(l, y).filter(e => e.c !== "ok"));
+    chk(!rp.length, "Échéances du prêt rapprochées des écritures bancaires.", "warn", `${rp.length} échéance${rp.length>1?"s":""} du prêt sans écriture ou avec un écart : ${rp.map(e => MOIS[e.r.mois-1]).join(", ").replace(/\.$/, "")}. L'échéancier de la page Emprunt détaille chaque mois.`, "emprunt");
+    const ec = ecartCRD(y);
+    chk(Math.abs(ec) < 1, "Grand livre de l'emprunt conforme à l'échéancier de la banque.", "warn", `Le grand livre donne ${eur(soldeGL164(y))} de restant dû au 31/12, l'échéancier de la banque ${eur(crdEcheancier(y))} : écart de ${eur(Math.abs(ec))} à expliquer, et à régulariser le cas échéant sur la page Emprunt.`, "emprunt");
   }
   const prec = exercice(y-1);
   if(y > yearOf(debutLMNP())) chk(!!prec && (!isHistorique(y-1) || prec.chiffres?.immobilisationsNettes != null), `Colonne N-1 (${y-1}) disponible pour la 2033-A.`, "warn", `Chiffres ${y-1} incomplets : la colonne « année précédente » du bilan (2033-A) sera à remplir à la main lors de la déclaration.`);
@@ -3393,7 +3435,7 @@ function vueCloture(y){
 function cloturer(y){
   if(!$("#clRegul").checked) return alert("Cochez d'abord la vérification des sommes dues et à recevoir au 31/12 (étape 2).");
   const ex = exercice(y), f = fiscalJusqua(y), d = $("#clDecl").value;
-  ex.statut = "cloture"; delete S.unlocked[y];
+  ex.statut = "cloture";
   ex.cloture = {date:new Date().toISOString().slice(0,10), resultatFiscal:r2(f.resultatFiscal), ardFin:r2(f.ardFin), deficitsFin:r2(f.deficitsFin.reduce((s,x)=>s+x.montant,0)), crdFin:r2(f.c.crd)};
   if(d) ex.dateDeclaration = d; else delete ex.dateDeclaration;
   const nouveau = !exercice(y+1);
@@ -3486,7 +3528,6 @@ function appliquerReprise(d, R){
   const avant = d.exercices[R.y] || {}, ex = {statut:"en-cours", ecritures:ecrituresReprise(R)};
   ex.reprise = {source:"Excel", fichier:R.lu.fichier, date:new Date().toISOString().slice(0,10), chiffres:R.lu.ctl};
   if(avant.chiffres) ex.reprise.anciensChiffres = avant.chiffres;
-  if(R.crd === "excel" && R.lu.ctl.capitalRestantDu != null) ex.crdBanque = R.lu.ctl.capitalRestantDu;
   d.exercices[R.y] = ex;
   return ex;
 }
@@ -3502,7 +3543,7 @@ function anneeReprenable(){
   const ys = Object.keys(S.data.exercices).map(Number), y = Math.min(...ys) - 1;
   return y >= yearOf(debutLMNP()) ? y : null;
 }
-function ouvrirReprise(y){ S.reprise = {y, crd:"excel", cloturer:true}; S.tab = "dossier"; renderAll(); haut(); }
+function ouvrirReprise(y){ S.reprise = {y, cloturer:true}; S.tab = "dossier"; renderAll(); haut(); }
 async function lireRepriseExcel(f){
   if(!f) return;
   try{
@@ -3557,10 +3598,8 @@ function vueReprise(y){
     ${ligne("Résultat comptable", C.resultat, c.resultatComptable)}${ligne(`Immobilisations nettes au 31/12/${y}`, C.immobilisationsNettes, s.b.immoNettes)}
     </table></div>
     <p class="sub" style="margin:10px 0 0">Résultat fiscal ${y} dans l'outil : <b>${eur(s.f.resultatFiscal)}</b>${s.f.ardFin > 0.5 ? ` · ${eur(s.f.ardFin)} d'amortissements en réserve fin ${y}` : ""}${s.f.deficitsFin.length ? ` · déficits reportables : ${eur(s.f.deficitsFin.reduce((t, x) => t + x.montant, 0))}` : ""}.</p></div>
-  <div class="card"><h3>3. Capital restant dû au 31/12/${y}</h3><div class="form">
-    ${C.capitalRestantDu != null ? `<label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="radio" name="rcrd" ${R.crd === "excel" ? "checked" : ""} onchange="S.reprise.crd='excel';renderAll()"> Celui de l'Excel, déclaré au bilan : <b>${eur(C.capitalRestantDu)}</b></label>` : ""}
-    <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="radio" name="rcrd" ${R.crd !== "excel" || C.capitalRestantDu == null ? "checked" : ""} onchange="S.reprise.crd='echeancier';renderAll()"> Celui de l'échéancier du prêt : <b>${eur(s.crdEch)}</b></label></div>
-    ${C.capitalRestantDu != null && Math.abs(C.capitalRestantDu - s.crdEch) > 50 ? `<p class="sub" style="margin:8px 0 0">Les deux diffèrent de ${eur(Math.abs(C.capitalRestantDu - s.crdEch))} : le relevé de prêt de la banque au 31/12/${y} tranchera. Le montant reste modifiable ensuite sur la page Emprunt.</p>` : ""}</div>
+  <div class="card"><h3>3. Capital restant dû au 31/12/${y}</h3>
+    <p class="sub" style="margin:0">D'après les écritures reprises : <b>${eur(s.b.crd)}</b>. Échéancier du prêt : ${eur(s.crdEch)}${C.capitalRestantDu != null ? ` · Excel : ${eur(C.capitalRestantDu)}` : ""}.${Math.abs(s.b.crd - s.crdEch) > 1 ? " Un écart avec l'échéancier sera signalé dans les contrôles : à expliquer, et à régulariser le cas échéant sur la page Emprunt d'une année ouverte." : ""}</p></div>
   <div class="card"><h3>4. Effet sur ${y+1}</h3>
     ${!sv ? `<p class="sub" style="margin:0">Pas d'année ${y+1} calculée dans le dossier.</p>` : suivOk
       ? `<div class="alert ok">Le résultat fiscal ${y+1} ne change pas : ${eur(sa.resultatFiscal)}.</div>`
