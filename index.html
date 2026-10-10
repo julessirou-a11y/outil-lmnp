@@ -800,7 +800,7 @@ const CATEGORIES = {construction:"Logement (bâti + terrain)", travaux:"Travaux 
 const DUREE_DEFICIT = 10;
 
 /* ============ État ============ */
-const S = {data:null, dirty:false, dir:null, fileName:null, year:null, tab:"accueil", editId:null, editImmo:null, unlocked:{}};
+const S = {data:null, dirty:false, dir:null, fileName:null, year:null, tab:"accueil", editId:null, editImmo:null};
 
 /* ============ Utilitaires ============ */
 const $ = s => document.querySelector(s);
@@ -933,8 +933,8 @@ function crdAu31(y){
   const ex = exercice(y);
   if(ex && ex.statut === "historique"){ const v = Number(ex.chiffres?.capitalRestantDu); if(ex.chiffres?.capitalRestantDu != null && !isNaN(v)) return v; }
   if(ex && ex.statut === "cloture" && ex.cloture?.crdFin != null) return Number(ex.cloture.crdFin);
-  if(ex && ex.crdBanque != null && ex.crdBanque !== "") return Number(ex.crdBanque); // reprise Excel pas encore clôturée
-  return crdEcheancier(y);
+  if(!ex || ex.statut === "historique") return crdEcheancier(y);
+  return soldeGL164(y); // exercice ouvert : ce qui est passé en comptabilité, l'échéancier de la banque sert de contrôle (ecartCRD)
 }
 function empruntAnnee(l, y){
   const rows = echeancier(l);
@@ -1336,6 +1336,7 @@ function aFaire(y){
   if(S.data.emprunts.some(l => !lignesBanque(l))) out.push(["warn", "Échéancier de la banque à déposer", "emprunt"]);
   const rp = S.data.emprunts.reduce((n,l) => n + etatsRapprochement(l, y).filter(e => e.c !== "ok").length, 0);
   if(rp) out.push(["warn", `${rp} échéance${rp>1?"s":""} de prêt à rapprocher`, "emprunt"]);
+  else if(Math.abs(ecartCRD(y)) >= 1) out.push(["warn", "Restant dû à régulariser", "emprunt"]);
   if(y < new Date().getFullYear() && ex.statut !== "cloture") out.push(["go", `Déclarer ${y}`, "declaration"]);
   if(!out.length) return "";
   return `<div class="pastilles">${out.map(([k,t,pg])=>`<button class="pastille ${k}" onclick="allerA('${pg}')">${t} →</button>`).join("")}</div>`;
@@ -1343,7 +1344,7 @@ function aFaire(y){
 function kpi(l,v,signe){ return `<div class="card kpi"><div class="l">${l}</div><div class="v" style="${signe&&v<0?'color:var(--neg)':''}">${eur(v)}</div></div>`; }
 
 /* ---- Écritures ---- */
-function verrouille(y){ return exercice(y)?.statut === "cloture" && !S.unlocked[y]; }
+function verrouille(y){ return exercice(y)?.statut === "cloture"; }
 const MOIS_LONG = ["janvier","février","mars","avril","mai","juin","juillet","août","septembre","octobre","novembre","décembre"];
 const svgI = d => `<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
 const I_EDIT = svgI('<path d="M5 19h3l10-10-3-3L5 16zM13 7l3 3"/>'), I_DEL = svgI('<path d="M6 7h12M10 7V5h4v2M8 7l1 12h6l1-12"/>'), I_CLIP = svgI('<path d="M16 8l-6.5 6.5a2 2 0 0 0 3 3L19 11a4 4 0 0 0-6-6l-7 7a6 6 0 0 0 9 9l5-5"/>');
@@ -1369,11 +1370,10 @@ function vueEcritures(){
   const list = [...ex.ecritures].filter(e => passeLignes(e, lignes) && passeFiltre(e, J, "journal")).sort((a,b)=> a.date.localeCompare(b.date));
   const natOpts = sel => Object.keys(NATURES).map(n=>optNature(n, sel)).join("");
   return tete + `
-  ${lock ? `<div class="alert warn" style="align-items:center">Année clôturée : écritures verrouillées.<button class="btn small sec" style="margin-left:auto" onclick="S.unlocked[${y}]=true;renderAll()">Déverrouiller</button></div>` : ""}
+  ${lock ? `<div class="alert warn" style="align-items:center">Année clôturée : écritures verrouillées. Pour les modifier, rouvrez l'année dans les paramètres du dossier.</div>` : ""}
   <div class="tuiles ejx-tu">${tuile("Encaissé", eur0(t.recettes), {col:"var(--pos)"})}${tuile("Payé", eur0(t.c242+t.c244+t.c294+t.remb))}${tuile("Écritures", ex.ecritures.length)}${tuile("Sans justificatif", piecesManquantes(y).length, {page:"pieces", col:piecesManquantes(y).length?"var(--warn)":""})}</div>
   <div class="row noprint" style="margin-bottom:14px">
-    ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"+ Écriture"}</button>
-    <button class="btn sec" onclick="dupliquerMois()">Recopier le dernier mois</button>`}
+    ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"+ Écriture"}</button>`}
     ${zoneFiltres("journal")}
   </div>
   ${ouvert ? `<div class="card composer noprint"><div class="form">
@@ -1777,18 +1777,6 @@ function saveEcriture(){
   setDirty(); renderAll(); setTimeout(()=>$("#eMont")?.focus(),0);
 }
 function delEcriture(id){ if(!confirm("Supprimer cette écriture ?")) return; const ex = exercice(S.year); ex.ecritures = ex.ecritures.filter(e=>e.id!==id); setDirty(); renderAll(); }
-function dupliquerMois(){
-  const ex = exercice(S.year); if(!ex.ecritures.length) return alert("Aucune écriture à recopier.");
-  const last = ex.ecritures.map(e=>monthOf(e.date)).reduce((a,b)=>Math.max(a,b));
-  if(last === 12) return alert("Le dernier mois saisi est décembre.");
-  const src = ex.ecritures.filter(e=>monthOf(e.date)===last);
-  if(!confirm(`Recopier ${src.length} écriture(s) de ${MOIS[last-1]} sur ${MOIS[last]} ? Pensez à ajuster les montants qui changent (intérêts, eau…).`)) return;
-  src.forEach(e => { const d = `${S.year}-${String(last+1).padStart(2,"0")}-${e.date.slice(8,10)}`;
-    const valid = new Date(d).getMonth()+1 === last+1 ? d : `${S.year}-${String(last+1).padStart(2,"0")}-28`;
-    // Une saisie neuve : ni pointage sur le relevé, ni justificatif du mois copié
-    ex.ecritures.push({id:uid(), date:valid, tiers:e.tiers, nature:e.nature, montant:e.montant, sens:e.sens, ...(e.commentaire ? {commentaire:e.commentaire} : {})}); });
-  setDirty(); renderAll();
-}
 
 /* ---- Immobilisations ---- */
 const IC_CAT = {construction:'<path d="M4 11l8-6 8 6v9H4zM10 20v-5h4v5"/>', travaux:'<path d="M4 20l8-8M13 5a4 4 0 0 0 6 6l-3 1-4-4z"/>', mobilier:'<path d="M5 11V7h14v4M4 11h16v5H4zM6 16v3M18 16v3"/>'};
@@ -1903,7 +1891,17 @@ function vueEmprunt(){
     <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)"})}${tuile(`Intérêts ${y} comptabilisés`, eur0(c?c.interets:a.interets), {sous: c && !c.interetsSaisis ? "aucune écriture bancaire" : "déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
     ${carteContrat(l, idx)}
     ${carteEcheancier(l, y)}`;
-  }).join("");
+  }).join("") + carteRegulCRD(y);
+}
+/* Écart entre le grand livre (164) et l'échéancier de la banque, et sa régularisation enregistrée dans le dossier */
+function carteRegulCRD(y){
+  const ex = exercice(y); if(!ex || isHistorique(y)) return "";
+  const e = ecartCRD(y), rg = ex.regulCRD, lock = verrouille(y);
+  if(Math.abs(e) < 0.005 && !rg) return "";
+  return `<div class="card"><h3>Régularisation du restant dû</h3>
+    ${Math.abs(e) >= 0.005 ? `<div class="alert warn" style="align-items:center">Le grand livre donne ${eur(soldeGL164(y))} de restant dû au 31/12/${y}, l'échéancier de la banque ${eur(crdEcheancier(y))} : écart de ${eur(Math.abs(e))}.${lock ? "" : `<button class="btn small" style="margin-left:auto" onclick="regulariserCRD()">Régulariser</button>`}</div>` : ""}
+    ${rg ? `<div class="row" style="align-items:center"><span>Régularisation passée au 31/12/${y} : <b>${eur(rg.montant)}</b> ${rg.montant > 0 ? "de restant dû en plus" : "de restant dû en moins"}${rg.motif ? ` · ${esc(rg.motif)}` : ""}</span>${lock ? "" : `<button class="btn small ghost" style="margin-left:auto" onclick="supprimerRegulCRD()">Supprimer</button>`}</div>` : ""}
+    <p class="sub" style="margin:8px 0 0">L'écriture va de l'emprunt (164) au compte de l'exploitant (108), sans opération bancaire.</p></div>`;
 }
 /* Menu « ⋯ » : actions secondaires d'une carte */
 const menu3 = (items, label = "Plus d'actions") => `<details class="menu3 noprint"><summary aria-label="${label}" title="${label}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></summary>
@@ -2352,7 +2350,7 @@ function ecrituresComptables(y){
     if(terrain > 0) an.push({c:"211000", d:terrain});
     an.push({c:k.brut, d:baseAmort(i)}, {c:k.am, cr:r2(a.cumulDebut)});
   });
-  const crdDebut = crdAu31(y-1);
+  const crdDebut = soldeGL164(y-1);
   if(crdDebut > 0) an.push({c:"164000", cr:r2(crdDebut)});
   const solde = r2(an.reduce((s,l)=>s+(l.d||0)-(l.cr||0),0));
   an.push(solde >= 0 ? {c:"108000", cr:solde} : {c:"108000", d:-solde});
@@ -2367,17 +2365,34 @@ function ecrituresComptables(y){
   const dot = {};
   c.immos.forEach(x => { if(x.entree <= y && x.a.dotation > 0){ const k = (CPT_IMMO[x.i.categorie] || CPT_IMMO.travaux).am; dot[k] = (dot[k]||0) + x.a.dotation; } });
   Object.entries(dot).forEach(([k,v]) => add("OD", fin, "Dotation aux amortissements " + y, [{c:"681120", d:r2(v)}, {c:k, cr:r2(v)}]));
-  // Le 164 doit finir sur le restant dû retenu au bilan : l'écart (restant dû de début mal repris, capital non saisi) est ajusté au 31/12
-  const ajust = ajustementCRD(y);
-  if(Math.abs(ajust) >= 0.005) add("OD", fin, "Ajustement du capital restant dû selon l'échéancier", ajust > 0 ? [{c:"108000", d:ajust}, {c:"164000", cr:ajust}] : [{c:"164000", d:-ajust}, {c:"108000", cr:-ajust}]);
+  // Régularisation du restant dû saisie dans le dossier (page Emprunt) : écart entre le 164 et l'échéancier de la banque
+  const rg = regulCRD(y);
+  if(rg) add("OD", fin, "Régularisation du capital restant dû selon l'échéancier" + (exercice(y).regulCRD.motif ? " - " + exercice(y).regulCRD.motif : ""), rg > 0 ? [{c:"108000", d:rg}, {c:"164000", cr:rg}] : [{c:"164000", d:-rg}, {c:"108000", cr:-rg}]);
   return out;
 }
-/* Écart entre le restant dû retenu au 31/12 et celui du 1er janvier moins le capital remboursé saisi en banque */
-function ajustementCRD(y){
-  if(!S.data.emprunts.length) return 0;
-  const rembourse = (exercice(y)?.ecritures||[]).filter(e => e.nature === "Remboursement emprunt").reduce((s,e) => s + e.montant, 0);
-  return r2(crdAu31(y) - (crdAu31(y-1) - rembourse));
+/* Solde du compte 164 au 31/12, repris au bilan : figé pour une année clôturée ou reprise, sinon celui de l'an passé moins le capital remboursé
+   saisi en banque, plus la régularisation éventuelle */
+const regulCRD = y => r2(Number(exercice(y)?.regulCRD?.montant) || 0);
+function soldeGL164(y){
+  const ex = exercice(y);
+  if(!ex || ex.statut === "historique" || (ex.statut === "cloture" && ex.cloture?.crdFin != null)) return crdAu31(y);
+  const rembourse = (ex.ecritures||[]).filter(e => e.nature === "Remboursement emprunt").reduce((s,e) => s + e.montant, 0);
+  return r2(soldeGL164(y-1) - rembourse + regulCRD(y));
 }
+/* Écart à expliquer : restant dû de l'échéancier de la banque moins le solde du 164 au 31/12 (le bilan reprend le 164) */
+function ecartCRD(y){
+  const ex = exercice(y);
+  if(!S.data.emprunts.length || !ex || ex.statut === "historique" || ex.statut === "cloture") return 0;
+  return r2(crdEcheancier(y) - soldeGL164(y));
+}
+function regulariserCRD(){
+  const y = S.year, ex = exercice(y), e = ecartCRD(y); if(verrouille(y) || Math.abs(e) < 0.005) return;
+  const motif = prompt(`Régulariser ${eur(Math.abs(e))} au 31/12/${y} entre l'emprunt (164) et le compte de l'exploitant (108), pour que le grand livre retombe sur l'échéancier de la banque.\n\nMotif (facultatif) :`, ex.regulCRD?.motif || "Restant dû des bilans antérieurs");
+  if(motif === null) return;
+  ex.regulCRD = {montant:r2(regulCRD(y) + e), motif:motif.trim(), date:new Date().toISOString().slice(0,10)};
+  setDirty(); renderAll();
+}
+function supprimerRegulCRD(){ const ex = exercice(S.year); if(verrouille(S.year) || !confirm("Supprimer la régularisation du restant dû ?")) return; delete ex.regulCRD; setDirty(); renderAll(); }
 function balance(y){
   const b = {};
   ecrituresComptables(y).forEach(e => e.lignes.forEach(l => { const x = b[l.c] ??= {d:0, cr:0}; x.d += l.d||0; x.cr += l.cr||0; }));
@@ -2589,11 +2604,11 @@ function controles(y){
   chk(!gros.length, "Aucun petit équipement au-dessus du seuil.", "warn", `${gros.length} « petit équipement » de plus de 600 € TTC : au-delà de 500 € HT par élément, il faut l'amortir (page Immobilisations).`, "immos");
   if(S.data.emprunts.length){
     chk(c.interetsSaisis, "Intérêts d'emprunt saisis d'après la banque.", "warn", `Aucun intérêt d'emprunt comptabilisé : seuls les prélèvements de la banque comptent (${eur(c.interetsEch)} attendus selon l'échéancier). L'échéancier de la page Emprunt montre les mois à rapprocher.`, "emprunt");
-    chk(S.data.emprunts.every(l => lignesBanque(l)), "Capital restant dû au 31/12 d'après l'échéancier de la banque.", "warn", "Échéancier de la banque non déposé : le restant dû au 31/12 vient de l'échéancier calculé d'après le contrat. Déposez-le sur la page Emprunt.", "emprunt");
+    chk(S.data.emprunts.every(l => lignesBanque(l)), "Échéancier de la banque déposé : il sert à contrôler le restant dû.", "warn", "Échéancier de la banque non déposé : le restant dû comptable est contrôlé avec l'échéancier calculé d'après le contrat. Déposez-le sur la page Emprunt.", "emprunt");
     const rp = S.data.emprunts.flatMap(l => etatsRapprochement(l, y).filter(e => e.c !== "ok"));
-    chk(!rp.length, "Échéances du prêt rapprochées des écritures bancaires.", "warn", `${rp.length} échéance${rp.length>1?"s":""} du prêt sans écriture ou avec un écart : ${rp.map(e => MOIS[e.r.mois-1]).join(", ")}. L'échéancier de la page Emprunt détaille chaque mois.`, "emprunt");
-    const aj = ajustementCRD(y);
-    if(Math.abs(aj) >= 1) out.push(["warn", `Le restant dû passe de ${eur(crdAu31(y-1))} au 1er janvier à ${eur(crdAu31(y))} au 31/12 selon l'échéancier, mais le capital remboursé saisi en banque n'explique pas ${eur(Math.abs(aj))} : un ajustement est passé au 31/12 entre l'emprunt et le compte de l'exploitant.`, "emprunt"]);
+    chk(!rp.length, "Échéances du prêt rapprochées des écritures bancaires.", "warn", `${rp.length} échéance${rp.length>1?"s":""} du prêt sans écriture ou avec un écart : ${rp.map(e => MOIS[e.r.mois-1]).join(", ").replace(/\.$/, "")}. L'échéancier de la page Emprunt détaille chaque mois.`, "emprunt");
+    const ec = ecartCRD(y);
+    chk(Math.abs(ec) < 1, "Grand livre de l'emprunt conforme à l'échéancier de la banque.", "warn", `Le grand livre donne ${eur(soldeGL164(y))} de restant dû au 31/12, l'échéancier de la banque ${eur(crdEcheancier(y))} : écart de ${eur(Math.abs(ec))} à expliquer, et à régulariser le cas échéant sur la page Emprunt.`, "emprunt");
   }
   const prec = exercice(y-1);
   if(y > yearOf(debutLMNP())) chk(!!prec && (!isHistorique(y-1) || prec.chiffres?.immobilisationsNettes != null), `Colonne N-1 (${y-1}) disponible pour la 2033-A.`, "warn", `Chiffres ${y-1} incomplets : la colonne « année précédente » du bilan (2033-A) sera à remplir à la main lors de la déclaration.`);
@@ -3420,7 +3435,7 @@ function vueCloture(y){
 function cloturer(y){
   if(!$("#clRegul").checked) return alert("Cochez d'abord la vérification des sommes dues et à recevoir au 31/12 (étape 2).");
   const ex = exercice(y), f = fiscalJusqua(y), d = $("#clDecl").value;
-  ex.statut = "cloture"; delete S.unlocked[y];
+  ex.statut = "cloture";
   ex.cloture = {date:new Date().toISOString().slice(0,10), resultatFiscal:r2(f.resultatFiscal), ardFin:r2(f.ardFin), deficitsFin:r2(f.deficitsFin.reduce((s,x)=>s+x.montant,0)), crdFin:r2(f.c.crd)};
   if(d) ex.dateDeclaration = d; else delete ex.dateDeclaration;
   const nouveau = !exercice(y+1);
@@ -3513,7 +3528,6 @@ function appliquerReprise(d, R){
   const avant = d.exercices[R.y] || {}, ex = {statut:"en-cours", ecritures:ecrituresReprise(R)};
   ex.reprise = {source:"Excel", fichier:R.lu.fichier, date:new Date().toISOString().slice(0,10), chiffres:R.lu.ctl};
   if(avant.chiffres) ex.reprise.anciensChiffres = avant.chiffres;
-  if(R.crd === "excel" && R.lu.ctl.capitalRestantDu != null) ex.crdBanque = R.lu.ctl.capitalRestantDu;
   d.exercices[R.y] = ex;
   return ex;
 }
@@ -3529,7 +3543,7 @@ function anneeReprenable(){
   const ys = Object.keys(S.data.exercices).map(Number), y = Math.min(...ys) - 1;
   return y >= yearOf(debutLMNP()) ? y : null;
 }
-function ouvrirReprise(y){ S.reprise = {y, crd:"excel", cloturer:true}; S.tab = "dossier"; renderAll(); haut(); }
+function ouvrirReprise(y){ S.reprise = {y, cloturer:true}; S.tab = "dossier"; renderAll(); haut(); }
 async function lireRepriseExcel(f){
   if(!f) return;
   try{
@@ -3584,10 +3598,8 @@ function vueReprise(y){
     ${ligne("Résultat comptable", C.resultat, c.resultatComptable)}${ligne(`Immobilisations nettes au 31/12/${y}`, C.immobilisationsNettes, s.b.immoNettes)}
     </table></div>
     <p class="sub" style="margin:10px 0 0">Résultat fiscal ${y} dans l'outil : <b>${eur(s.f.resultatFiscal)}</b>${s.f.ardFin > 0.5 ? ` · ${eur(s.f.ardFin)} d'amortissements en réserve fin ${y}` : ""}${s.f.deficitsFin.length ? ` · déficits reportables : ${eur(s.f.deficitsFin.reduce((t, x) => t + x.montant, 0))}` : ""}.</p></div>
-  <div class="card"><h3>3. Capital restant dû au 31/12/${y}</h3><div class="form">
-    ${C.capitalRestantDu != null ? `<label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="radio" name="rcrd" ${R.crd === "excel" ? "checked" : ""} onchange="S.reprise.crd='excel';renderAll()"> Celui de l'Excel, déclaré au bilan : <b>${eur(C.capitalRestantDu)}</b></label>` : ""}
-    <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="radio" name="rcrd" ${R.crd !== "excel" || C.capitalRestantDu == null ? "checked" : ""} onchange="S.reprise.crd='echeancier';renderAll()"> Celui de l'échéancier du prêt : <b>${eur(s.crdEch)}</b></label></div>
-    ${C.capitalRestantDu != null && Math.abs(C.capitalRestantDu - s.crdEch) > 50 ? `<p class="sub" style="margin:8px 0 0">Les deux diffèrent de ${eur(Math.abs(C.capitalRestantDu - s.crdEch))} : le relevé de prêt de la banque au 31/12/${y} tranchera. Les années suivantes partent de ce montant, puis suivent l'échéancier de la banque.</p>` : ""}</div>
+  <div class="card"><h3>3. Capital restant dû au 31/12/${y}</h3>
+    <p class="sub" style="margin:0">D'après les écritures reprises : <b>${eur(s.b.crd)}</b>. Échéancier du prêt : ${eur(s.crdEch)}${C.capitalRestantDu != null ? ` · Excel : ${eur(C.capitalRestantDu)}` : ""}.${Math.abs(s.b.crd - s.crdEch) > 1 ? " Un écart avec l'échéancier sera signalé dans les contrôles : à expliquer, et à régulariser le cas échéant sur la page Emprunt d'une année ouverte." : ""}</p></div>
   <div class="card"><h3>4. Effet sur ${y+1}</h3>
     ${!sv ? `<p class="sub" style="margin:0">Pas d'année ${y+1} calculée dans le dossier.</p>` : suivOk
       ? `<div class="alert ok">Le résultat fiscal ${y+1} ne change pas : ${eur(sa.resultatFiscal)}.</div>`
