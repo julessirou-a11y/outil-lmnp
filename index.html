@@ -82,10 +82,17 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .prefs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:inherit;font-size:12.5px;padding:5px 6px;border-radius:var(--r-md);cursor:pointer}
 .prefs button:hover{color:var(--text)}
 .prefs button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
-.rv summary{cursor:pointer;list-style:none;display:flex;align-items:center}.rv summary::-webkit-details-marker{display:none}
-.rv ul{list-style:none;padding:0;margin:10px 0 0}.rv li{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--line)}
-.rv-txt{width:100%;margin-top:6px;font:inherit;font-size:13.5px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);resize:vertical}
+.rv summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap}.rv summary::-webkit-details-marker{display:none}.rv summary h3{margin:0}
+.rl{display:grid;grid-template-columns:minmax(0,1fr) 120px 120px 110px 92px;gap:4px 12px;align-items:center;padding:10px 0;border-top:1px solid var(--line)}
+.rv summary+.rl,.rv p+.rl{margin-top:8px}.rl-lib b{display:block;font-weight:600}.rl-lib small,.rl-n small{display:block;color:var(--muted);font-size:12px}
+.rl-n{text-align:right;font-variant-numeric:tabular-nums}.rl-n b.neg{color:var(--neg)}.rl-s{text-align:right;display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+.rl-auto{grid-template-columns:minmax(0,1fr) auto}.rl-suite{grid-column:1/-1}
+.rv-ok{color:var(--pos);font-weight:600;font-size:13px;white-space:nowrap}.rv-ko{color:var(--neg);font-weight:600;font-size:13px;white-space:nowrap}
+.rs-ok .rl-lib{color:var(--muted)}
+.rv-rel{gap:8px;margin:4px 0 6px;align-items:flex-end}.rv-rel label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:2px}.rv-rel input{width:120px;font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text)}
+.rv-txt{width:100%;margin-top:2px;font:inherit;font-size:13.5px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);resize:vertical}
 .rv-com{margin-top:4px;font-size:13.5px;color:var(--muted);font-style:italic}
+@media (max-width:700px){ .rl{grid-template-columns:repeat(3,minmax(0,1fr))} .rl-n{font-size:13px} .rl-lib,.rl-s{grid-column:1/-1} .rl-s{justify-content:flex-start} .rl-auto{grid-template-columns:1fr} }
 .printonly{display:none}@media print{.printonly{display:block}.rv{break-inside:avoid}.rv ul{display:block!important}}
 .todo ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px}
 .todo li{display:flex;gap:10px;align-items:baseline;padding:6px 0;border-bottom:1px solid var(--line)}
@@ -2707,89 +2714,106 @@ function controles(y){
   if(xl != null) chk("excel", "fiscal", Math.abs(c.resultatComptable - xl) < 1, `Résultat comptable identique à l'Excel repris (${eur(xl)}).`, "warn", `Résultat comptable de ${eur(c.resultatComptable)} contre ${eur(xl)} dans l'Excel repris : vérifiez les écritures et les immobilisations.`, "ecritures");
   const f = fiscalJusqua(y);
   if(f.perimes?.length) out.push(["warn", `Déficit${pl(f.perimes.length)} de plus de 10 ans perdu${pl(f.perimes.length)} cette année : ${f.perimes.map(d=>d.annee+" ("+eur(d.montant)+")").join(", ")}.`, null, "deficits-perimes", "fiscal"]);
-  controlesRevision(y, c, chk);
   return out;
 }
 /* ============ Révision ============ */
-/* Chaque poste est révisé avant la clôture : contrôles calculés (controles), questions à attester, revue N/N−1.
-   Un point « à vérifier » est traité par une explication, une question par une réponse ; les deux sont gardés
-   dans exercice.revision[id] = {statut, commentaire, texte, date}. Une explication ne vaut que pour la situation
-   expliquée : si le texte du contrôle change (un nouveau mois manquant…), le point est à revoir. */
-const CYCLES = [["statut","Statut et régime"],["tresorerie","Trésorerie et banque"],["recettes","Recettes"],["charges","Charges externes"],["impots","Impôts et taxes"],
-  ["immos","Immobilisations et amortissements"],["emprunt","Emprunt"],["capitaux","Capitaux propres et à-nouveaux"],["fiscal","Résultat fiscal"],["pieces","Saisie et justificatifs"]];
-const SEUIL_LMP = 23000, SEUIL_MICRO = 77700, REVUE_PCT = 0.20, REVUE_MIN = 150;
-const NAT_PONCTUELLES = new Set(["Petit équipement (< 500 € HT)","Entretien et réparations","Honoraires","Autre charge","Autre recette","Remboursement emprunt"]);
-const DUREES = {construction:[25,80], travaux:[5,30], mobilier:[3,10]};
-/* Questions à attester : [id, cycle, question, condition] */
+/* Chaque poste est rapproché d'une source indépendante : Comptabilité (grand livre) − Attendu (échéancier, bail,
+   relevé, tableau d'amortissement, clôture N−1) = Écart. Un écart se corrige dans le module d'origine, ou s'explique :
+   l'explication est gardée dans exercice.revision[id] = {commentaire, texte, statut, date} et ne vaut que pour les
+   montants expliqués (texte = « compta|attendu ») : si un montant change, l'écart est à revoir. */
+const CYCLES = [["recettes","Recettes","ecritures"],["emprunt","Emprunt","emprunt"],["immos","Immobilisations et amortissements","immos"],
+  ["tresorerie","Banque","banque"],["resultat","Résultat, reports et bilan","declaration"],["charges","Charges : comparaison avec l'an passé","ecritures"],
+  ["saisie","Saisie et justificatifs","ecritures"],["confirmer","Points à confirmer",""]];
+const REVUE_PCT = 0.20, REVUE_MIN = 150;
 const ATTEST = [
-  ["meuble", "statut", "Le logement est loué meublé, avec au moins le mobilier minimum du décret n° 2015-981 (literie, plaques, réfrigérateur, vaisselle, table et chaises…).", () => true],
-  ["perso-banque", "tresorerie", "Les opérations personnelles ont été écartées du relevé importé, ou le compte est dédié à la location.", () => true],
-  ["charges-refact", "recettes", "Les charges refacturées au locataire correspondent aux provisions du bail, et la régularisation annuelle est passée.", (y, c) => (c.t.parNature["Loyer"]||0) > 0],
-  ["caution", "recettes", "Aucun dépôt de garantie encaissé n'est classé en recette (il est rendu au départ du locataire).", (y, c) => (c.t.parNature["Loyer"]||0) > 0],
-  ["travaux", "charges", "Aucune amélioration, transformation ou agrandissement n'est passé en entretien et réparations : ces travaux s'amortissent.", (y, c) => (c.t.parNature["Entretien et réparations"]||0) > 0],
-  ["alur", "charges", "Copropriété : la cotisation au fonds de travaux (loi ALUR) et les travaux votés non réalisés ne sont pas déduits cette année.", (y, c) => (c.t.parNature["Copropriété"]||0) > 0],
-  ["perso", "charges", "Aucune dépense personnelle n'est déduite (taxe d'habitation, frais de la résidence principale, ameublement personnel…).", () => true],
-  ["teom", "impots", "La taxe d'ordures ménagères refacturée au locataire est comptée en recette (charges refacturées).", (y, c) => (c.t.parNature["Taxe foncière"]||0) > 0],
-  ["sorties", "immos", "Aucun bien de l'inventaire n'a été vendu, détruit ou remplacé sans être sorti des immobilisations.", () => S.data.immobilisations.length > 0],
-  ["frais-pret", "emprunt", "Les frais de dossier et de garantie du prêt sont comptés, en charge l'année du prêt ou étalés.", () => S.data.emprunts.length > 0]
+  ["meuble", "Le logement est loué meublé, avec au moins le mobilier minimum (décret n° 2015-981)."],
+  ["travaux", "Aucune amélioration ou agrandissement n'est passé en « Entretien et réparations » : ces travaux s'amortissent."],
+  ["alur", "Copropriété : la cotisation au fonds de travaux (loi ALUR) n'est pas déduite tant que les travaux ne sont pas réalisés."],
+  ["caution", "Aucun dépôt de garantie encaissé n'est classé en recette."],
+  ["perso", "Aucune dépense personnelle n'est déduite."]
 ];
-/* Contrôles calculés propres à la révision, ajoutés à controles(y) */
-function controlesRevision(y, c, chk){
-  const es = exercice(y).ecritures || [], pn = c.t.parNature;
-  // Statut
-  chk("seuil-lmp", "statut", c.produits <= SEUIL_LMP, `Recettes de ${eur0(c.produits)}, sous le seuil de ${eur0(SEUIL_LMP)} : statut de loueur non professionnel.`, "warn",
-    `Recettes de ${eur0(c.produits)}, au-dessus de ${eur0(SEUIL_LMP)} : le statut devient professionnel (LMP) si elles dépassent aussi les autres revenus d'activité du foyer. Indiquez pourquoi le statut LMNP reste acquis.`);
-  if(c.produits > SEUIL_MICRO) chk("seuil-micro", "statut", false, "", "warn", `Recettes au-dessus de ${eur0(SEUIL_MICRO)} : le régime réel est obligatoire. Vérifiez qu'aucune option n'est à revoir.`);
-  // Recettes : loyers réguliers
-  const parMois = {}; es.filter(e => e.nature === "Loyer").forEach(e => parMois[monthOf(e.date)] = r2((parMois[monthOf(e.date)]||0) + e.montant));
-  const vals = Object.values(parMois).sort((a,b) => a-b), med = vals.length ? vals[Math.floor(vals.length/2)] : 0;
-  const irr = Object.entries(parMois).filter(([, v]) => med && Math.abs(v - med) > med * 0.10).map(([m, v]) => `${MOIS[m-1].replace(/\.$/, "")} (${eur(v)})`);
-  if(vals.length > 2) chk("loyers-reguliers", "recettes", !irr.length, `Loyers réguliers (${eur(med)} par mois).`, "warn", `Loyer différent de plus de 10 % du loyer habituel (${eur(med)}) : ${irr.join(", ")}. Expliquez l'écart (révision IRL, vacance, régularisation, double encaissement).`, "ecritures");
-  // Revue N/N−1 et charges récurrentes
-  const ex1 = exercice(y-1);
-  if(ex1 && !isHistorique(y-1)){
-    const c1 = calculAnnee(y-1), p1 = c1.t.parNature;
-    const absentes = Object.keys(p1).filter(n => NATURES[n]?.g === "charge" && !NAT_PONCTUELLES.has(n) && p1[n] > 0 && !(pn[n] > 0) && !(n === "CFE" && c.produits > 5000)); // CFE : contrôle dédié
-    chk("recurrentes", "charges", !absentes.length, `Les charges récurrentes de ${y-1} sont toutes présentes.`, "warn", `Charge${pl(absentes.length)} présente${pl(absentes.length)} en ${y-1} et absente${pl(absentes.length)} cette année : ${absentes.join(", ")}. Oubli de saisie, ou charge arrêtée ?`, "ecritures");
-    for(const n of new Set([...Object.keys(pn), ...Object.keys(p1)])){
-      const g = NATURES[n]?.g; if(!g || g === "bilan") continue;
-      const v = pn[n]||0, v1 = p1[n]||0, d = v - v1;
-      if(!v1 || !v || Math.abs(d) <= REVUE_MIN || Math.abs(d) <= v1 * REVUE_PCT) continue;
-      const cyc = g === "recette" ? "recettes" : NATURES[n].l === "244" ? "impots" : NATURES[n].l === "294" ? "emprunt" : "charges";
-      chk(`revue-${slug(n)}`, cyc, false, "", "warn", `${n} : ${eur(v)} contre ${eur(v1)} en ${y-1} (${d > 0 ? "+" : "−"}${Math.round(Math.abs(d) / v1 * 100)} %). Expliquez la variation.`, "ecritures");
+const sommeNature = (y, n, f = () => true) => r2((exercice(y)?.ecritures||[]).filter(e => e.nature === n && f(e)).reduce((s,e) => s + e.montant, 0));
+function moisLoues(y){
+  const d = debutLMNP(), m0 = yearOf(d) === y ? monthOf(d) : yearOf(d) > y ? 13 : 1, now = new Date();
+  const mFin = y < now.getFullYear() ? 12 : y === now.getFullYear() ? now.getMonth() + 1 : 0;
+  return Math.max(0, mFin - m0 + 1);
+}
+/* Rapprochements chiffrés : [id, cycle, libellé, compta, attendu, source, lien vers le grand livre, page] */
+function rapprochements(y){
+  const out = [], c = calculAnnee(y), f = fiscalJusqua(y), d = S.data.dossier, ex = exercice(y);
+  const R = (id, cycle, lib, compta, attendu, source, gl, page, extra) => out.push({type:"calc", id, cycle, lib, compta:r2(compta), attendu:attendu == null ? null : r2(attendu), source, gl, page, extra});
+  // Recettes : bail
+  const nm = moisLoues(y), loyer = parseMontant(d.loyerMensuel), prov = parseMontant(d.provisionCharges);
+  R("loyers", "recettes", "Loyers encaissés (706)", sommeNature(y, "Loyer"), loyer ? loyer * nm : null, loyer ? `bail : ${eur(loyer)} × ${nm} mois` : "loyer du bail non renseigné", "706000", "dossier");
+  if(prov || sommeNature(y, "Charges refacturées")) R("provisions", "recettes", "Charges refacturées (708)", sommeNature(y, "Charges refacturées"), prov ? prov * nm : null, prov ? `bail : ${eur(prov)} × ${nm} mois` : "provision du bail non renseignée", "708400", "dossier");
+  // Emprunt : chaque prêt contre son échéancier
+  S.data.emprunts.forEach((l, i) => {
+    const nom = S.data.emprunts.length > 1 ? ` · ${nomPret(l, i)}` : "", src = `échéancier ${lignesBanque(l) ? "de la banque" : "calculé"}`, rows = echeancier(l).filter(r => r.annee === y);
+    const de = e => pretDe(e) === l.id;
+    R(`capital-${l.id}`, "emprunt", `Capital remboursé${nom}`, sommeNature(y, "Remboursement emprunt", de), rows.reduce((s,r) => s + r.capital, 0), src, "164000", "emprunt");
+    R(`interets-${l.id}`, "emprunt", `Intérêts${nom} (661)`, sommeNature(y, "Intérêts emprunt", de), rows.reduce((s,r) => s + r.interet, 0), src, "661160", "emprunt");
+    const ass = rows.reduce((s,r) => s + (r.assurance||0), 0), assGL = sommeNature(y, "Assurance emprunt", de);
+    if(ass || assGL) R(`assurance-${l.id}`, "emprunt", `Assurance emprunteur${nom} (616)`, assGL, ass, src, "616100", "emprunt");
+  });
+  if(S.data.emprunts.length) R("crd", "emprunt", "Restant dû au 31/12 (164)", soldeGL164(y), crdEcheancier(y), "échéancier", "164000", "emprunt", regulCRD(y) ? `dont régularisation ${eur(regulCRD(y))}` : "");
+  // Immobilisations
+  const b = bilan(y), b1 = exercice(y-1) && !isHistorique(y-1) ? bilan(y-1) : null, dotTab = c.immos.reduce((s,x) => s + (x.entree <= y ? x.a.dotation : 0), 0);
+  if(S.data.immobilisations.length){
+    if(b1){ const debut = Object.values(b.lignes).reduce((s,L) => s + L.brutDebut, 0);
+      R("brut-an", "immos", "Valeur brute au 1er janvier", debut, b1.brut, `bilan ${y-1}`, "213000", "immos"); }
+    R("dotation", "immos", "Dotation aux amortissements (681)", c.dotations, dotTab, "tableau d'amortissement", "681120", "immos");
+    R("dot-39c", "immos", "Dotation déduite + mise en réserve (art. 39 C)", r2(f.dotDeductible + f.reintegration), c.dotations, "dotation de l'année", null, "declaration");
+    const acq = c.immos.filter(x => x.entree === y).reduce((s,x) => s + x.i.valeurOrigine, 0);
+    if(acq) R("acquisitions", "immos", "Acquisitions de l'année", acq, null, c.immos.filter(x => x.entree === y).map(x => esc(x.i.libelle)).join(", "), null, "immos");
+  }
+  // Banque : relevé saisi
+  const mvt = r2((ex.ecritures||[]).reduce((s,e) => s + ((NATURES[e.nature]?.g || (e.sens === "recette" ? "recette" : "charge")) === "recette" ? e.montant : -e.montant), 0));
+  const rl = ex.releve || {};
+  R("releve", "tresorerie", "Variation du compte bancaire sur l'année", mvt, rl.debut != null && rl.fin != null ? rl.fin - rl.debut : null, rl.debut != null && rl.fin != null ? `relevé : ${eur(rl.fin)} au 31/12 − ${eur(rl.debut)} au 1/1` : "soldes du relevé à saisir ci-dessous", "512000", "banque", "releve");
+  // Résultat, reports, bilan
+  const cl1 = exercice(y-1)?.statut === "cloture" ? exercice(y-1).cloture : null;
+  const bal = balance(y), dt = bal.reduce((s,x) => s + x.d, 0), ct = bal.reduce((s,x) => s + x.cr, 0);
+  R("balance", "resultat", "Balance : total des débits = total des crédits", dt, ct, "balance générale", null, "ecritures");
+  if(cl1){
+    if(cl1.resultatFiscal != null) R("rf-n1", "resultat", `Résultat fiscal ${y-1} recalculé aujourd'hui`, fiscalJusqua(y-1).resultatFiscal, cl1.resultatFiscal, `déclaré à la clôture ${y-1}`, null, "declaration");
+    R("an-crd", "resultat", "Restant dû au 1er janvier", soldeGL164(y-1), cl1.crdFin, `clôture ${y-1}`, "164000", "emprunt");
+    if(cl1.ardFin != null) R("an-ard", "resultat", "Amortissements en réserve au 1er janvier", f.ardDebut, cl1.ardFin, `clôture ${y-1}`, null, "declaration");
+    if(cl1.deficitsFin != null) R("an-def", "resultat", "Déficits reportables au 1er janvier", f.deficitsDebut.reduce((s,x) => s + x.montant, 0), cl1.deficitsFin, `clôture ${y-1}`, null, "declaration");
+  }
+  R("fiscal", "resultat", "Résultat fiscal = comptable + réserve 39 C − réserve utilisée − déficits imputés", f.resultatFiscal, c.resultatComptable + f.reintegration - f.ardUtilise - f.deficitsImputes, "2033-B", null, "declaration");
+  // Charges et recettes : N contre N−1 (compte par compte)
+  if(exercice(y-1) && !isHistorique(y-1)){
+    const p = c.t.parNature, p1 = calculAnnee(y-1).t.parNature;
+    for(const n of Object.keys(NATURES).filter(n => NATURES[n].g !== "bilan" && ((p[n]||0) || (p1[n]||0)))){
+      const v = r2(p[n]||0), v1 = r2(p1[n]||0), ecart = Math.abs(v - v1);
+      out.push({type:"revue", id:`revue-${slug(n)}`, cycle:"charges", lib:`${n} (${NATURES[n].c.slice(0,3)})`, compta:v, attendu:v1, source:`${y-1}`, gl:NATURES[n].c, page:"ecritures", significatif: ecart > REVUE_MIN && (!v1 || ecart > v1 * REVUE_PCT)});
     }
   }
-  // Impôts
-  if(c.lmnpActif) chk("taxe-fonciere", "impots", pn["Taxe foncière"] > 0, "Taxe foncière saisie.", "warn", "Aucune taxe foncière saisie : elle est due par le propriétaire au 1er janvier. Saisissez-la, ou expliquez son absence (exonération, payée par un autre compte).", "ecritures");
-  // Immobilisations
-  const constr = S.data.immobilisations.filter(i => i.categorie === "construction" && yearOf(i.miseEnService) <= y);
-  const terr = constr.filter(i => !(i.quotePartTerrain >= 0.10 && i.quotePartTerrain <= 0.30));
-  if(constr.length) chk("terrain", "immos", !terr.length, "Part du terrain isolée, non amortie (entre 10 et 30 % du prix).", "warn", `Part du terrain inhabituelle pour ${terr.map(i => `« ${esc(i.libelle)} » (${Math.round((i.quotePartTerrain||0)*100)} %)`).join(", ")} : elle se situe en général entre 10 et 30 % du prix. Justifiez-la (acte, évaluation).`, "immos");
-  const hd = S.data.immobilisations.filter(i => DUREES[i.categorie] && yearOf(i.miseEnService) <= y && (i.dureeAns < DUREES[i.categorie][0] || i.dureeAns > DUREES[i.categorie][1]));
-  if(S.data.immobilisations.length) chk("durees", "immos", !hd.length, "Durées d'amortissement dans les fourchettes usuelles.", "warn", `Durée inhabituelle : ${hd.map(i => `« ${esc(i.libelle)} » ${i.dureeAns} ans (usuel ${DUREES[i.categorie].join(" à ")} ans)`).join(", ")}. Justifiez-la.`, "immos");
-  // Emprunt : intérêts comptabilisés et échéancier
-  if(S.data.emprunts.length && c.interetsSaisis){
-    const ecart = r2((pn["Intérêts emprunt"]||0) - c.interetsEch);
-    chk("interets-montant", "emprunt", Math.abs(ecart) < 1, `Intérêts comptabilisés égaux à l'échéancier (${eur(c.interetsEch)}).`, "warn", `Intérêts comptabilisés ${eur(pn["Intérêts emprunt"]||0)}, échéancier ${eur(c.interetsEch)} : écart de ${eur(Math.abs(ecart))} à expliquer.`, "emprunt");
-  }
+  return out;
 }
 const revision = y => exercice(y)?.revision || {};
-/* État d'un point : "ok" (rien à faire), "fait" (expliqué ou attesté), "afaire", "bloque" (à corriger) */
+const sigCalc = x => `${x.compta}|${x.attendu}`;
 function etatPoint(y, x){
   const r = revision(y)[x.id];
   if(x.type === "q") return r?.statut === "vu" || r?.statut === "na" ? "fait" : "afaire";
+  if(x.type === "calc" || x.type === "revue"){
+    if(x.attendu == null) return x.extra === "releve" && r?.statut === "na" ? "fait" : x.id === "acquisitions" ? (r?.statut === "vu" ? "fait" : "afaire") : "afaire";
+    const ok = x.type === "revue" ? !x.significatif : Math.abs(x.compta - x.attendu) < 0.005;
+    return ok ? "ok" : r?.commentaire && r.texte === sigCalc(x) ? "fait" : "afaire";
+  }
   if(x.niveau === "ok") return "ok";
   if(x.niveau === "bad") return "bloque";
   return r?.commentaire && r.texte === x.texte ? "fait" : "afaire";
 }
+const GARDER = new Set(["dates","montants","natures","loyers-mois","cfe","justificatifs","banque-tri","doublons","petit-equipement","echeancier-banque","pret-rattache","echeances","n1","excel","deficits-perimes"]);
 function pointsRevision(y){
-  const c = calculAnnee(y);
-  const auto = controles(y).map(([niveau, texte, page, id, cycle]) => ({type:"auto", niveau, texte, page, id:id || slug(texte), cycle:cycle || "fiscal"}));
-  const q = ATTEST.filter(a => a[3](y, c)).map(([id, cycle, texte]) => ({type:"q", id:"q-" + id, cycle, texte}));
-  return [...auto, ...q].map(x => ({...x, etat:etatPoint(y, x)}));
+  const auto = controles(y).filter(x => GARDER.has(x[3])).map(([niveau, texte, page, id]) => ({type:"auto", niveau, texte, page, id, cycle:["echeancier-banque","pret-rattache","echeances"].includes(id) ? "emprunt" : id === "banque-tri" ? "tresorerie" : id === "deficits-perimes" || id === "n1" || id === "excel" ? "resultat" : "saisie"}));
+  const q = ATTEST.map(([id, texte]) => ({type:"q", id:"q-" + id, cycle:"confirmer", texte}));
+  const rap = rapprochements(y), dejaVu = new Set(rap.map(x => x.id));
+  return [...rap, ...auto.filter(x => !(x.id === "cfe" && dejaVu.has("revue-CFE"))), ...q].map(x => ({...x, etat:etatPoint(y, x)}));
 }
+const restantRevision = y => pointsRevision(y).filter(x => x.etat === "afaire" || x.etat === "bloque").map(x => ({...x, texte:x.texte || x.lib}));
 addEventListener("beforeprint", () => document.querySelectorAll("details.rv").forEach(d => d.open = true));
-const restantRevision = y => pointsRevision(y).filter(x => x.etat === "afaire" || x.etat === "bloque");
 function majRevision(y, id, champs){
   if(verrouille(y)) return;
   const ex = exercice(y), rev = (ex.revision ??= {}), r = {...(rev[id] || {}), ...champs, date:new Date().toISOString().slice(0,10)};
@@ -2797,26 +2821,43 @@ function majRevision(y, id, champs){
   if(!Object.keys(rev).length) delete ex.revision;
   setDirty(); renderAll();
 }
-function expliquerPoint(y, id, el){ const x = pointsRevision(y).find(p => p.id === id); majRevision(y, id, {commentaire:el.value.trim(), texte:x.texte}); }
+function expliquerPoint(y, id, el){ const x = pointsRevision(y).find(p => p.id === id); majRevision(y, id, {commentaire:el.value.trim(), texte:x.type === "auto" ? x.texte : sigCalc(x)}); }
+function majReleve(y, k, v){ if(verrouille(y)) return; const ex = exercice(y), n = parseMontant(v); ex.releve ??= {}; if(v === "" || isNaN(n)) delete ex.releve[k]; else ex.releve[k] = n; if(!Object.keys(ex.releve).length) delete ex.releve; setDirty(); renderAll(); }
 function vueRevision(y){
-  const pts = pointsRevision(y), clos = verrouille(y), rev = revision(y);
+  const pts = pointsRevision(y), clos = verrouille(y), rev = revision(y), ex = exercice(y);
   const reste = pts.filter(x => x.etat === "afaire" || x.etat === "bloque"), bloq = pts.filter(x => x.etat === "bloque").length;
-  const enCours = y >= new Date().getFullYear();
-  const sym = {ok:["✓","var(--pos)"], fait:["✓","var(--pos)"], afaire:["!","var(--warn)"], bloque:["✕","var(--neg)"]};
-  const point = x => { const r = rev[x.id] || {}, [s, col] = sym[x.etat], ancien = x.type === "auto" && r.commentaire && r.texte !== x.texte;
-    const boutonsQ = x.type === "q" ? `<div class="row noprint" style="gap:6px;margin-top:6px">${[["vu","Vérifié"],["na","Non applicable"],["regul","À régulariser"]].map(([k,l]) => `<button class="btn small ${r.statut===k?"":"sec"}" ${clos?"disabled":""} onclick="majRevision(${y},'${x.id}',{statut:${r.statut===k?"null":`'${k}'`}})">${l}</button>`).join("")}</div>` : "";
-    const zone = x.etat === "ok" ? "" : clos ? (r.commentaire ? `<div class="rv-com">${esc(r.commentaire)}</div>` : "")
-      : (x.type === "q" || x.niveau === "warn") ? `<textarea class="rv-txt noprint" rows="1" placeholder="${x.type === "q" ? "Commentaire (facultatif)" : "Explication (gardée dans le dossier)"}" onchange="${x.type === "q" ? `majRevision(${y},'${x.id}',{commentaire:this.value.trim()})` : `expliquerPoint(${y},'${x.id}',this)`}">${esc(r.commentaire||"")}</textarea>${r.commentaire ? `<div class="rv-com printonly">${esc(r.commentaire)}</div>` : ""}` : "";
-    return `<li class="rv-${x.etat}"><b style="color:${col}">${s}</b><div style="flex:1;min-width:0"><span style="${x.etat==="ok"?"color:var(--muted)":""}">${x.texte}</span>
-      ${ancien ? `<div class="sub" style="margin:4px 0 0;color:var(--warn)">La situation a changé depuis l'explication du ${fmtDate(r.date)} : relisez-la et validez-la à nouveau.</div>` : ""}
-      ${boutonsQ}${zone}${x.etat === "fait" && r.date ? `<small class="sub" style="display:block;margin-top:2px">Traité le ${fmtDate(r.date)}</small>` : ""}</div>${x.page && (x.etat === "afaire" || x.etat === "bloque") ? lienPage(x.page) : ""}</li>`; };
-  const cycles = CYCLES.map(([k, l]) => { const p = pts.filter(x => x.cycle === k); if(!p.length) return "";
-    const r = p.filter(x => x.etat === "afaire" || x.etat === "bloque").length, ord = {bloque:0, afaire:1, fait:2, ok:3};
-    return `<details class="card rv" ${r && !clos ? "open" : ""}><summary><h3 style="display:inline;margin:0">${l}</h3><span class="pill" style="margin-left:8px;${r?"":"color:var(--pos)"}">${r ? `${r} à traiter` : `✓ ${p.length}/${p.length}`}</span></summary>
-      <ul>${p.sort((a,b) => ord[a.etat] - ord[b.etat]).map(point).join("")}</ul></details>`; }).join("");
-  const tete = clos ? (exercice(y).revision ? `Révision ${y} figée avec la clôture.` : `${y} a été clôturé avant le module de révision : les points ci-dessous sont indicatifs.`) : bloq ? `${bloq} point${pl(bloq)} à corriger et ${reste.length - bloq} à traiter avant de clôturer` : reste.length ? `${reste.length} point${pl(reste.length)} à traiter avant de clôturer` : "Révision complète : prêt à déclarer";
+  const montant = (v, gl) => v == null ? `<span class="sub">–</span>` : gl ? lienGL({t:"compte", v:gl}, eur(v)) : eur(v);
+  const explication = (x, r) => clos ? (r.commentaire ? `<div class="rv-com">${esc(r.commentaire)}</div>` : "")
+    : `<textarea class="rv-txt noprint" rows="1" placeholder="Expliquer l'écart (gardé dans le dossier)…" onchange="expliquerPoint(${y},'${x.id}',this)">${esc(r.commentaire && (r.texte === sigCalc(x) || r.texte === x.texte) ? r.commentaire : "")}</textarea>${r.commentaire ? `<div class="rv-com printonly">${esc(r.commentaire)}</div>` : ""}`;
+  const pastille = x => ({ok:`<span class="rv-ok">✓</span>`, fait:`<span class="rv-ok" title="Écart expliqué">✓ expliqué</span>`, afaire:`<span class="rv-ko">${x.attendu == null && x.type === "calc" ? "à compléter" : "écart"}</span>`, bloque:`<span class="rv-ko">à corriger</span>`})[x.etat];
+  const ligneCalc = x => { const r = rev[x.id] || {}, ecart = x.attendu == null ? null : r2(x.compta - x.attendu), ko = x.etat === "afaire" || x.etat === "bloque";
+    const ancien = r.commentaire && r.texte !== sigCalc(x) && x.etat !== "ok";
+    let suite = "";
+    if(x.extra === "releve" && !clos) suite = `<div class="row noprint rv-rel"><label>Solde du relevé au 1/1<input inputmode="decimal" value="${ex.releve?.debut ?? ""}" onchange="majReleve(${y},'debut',this.value)"></label><label>au 31/12<input inputmode="decimal" value="${ex.releve?.fin ?? ""}" onchange="majReleve(${y},'fin',this.value)"></label>
+      <button class="btn small ${r.statut === "na" ? "" : "sec"}" onclick="majRevision(${y},'releve',{statut:${r.statut === "na" ? "null" : "'na'"}})">Compte non dédié à la location</button></div>`;
+    else if(x.id === "acquisitions" && !clos) suite = `<div class="row noprint" style="margin-top:6px"><button class="btn small ${r.statut === "vu" ? "" : "sec"}" onclick="majRevision(${y},'acquisitions',{statut:${r.statut === "vu" ? "null" : "'vu'"}})">Factures vérifiées</button></div>`;
+    else if(x.id === "crd" && ko && !clos) suite = `<div class="row noprint" style="margin-top:6px"><button class="btn small sec" onclick="allerA('emprunt')">Voir l'échéancier mois par mois</button><button class="btn small sec" onclick="S.year=${y};regulariserCRD()">Régulariser l'écart…</button></div>`;
+    else if(x.attendu == null && x.page === "dossier" && !clos) suite = `<div class="row noprint" style="margin-top:6px"><button class="btn small sec" onclick="allerA('dossier')">Renseigner le bail dans les paramètres</button></div>`;
+    else if(ko && x.page && !clos) suite = `<div class="row noprint" style="margin-top:6px"><button class="btn small sec" onclick="allerA('${x.page}')">${x.page === "emprunt" ? "Voir l'échéancier mois par mois" : `Vérifier dans ${NOM_PAGE[x.page]}`} →</button></div>`;
+    return `<div class="rl rs-${x.etat}"><div class="rl-lib"><b>${x.lib}</b><small>${esc(x.source || "")}${x.extra && x.extra !== "releve" ? ` · ${esc(x.extra)}` : ""}</small></div>
+      <div class="rl-n"><small>Comptabilité</small>${montant(x.compta, x.gl)}</div><div class="rl-n"><small>${x.type === "revue" ? x.source : "Attendu"}</small>${montant(x.attendu)}</div>
+      <div class="rl-n"><small>Écart</small>${ecart == null ? "–" : `<b class="${Math.abs(ecart) < 0.005 ? "" : x.type === "revue" && !x.significatif ? "" : "neg"}">${ecart > 0 ? "+" : ecart < 0 ? "−" : ""}${eur(Math.abs(ecart))}</b>`}</div>
+      <div class="rl-s">${pastille(x)}</div>
+      ${ko || x.etat === "fait" ? `<div class="rl-suite">${ancien ? `<div class="sub" style="margin:0 0 4px;color:var(--warn)">Les montants ont changé depuis l'explication du ${fmtDate(r.date)} : relisez-la et validez-la à nouveau.</div>` : ""}${suite}${x.attendu != null ? explication(x, r) : ""}</div>` : ""}</div>`; };
+  const ligneAuto = x => { const r = rev[x.id] || {};
+    return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s">${pastille(x)}</div>
+      ${x.etat === "afaire" || x.etat === "bloque" || x.etat === "fait" ? `<div class="rl-suite">${x.page ? `<button class="btn small sec noprint" style="margin-bottom:6px" onclick="allerA('${x.page}')">Corriger dans ${NOM_PAGE[x.page]} →</button>` : ""}${x.niveau === "warn" ? explication(x, r) : ""}</div>` : ""}</div>`; };
+  const ligneQ = x => { const r = rev[x.id] || {};
+    return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s noprint">${[["vu","Oui"],["na","Sans objet"]].map(([k,l]) => `<button class="btn small ${r.statut===k?"":"sec"}" ${clos?"disabled":""} onclick="majRevision(${y},'${x.id}',{statut:${r.statut===k?"null":`'${k}'`}})">${l}</button>`).join("")}</div>
+      <div class="rl-s printonly">${r.statut === "vu" ? "Oui" : r.statut === "na" ? "Sans objet" : "–"}</div></div>`; };
+  const cycles = CYCLES.map(([k, l, pg]) => { const p = pts.filter(x => x.cycle === k); if(!p.length) return "";
+    const r = p.filter(x => x.etat === "afaire" || x.etat === "bloque").length;
+    const corps = p.map(x => x.type === "calc" || x.type === "revue" ? ligneCalc(x) : x.type === "q" ? ligneQ(x) : ligneAuto(x)).join("");
+    return `<details class="card rv" ${r && !clos ? "open" : ""}><summary><h3>${l}</h3><span class="pill" style="${r?"":"color:var(--pos)"}">${r ? `${r} à traiter` : "✓ rapproché"}</span>${pg && pg !== "declaration" ? `<button class="btn ghost small noprint" style="margin-left:auto;color:var(--accent)" onclick="event.preventDefault();allerA('${pg}')">${NOM_PAGE[pg]} →</button>` : ""}</summary>
+      ${k === "charges" ? `<p class="sub" style="margin:8px 0 0">Une variation de plus de ${Math.round(REVUE_PCT*100)} % et de plus de ${eur0(REVUE_MIN)} est à expliquer.</p>` : ""}${corps}</details>`; }).join("");
+  const tete = clos ? (ex.revision ? `Révision ${y} figée avec la clôture.` : `${y} a été clôturé avant le module de révision : les points ci-dessous sont indicatifs.`) : bloq ? `${bloq} point${pl(bloq)} à corriger et ${reste.length - bloq} à traiter avant de clôturer` : reste.length ? `${reste.length} point${pl(reste.length)} à traiter avant de clôturer` : "Révision complète : prêt à déclarer";
   return `<div class="card noprint"><h3 style="margin:0 0 4px;color:${clos ? "var(--text)" : bloq ? "var(--neg)" : reste.length ? "var(--warn)" : "var(--pos)"}">${tete}</h3>
-    <p class="sub" style="margin:0">${pts.length - reste.length}/${pts.length} points traités. Un point « à vérifier » se traite en l'expliquant, ou en corrigeant la saisie ; une question, en y répondant.${enCours && !clos ? ` La révision se fait une fois l'année ${y} terminée.` : ""}</p>
+    <p class="sub" style="margin:0">Chaque poste est rapproché d'une source indépendante (échéancier, bail, relevé, tableau d'amortissement, clôture ${y-1}). Un écart se corrige dans le module concerné, ou s'explique.</p>
     <div class="row" style="margin-top:10px"><button class="btn small sec" onclick="window.print()">Imprimer la feuille de révision</button></div></div>
   <h2 class="printonly">Feuille de révision ${y} · ${esc(S.data.dossier.nom||"")}</h2>${cycles}`;
 }
@@ -2834,7 +2875,7 @@ const CHAMPS_DOSSIER = {
     ["sie","Service des impôts (SIE)", "large"] ]],
   bien: ["Logement loué", "M3 11l9-7 9 7M5 10v10h14V10M10 20v-6h4v6", [
     ["adresseBien","Adresse du logement", "large"], ["typeBien","Type", "select", [["","–"],["appartement","Appartement"],["maison","Maison"],["studio","Studio"],["parking","Parking / annexe"]]],
-    ["surface","Surface (m²)", "num"], ["typeLocation","Location", "select", [["","–"],["longue","Longue durée"],["etudiant","Étudiant / bail mobilité"],["saisonnier","Saisonnière"]]] ]],
+    ["surface","Surface (m²)", "num"], ["loyerMensuel","Loyer mensuel hors charges (bail)", "num"], ["provisionCharges","Provision mensuelle sur charges", "num"], ["typeLocation","Location", "select", [["","–"],["longue","Longue durée"],["etudiant","Étudiant / bail mobilité"],["saisonnier","Saisonnière"]]] ]],
   conseil: ["Accompagnement", "M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z", [
     ["comptable","Comptable (facultatif)", "large"], ["oga","Organisme de gestion agréé", "large"] ]],
 };
@@ -2847,7 +2888,7 @@ function champDossier([k, lib, type, opt]){
 function majDossier(k, v){
   v = String(v).trim();
   if(k==="siren"||k==="siret"||k==="numeroFiscal") v = v.replace(/\D/g,"");
-  if(k==="surface") v = parseMontant(v) || "";
+  if(k==="surface"||k==="loyerMensuel"||k==="provisionCharges") v = parseMontant(v) || "";
   if(k==="siret" && v.length===14 && !S.data.dossier.siren) S.data.dossier.siren = v.slice(0,9);
   if(v === "") delete S.data.dossier[k]; else S.data.dossier[k] = v;
   setDirty(); renderAll();
