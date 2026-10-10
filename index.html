@@ -932,6 +932,22 @@ function echeancierTheorique(l){
 /* Capital restant dû retenu au 31/12, le même partout (bilan, à-nouveaux, annexe, clôture) :
    figé tel que déclaré pour une année reprise de l'Excel ou clôturée, sinon celui de l'échéancier
    (celui de la banque dès que son PDF est déposé, sinon celui calculé d'après le contrat) */
+/* Prêt d'une écriture d'emprunt : celui choisi à la saisie, sinon le seul prêt du dossier, sinon celui dont l'échéance du mois a ce montant */
+const NAT_PRET = {"Intérêts emprunt":"interet", "Remboursement emprunt":"capital", "Assurance emprunt":"assurance"};
+function pretDe(e){
+  const L = S.data.emprunts, k = NAT_PRET[e.nature]; if(!k || !L.length) return null;
+  if(e.pret && L.some(l => l.id === e.pret)) return e.pret;
+  if(L.length === 1) return L[0].id;
+  const y = yearOf(e.date), m = monthOf(e.date);
+  const c = L.filter(l => echeancier(l).some(r => r.annee === y && r.mois === m && Math.abs((r[k]||0) - e.montant) < 0.01));
+  if(c.length === 1) return c[0].id;
+  // Montant qui ne colle à aucune échéance : la banque nommée dans le tiers, si un seul prêt est chez elle
+  const t = (e.tiers || "").toLowerCase(), b = L.filter(l => l.banque && t.includes(l.banque.toLowerCase()));
+  return b.length === 1 ? b[0].id : null;
+}
+/* Intérêts comptabilisés d'un prêt sur l'exercice */
+const interetsPret = (l, y) => r2((exercice(y)?.ecritures||[]).filter(e => e.nature === "Intérêts emprunt" && pretDe(e) === l.id).reduce((s,e) => s + e.montant, 0));
+const nomPret = (l, idx) => l.banque ? `${l.banque}${S.data.emprunts.filter(x => x.banque === l.banque).length > 1 ? ` (${eur0(l.capital)})` : ""}` : `Prêt ${idx+1}`;
 function crdEcheancier(y){ return S.data.emprunts.reduce((s,l) => s + empruntAnnee(l, y).crdFin, 0); }
 function crdAu31(y){
   const ex = exercice(y);
@@ -1383,8 +1399,9 @@ function vueEcritures(){
   ${ouvert ? `<div class="card composer noprint"><div class="form">
     <label>Date<input type="date" id="eDate" value="${ed?ed.date:(list.length?list[list.length-1].date:y+"-01-01")}"></label>
     <label>Tiers<input id="eTiers" list="tiersList" value="${esc(ed?ed.tiers:"")}" placeholder="Syndic, banque…"></label>
-    <label>Nature<select id="eNat">${natOpts(ed?ed.nature:"Loyer")}</select></label>
+    <label>Nature<select id="eNat" onchange="$('#ePretL')?.classList.toggle('hide', !NAT_PRET[this.value])">${natOpts(ed?ed.nature:"Loyer")}</select></label>
     <label>Montant TTC<input id="eMont" inputmode="decimal" value="${ed?String(ed.montant).replace(".",","):""}" placeholder="0,00"></label>
+    ${S.data.emprunts.length > 1 ? `<label id="ePretL" class="${NAT_PRET[ed?ed.nature:"Loyer"]?"":"hide"}">Prêt<select id="ePret"><option value="">Selon le montant de l'échéance</option>${S.data.emprunts.map((l,i) => `<option value="${l.id}" ${ed?.pret===l.id?"selected":""}>${esc(nomPret(l,i))}</option>`).join("")}</select></label>` : ""}
     <label style="grid-column:span 2">Commentaire<input id="eCom" value="${esc(ed?.commentaire||"")}"></label>
     <div class="row"><button class="btn" onclick="saveEcriture()">${ed?"Enregistrer":"Ajouter"}</button><button class="btn ghost" onclick="S.editId=null;S.composer=false;renderAll()">Annuler</button></div>
   </div>
@@ -1776,6 +1793,8 @@ function saveEcriture(){
   if(yearOf(e.date) !== S.year) return alert("La date doit être dans l'exercice " + S.year + ".");
   e.sens = NATURES[e.nature].g === "recette" ? "recette" : "depense";
   if(!e.commentaire) delete e.commentaire;
+  const pr = NAT_PRET[e.nature] && $("#ePret")?.value; if(pr) e.pret = pr;
+  if(S.editId){ const x = ex.ecritures.find(x=>x.id===S.editId); if(!pr) delete x.pret; }
   if(S.editId){ Object.assign(ex.ecritures.find(x=>x.id===S.editId), e); S.editId = null; }
   else ex.ecritures.push({id:uid(), ...e});
   rapprocherFactures();
@@ -1892,12 +1911,17 @@ function delImmo(){ if(immoFigee(S.data.immobilisations.find(i=>i.id===S.editImm
 /* Courbe du capital restant dû, avec l'année affichée mise en évidence */
 function vueEmprunt(){
   const y = S.year;
-  if(!S.data.emprunts.length) return `<div class="pagehead"><h1>Emprunt</h1></div><div class="card"><button class="btn" onclick="const id=uid();S.data.emprunts.push({id,banque:'',capital:0,tauxAnnuel:0,dureeMois:240,premiereEcheance:'${y}-01-01',mensualite:0});S.editPret=id;setDirty();renderAll()">+ Ajouter un emprunt</button></div>`;
-  return S.data.emprunts.map((l,idx) => {
-    const rows = echeancier(l), der = rows[rows.length-1];
-    const c = !isHistorique(y) ? calculAnnee(y) : null, a = empruntAnnee(l, y), crd = c ? c.crd : a.crdFin;
-    return `<div class="pagehead"><h1>Emprunt ${esc(l.banque)}</h1></div>
-    <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)"})}${tuile(`Intérêts ${y} comptabilisés`, eur0(c?c.interets:a.interets), {sous: c && !c.interetsSaisis ? "aucune écriture bancaire" : "déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
+  if(!S.data.emprunts.length) return `<div class="pagehead"><h1>Emprunt</h1></div><div class="card"><button class="btn" onclick="ajouterEmprunt()">+ Ajouter un emprunt</button></div>`;
+  const L = S.data.emprunts, plusieurs = L.length > 1, c = !isHistorique(y) ? calculAnnee(y) : null;
+  const ajout = `<button class="btn sec noprint" onclick="ajouterEmprunt()">+ Ajouter un emprunt</button>`;
+  // Plusieurs prêts : le total (celui du bilan) en tête, puis chaque prêt d'après son échéancier et ses écritures
+  const tete = plusieurs ? `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Emprunts</h1></div>${ajout}</div>
+    <div class="tuiles">${tuile("Capital emprunté", eur0(L.reduce((t,l) => t + l.capital, 0)))}${tuile(`Restant dû fin ${y}`, eur0(c ? c.crd : crdEcheancier(y)), {col:"var(--accent)", sous:"au bilan, tous prêts"})}${tuile(`Intérêts ${y} comptabilisés`, eur0(c ? c.interets : L.reduce((t,l) => t + empruntAnnee(l,y).interets, 0)), {sous:"tous prêts"})}${tuile("Prêts", L.length)}</div>` : "";
+  return tete + L.map((l,idx) => {
+    const rows = echeancier(l), der = rows[rows.length-1], a = empruntAnnee(l, y);
+    const crd = plusieurs ? a.crdFin : c ? c.crd : a.crdFin, int = plusieurs ? (c ? interetsPret(l, y) : a.interets) : c ? c.interets : a.interets;
+    return `<div class="row" style="justify-content:space-between;margin:${idx||plusieurs?"28px":"0"} 0 16px"><div class="pagehead" style="margin:0"><h1>${plusieurs ? `<span class="sub" style="font-size:.6em;display:block">Prêt ${idx+1}</span>` : ""}Emprunt ${esc(l.banque)}</h1></div>${plusieurs ? menu3([["Supprimer ce prêt", `supprimerEmprunt(${idx})`, "danger"]], "Actions du prêt") : ajout}</div>
+    <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)", sous: plusieurs ? "selon l'échéancier" : ""})}${tuile(`Intérêts ${y} comptabilisés`, eur0(int), {sous: c && !int ? "aucune écriture bancaire" : "déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
     ${carteContrat(l, idx)}
     ${carteEcheancier(l, y)}`;
   }).join("") + carteRegulCRD(y);
@@ -1936,7 +1960,7 @@ function carteContrat(l, idx){
       ${menu3([doc && ["Ouvrir", ouvrir], doc && ["Télécharger", `telechargerChemin(${jsq(doc.fichier)})`], doc && !banque && ["Lire le tableau", `lireEcheancierDoc(${idx})`], ["Supprimer", `supprimerEcheancierBanque(${idx})`, "danger"]])}</div>`
     : `${zoneDepot("Déposer l'échéancier de la banque", "PDF · il remplace l'échéancier calculé", `ajouterEcheancierPret(${idx})`, `ajouterEcheancierPret(${idx},event)`).replace('class="depot noprint"','class="depot noprint compact"')}
       <details class="coller"><summary>Le PDF ne se lit pas ? Coller le tableau</summary>
-        <textarea id="echColle" rows="4" style="width:100%;margin-top:8px" placeholder="05/11/2016   729,86   122,00   607,86   119 392,14 …"></textarea>
+        <textarea id="echColle${idx}" rows="4" style="width:100%;margin-top:8px" placeholder="05/11/2016   729,86   122,00   607,86   119 392,14 …"></textarea>
         <button class="btn small" style="margin-top:6px" onclick="collerEcheancier(${idx})">Lire le tableau</button></details>`;
   const crayon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>`;
   return `<div class="card contrat ${edit ? "edition" : ""}"><div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="margin:0">${edit ? "Édition du contrat de prêt" : "Contrat de prêt"}</h3>${edit ? "" : `<button class="btn small sec" onclick="S.editPret='${l.id}';renderAll()">${crayon} Modifier le contrat</button>`}</div>
@@ -1955,6 +1979,19 @@ async function telechargerChemin(chemin){
     a.href = URL.createObjectURL(f); a.download = f.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
   catch(_){ alert(`Fichier introuvable : « ${chemin} ».`); }
 }
+function ajouterEmprunt(){
+  const id = uid(); S.data.emprunts.push({id, banque:"", capital:0, tauxAnnuel:0, dureeMois:240, premiereEcheance:`${S.year}-01-01`, mensualite:0});
+  S.editPret = id; setDirty(); renderAll();
+}
+function supprimerEmprunt(idx){
+  const l = S.data.emprunts[idx]; if(!l) return;
+  const lies = Object.entries(S.data.exercices).flatMap(([y, ex]) => (ex.ecritures||[]).filter(e => NAT_PRET[e.nature] && pretDe(e) === l.id).map(() => +y));
+  if(lies.some(y => verrouille(y) || isHistorique(y))) return alert("Ce prêt a des écritures dans un exercice clôturé : il ne peut pas être supprimé.");
+  if(!confirm(`Supprimer le prêt ${nomPret(l, idx)} ?${lies.length ? `\n\n${lies.length} écriture${pl(lies.length)} d'emprunt y ${lies.length>1?"sont rattachées":"est rattachée"} : elle${pl(lies.length)} resteront dans la comptabilité, à rattacher à un autre prêt.` : ""}`)) return;
+  S.data.emprunts.splice(idx, 1);
+  Object.values(S.data.exercices).forEach(ex => (ex.ecritures||[]).forEach(e => { if(e.pret === l.id) delete e.pret; }));
+  setDirty(); renderAll();
+}
 function supprimerEcheancierBanque(idx){
   if(!confirm("Supprimer l'échéancier de la banque ? L'outil reprend l'échéancier calculé d'après le contrat. Le fichier reste dans le dossier.")) return;
   const l = S.data.emprunts[idx], d = l.echeancierDoc && docs().find(x => x.id === l.echeancierDoc);
@@ -1968,7 +2005,7 @@ function rattacherEcheanciers(){
     const d = l.echeancierDoc && docs().find(x => x.id === l.echeancierDoc), B = lignesBanque(l); if(!d || !B) return;
     const mois = new Set(B.map(r => r.annee * 100 + r.mois));
     Object.entries(S.data.exercices).filter(([y]) => !isHistorique(+y) && !verrouille(+y)).forEach(([, ex]) => (ex.ecritures||[]).forEach(e => {
-      if(!e.piece && NAT.has(e.nature) && mois.has(yearOf(e.date) * 100 + monthOf(e.date))){ e.piece = d.fichier; n++; } }));
+      if(!e.piece && NAT.has(e.nature) && pretDe(e) === l.id && mois.has(yearOf(e.date) * 100 + monthOf(e.date))){ e.piece = d.fichier; n++; } }));
   });
   return n;
 }
@@ -2066,7 +2103,7 @@ function appliquerEcheancierBanque(idx, texte, origine){
   toast(`${L.length} échéances lues, de ${MOIS[monthOf(a.date)-1]} ${yearOf(a.date)} à ${MOIS[monthOf(z.date)-1]} ${yearOf(z.date)}.`);
 }
 function collerEcheancier(idx){
-  const t = $("#echColle").value; if(!t.trim()) return;
+  const t = $("#echColle" + idx).value; if(!t.trim()) return;
   try{ appliquerEcheancierBanque(idx, t, "colle"); } catch(e){ alert(e.message); }
 }
 const IC_RP = {
@@ -2083,7 +2120,7 @@ function etatEcheance(l, r, cache = {}){
   const K = ["interet","capital"].concat(ass ? ["assurance"] : []);
   const auj = new Date();
   if(r.annee * 100 + r.mois > auj.getFullYear() * 100 + auj.getMonth() + 1 || !exercice(r.annee) || isHistorique(r.annee)) return null;
-  const saisi = cache[r.annee] ??= (exercice(r.annee).ecritures||[]).reduce((m, e) => { const k = Object.keys(NAT).find(k => NAT[k] === e.nature); if(k){ const s = m[monthOf(e.date)] ??= {interet:0, capital:0, assurance:0, n:0}; s[k] += e.montant; s.n++; } return m; }, {});
+  const saisi = cache[r.annee] ??= (exercice(r.annee).ecritures||[]).reduce((m, e) => { const k = Object.keys(NAT).find(k => NAT[k] === e.nature); if(k && pretDe(e) === l.id){ const s = m[monthOf(e.date)] ??= {interet:0, capital:0, assurance:0, n:0}; s[k] += e.montant; s.n++; } return m; }, {});
   const s = saisi[r.mois];
   if(!s?.n) return {c:"ko", t:"Aucune écriture bancaire pour cette échéance : rien n'est passé en charge"};
   const faux = K.filter(k => Math.abs(s[k]) > 0.004 && Math.abs(s[k] - r[k]) >= 0.01), manq = K.filter(k => Math.abs(s[k]) <= 0.004 && r[k] > 0.004);
@@ -2336,7 +2373,9 @@ function etatsFinanciers(y){
       ${immos.map(x=>`<tr><td>${esc(x.i.libelle)}</td><td>${fmtDate(x.i.miseEnService)}</td><td class="n">${eur0(x.i.valeurOrigine)}</td><td class="n">${x.i.dureeAns} ans</td><td class="n">${eur0(x.a.dotation)}</td><td class="n">${eur0(x.a.cumulFin)}</td><td class="n">${eur0(x.i.valeurOrigine - x.a.cumulFin)}</td></tr>`).join("")}
       <tr class="tot"><td>Total</td><td></td><td class="n">${eur0(L.brut)}</td><td></td><td class="n">${eur0(L.c254)}</td><td class="n">${eur0(L.am)}</td><td class="n">${eur0(L.net)}</td></tr></table>
     ${emp.length?`<h3>Emprunts</h3><table><tr><th>Banque</th><th class="n">Capital</th><th class="n">Taux</th><th class="n">Restant dû début</th><th class="n">Intérêts ${y}</th><th class="n">Restant dû fin</th></tr>
-      ${emp.map(l=>`<tr><td>${esc(l.banque)}</td><td class="n">${eur0(l.capital)}</td><td class="n">${(l.tauxAnnuel*100).toLocaleString("fr-FR",{maximumFractionDigits:2})} %</td><td class="n">${eur0(emp.length === 1 ? crdAu31(y-1) : empruntAnnee(l,y-1).crdFin)}</td><td class="n">${eur0(emp.length === 1 ? L.c294 : empruntAnnee(l,y).interets)}</td><td class="n">${eur0(emp.length === 1 ? L.crd : empruntAnnee(l,y).crdFin)}</td></tr>`).join("")}</table>`:""}
+      ${emp.map(l=>`<tr><td>${esc(l.banque)}</td><td class="n">${eur0(l.capital)}</td><td class="n">${(l.tauxAnnuel*100).toLocaleString("fr-FR",{maximumFractionDigits:2})} %</td><td class="n">${eur0(emp.length === 1 ? crdAu31(y-1) : empruntAnnee(l,y-1).crdFin)}</td><td class="n">${eur0(emp.length === 1 ? L.c294 : interetsPret(l,y))}</td><td class="n">${eur0(emp.length === 1 ? L.crd : empruntAnnee(l,y).crdFin)}</td></tr>`).join("")}
+      ${emp.length > 1 ? `<tr class="tot"><td>Total au bilan</td><td class="n">${eur0(emp.reduce((t,l) => t + l.capital, 0))}</td><td></td><td class="n">${eur0(crdAu31(y-1))}</td><td class="n">${eur0(L.c294)}</td><td class="n">${eur0(L.crd)}</td></tr>` : ""}</table>
+    ${emp.length > 1 ? `<p class="sub" style="margin:6px 0 0">Restant dû de chaque prêt selon son échéancier ; le total est celui de la comptabilité.</p>` : ""}`:""}
     <h3>Déficits et amortissements reportés</h3>
     <table><tr><th></th><th class="n">Début</th><th class="n">Fin</th></tr>
       <tr><td>Déficits reportables</td><td class="n">${eur0(L.f.deficitsDebut.reduce((s,x)=>s+x.montant,0))}</td><td class="n">${eur0(L.f.deficitsFin.reduce((s,x)=>s+x.montant,0))}</td></tr>
@@ -2615,8 +2654,11 @@ function controles(y){
   if(S.data.emprunts.length){
     chk(c.interetsSaisis, "Intérêts d'emprunt saisis d'après la banque.", "warn", `Aucun intérêt d'emprunt comptabilisé : seuls les prélèvements de la banque comptent (${eur(c.interetsEch)} attendus selon l'échéancier). L'échéancier de la page Emprunt montre les mois à rapprocher.`, "emprunt");
     chk(S.data.emprunts.every(l => lignesBanque(l)), "Échéancier de la banque déposé : il sert à contrôler le restant dû.", "warn", "Échéancier de la banque non déposé : le restant dû comptable est contrôlé avec l'échéancier calculé d'après le contrat. Déposez-le sur la page Emprunt.", "emprunt");
-    const rp = S.data.emprunts.flatMap(l => etatsRapprochement(l, y).filter(e => e.c !== "ok"));
-    chk(!rp.length, "Échéances du prêt rapprochées des écritures bancaires.", "warn", `${rp.length} échéance${rp.length>1?"s":""} du prêt sans écriture ou avec un écart : ${rp.map(e => MOIS[e.r.mois-1]).join(", ").replace(/\.$/, "")}. L'échéancier de la page Emprunt détaille chaque mois.`, "emprunt");
+    const sansPret = S.data.emprunts.length > 1 ? es.filter(e => NAT_PRET[e.nature] && !pretDe(e)) : [];
+    chk(!sansPret.length, "Chaque écriture d'emprunt est rattachée à son prêt.", "warn", `${sansPret.length} écriture${pl(sansPret.length)} d'emprunt sans prêt reconnu (montant différent de l'échéance de chaque prêt) : choisissez le prêt en modifiant l'écriture.`, "ecritures");
+    const parPret = S.data.emprunts.map((l, i) => [l, i, etatsRapprochement(l, y).filter(e => e.c !== "ok")]).filter(x => x[2].length), rp = parPret.flatMap(x => x[2]);
+    const moisRp = a => a.map(e => MOIS[e.r.mois-1]).join(", ").replace(/\.$/, "");
+    chk(!rp.length, "Échéances du prêt rapprochées des écritures bancaires.", "warn", `${rp.length} échéance${pl(rp.length)} de prêt sans écriture ou avec un écart : ${S.data.emprunts.length > 1 ? parPret.map(([l, i, a]) => `${nomPret(l, i)} (${moisRp(a)})`).join(", ") : moisRp(rp)}. L'échéancier de la page Emprunt détaille chaque mois.`, "emprunt");
     const ec = ecartCRD(y);
     chk(Math.abs(ec) < 1, "Grand livre de l'emprunt conforme à l'échéancier de la banque.", "warn", `Le grand livre donne ${eur(soldeGL164(y))} de restant dû au 31/12, l'échéancier de la banque ${eur(crdEcheancier(y))} : écart de ${eur(Math.abs(ec))} à expliquer, et à régulariser le cas échéant sur la page Emprunt.`, "emprunt");
   }
