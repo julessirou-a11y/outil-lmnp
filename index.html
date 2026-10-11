@@ -500,23 +500,26 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 .ratt .m{text-align:right}
 @media (max-width:700px){ .pieces-top{grid-template-columns:1fr} .pc{grid-template-columns:44px minmax(0,1fr) auto} .pc .a{grid-column:1/-1} .ratt label{grid-template-columns:22px 46px minmax(0,1fr) 80px} .ratt label .chip{display:none} }
 
+/* Tableau des amortissements : même présentation que le grand livre */
+table.imx th.ms{width:116px} table.imx th.du{width:70px} table.imx th.mt{width:118px} table.imx th.pg{width:90px}
+table.imx tr.imx-l{cursor:pointer} table.imx tr.imx-l:hover td{background:var(--accent-soft)}
+.imx-nom{font-weight:600} .imx-sous{display:block;font-size:11.5px;color:var(--faint);font-weight:400;white-space:nowrap}
+table.imx td.imx-dot{color:var(--accent);font-weight:600} .imx-fin{color:var(--faint);font-weight:400;font-size:12px}
+table.imx td.imx-p .jauge{margin:0}
+table.imx tr.imx-cur td{background:var(--accent-soft);font-weight:600}
+table.imx tr.imx-prev td{color:var(--muted);font-style:italic} table.imx tr.imx-prev td.imx-dot{color:var(--accent);opacity:.75}
+table.imx tr.imx-avant td{color:var(--faint)} table.imx tr.imx-avant td.imx-dot{color:var(--faint);font-weight:400}
+table.imx-plan td,table.imx-plan th{padding-top:6px;padding-bottom:6px} table.imx-plan th.an{width:260px}
+.imx-fen table.imx th.an{width:250px} table.imx .pill{font-style:normal;font-size:11.5px;padding:1px 8px;margin-left:4px}
+table.imx td.lb{text-align:left!important}
+details.imx-conso>summary{list-style:none;display:flex;align-items:center;gap:8px 14px;flex-wrap:wrap;color:var(--text);font-size:15px} details.imx-conso>summary::-webkit-details-marker{display:none}
+details.imx-conso>summary h3{margin:0} details.imx-conso>summary .imx-ouvrir{margin-left:auto;color:var(--accent);font-size:13.5px} details.imx-conso[open]>summary{margin-bottom:14px} details.imx-conso[open] .imx-ouvrir{display:none}
+.imx-fen{width:min(820px,100%)} .imx-ic{display:inline-flex;width:38px;height:38px;border-radius:10px;background:var(--accent-soft);align-items:center;justify-content:center;flex:none}
+.imx-fiche{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px 16px;margin-top:6px}
+.imx-fiche span{display:block;font-size:12px;color:var(--muted)} .imx-fiche b{font-weight:600;font-size:15px}
+@media (max-width:700px){ table.imx{table-layout:auto} table.imx .m-x{display:none} table.imx th.mt,table.imx th.an,.imx-fen table.imx th.an{width:auto} .imx-fen .rv-fh h2{font-size:17px} .imx-fen .rv-fc{padding:12px 12px 16px} .imx-fen .rv-fh{padding:14px 12px} .pl-long{display:none} .imx-sous{white-space:normal;overflow:visible} table.imx td:last-child,table.imx th:last-child{padding-right:14px} }
+@media (min-width:701px){ .pl-court{display:none} }
 /* ---------- Immobilisations ---------- */
-.frise{position:relative;padding-top:22px}
-.frise .axe{position:relative;height:18px;margin-left:150px;border-bottom:1px solid var(--line);margin-bottom:8px}
-.frise .axe span{position:absolute;transform:translateX(-50%);font-size:11.5px;color:var(--faint);top:0}
-.fl{display:flex;align-items:center;gap:0;height:30px}
-.fn{width:150px;flex:none;font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:10px}
-.fb{position:relative;flex:1;height:14px}
-.fbar{position:absolute;top:0;height:14px;border-radius:99px;background:color-mix(in srgb, var(--c) 18%, transparent);overflow:hidden}
-.fbar i{display:block;height:100%;background:var(--c);border-radius:99px}
-.today{position:absolute;top:22px;bottom:0;border-left:2px dashed var(--neg);pointer-events:none}
-.today span{position:absolute;top:-20px;left:4px;font-size:11px;color:var(--neg);white-space:nowrap}
-.immos{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(330px,1fr))}
-.immo{margin:0;display:flex;flex-direction:column;gap:12px}
-.immo .ih{display:flex;gap:10px;align-items:center} .immo .ih b{display:block;font-weight:600} .immo .ih small{color:var(--muted)}
-.immo .ib{display:flex;gap:16px;align-items:center}
-.iv{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 12px;flex:1}
-.iv>div{display:flex;flex-direction:column;justify-content:flex-end;min-width:0} .iv span{display:block;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .iv b{font-weight:600;font-size:15px}
 .muted-s{color:var(--faint);font-size:12px}
 .conso{display:grid;grid-template-columns:240px 1fr;gap:24px;align-items:center}
 .cbars{display:flex;gap:10px;align-items:flex-end;height:170px;padding-top:6px}
@@ -524,8 +527,7 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 .cbs{flex:1;width:100%;display:flex;flex-direction:column-reverse;border-radius:6px 6px 0 0;overflow:hidden}
 .cbs i{display:block;width:100%}
 .cb span{font-size:11.5px;color:var(--faint)}
-.immos + .card{margin-top:20px}
-@media (max-width:700px){ .conso{grid-template-columns:1fr} .fn{width:96px} .frise .axe{margin-left:96px} .today{display:none} .immos{grid-template-columns:1fr} .iv{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:700px){ .conso{grid-template-columns:1fr} }
 
 /* ---------- Emprunt ---------- */
 .cbs.sel{outline:2px solid var(--accent);outline-offset:1px}
@@ -1859,48 +1861,108 @@ function delEcriture(id){ if(!confirm("Supprimer cette écriture ?")) return; co
 const IC_CAT = {construction:'<path d="M4 11l8-6 8 6v9H4zM10 20v-5h4v5"/>', travaux:'<path d="M4 20l8-8M13 5a4 4 0 0 0 6 6l-3 1-4-4z"/>', mobilier:'<path d="M5 11V7h14v4M4 11h16v5H4zM6 16v3M18 16v3"/>'};
 const COUL_CAT = {construction:"var(--accent)", travaux:"var(--accent-2)", mobilier:"#0EA5A4"};
 function vueImmos(){
-  const y = S.year;
-  const ed = S.editImmo === "new" ? {libelle:"",categorie:"mobilier",valeurOrigine:"",quotePartTerrain:0,dureeAns:7,miseEnService:y+"-01-01"} : S.data.immobilisations.find(i=>i.id===S.editImmo);
-  const fig = S.editImmo !== "new" && immoFigee(ed);
-  const immos = S.data.immobilisations.map(i => { const plan = planAmort(i), a = amortAnnee(i,y), avant = plan.filter(p=>p.avantLMNP && p.annee<=y).reduce((s,p)=>s+p.dotation,0);
-    return {i, plan, a, avant, fin: plan.length ? plan[plan.length-1].annee : yearOf(i.miseEnService)}; });
-  const T = immos.reduce((s,x)=>({val:s.val+x.i.valeurOrigine, base:s.base+x.a.base, cum:s.cum+x.a.cumulFin, dot:s.dot+(anneeEntreeBilan(x.i)<=y?x.a.dotation:0)}), {val:0,base:0,cum:0,dot:0});
-  // Frise : de la plus ancienne mise en service à la dernière fin d'amortissement
-  const y0 = Math.min(y, ...immos.map(x=>yearOf(x.i.miseEnService))), y1 = Math.max(y+1, ...immos.map(x=>x.fin)), span = y1 - y0 + 1;
-  const pos = a => ((a - y0) / span * 100).toFixed(2) + "%";
-  const frise = immos.length ? `<div class="card"><h3>Frise des amortissements</h3><div class="frise">
-    <div class="axe">${[...Array(span).keys()].map(k=>y0+k).filter(a => span<=16 || a===y || (a%5===0 && Math.abs(a-y) > 2)).map(a=>`<span style="left:${pos(a)}">${a}</span>`).join("")}</div>
-    ${immos.map(x => { const d = yearOf(x.i.miseEnService) + (monthOf(x.i.miseEnService)-1)/12, f = x.fin + 1, fait = Math.min(1, x.a.cumulFin / (x.a.base||1));
-      return `<div class="fl"><span class="fn">${esc(x.i.libelle)}</span><div class="fb"><div class="fbar" style="left:${pos(d)};width:${((f-d)/span*100).toFixed(2)}%;--c:${COUL_CAT[x.i.categorie]||"var(--accent)"}"><i style="width:${(fait*100).toFixed(1)}%"></i></div></div></div>`; }).join("")}
-    <div class="today" style="left:calc(150px + (100% - 150px) * ${((y + 1 - y0)/span).toFixed(4)})"><span>fin ${y}</span></div>
-  </div></div>` : "";
-  const carte = x => { const {i, a, plan} = x, fait = a.cumulFin / (a.base||1), restant = a.base - a.cumulFin, col = COUL_CAT[i.categorie]||"var(--accent)";
-    return `<div class="card immo">
-      <div class="ih">${svgI(IC_CAT[i.categorie]||IC_CAT.travaux).replace('width="17" height="17"','width="22" height="22"')}<div><b>${esc(i.libelle)}</b><small>${CATEGORIES[i.categorie]||i.categorie}</small></div>
-        <button class="btn small ghost noprint" style="margin-left:auto" onclick="S.editImmo='${i.id}';renderAll();haut()">${I_EDIT}</button></div>
-      <div class="ib">${anneau(fait, pctTxt(fait), col, 96)}
-        <div class="iv"><div><span>Prix</span><b>${eur0(i.valeurOrigine)}</b></div><div><span>Durée</span><b>${i.dureeAns} ans</b></div><div><span>Fin</span><b>${x.fin}</b></div>
-          <div><span title="Amortissement de ${y}">Dotation ${y}</span><b style="color:${col}">${eur0(a.dotation)}</b></div><div><span>Amorti fin ${y}</span><b>${eur0(a.cumulFin)}</b></div><div><span>Reste</span><b>${eur0(restant)}</b></div></div></div>
-      ${jauge([[x.avant,"var(--seg-2)","Avant la location meublée (non déduit)"],[a.cumulFin - x.avant, col, "Amorti"]], a.base, 10)}
-      ${a.base < i.valeurOrigine - 0.005 ? `<small class="muted-s">Terrain non amortissable : ${eur0(i.valeurOrigine - a.base)}</small>` : ""}
-      <details><summary>Plan année par année</summary><div class="tablewrap"><table>${plan.map(p=>`<tr class="${p.annee===y?"tot":""}"><td>${p.annee}${p.avantLMNP?' <span class="pill">avant LMNP</span>':""}</td><td class="n">${eur(p.dotation)}</td><td class="n">${eur(p.cumul)}</td><td class="n">reste ${eur(p.vnc)}</td></tr>`).join("")}</table></div></details>
-    </div>`; };
-  return `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Immobilisations</h1></div>
-    <button class="btn noprint" onclick="S.editImmo='new';renderAll()">+ Ajouter</button></div>
-  ${ed ? `<div class="card composer">${fig ? `<div class="alert warn">Déjà au bilan de ${derniereCloture()}, exercice clôturé : seul le libellé se modifie. Pour changer un montant, une durée ou une date, rouvrez d'abord l'exercice.</div>` : ""}<div class="form">
-    <label>Libellé<input id="iLib" value="${esc(ed.libelle)}"></label>
-    <label>Catégorie<select id="iCat" ${fig?"disabled":""} onchange="$('#iTerL').classList.toggle('hide', this.value!=='construction')">${Object.entries(CATEGORIES).map(([k,l])=>`<option value="${k}" ${k===ed.categorie?"selected":""}>${l}</option>`).join("")}</select></label>
-    <label>Prix TTC<input id="iVal" inputmode="decimal" ${fig?"disabled":""} value="${String(ed.valeurOrigine).replace(".",",")}"></label>
-    <label id="iTerL" class="${ed.categorie==="construction"?"":"hide"}">Part terrain (%)<input id="iTer" inputmode="decimal" ${fig?"disabled":""} value="${String(r2((ed.quotePartTerrain||0)*100)).replace(".",",")}"></label>
-    <label>Durée (ans)<input id="iDur" type="number" min="1" ${fig?"disabled":""} value="${ed.dureeAns}"></label>
-    <label>Mise en service<input id="iDate" type="date" ${fig?"disabled":""} value="${ed.miseEnService}"></label>
-    <div class="row"><button class="btn" onclick="saveImmo()">Enregistrer</button><button class="btn sec" onclick="S.editImmo=null;renderAll()">Annuler</button>
-    ${S.editImmo!=="new" && !fig?`<button class="btn danger" onclick="delImmo()">Supprimer</button>`:""}</div></div>
-    <p class="sub" style="margin:10px 0 0">Durées usuelles : logement 25–30 ans, travaux 10–15 ans, mobilier 5–10 ans. Moins de 500 € HT : en charge.</p></div>` : ""}
-  <div class="tuiles">${tuile("Valeur totale", eur0(T.val))}${tuile(`Amortissement ${y}`, eur0(T.dot), {col:"var(--accent)"})}${tuile(`Amorti fin ${y}`, eur0(T.cum))}${tuile("Reste à amortir", eur0(T.base - T.cum))}</div>
-  ${frise}
-  <div class="immos">${immos.map(carte).join("")}</div>
-  ${vueConsommes(y)}`;
+  const y = S.year, vue = S.vueImmo || "exercice";
+  const immos = S.data.immobilisations.map(i => { const plan = planAmort(i), a = amortAnnee(i,y);
+    return {i, plan, a, entree: anneeEntreeBilan(i), fin: plan.length ? plan[plan.length-1].annee : yearOf(i.miseEnService)}; })
+    .sort((p,q) => p.i.miseEnService.localeCompare(q.i.miseEnService));
+  const auBilan = immos.filter(x => x.entree <= y);
+  const T = auBilan.reduce((s,x)=>({val:s.val+x.i.valeurOrigine, cum:s.cum+x.a.cumulFin, dot:s.dot+x.a.dotation}), {val:0,cum:0,dot:0});
+  const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Immobilisations</h1></div>
+    <div class="row">${segments("vueImmo", [["exercice",`Exercice ${y}`],["plan","Plan pluriannuel"]], vue)}<button class="btn noprint" onclick="ouvrirImmo('new')">+ Ajouter</button></div></div>`;
+  const tuiles = `<div class="tuiles">${tuile("Valeur brute", eur0(T.val))}${tuile(`Dotation ${y}`, eur0(T.dot), {col:"var(--accent)"})}${tuile(`Amortissements fin ${y}`, eur0(T.cum))}${tuile(`Valeur nette fin ${y}`, eur0(T.val - T.cum))}</div>`;
+  if(!immos.length) return tete + `<div class="card"><p class="sub" style="margin:0">Aucune immobilisation. Ajoutez le logement, les travaux et le mobilier de plus de 500 € HT.</p></div>` + fenetreImmo(y);
+  return tete + tuiles + (vue === "plan" ? tableauPlanGlobal(y, immos) : tableauAmortExercice(y, auBilan, immos.filter(x => x.entree > y))) + vueConsommes(y, true) + fenetreImmo(y);
+}
+const num0 = v => eur(v).replace(/\s€$/, "");
+/* Tableau des amortissements de l'exercice, présenté comme le grand livre : un bloc par catégorie (compte 2135, 28135…) */
+function tableauAmortExercice(y, liste, futures){
+  const G = {val:0, cd:0, dot:0, cf:0};
+  const blocs = Object.keys(CATEGORIES).map(k => {
+    const xs = liste.filter(x => x.i.categorie === k); if(!xs.length) return "";
+    const t = xs.reduce((s,x)=>({val:s.val+x.i.valeurOrigine, cd:s.cd+x.a.cumulDebut, dot:s.dot+x.a.dotation, cf:s.cf+x.a.cumulFin}), {val:0,cd:0,dot:0,cf:0});
+    Object.keys(G).forEach(c => G[c] += t[c]);
+    const cpt = CPT_IMMO[k] || CPT_IMMO.travaux;
+    const rows = xs.map(x => { const {i, a} = x, fini = a.cumulFin >= a.base - 0.005, terrain = i.valeurOrigine - a.base;
+      return `<tr class="imx-l" role="button" tabindex="0" onclick="ouvrirImmo('${i.id}')" onkeydown="if(event.key==='Enter'){ouvrirImmo('${i.id}')}">
+        <td class="lb2"><span class="imx-nom">${esc(i.libelle)}</span>${terrain > 0.005 ? `<span class="imx-sous">dont terrain ${eur0(terrain)} non amorti</span>` : ""}</td>
+        <td class="m-x">${fmtDate(i.miseEnService)}</td><td class="n m-x">${i.dureeAns} ans</td><td class="n m-x">${num0(i.valeurOrigine)}</td><td class="n m-x">${num0(a.cumulDebut)}</td>
+        <td class="n imx-dot">${a.dotation > 0.005 ? num0(a.dotation) : `<span class="imx-fin">${fini ? "amorti" : "–"}</span>`}</td><td class="n m-x">${num0(a.cumulFin)}</td><td class="n">${num0(i.valeurOrigine - a.cumulFin)}</td>
+        <td class="imx-p m-x">${jauge([[a.cumulFin, "var(--accent)"]], a.base, 6)}</td></tr>`; }).join("");
+    return `<tbody class="glx-c"><tr class="glx-h"><td colspan="9"><div class="glx-hd" style="cursor:default"><span class="glx-pill">${cpt.brut.slice(0,4)} · ${cpt.am.slice(0,5)}</span><span class="glx-lib">${CATEGORIES[k]}</span><span class="glx-nb">${xs.length} élément${pl(xs.length)}</span><span class="glx-rule"></span><span class="glx-solde">Dotation <b>${num0(t.dot)}</b></span></div></td></tr>
+      ${rows}${xs.length > 1 ? `<tr class="glx-tot"><td class="lb">Total</td><td class="m-x"></td><td class="m-x"></td><td class="n m-x">${num0(t.val)}</td><td class="n m-x">${num0(t.cd)}</td><td class="n">${num0(t.dot)}</td><td class="n m-x">${num0(t.cf)}</td><td class="n">${num0(t.val - t.cf)}</td><td class="m-x"></td></tr>` : ""}</tbody>`; }).join("");
+  return `<div class="glx-bar"><span>Tableau des amortissements <b>${y}</b> · <b>${liste.length}</b> immobilisation${pl(liste.length)}</span><span class="stat">Touchez une ligne pour voir son plan d'amortissement</span>
+    <span class="lien noprint"><button onclick="window.print()">Imprimer</button></span></div>
+  <div class="card glxw"><div class="tablewrap"><table class="glx imx">
+    <thead><tr><th>Immobilisation</th><th class="m-x ms">Mise en service</th><th class="n m-x du">Durée</th><th class="n m-x mt">Valeur brute</th><th class="n m-x mt">Cumul au 01/01</th><th class="n mt">Dotation ${y}</th><th class="n m-x mt">Cumul au 31/12</th><th class="n mt">Valeur nette</th><th class="m-x pg"></th></tr></thead>
+    ${blocs}
+    <tbody class="glx-gen"><tr><td style="text-align:right">Total général</td><td class="m-x"></td><td class="m-x"></td><td class="n m-x">${num0(G.val)}</td><td class="n m-x">${num0(G.cd)}</td><td class="n">${num0(G.dot)}</td><td class="n m-x">${num0(G.cf)}</td><td class="n">${num0(G.val - G.cf)}</td><td class="m-x"></td></tr></tbody>
+  </table></div></div>
+  ${futures.length ? `<p class="sub" style="margin:8px 4px 20px">Mis en service après ${y} : ${futures.map(x => `<a href="#" onclick="event.preventDefault();ouvrirImmo('${x.i.id}')">${esc(x.i.libelle)}</a>`).join(", ")}.</p>` : `<div style="height:20px"></div>`}`;
+}
+/* Plan global : une ligne par année, de l'entrée en location meublée à la dernière fin d'amortissement */
+function tableauPlanGlobal(y, immos){
+  const y0 = yearOf(debutLMNP()), y1 = Math.max(y, ...immos.map(x => x.fin));
+  const cats = Object.keys(CATEGORIES).filter(k => immos.some(x => x.i.categorie === k));
+  const court = {construction:"Logement", travaux:"Travaux", mobilier:"Mobilier"};
+  let rows = "", tot = 0;
+  for(let a = y0; a <= y1; a++){
+    const bil = immos.filter(x => x.entree <= a), dc = cats.map(k => bil.filter(x => x.i.categorie === k).reduce((s,x) => s + amortAnnee(x.i, a).dotation, 0));
+    const dot = dc.reduce((s,v)=>s+v,0), cum = bil.reduce((s,x)=>s + amortAnnee(x.i, a).cumulFin, 0), brut = bil.reduce((s,x)=>s + x.i.valeurOrigine, 0); tot += dot;
+    const fin = immos.filter(x => x.fin === a && a > y).map(x => x.i.libelle);
+    rows += `<tr class="${a === y ? "imx-cur" : a > y ? "imx-prev" : ""}"><td>${a}${a === y ? ' <span class="pill">exercice</span>' : ""}${fin.length ? `<span class="imx-sous">fin : ${esc(fin.join(", "))}</span>` : ""}</td>
+      ${dc.map(v => `<td class="n m-x">${v > 0.005 ? num0(v) : "–"}</td>`).join("")}<td class="n imx-dot">${num0(dot)}</td><td class="n m-x">${num0(cum)}</td><td class="n">${num0(brut - cum)}</td></tr>`;
+  }
+  return `<div class="glx-bar"><span>Plan d'amortissement global <b>${y0}–${y1}</b></span><span class="stat">À partir de ${y+1}, en italique : prévision avec les immobilisations actuelles</span>
+    <span class="lien noprint"><button onclick="window.print()">Imprimer</button></span></div>
+  <div class="card glxw"><div class="tablewrap"><table class="glx imx imx-plan">
+    <thead><tr><th class="an">Année</th>${cats.map(k => `<th class="n m-x">${court[k]}</th>`).join("")}<th class="n">Dotation</th><th class="n m-x">Cumul</th><th class="n">Valeur nette</th></tr></thead>
+    <tbody>${rows}</tbody>
+    <tbody class="glx-gen"><tr><td>Total</td>${cats.map(() => `<td class="m-x"></td>`).join("")}<td class="n">${num0(tot)}</td><td class="m-x"></td><td></td></tr></tbody>
+  </table></div></div><div style="height:20px"></div>`;
+}
+function ouvrirImmo(id){ S.immoOuv = id; S.editImmo = id === "new" ? "new" : null; renderAll(); }
+function fermerImmo(){ S.immoOuv = null; S.editImmo = null; renderAll(); }
+addEventListener("keydown", e => { if(e.key === "Escape" && S.immoOuv && S.tab === "immos") fermerImmo(); });
+/* Fenêtre d'une immobilisation : son tableau d'amortissement, et la fiche à modifier */
+function fenetreImmo(y){
+  if(!S.immoOuv) return "";
+  const neuf = S.immoOuv === "new";
+  const i = neuf ? {libelle:"",categorie:"mobilier",valeurOrigine:"",quotePartTerrain:0,dureeAns:7,miseEnService:y+"-01-01"} : S.data.immobilisations.find(x => x.id === S.immoOuv);
+  if(!i) return "";
+  const edit = neuf || S.editImmo === i.id, fig = !neuf && immoFigee(i), col = COUL_CAT[i.categorie] || "var(--accent)";
+  const ic = `<span class="imx-ic" style="color:${col}">${svgI(IC_CAT[i.categorie]||IC_CAT.travaux).replace('width="17" height="17"','width="22" height="22"')}</span>`;
+  const form = `${fig ? `<div class="alert warn">Déjà au bilan de ${derniereCloture()}, exercice clôturé : seul le libellé se modifie. Pour changer un montant, une durée ou une date, rouvrez d'abord l'exercice.</div>` : ""}<div class="form">
+    <label>Libellé<input id="iLib" value="${esc(i.libelle)}"></label>
+    <label>Catégorie<select id="iCat" ${fig?"disabled":""} onchange="$('#iTerL').classList.toggle('hide', this.value!=='construction')">${Object.entries(CATEGORIES).map(([k,l])=>`<option value="${k}" ${k===i.categorie?"selected":""}>${l}</option>`).join("")}</select></label>
+    <label>Prix TTC<input id="iVal" inputmode="decimal" ${fig?"disabled":""} value="${String(i.valeurOrigine).replace(".",",")}"></label>
+    <label id="iTerL" class="${i.categorie==="construction"?"":"hide"}">Part terrain (%)<input id="iTer" inputmode="decimal" ${fig?"disabled":""} value="${String(r2((i.quotePartTerrain||0)*100)).replace(".",",")}"></label>
+    <label>Durée (ans)<input id="iDur" type="number" min="1" ${fig?"disabled":""} value="${i.dureeAns}"></label>
+    <label>Mise en service<input id="iDate" type="date" ${fig?"disabled":""} value="${i.miseEnService}"></label>
+    <div class="row"><button class="btn" onclick="saveImmo()">Enregistrer</button><button class="btn sec" onclick="${neuf ? "fermerImmo()" : "S.editImmo=null;renderAll()"}">Annuler</button>
+    ${!neuf && !fig ? `<button class="btn danger" onclick="delImmo()">Supprimer</button>` : ""}</div></div>
+    <p class="sub" style="margin:10px 0 0">Durées usuelles : logement 25–30 ans, travaux 10–15 ans, mobilier 5–10 ans. Moins de 500 € HT : en charge.</p>`;
+  let corps = form;
+  if(!edit){
+    const plan = planAmort(i), a = amortAnnee(i, y), base = a.base, terrain = i.valeurOrigine - base, cpt = CPT_IMMO[i.categorie] || CPT_IMMO.travaux;
+    const avant = plan.filter(p => p.avantLMNP).reduce((s,p)=>s+p.dotation,0), fin = plan.length ? plan[plan.length-1].annee : yearOf(i.miseEnService);
+    const m0 = monthOf(i.miseEnService);
+    const fiche = [["Prix TTC", eur0(i.valeurOrigine)], terrain > 0.005 ? ["Terrain (non amorti)", eur0(terrain)] : null, ["Base amortissable", eur0(base)],
+      ["Durée", `${i.dureeAns} ans · ${String(r2(100 / i.dureeAns)).replace(".",",")} %`], ["Mise en service", fmtDate(i.miseEnService)], ["Fin", fin]].filter(Boolean);
+    corps = `<div class="imx-fiche">${fiche.map(([l,v]) => `<div><span>${l}</span><b>${v}</b></div>`).join("")}</div>
+      <div style="margin:14px 0 4px">${jauge([[avant,"var(--seg-2)","Avant la location meublée (non déduit)"],[a.cumulFin - avant, col, "Amorti"]], base, 10)}</div>
+      <div class="leg" style="margin-bottom:14px">${avant > 0.005 ? `<span><i style="background:var(--seg-2)"></i>Avant la location meublée ${eur0(avant)}</span>` : ""}<span><i style="background:${col}"></i>Amorti en location ${eur0(a.cumulFin - avant)}</span><span><i style="background:var(--line)"></i>Reste ${eur0(base - a.cumulFin)}</span></div>
+      <div class="card glxw" style="margin:0"><div class="tablewrap"><table class="glx imx">
+        <thead><tr><th class="an">Année</th><th class="n m-x">Prorata</th><th class="n">Dotation</th><th class="n">Cumul</th><th class="n">Valeur nette</th></tr></thead><tbody>
+        ${plan.map((p,k) => { const mois = k === 0 ? 13 - m0 : p === plan[plan.length-1] && p.dotation < base / i.dureeAns - 0.01 ? Math.round(p.dotation / (base / i.dureeAns) * 12) : 12;
+          return `<tr class="${p.annee === y ? "imx-cur" : p.avantLMNP ? "imx-avant" : p.annee > y ? "imx-prev" : ""}"><td>${p.annee}${p.avantLMNP ? ' <span class="pill"><span class="pl-long">avant LMNP, non déduit</span><span class="pl-court">avant LMNP</span></span>' : p.annee === y ? ' <span class="pill">exercice</span>' : ""}</td>
+          <td class="n m-x">${mois === 12 ? "12 mois" : `${mois} mois`}</td><td class="n imx-dot">${num0(p.dotation)}</td><td class="n">${num0(p.cumul)}</td><td class="n">${num0(i.valeurOrigine - p.cumul)}</td></tr>`; }).join("")}</tbody>
+        <tbody class="glx-gen"><tr><td>Total</td><td class="m-x"></td><td class="n">${num0(base)}</td><td></td><td class="n">${num0(terrain)}</td></tr></tbody></table></div></div>
+      <p class="sub" style="margin:10px 0 0">Comptes ${lienGL({t:"compte", v:cpt.brut}, cpt.brut, "rv-cpt")} ${lienGL({t:"compte", v:cpt.am}, cpt.am, "rv-cpt")} ${lienGL({t:"compte", v:"681120"}, "681120", "rv-cpt")}</p>`;
+  }
+  return `<div class="rv-voile noprint" onclick="if(event.target===this)fermerImmo()"><div class="rv-fen imx-fen" role="dialog" aria-modal="true" aria-label="${esc(i.libelle || "Nouvelle immobilisation")}">
+    <div class="rv-fh">${ic}<div style="flex:1;min-width:0"><h2>${neuf ? "Nouvelle immobilisation" : esc(i.libelle)}</h2>${neuf ? "" : `<small style="color:var(--muted)">${CATEGORIES[i.categorie]||i.categorie}</small>`}</div>
+      ${!edit ? `<button class="btn small sec" onclick="S.editImmo='${i.id}';renderAll()">${I_EDIT} Modifier</button>` : ""}<button class="btn small" onclick="fermerImmo()">Fermer</button></div>
+    <div class="rv-fc">${corps}</div></div></div>`;
 }
 
 /* ---- Amortissements consommés (déduits) et en réserve, pour la plus-value à la revente ---- */
@@ -1923,13 +1985,14 @@ function suiviAmortissements(yMax){
   const der = lignes.filter(l => !l.historique).pop();
   return {lignes, consommesHist, dotHist, reserveOuverture, cumul, reserveFin: der ? der.reserveFin : reserveOuverture};
 }
-function vueConsommes(y){
+function vueConsommes(y, replie){
   if(isHistorique(y)) return "";
   const t = suiviAmortissements(y);
   if(!t.lignes.length) return "";
   const det = t.lignes, max = Math.max(1, ...det.map(l=>l.dotations + (l.reserveUtilisee||0)));
   const tot = t.cumul + t.reserveFin;
-  return `<div class="card"><h3>Amortissements consommés et en réserve</h3>
+  const titre = `<h3>Amortissements consommés et en réserve</h3>`;
+  return `${replie ? `<details class="card imx-conso"><summary>${titre}<span class="sub" style="margin:0">${eur0(t.cumul)} consommés · ${eur0(t.reserveFin)} en réserve</span><span class="imx-ouvrir">Voir le détail ▾</span></summary>` : `<div class="card">${titre}`}
     <div class="conso">
       <div class="centre">${donut([["Consommés", t.cumul, "var(--accent)"],["En réserve", t.reserveFin, "var(--warn)"]], eur0(tot), "amortissements")}
         <div class="leg col"><span><i style="background:var(--accent)"></i>Consommés ${eur0(t.cumul)}</span><span><i style="background:var(--warn)"></i>En réserve ${eur0(t.reserveFin)}</span></div></div>
@@ -1945,7 +2008,7 @@ function vueConsommes(y){
     ${t.lignes.map(l => l.historique
       ? `<tr class="muted"><td>${l.y} <span class="pill">Excel</span></td><td class="n">${eur(l.dotations)}</td><td class="n" colspan="5"></td></tr>`
       : `<tr class="${l.y===y?"tot":""}"><td>${l.y}</td><td class="n">${eur(l.dotations)}</td><td class="n">${eur(l.deduites)}</td><td class="n">${eur(l.reserveUtilisee)}</td><td class="n">${eur(l.consommes)}</td><td class="n">${eur(l.cumul)}</td><td class="n">${eur(l.reserveFin)}</td></tr>`).join("")}
-    </table></div>${t.lignes.some(l=>l.historique) ? `<p class="sub" style="margin:8px 0 0">Années Excel : ${eur(t.consommesHist)} consommés (${eur(t.dotHist)} de dotations moins ${eur(t.reserveOuverture)} en réserve à l'ouverture).</p>` : ""}</details></div>`;
+    </table></div>${t.lignes.some(l=>l.historique) ? `<p class="sub" style="margin:8px 0 0">Années Excel : ${eur(t.consommesHist)} consommés (${eur(t.dotHist)} de dotations moins ${eur(t.reserveOuverture)} en réserve à l'ouverture).</p>` : ""}</details>${replie ? "</details>" : "</div>"}`;
 }
 function saveImmo(){
   const cour = S.editImmo !== "new" && S.data.immobilisations.find(i=>i.id===S.editImmo);
@@ -1954,11 +2017,11 @@ function saveImmo(){
     quotePartTerrain: $("#iCat").value === "construction" ? r2(parseMontant($("#iTer").value)/100 || 0) : 0, dureeAns: parseInt($("#iDur").value,10), miseEnService:$("#iDate").value};
   if(v.miseEnService && anneeEntreeBilan(v) <= derniereCloture()) return alert(`${derniereCloture()} est clôturé : une immobilisation mise en service avant ou pendant cet exercice ne peut être ajoutée qu'après réouverture.`);
   if(!v.libelle || !(v.valeurOrigine>0) || !(v.dureeAns>0) || !v.miseEnService) return alert("Libellé, valeur, durée et date sont obligatoires.");
-  if(S.editImmo === "new") S.data.immobilisations.push({id:uid(), ...v});
+  if(S.editImmo === "new"){ const id = uid(); S.data.immobilisations.push({id, ...v}); S.immoOuv = id; }
   else Object.assign(S.data.immobilisations.find(i=>i.id===S.editImmo), v);
   S.editImmo = null; setDirty(); renderAll();
 }
-function delImmo(){ if(immoFigee(S.data.immobilisations.find(i=>i.id===S.editImmo))) return; if(!confirm("Supprimer cette immobilisation ?")) return; S.data.immobilisations = S.data.immobilisations.filter(i=>i.id!==S.editImmo); S.editImmo=null; setDirty(); renderAll(); }
+function delImmo(){ if(immoFigee(S.data.immobilisations.find(i=>i.id===S.editImmo))) return; if(!confirm("Supprimer cette immobilisation ?")) return; S.data.immobilisations = S.data.immobilisations.filter(i=>i.id!==S.editImmo); S.editImmo=null; S.immoOuv=null; setDirty(); renderAll(); }
 
 /* ---- Emprunt ---- */
 /* Courbe du capital restant dû, avec l'année affichée mise en évidence */
@@ -2903,7 +2966,7 @@ function vueRevision(y){
   <h2 class="printonly">Feuille de révision ${y} · ${esc(S.data.dossier.nom||"")}</h2>${imprimer}${fenetre}`;
 }
 const NOM_PAGE = Object.fromEntries(TABS.filter(t=>t[0]!=="h"&&t[0]!=="sep"));
-function allerA(pg){ S.tab = pg; S.editId=null; S.editImmo=null; S.composer=false; S.cloture=null; S.reprise=null; document.body.classList.remove("menu-open"); renderAll(); haut(); }
+function allerA(pg){ S.tab = pg; S.editId=null; S.editImmo=null; S.immoOuv=null; S.composer=false; S.cloture=null; S.reprise=null; document.body.classList.remove("menu-open"); renderAll(); haut(); }
 const lienPage = pg => `<button class="btn ghost small noprint" style="margin-left:auto;flex:none;color:var(--accent)" onclick="allerA('${pg}')">${NOM_PAGE[pg]} →</button>`;
 
 /* ---- Dossier ---- */
