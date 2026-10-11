@@ -200,6 +200,7 @@ select{-webkit-appearance:none;appearance:none;background-image:var(--chev) !imp
 a.lgl{color:inherit;text-decoration:none;cursor:pointer;border-radius:4px}
 a.lgl:hover{color:var(--accent);text-decoration:underline;text-underline-offset:3px}
 td.mt.in a.lgl:hover b{color:var(--accent)}
+a.lgl.glx-pill{color:var(--accent-ink);border-radius:99px}
 a.lgl.glx-pill:hover{color:var(--accent-ink);text-decoration:none;filter:brightness(1.15)}
 td.cp a.lgl:hover span{border-color:var(--accent);color:var(--accent)}
 td.cp a.lgl{text-decoration:none}
@@ -357,13 +358,12 @@ tbody.ejx-tot td{background:var(--warn-soft);font-weight:600}
 }
 /* Balance : même tableau que le grand livre, solde N, N-1 et variation */
 table.blx{table-layout:fixed;font-size:13.5px;font-variant-numeric:tabular-nums}
-table.blx th.cpt{width:118px} table.blx th.so{width:150px}
+table.blx th.cpt{width:140px} table.blx th.so{width:150px}
 table.blx thead th{background:var(--surface-2);font-size:12px;font-weight:600;color:var(--muted);text-align:left;padding:10px;border-bottom:1px solid var(--line)}
 table.blx th.n,table.blx td.n{text-align:right;white-space:nowrap}
 table.blx td{padding:9px 10px;border-top:1px solid var(--line)}
 table.blx td:first-child,table.blx th:first-child{padding-left:20px}
 table.blx td:last-child,table.blx th:last-child{padding-right:20px}
-table.blx .glx-pill{font-size:12px;padding:3px 10px}
 table.blx .sfx{font-size:11px;font-weight:600;margin-left:3px;color:var(--faint)}
 table.blx .anorm,table.blx .anorm .sfx{color:var(--neg)}
 table.blx td.n1{color:var(--muted)}
@@ -1771,7 +1771,7 @@ function vueBalanceVisuelle(y){
   const mob = (n, a, o, txt) => `<span class="blx-mob"><span>${y-1} : ${txt}</span>${pastilleVar(n, a, o)}</span>`;
   const CL = [["1","Capitaux"],["2","Immobilisations"],["4","Tiers"],["5","Banque"],["6","Charges"],["7","Produits"]];
   const ligne = c => { const n = N[c] ?? 0, a = avant ? (p[c] ?? 0) : null;
-    return `<tr><td class="cptl">${lienGL({t:"compte", v:c}, c, "glx-pill")}<span class="blx-l">${esc(COMPTES[c]||"")}</span></td><td class="lib">${esc(COMPTES[c]||"")}</td>
+    return `<tr><td class="cptl">${lienGL({t:"compte", v:c}, IC_GL.liste + c, "glx-pill")}<span class="blx-l">${esc(COMPTES[c]||"")}</span></td><td class="lib">${esc(COMPTES[c]||"")}</td>
       <td class="n"><b>${solde(n, c)}</b>${avant ? mob(n, a, orient(c, n, a), num(Math.abs(a)) + " " + sens(a)) : ""}</td>
       <td class="n n1">${avant ? solde(a, c) : `<span class="blx-0">–</span>`}</td><td class="n va">${varTxt(n, a, orient(c, n, a))}</td></tr>`; };
   const corps = CL.map(([k, nom]) => { const cs = comptes.filter(c => c[0] === k); if(!cs.length) return "";
