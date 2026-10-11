@@ -2779,8 +2779,9 @@ function rapprochements(y){
   }
   // Banque : relevé saisi
   const mvt = r2((ex.ecritures||[]).reduce((s,e) => s + ((NATURES[e.nature]?.g || (e.sens === "recette" ? "recette" : "charge")) === "recette" ? e.montant : -e.montant), 0));
-  const rl = ex.releve || {};
-  R("releve", "tresorerie", "Variation du compte bancaire sur l'année", mvt, rl.debut != null && rl.fin != null ? rl.fin - rl.debut : null, rl.debut != null && rl.fin != null ? `relevé : ${eur(rl.fin)} au 31/12 − ${eur(rl.debut)} au 1/1` : "soldes du relevé à saisir ci-dessous", "512000", "banque", "releve");
+  const rl = ex.releve || {}, hors = r2((S.data.banque?.ignorees || []).filter(o => yearOf(o.date) === y).reduce((s,o) => s + o.montant, 0)), aRel = rl.debut != null && rl.fin != null;
+  R("releve", "tresorerie", "Variation du compte bancaire liée à la location", mvt, aRel ? rl.fin - rl.debut - hors : null,
+    aRel ? `relevé : ${eur(rl.fin)} au 31/12 − ${eur(rl.debut)} au 1/1${hors ? `, en excluant ${eur(Math.abs(hors))} ${hors < 0 ? "de dépenses" : "d'encaissements"} hors location` : ""}` : "soldes du relevé à saisir ci-dessous", "512000", "banque", "releve");
   // Résultat, reports, bilan
   const cl1 = exercice(y-1)?.statut === "cloture" ? exercice(y-1).cloture : null;
   const bal = balance(y), dt = bal.reduce((s,x) => s + x.d, 0), ct = bal.reduce((s,x) => s + x.cr, 0);
@@ -2811,11 +2812,11 @@ function etatPoint(y, x){
   if(x.type === "calc" || x.type === "revue"){
     if(x.attendu == null) return x.extra === "releve" && r?.statut === "na" ? "fait" : x.id === "acquisitions" ? (r?.statut === "vu" ? "fait" : "afaire") : "afaire";
     const ok = x.type === "revue" ? !x.significatif : Math.abs(x.compta - x.attendu) < 0.005;
-    return ok ? "ok" : r?.commentaire && r.texte === sigCalc(x) ? "fait" : x.type === "revue" || x.nonBloquant ? "afaire" : "bloque";
+    return ok ? "ok" : (r?.commentaire || r?.piece) && r.texte === sigCalc(x) ? "fait" : x.type === "revue" || x.nonBloquant ? "afaire" : "bloque";
   }
   if(x.niveau === "ok") return "ok";
   if(x.niveau === "bad") return "bloque";
-  return r?.commentaire && r.texte === x.texte ? "fait" : "afaire";
+  return (r?.commentaire || r?.piece) && r.texte === x.texte ? "fait" : "afaire";
 }
 const GARDER = new Set(["dates","montants","natures","loyers-mois","cfe","justificatifs","banque-tri","doublons","petit-equipement","echeancier-banque","pret-rattache","echeances","n1","excel","deficits-perimes"]);
 function pointsRevision(y){
@@ -2826,15 +2827,25 @@ function pointsRevision(y){
 }
 const restantRevision = y => pointsRevision(y).filter(x => x.etat === "afaire" || x.etat === "bloque").map(x => ({...x, texte:x.texte || x.lib}));
 addEventListener("beforeprint", () => document.querySelectorAll("details.rv").forEach(d => d.open = true));
+/* La révision se documente aussi sur un exercice clôturé : réponses, explications, pièces et soldes du relevé ne changent aucune écriture */
 function majRevision(y, id, champs){
-  if(verrouille(y)) return;
   const ex = exercice(y), rev = (ex.revision ??= {}), r = {...(rev[id] || {}), ...champs, date:new Date().toISOString().slice(0,10)};
-  if(!r.statut && !r.commentaire) delete rev[id]; else rev[id] = r;
+  if(!r.statut && !r.commentaire && !r.piece) delete rev[id]; else rev[id] = r;
   if(!Object.keys(rev).length) delete ex.revision;
   setDirty(); renderAll();
 }
-function expliquerPoint(y, id, el){ const x = pointsRevision(y).find(p => p.id === id); majRevision(y, id, {commentaire:el.value.trim(), texte:x.type === "auto" ? x.texte : sigCalc(x)}); }
-function majReleve(y, k, v){ if(verrouille(y)) return; const ex = exercice(y), n = parseMontant(v); ex.releve ??= {}; if(v === "" || isNaN(n)) delete ex.releve[k]; else ex.releve[k] = n; if(!Object.keys(ex.releve).length) delete ex.releve; setDirty(); renderAll(); }
+const sigPoint = x => x.type === "auto" ? x.texte : sigCalc(x);
+function expliquerPoint(y, id, el){ const x = pointsRevision(y).find(p => p.id === id); majRevision(y, id, {commentaire:el.value.trim(), texte:sigPoint(x)}); }
+/* Pièce justifiant un point de révision : copiée dans Justificatifs/<année>/Révision */
+async function joindreRevision(y, id){
+  if(!await dossierRequis()) return;
+  const f = await choisirFichier(); if(!f) return;
+  const x = pointsRevision(y).find(p => p.id === id);
+  const piece = await copierDansDossier(f, ["Justificatifs", String(y), "Révision"], `revision_${slug(id)}`);
+  majRevision(y, id, {piece, texte:sigPoint(x)}); toast("Pièce jointe au point de révision.");
+}
+function retirerPieceRevision(y, id){ if(confirm("Retirer cette pièce du point de révision ? (le fichier reste dans le dossier)")) majRevision(y, id, {piece:null}); }
+function majReleve(y, k, v){ const ex = exercice(y), n = parseMontant(v); ex.releve ??= {}; if(v === "" || isNaN(n)) delete ex.releve[k]; else ex.releve[k] = n; if(!Object.keys(ex.releve).length) delete ex.releve; setDirty(); renderAll(); }
 const NIV = {bloque:["bloquant","✕","var(--neg)"], afaire:["à vérifier","!","var(--warn)"], fait:["validé","✓","var(--pos)"], ok:["validé","✓","var(--pos)"]};
 const niveauPoste = p => p.some(x => x.etat === "bloque") ? "bloque" : p.some(x => x.etat === "afaire") ? "afaire" : "ok";
 function ouvrirPoste(k){ S.revPoste = k; renderAll(); }
@@ -2844,15 +2855,15 @@ function vueRevision(y){
   const pts = pointsRevision(y), clos = verrouille(y), rev = revision(y), ex = exercice(y);
   const bloq = pts.filter(x => x.etat === "bloque").length, nb = pts.filter(x => x.etat === "afaire").length;
   const montant = (v, gl) => v == null ? `<span class="sub">–</span>` : gl ? lienGL({t:"compte", v:gl}, eur(v)) : eur(v);
-  const explication = (x, r) => clos ? (r.commentaire ? `<div class="rv-com">${esc(r.commentaire)}</div>` : "")
-    : `<textarea class="rv-txt" rows="2" placeholder="${x.etat === "bloque" ? "Expliquer l'écart pour le valider (gardé dans le dossier)…" : "Explication (gardée dans le dossier)…"}" onchange="expliquerPoint(${y},'${x.id}',this)">${esc(r.commentaire && (r.texte === sigCalc(x) || r.texte === x.texte) ? r.commentaire : "")}</textarea>`;
+  const pj = (x, r) => `<div class="row" style="gap:6px;margin-top:6px">${r.piece ? `<button class="btn small sec" onclick="ouvrirChemin(${jsq(r.piece)},'Pièce de révision')">${I_CLIP} ${esc(r.piece.split("/").pop())}</button><button class="btn small ghost" aria-label="Retirer la pièce" onclick="retirerPieceRevision(${y},'${x.id}')">×</button>` : `<button class="btn small sec" onclick="joindreRevision(${y},'${x.id}')">${I_CLIP} Joindre une pièce</button>`}</div>`;
+  const explication = (x, r) => `<textarea class="rv-txt" rows="2" placeholder="${x.etat === "bloque" ? "Expliquer l'écart pour le valider (gardé dans le dossier)…" : "Explication (gardée dans le dossier)…"}" onchange="expliquerPoint(${y},'${x.id}',this)">${esc(r.commentaire || "")}</textarea>${pj(x, r)}`;
   const pastille = x => { const [l, s, col] = NIV[x.etat]; return `<span class="rv-p" style="color:${col}">${s} ${x.etat === "fait" ? "validé (expliqué)" : x.etat === "afaire" && x.attendu === null && x.type === "calc" ? "à compléter" : l}</span>`; };
   const ligneCalc = x => { const r = rev[x.id] || {}, ecart = x.attendu == null ? null : r2(x.compta - x.attendu), ko = x.etat === "afaire" || x.etat === "bloque";
     const ancien = r.commentaire && r.texte !== sigCalc(x) && x.etat !== "ok";
     let suite = "";
-    if(x.extra === "releve" && !clos) suite = `<div class="row rv-rel"><label>Solde du relevé au 1/1<input inputmode="decimal" value="${ex.releve?.debut ?? ""}" onchange="majReleve(${y},'debut',this.value)"></label><label>au 31/12<input inputmode="decimal" value="${ex.releve?.fin ?? ""}" onchange="majReleve(${y},'fin',this.value)"></label>
-      <button class="btn small ${r.statut === "na" ? "" : "sec"}" onclick="majRevision(${y},'releve',{statut:${r.statut === "na" ? "null" : "'na'"}})">Compte non dédié à la location</button></div>`;
-    else if(x.id === "acquisitions" && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small ${r.statut === "vu" ? "" : "sec"}" onclick="majRevision(${y},'acquisitions',{statut:${r.statut === "vu" ? "null" : "'vu'"}})">Factures vérifiées</button></div>`;
+    if(x.extra === "releve") suite = `<div class="row rv-rel"><label>Solde du relevé au 1/1<input inputmode="decimal" value="${ex.releve?.debut ?? ""}" onchange="majReleve(${y},'debut',this.value)"></label><label>au 31/12<input inputmode="decimal" value="${ex.releve?.fin ?? ""}" onchange="majReleve(${y},'fin',this.value)"></label>
+      <button class="btn small ${r.statut === "na" ? "" : "sec"}" onclick="majRevision(${y},'releve',{statut:${r.statut === "na" ? "null" : "'na'"}})">Pas de relevé disponible</button></div>`;
+    else if(x.id === "acquisitions") suite = `<div class="row" style="margin-top:6px"><button class="btn small ${r.statut === "vu" ? "" : "sec"}" onclick="majRevision(${y},'acquisitions',{statut:${r.statut === "vu" ? "null" : "'vu'"}})">Factures vérifiées</button></div>`;
     else if(x.id === "crd" && ko && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('emprunt')">Voir l'échéancier mois par mois</button><button class="btn small sec" onclick="S.year=${y};regulariserCRD()">Régulariser l'écart…</button></div>`;
     else if(x.attendu == null && x.page === "dossier" && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('dossier')">Renseigner le bail dans les paramètres</button></div>`;
     else if(ko && x.page && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('${x.page}')">${x.page === "emprunt" ? "Voir l'échéancier mois par mois" : `Corriger dans ${NOM_PAGE[x.page]}`} →</button></div>`;
@@ -2866,7 +2877,7 @@ function vueRevision(y){
     return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s">${pastille(x)}</div>
       ${x.etat === "afaire" || x.etat === "bloque" || x.etat === "fait" ? `<div class="rl-suite">${x.page && x.etat !== "fait" && !clos ? `<button class="btn small sec" style="margin-bottom:6px" onclick="S.revPoste=null;allerA('${x.page}')">Corriger dans ${NOM_PAGE[x.page]} →</button>` : ""}${x.niveau === "warn" ? explication(x, r) : ""}</div>` : ""}</div>`; };
   const ligneQ = x => { const r = rev[x.id] || {};
-    return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s">${[["vu","Oui"],["na","Sans objet"]].map(([k,l]) => `<button class="btn small ${r.statut===k?"":"sec"}" ${clos?"disabled":""} onclick="majRevision(${y},'${x.id}',{statut:${r.statut===k?"null":`'${k}'`}})">${l}</button>`).join("")}</div></div>`; };
+    return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s">${[["vu","Oui"],["na","Sans objet"]].map(([k,l]) => `<button class="btn small ${r.statut===k?"":"sec"}" onclick="majRevision(${y},'${x.id}',{statut:${r.statut===k?"null":`'${k}'`}})">${l}</button>`).join("")}</div></div>`; };
   const ligne = x => x.type === "calc" || x.type === "revue" ? ligneCalc(x) : x.type === "q" ? ligneQ(x) : ligneAuto(x);
   const postes = CYCLES.map(([k, l, pg]) => ({k, l, pg, p:pts.filter(x => x.cycle === k)})).filter(c => c.p.length);
   const resume = c => { const b = c.p.filter(x => x.etat === "bloque").length, a = c.p.filter(x => x.etat === "afaire").length, v = c.p.length - b - a;
@@ -2882,7 +2893,7 @@ function vueRevision(y){
         ${c.pg && c.pg !== "declaration" ? `<button class="btn small sec" onclick="S.revPoste=null;allerA('${c.pg}')">${NOM_PAGE[c.pg]} →</button>` : ""}<button class="btn small" onclick="fermerPoste()">Fermer</button></div>
       <div class="rv-fc">${c.k === "charges" ? `<p class="sub" style="margin:0 0 6px">Une variation de plus de ${Math.round(REVUE_PCT*100)} % et de plus de ${eur0(REVUE_MIN)} est à vérifier.</p>` : ""}
         ${groupe("Erreurs bloquantes", tri.filter(x => x.etat === "bloque"), true)}${groupe("À vérifier, non bloquant", tri.filter(x => x.etat === "afaire"), true)}${groupe("Validé", tri.filter(x => x.etat === "ok" || x.etat === "fait"), !tri.some(x => x.etat === "bloque" || x.etat === "afaire"))}</div></div></div>`; })() : "";
-  const tete = clos ? (ex.revision ? `Révision ${y} figée avec la clôture.` : `${y} a été clôturé avant le module de révision : les points ci-dessous sont indicatifs.`)
+  const tete = clos ? `${y} est clôturé : ses écritures ne changent plus, mais vous pouvez documenter la révision (réponses, explications, pièces).`
     : bloq ? `${bloq} erreur${pl(bloq)} bloquante${pl(bloq)} : la clôture attend qu'elles soient corrigées ou expliquées` : nb ? `Plus d'erreur bloquante : la clôture est possible (${nb} point${pl(nb)} à vérifier)` : "Révision validée : prêt à clôturer";
   const imprimer = postes.map(c => `<div class="printonly rv-imp"><h3>${c.l} · ${NIV[niveauPoste(c.p)][0]}</h3>${c.p.map(x => `<div>${NIV[x.etat][1]} ${x.lib || x.texte}${x.type === "calc" && x.attendu != null ? ` : ${eur(x.compta)} / ${eur(x.attendu)}` : ""}${rev[x.id]?.commentaire ? ` · <i>${esc(rev[x.id].commentaire)}</i>` : ""}</div>`).join("")}</div>`).join("");
   return `<div class="card noprint"><h3 style="margin:0 0 4px;color:${clos ? "var(--text)" : bloq ? "var(--neg)" : nb ? "var(--warn)" : "var(--pos)"}">${tete}</h3>
