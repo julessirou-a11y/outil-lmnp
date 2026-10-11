@@ -435,8 +435,6 @@ td.d{white-space:nowrap;color:var(--muted)}
 td.lb2{overflow-wrap:anywhere}
 tr.glx-an td{background:var(--surface-2);font-style:italic;color:var(--muted)}
 tr.glx-an td.n{font-style:normal}
-tr.glx-ex td{border-top:0;padding:8px 20px 6px}
-.glx-flag{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:99px;padding:3px 11px 3px 9px}
 tr.glx-tot td{background:var(--accent-soft);font-weight:600}
 tr.glx-tot td.lb{text-align:right;color:var(--muted)}
 tbody.glx-gen td{background:var(--surface-2);font-weight:700;border-top:2px solid var(--line);padding-top:12px;padding-bottom:12px}
@@ -1800,7 +1798,6 @@ function sensNormal(c){
 }
 const IC_GL = {
   liste:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01"/></svg>',
-  drapeau:'<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M5 3v18h2v-7h11l-2-4 2-4H7V3z"/></svg>',
   chevron:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>'};
 function basculerCompteGL(c){ (S.glFerme ??= {})[c] = !S.glFerme[c]; renderAll(); }
 function toutReplierGL(ferme){ S.glFerme = {}; if(ferme) balance(S.year).forEach(r => S.glFerme[r.c] = true); renderAll(); }
@@ -1819,13 +1816,12 @@ function vueGrandLivre(y){
     return `<span class="${anormal?"anorm":""}" ${anormal?'title="Solde inhabituel pour ce compte"':""}>${num(Math.abs(s))}<span class="sfx">${k}</span></span>`; };
   let TD = 0, TC = 0;
   const corps = comptes.map(c => {
-    const ls = parC[c].sort((a,b)=>a.date.localeCompare(b.date)); let s = 0, drapeau = false;
+    const ls = parC[c].sort((a,b)=>a.date.localeCompare(b.date)); let s = 0;
     const D = ls.reduce((x,l)=>x+l.d,0), C = ls.reduce((x,l)=>x+l.cr,0), sol = D - C; TD += D; TC += C;
     const ferme = !!(S.glFerme||{})[c];
-    const rows = ls.map(l => { s += l.d - l.cr; let pre = "";
-      if(l.j !== "AN" && !drapeau){ drapeau = true; if(ls[0].j === "AN") pre = `<tr class="glx-ex"><td colspan="8"><span class="glx-flag">${IC_GL.drapeau}Exercice ${y}</span></td></tr>`; }
+    const rows = ls.map(l => { s += l.d - l.cr;
       const mt = v => lienGL({t:"montant", op:"=", v}, num(v)), mv = lienGL({t:"montant", op:"=", v:l.d || l.cr}, `${num(l.d || l.cr)}<span class="sfx">${l.d ? "D" : "C"}</span>`);
-      return pre + `<tr class="${l.j==="AN"?"glx-an":""}"><td class="d"><span class="dl">${fmtDate(l.date)}</span><span class="dcrt">${fmtDate(l.date).slice(0,5)}</span></td><td class="j"><span>${l.j}</span></td>
+      return `<tr class="${l.j==="AN"?"glx-an":""}"><td class="d"><span class="dl">${fmtDate(l.date)}</span><span class="dcrt">${fmtDate(l.date).slice(0,5)}</span></td><td class="j"><span>${l.j}</span></td>
         <td class="cp">${l.cp === "Divers" ? `<span title="Plusieurs comptes">Divers</span>` : lienGL({t:"compte", v:l.cp}, `<span>${l.cp}</span>`, "", `${l.cp} · ${COMPTES[l.cp]||""}`)}</td><td class="lb2">${l.j==="AN" ? "Report à nouveau au 1er janvier" : esc(l.lib)}</td>
         <td class="n dc">${l.d?mt(l.d):""}</td><td class="n dc">${l.cr?mt(l.cr):""}</td><td class="n mv">${mv}</td><td class="n">${solde(s, c)}</td></tr>`; }).join("");
     const tot = ls.length > 1 ? `<tr class="glx-tot"><td colspan="4" class="lb">Total ${c}</td><td class="n dc">${num(D)}</td><td class="n dc">${num(C)}</td><td class="n mv"></td><td class="n">${solde(sol, c)}</td></tr>` : "";
