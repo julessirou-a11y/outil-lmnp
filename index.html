@@ -1449,6 +1449,7 @@ function vueAssistant(){
         <label class="large">Adresse du logement loué<input id="asAdresse" value="${esc(A.adresse || "")}" autocomplete="street-address"></label>
         <label>Début de la location meublée<input id="asDebut" type="date" value="${esc(A.debut || an + "-01-01")}" max="${an}-12-31"></label>
         <label>Loyer mensuel hors charges<input id="asLoyer" inputmode="decimal" value="${esc(A.loyer || "")}" placeholder="facultatif"></label>
+        <label>Charges mensuelles demandées<input id="asCharges" inputmode="decimal" value="${esc(A.charges || "")}" placeholder="facultatif"></label>
       </div>
       <div class="row as-actions"><button class="btn" onclick="creerDossierAssistant()">Créer mon dossier</button></div>`;
   return `<div class="as"><button class="btn ghost small as-retour" onclick="${retour}">← Retour</button>${pas}${corps}</div>`;
@@ -1463,16 +1464,16 @@ async function choisirDossierAssistant(){
   if(noms.length && !await confirmer(`« ${dir.name} » n'est pas vide.\n\nIl contient ${noms.length} élément${noms.length > 1 ? "s" : ""}. Le Carnet y ajoutera ses fichiers à côté. Mieux vaut un dossier vide, rien que pour le Carnet.`, {ok:"Utiliser quand même", annuler:"Choisir un autre"})) return;
   S.assistant.dir = dir; renderAll();
 }
-function lireAssistant(){ const A = S.assistant; for(const [k, id] of [["nom","asNom"],["adresse","asAdresse"],["debut","asDebut"],["loyer","asLoyer"]]){ const el = $("#" + id); if(el) A[k] = el.value.trim(); } return A; }
+function lireAssistant(){ const A = S.assistant; for(const [k, id] of [["nom","asNom"],["adresse","asAdresse"],["debut","asDebut"],["loyer","asLoyer"],["charges","asCharges"]]){ const el = $("#" + id); if(el) A[k] = el.value.trim(); } return A; }
 async function creerDossierAssistant(){
   const A = lireAssistant(), an = new Date().getFullYear();
   if(!A.nom) return avertir("Indiquez votre nom et prénom : ils figurent sur la déclaration.");
   if(!/^\d{4}-\d{2}-\d{2}$/.test(A.debut || "")) return avertir("Indiquez la date de début de la location meublée.");
-  const loyer = A.loyer ? montantChamp(A.loyer, "loyer") : null; if(loyer === undefined) return;
+  const loyer = montantChamp(A.loyer, "loyer"), charges = loyer === undefined ? null : montantChamp(A.charges, "charges"); if(loyer === undefined || charges === undefined) return;
   // Premier exercice : l'année du début, ou l'an dernier tant que sa déclaration (mai) n'est pas passée ; les années d'avant ont été déclarées ailleurs
   const debutAn = Math.min(yearOf(A.debut), an), premier = Math.max(debutAn, aujourdhui() < `${an}-06-01` ? an - 1 : an);
   const d = newDossier();
-  d.dossier = {...d.dossier, nom:A.dir.name, nomExploitant:A.nom, debutLocationMeublee:A.debut, ...(A.adresse ? {adresseBien:A.adresse} : {}), ...(loyer ? {loyerMensuel:loyer} : {}), demarrage:true};
+  d.dossier = {...d.dossier, nom:A.dir.name, nomExploitant:A.nom, debutLocationMeublee:A.debut, ...(A.adresse ? {adresseBien:A.adresse} : {}), ...(loyer ? {loyerMensuel:loyer} : {}), ...(charges ? {provisionCharges:charges} : {}), demarrage:true};
   d.exercices = {}; for(let y = premier; y <= an; y++) d.exercices[y] = {statut:"en-cours", ecritures:[]};
   const dir = A.dir;
   try{ if(await dir.queryPermission({mode:"readwrite"}) !== "granted" && await dir.requestPermission({mode:"readwrite"}) !== "granted") return; }catch(_){}
@@ -1488,7 +1489,7 @@ function demarrage(){
     [S.data.immobilisations.length, "Le logement et le mobilier", "Prix d'achat, frais, meubles : ils s'amortissent.", `allerA('immos');ouvrirImmo('new')`, "Ajouter"],
     [S.data.emprunts.length || d.sansPret, "Le prêt", "Le tableau d'amortissement de la banque.", `allerA('emprunt');ajouterEmprunt()`, "Ajouter", `S.data.dossier.sansPret=true;setDirty();renderAll()`],
     [ecr, "Les opérations de l'année", "Importez le relevé de votre banque.", `allerA('banque')`, "Importer"],
-    [d.siret, "Le numéro SIRET", "Obligatoire pour déclarer.", `allerA('dossier')`, "Renseigner"],
+    [d.siret && d.numeroFiscal, "Vos numéros pour les impôts", "SIRET, numéro fiscal, déclarant 1 ou 2.", `allerA('dossier')`, "Renseigner"],
   ];
   const faits = etapes.filter(e => e[0]).length;
   if(faits === etapes.length) return "";
@@ -2136,7 +2137,8 @@ addEventListener("keydown", e => { if(e.key === "Escape" && S.immoOuv && S.tab =
 function fenetreImmo(y){
   if(!S.immoOuv) return "";
   const neuf = S.immoOuv === "new";
-  const i = neuf ? {libelle:"",categorie:"mobilier",valeurOrigine:"",quotePartTerrain:0,dureeAns:7,miseEnService:y+"-01-01"} : S.data.immobilisations.find(x => x.id === S.immoOuv);
+  const logement = neuf && !S.data.immobilisations.some(x => x.categorie === "construction"), deb = debutLMNP();
+  const i = neuf ? {libelle:logement ? "Logement" : "", categorie:logement ? "construction" : "mobilier", valeurOrigine:"", quotePartTerrain:logement ? 0.15 : 0, dureeAns:logement ? 30 : 7, miseEnService:yearOf(deb) === y ? deb : y+"-01-01"} : S.data.immobilisations.find(x => x.id === S.immoOuv);
   if(!i) return "";
   const edit = neuf || S.editImmo === i.id, fig = !neuf && immoFigee(i), col = COUL_CAT[i.categorie] || "var(--accent)";
   const ic = `<span class="imx-ic" style="color:${col}">${svgI(IC_CAT[i.categorie]||IC_CAT.travaux).replace('width="17" height="17"','width="22" height="22"')}</span>`;
