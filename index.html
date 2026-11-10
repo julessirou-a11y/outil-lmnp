@@ -740,7 +740,8 @@ html.mobile main{padding:calc(18px + env(safe-area-inset-top)) 16px calc(110px +
 .mob h1{margin:0;font-size:28px;font-weight:700;letter-spacing:-.02em;line-height:1.2}
 .mob h2{margin:22px 0 10px;font-size:18px;font-weight:600}
 .m-marque{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 18px}
-.m-marque .logo{display:block;height:28px;width:auto;color:var(--text)}.m-marque span{font-size:13px;color:var(--muted);text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.m-marque .logo{display:block;height:28px;width:auto;color:var(--text)}
+.m-maj{display:flex;align-items:center;gap:6px;min-width:0;min-height:36px;padding:0 0 0 10px;border:0;background:none;color:var(--muted);font:inherit;font-size:13px;cursor:pointer}.m-maj span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.m-maj svg{flex:none;color:var(--accent)}
 .m-ok{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;margin:26px 0 8px;padding:26px 20px 24px;border-radius:24px;background:linear-gradient(160deg,var(--pos-soft),var(--accent-soft))}
 .m-ok-ic{position:relative;width:84px;height:84px;margin-bottom:6px;border-radius:50%;background:var(--surface);color:var(--pos);display:flex;align-items:center;justify-content:center;box-shadow:0 8px 24px rgba(47,125,91,.18)}
 .m-ok-ic i{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--accent-2)}.m-ok-ic i:nth-child(2){top:-6px;right:2px}.m-ok-ic i:nth-child(3){bottom:4px;left:-10px;width:7px;height:7px;background:var(--pos)}.m-ok-ic i:nth-child(4){top:20px;left:-16px;width:5px;height:5px}
@@ -752,7 +753,6 @@ html.mobile body:has(.m-accueil){background:radial-gradient(120% 60% at 0% 0%,va
 html.mobile body:has(.m-accueil) .app{background:transparent}
 .m-hero{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:26px 0}
 .m-hero h1{margin:8px 0 0;font-size:32px;line-height:1.15;font-weight:700;letter-spacing:-.025em}.m-hero p{margin:0;font-size:17px;color:var(--muted);line-height:1.45}
-.m-points{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}.m-points li{display:flex;align-items:center;gap:12px;font-size:16px}.m-points .m-ic{width:36px;height:36px;border-radius:11px}
 .m-actions{display:flex;flex-direction:column;gap:10px;padding-bottom:env(safe-area-inset-bottom)}
 .m-btn.sec{background:var(--surface);color:var(--accent);border:1px solid var(--line)}.m-btn small{display:block;font-size:13px;font-weight:400;opacity:.8}.m-btn.deux{flex-direction:column;gap:0;padding:8px 16px}
 .m-intro{margin:6px 0 0;color:var(--muted);font-size:16px;line-height:1.4}
@@ -760,6 +760,9 @@ html.mobile body:has(.m-accueil) .app{background:transparent}
 .m-photo b{font-size:19px;font-weight:600}.m-photo small{font-size:14px;color:#EAD7D7}
 .m-liste{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin:0 0 10px}
 .m-vide{padding:18px 16px;color:var(--muted)}
+.m-rien{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:34px 18px 10px}
+.m-rien-ic{width:88px;height:88px;margin-bottom:10px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);background:radial-gradient(circle at 30% 25%,var(--surface) 0%,var(--accent-soft) 70%);box-shadow:0 10px 28px rgba(109,70,107,.16)}
+.m-rien b{font-size:20px;font-weight:700}.m-rien small{font-size:15px;color:var(--muted);line-height:1.45;max-width:290px}
 .m-ligne{display:flex;align-items:center;gap:12px;width:100%;min-height:62px;padding:12px 16px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
 .m-ligne:last-child,.m-liste>label:last-child,.m-kv:last-child{border-bottom:0}
 .mob .tx{flex:1;min-width:0;display:block}.mob .tx b{display:block;font-size:17px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mob .tx small{display:block;font-size:14px;color:var(--muted);line-height:1.35}
@@ -769,17 +772,27 @@ html.mobile body:has(.m-accueil) .app{background:transparent}
 .m-chev{color:var(--accent-2);display:flex;flex:none}
 .m-lien{border:0;background:none;padding:6px 0;min-height:36px;color:var(--accent);font:inherit;font-size:15px;text-align:left;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .m-note{margin:10px 0;font-size:14px;color:var(--muted);line-height:1.45}
-.m-version{margin-top:22px}.m-version .m-lien{font-size:14px;padding:0;min-height:0}
-.m-seg{display:grid;grid-template-columns:1fr 1fr;padding:3px;margin:14px 0 16px;border-radius:12px;background:var(--line)}
+.m-seg{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:3px;margin:14px 0 16px;border-radius:12px;background:var(--line)}
+.m-seg-ind{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:10px;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.1);transition:transform .38s cubic-bezier(.3,1.25,.5,1)}
+.m-seg button{position:relative;z-index:1}
 .m-seg button{border:0;background:none;padding:9px 0;border-radius:10px;color:var(--muted);font:inherit;font-size:15px;cursor:pointer}
-.m-seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.m-seg button{transition:color .25s}.m-seg button[aria-pressed="true"]{color:var(--text);font-weight:600}
+.m-tabs-ind{position:absolute;top:6px;bottom:6px;left:6px;width:calc(50% - 8px);border-radius:999px;background:var(--accent-soft);transition:transform .42s cubic-bezier(.3,1.3,.5,1)}
+.m-tabs button{position:relative;z-index:1}
+@keyframes m-de-droite{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes m-de-gauche{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes m-fondu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.m-de-droite{animation:m-de-droite .34s cubic-bezier(.2,.8,.2,1) both}.m-de-gauche{animation:m-de-gauche .34s cubic-bezier(.2,.8,.2,1) both}.m-fondu{animation:m-fondu .3s ease-out both}
+.m-tabs button:active,.m-seg button:active,.m-photo:active,.m-btn:active,.m-ligne:active,.m-rond:active{transform:scale(.97)}
+.m-photo,.m-btn,.m-ligne,.m-rond{transition:transform .15s}
+@media (prefers-reduced-motion:reduce){.m-de-droite,.m-de-gauche,.m-fondu{animation:none}.m-seg-ind,.m-tabs-ind{transition:none}}
 .m-nav{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px}.m-nav b{font-size:20px;font-weight:600}
 .m-rond{width:44px;height:44px;border-radius:50%;border:0;background:var(--surface);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer}.m-rond:disabled{opacity:.3;cursor:default}
 .m-tuiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;margin:0 0 14px}
 .m-tuiles div{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}.m-tuiles small{display:block;font-size:14px;color:var(--muted)}.m-tuiles b{font-size:24px;font-weight:600}
 .m-barre{display:block;height:5px;margin-top:6px;border-radius:3px;background:var(--accent-2)}.m-barre.in{background:var(--pos)}
 .m-tabs{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:4px;width:min(300px,calc(100% - 48px));padding:6px;border-radius:999px;background:color-mix(in srgb,var(--surface) 82%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);border:1px solid color-mix(in srgb,var(--line) 70%,transparent);box-shadow:0 10px 30px rgba(43,24,34,.16),0 2px 6px rgba(43,24,34,.08)}
-.m-tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;border:0;border-radius:999px;background:none;color:var(--muted);font:inherit;font-size:11.5px;cursor:pointer;transition:background .2s,color .2s}.m-tabs button[aria-current]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.m-tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;border:0;border-radius:999px;background:none;color:var(--muted);font:inherit;font-size:11.5px;cursor:pointer;transition:background .2s,color .2s}.m-tabs button[aria-current]{color:var(--accent);font-weight:600}
 .m-retour{display:inline-flex;align-items:center;gap:4px;min-height:44px;margin:0 0 6px;padding:0 10px 0 0;border:0;background:none;color:var(--accent);font:inherit;font-size:17px;cursor:pointer}
 .m-tete{display:flex;flex-direction:column;align-items:center;gap:4px;margin:4px 0 18px;text-align:center}
 .m-tete .m-ic{width:56px;height:56px;border-radius:16px}.m-tete h1{font-size:24px}.m-tete .mt{font-size:34px;font-weight:700;letter-spacing:-.02em}.m-tete small{font-size:15px;color:var(--muted)}
@@ -1326,7 +1339,7 @@ function renderAll(){
   const m = $("#main");
   document.documentElement.classList.toggle("mobile", DEPOT);
   if(!S.data){ m.innerHTML = DEPOT ? vueBienvenueM() : vueBienvenue(); return; }
-  if(DEPOT){ m.innerHTML = vueMobile(); return; }
+  if(DEPOT){ m.innerHTML = vueMobile(); animerM(); return; }
   m.innerHTML = (({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab] || vueAccueil)();
   if(S.tab === "pieces") scanPieces(S.year);
 }
@@ -3066,7 +3079,7 @@ const MOTS = {"Charges refacturées":"Charges payées par le locataire", "Autre 
 const mot = n => MOTS[n] || n || "Autre";
 const ICM = {maison:'M4 11l8-6 8 6v9H4z', banque:'M3 10l9-5 9 5M5 10v8M19 10v8M9 10v8M15 10v8M3 20h18', immeuble:'M5 21V4h10v17M15 9h4v12M8 8h3M8 12h3M8 16h3',
   doc:'M6 3h9l4 4v14H6zM9 12h6M9 16h6', ticket:'M6 3h12v18l-3-2-3 2-3-2-3 2zM9 8h6M9 12h6', photo:'M4 8h3l2-3h6l2 3h3v11H4zM15.5 13a3.5 3.5 0 1 1-7 0 3.5 3.5 0 0 1 7 0z',
-  liste:'M5 7h14M5 12h14M5 17h9', gauche:'M15 6l-6 6 6 6', droite:'M9 6l6 6-6 6', trombone:'M16 8l-6.5 6.5a2 2 0 0 0 3 3L19 11a4 4 0 0 0-6-6l-7 7a6 6 0 0 0 9 9l5-5'};
+  liste:'M5 7h14M5 12h14M5 17h9', maj:'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7', gauche:'M15 6l-6 6 6 6', droite:'M9 6l6 6-6 6', trombone:'M16 8l-6.5 6.5a2 2 0 0 0 3 3L19 11a4 4 0 0 0-6-6l-7 7a6 6 0 0 0 9 9l5-5'};
 const svgM = (k, t = 20, ep = 1.8) => `<svg width="${t}" height="${t}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${ep}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${ICM[k]}"/></svg>`;
 const eurM = n => Math.abs(n % 1) < 0.005 ? eur0(n) : eur(n);
 const dateM = (d, o = {day:"numeric", month:"long"}) => { const [y, m, j] = d.split("-").map(Number); return new Date(y, m - 1, j).toLocaleDateString("fr-FR", o); };
@@ -3110,11 +3123,28 @@ function etatM(o){
 const manquantesM = () => Object.keys(S.data.exercices).map(Number).filter(y => !isHistorique(y) && !verrouille(y))
   .flatMap(y => aDeposer(y)).sort((a, b) => b.date.localeCompare(a.date));
 
+/* Animations : chaque bascule (onglet, regroupement, période, profondeur d'écran) compare la valeur affichée à la précédente.
+   Le contenu arrive du côté où l'on va ; les curseurs partent de l'ancienne position (data-vers, appliqué après le rendu). */
+function basculeM(cle, val, rang){
+  const vu = S.m.vu ??= {}, avant = cle in vu ? vu[cle] : val; vu[cle] = val;
+  if(avant === val) return {avant, cls:""};
+  const a = rang(avant), b = rang(val);
+  return {avant, cls: a === b ? "m-fondu" : b > a ? "m-de-droite" : "m-de-gauche"};
+}
+function animerM(){
+  const ind = document.querySelectorAll("#main [data-vers], .m-tabs [data-vers]");
+  if(!ind.length) return;
+  void document.body.offsetWidth; // l'ancienne position est posée avant la transition
+  ind.forEach(el => { el.style.transform = el.dataset.vers; });
+}
 function vueMobile(){
   const t = S.tab === "ops" ? "ops" : "depot";
+  const prof = S.pieceIPhone ? 3 : S.m.op ? 2 : t === "ops" && S.m.fourn ? 1 : 0;
+  const bt = basculeM("tab", t, v => v === "ops" ? 1 : 0), bp = basculeM("profondeur", prof, v => v);
   const ecran = S.pieceIPhone ? vueDeposerM() : S.m.op ? vueFicheM() : t === "ops" ? (S.m.fourn ? vueFournDetailM() : S.m.mode === "fourn" ? vueFournM() : vueMoisM()) : vueJustifM();
   const onglet = (k, l, ic) => `<button onclick="ongletM('${k}')" ${t === k ? 'aria-current="page"' : ""}>${svgM(ic, 24, t === k ? 1.9 : 1.7)}${l}</button>`;
-  return `<div class="mob">${ecran}</div>${S.pieceIPhone ? "" : `<nav class="m-tabs" aria-label="Onglets">${onglet("depot", "Justificatifs", "photo")}${onglet("ops", "Mes opérations", "liste")}</nav>`}`;
+  const pos = v => v === "ops" ? "translateX(calc(100% + 4px))" : "translateX(0)";
+  return `<div class="mob ${bt.cls || bp.cls}">${ecran}</div>${S.pieceIPhone ? "" : `<nav class="m-tabs" aria-label="Onglets"><span class="m-tabs-ind" style="transform:${pos(bt.avant === t ? t : bt.avant)}" data-vers="${pos(t)}"></span>${onglet("depot", "Justificatifs", "photo")}${onglet("ops", "Mes opérations", "liste")}</nav>`}`;
 }
 function ongletM(k){ S.tab = k; S.m.op = S.m.fourn = null; renderAll(); haut(); }
 const ligneM = (o, clic) => { const et = etatM(o);
@@ -3123,40 +3153,33 @@ const ligneM = (o, clic) => { const et = etatM(o);
     <span class="mt ${o.entree ? "in" : ""}">${o.entree ? "+" : "−"}${eurM(o.montant)}</span></button>`; };
 
 const logoM = () => $(".topbar .logo")?.outerHTML.replace('class="logo"', 'class="logo" aria-hidden="true"') || "";
-const marqueM = () => `<div class="m-marque">${logoM()}<span>${esc(S.data.dossier.nom || "")}</span></div>`;
+const marqueM = () => `<div class="m-marque">${logoM()}<button class="m-maj" onclick="ouvrirFichier()" title="Rouvrir le fichier après une saisie sur l'ordinateur"><span>${esc(S.data.dossier.nom || "")}</span>${svgM("maj", 16, 2)}</button></div>`;
 /* Accueil sur iPhone, avant d'ouvrir le dossier */
 function vueBienvenueM(){
   const m = dossierMemorise();
   return `<div class="m-accueil mob"><div class="m-vitrine">${logoM()}</div>
     <div class="m-hero"><h1>Votre location meublée, dans la poche</h1>
-      <p>Le Carnet garde vos factures et vous montre ce qui entre et ce qui sort. Rien n'est envoyé sur internet.</p>
-      <ul class="m-points"><li><span class="m-ic">${svgM("photo")}</span>Prendre une facture en photo</li><li><span class="m-ic in">${svgM("liste")}</span>Voir ses opérations, mois par mois</li></ul></div>
+      <p>Vos factures et vos opérations, sans rien envoyer sur internet.</p></div>
     <div class="m-actions">
-      ${m ? `<button class="m-btn deux" onclick="reprendreMemorise()">Reprendre « ${esc(m.nom)} »<small>version du ${esc(m.le)}</small></button>` : ""}
-      <button class="m-btn ${m ? "sec" : ""}" onclick="ouvrirFichier()">${m ? "Ouvrir une version plus récente" : "Ouvrir mon dossier"}</button>
-      <p class="m-note" style="text-align:center;margin:2px 0 0">Choisissez <b>${FILE}</b>, dans le dossier du Carnet sur iCloud Drive.</p>
+      ${m ? `<button class="m-btn deux" onclick="reprendreMemorise()">Reprendre « ${esc(m.nom)} »<small>${esc(m.le)}</small></button>` : ""}
+      <button class="m-btn ${m ? "sec" : ""}" onclick="ouvrirFichier()">${m ? "Rouvrir le fichier" : "Ouvrir mon dossier"}</button>
+      <p class="m-note" style="text-align:center;margin:2px 0 0"><b>${FILE}</b>, sur iCloud Drive</p>
     </div></div>`;
 }
 /* ---- Justificatifs ---- */
 function vueJustifM(){
-  const manq = manquantesM(), vus = S.m.tout ? manq : manq.slice(0, 4), m = dossierMemorise();
-  const nDep = Object.keys(deposees()).length + autresDeposees().length;
+  const manq = manquantesM(), vus = S.m.tout ? manq : manq.slice(0, 4);
   return `${marqueM()}
   <h1>Justificatifs</h1>
-  <p class="m-intro">Prenez en photo une facture ou un ticket : Le Carnet la range pour vous.</p>
-  <button class="m-photo" onclick="photoM()">${svgM("photo", 40, 1.6)}<b>Prendre une photo</b><small>ou choisir un PDF</small></button>
-  <button class="m-lien" style="display:block;margin:8px auto 0" onclick="scanM()">Plusieurs pages ? Scannez avec l'iPhone</button>
+  <button class="m-photo" onclick="photoM()">${svgM("photo", 40, 1.6)}<b>Prendre une photo</b></button>
   ${manq.length ? `<h2>Il manque la facture de…</h2>
     <div class="m-liste">${vus.map(e => `<button class="m-ligne" onclick="photoM('${e.id}')"><span class="tx"><b>${esc(e.tiers || mot(e.nature))}</b><small>${esc(mot(e.nature))}, le ${dateM(e.date)}</small></span>
       <span class="mt">${eurM(e.montant)}</span><span class="m-chev">${svgM("droite", 18, 2)}</span></button>`).join("")}</div>
-    ${manq.length > vus.length ? `<button class="m-lien" onclick="S.m.tout=true;renderAll()">Et ${manq.length - vus.length} autre${pl(manq.length - vus.length)}, plus ancienne${pl(manq.length - vus.length)} : tout voir</button>` : ""}`
+    ${manq.length > vus.length ? `<button class="m-lien" onclick="S.m.tout=true;renderAll()">Tout voir (${manq.length})</button>` : ""}`
   : `<div class="m-ok"><span class="m-ok-ic"><svg width="44" height="44" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg><i></i><i></i><i></i></span>
-      <b>Tout est en ordre</b><small>Aucune facture ne manque. Pensez à photographier les prochaines dès que vous les recevez.</small></div>`}
-  ${nDep ? `<p class="m-note">${nDep} photo${pl(nDep)} déposée${pl(nDep)} depuis cet iPhone : l'ordinateur les rattachera à la prochaine ouverture du dossier.</p>` : ""}
-  <p class="m-note m-version">Dossier ouvert le ${esc(m?.le || "–")}. <button class="m-lien" onclick="ouvrirFichier()">Rouvrir le fichier</button> après une saisie sur l'ordinateur.</p>`;
+      <b>Tout est en ordre</b><small>Aucune facture ne manque.</small></div>`}
+`;
 }
-/* Le scanner de documents d'iOS n'est pas accessible à une page web : on l'utilise depuis l'app Fichiers, directement dans « A ranger » */
-function scanM(){ avertir(`1. Ouvrez l'app Fichiers, puis le dossier du Carnet sur iCloud Drive, et le dossier « ${A_RANGER} ».\n2. Touchez ⋯ en haut à droite, puis « Scanner des documents ».\n3. Cadrez chaque page, puis touchez « Enregistrer ».\n\nLe scan est enregistré en PDF dans « ${A_RANGER} ». À la prochaine ouverture du dossier, l'ordinateur vous demandera à quelle dépense il correspond.`, "Scanner avec l'iPhone"); }
 /* Safari n'ouvre le choix du fichier que dans le geste de l'utilisateur : le champ est créé et ouvert sans attente */
 function photoM(id){
   const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*,.pdf";
@@ -3172,21 +3195,19 @@ function vueDeposerM(){
   let vus = P.tout ? manq : manq.slice(0, 5);
   if(P.cible && !vus.some(e => e.id === P.cible)){ const c = manq.find(e => e.id === P.cible) || findEcr(P.cible); if(c) vus = [c, ...vus]; }
   const choix = (v, titre, sous) => `<label class="${P.cible === v ? "on" : ""}"><input type="radio" name="cible" value="${v}" ${P.cible === v ? "checked" : ""} onchange="S.pieceIPhone.cible=this.value;renderAll()">
-    <span class="tx"><b>${titre}</b><small>${sous}</small></span></label>`;
+    <span class="tx"><b>${titre}</b>${sous ? `<small>${sous}</small>` : ""}</span></label>`;
   const premiere = !pref("dejaRange");
   return `<button class="m-retour" onclick="annulerPhotoM()">Annuler</button>
   <div class="m-depot-tete"><div class="m-vignette">${P.url ? `<img src="${P.url}" alt="">` : svgM("doc", 32, 1.6)}</div>
     <div><h1>C'est pour quelle dépense ?</h1><button class="m-lien" onclick="photoM()">Reprendre la photo</button></div></div>
-  <div class="m-liste m-choix">${vus.map(e => choix(e.id, `${esc(e.tiers || mot(e.nature))} · ${eurM(e.montant)}`, `${esc(mot(e.nature))}, payé le ${dateM(e.date)}`)).join("")}
-    ${choix("", "Une autre dépense", "pas encore sur le relevé de la banque")}</div>
-  ${manq.length > vus.length ? `<button class="m-lien" onclick="S.pieceIPhone.tout=true;renderAll()">Voir les ${manq.length - vus.length} autres dépenses sans facture</button>` : ""}
-  ${P.cible ? "" : `<label class="m-champ">C'est quoi ?<input id="mLib" value="${esc(P.libelle)}" placeholder="Ticket Ikea, facture du plombier…" oninput="S.pieceIPhone.libelle=this.value" autocomplete="off"></label>
-    <label class="m-champ">Combien ? (facultatif)<input id="mMt" value="${esc(P.montant)}" inputmode="decimal" placeholder="0,00 €" oninput="S.pieceIPhone.montant=this.value" autocomplete="off"></label>`}
+  <div class="m-liste m-choix">${vus.map(e => choix(e.id, `${esc(e.tiers || mot(e.nature))} · ${eurM(e.montant)}`, dateM(e.date))).join("")}
+    ${choix("", "Une autre dépense", "")}</div>
+  ${manq.length > vus.length ? `<button class="m-lien" onclick="S.pieceIPhone.tout=true;renderAll()">Tout voir (${manq.length})</button>` : ""}
+  ${P.cible ? "" : `<label class="m-champ">C'est quoi ?<input id="mLib" value="${esc(P.libelle)}" placeholder="Ticket Ikea…" oninput="S.pieceIPhone.libelle=this.value" autocomplete="off"></label>
+    <label class="m-champ">Combien ?<input id="mMt" value="${esc(P.montant)}" inputmode="decimal" placeholder="0,00 €" oninput="S.pieceIPhone.montant=this.value" autocomplete="off"></label>`}
   <div class="m-pied">
-    ${premiere ? `<ol class="m-etapes"><li>Touchez « Ranger le justificatif ».</li><li>Dans la fenêtre qui s'ouvre, touchez « Enregistrer dans Fichiers ».</li>
-      <li>Allez dans le dossier du Carnet (celui qui contient <code>${FILE}</code>), puis dans « ${A_RANGER} ».</li><li>Touchez « Enregistrer ». Les fois suivantes, l'iPhone sera déjà sur ce dossier.</li></ol>` : ""}
-    <button class="m-btn" onclick="rangerM()">Ranger le justificatif</button>
-    <p class="m-note" style="text-align:center;margin:8px 0 0">${premiere ? "L'ordinateur la classera et la rattachera tout seul." : `Puis « Enregistrer dans Fichiers » et « Enregistrer », dans « ${A_RANGER} ». L'ordinateur s'occupe du reste.`}</p>
+    ${premiere ? `<ol class="m-etapes"><li>« Enregistrer dans Fichiers »</li><li>Dossier du Carnet › « ${A_RANGER} »</li><li>« Enregistrer »</li></ol>` : ""}
+    <button class="m-btn" onclick="rangerM()">Ranger</button>
   </div>`;
 }
 function annulerPhotoM(){ if(S.pieceIPhone?.url) URL.revokeObjectURL(S.pieceIPhone.url); S.pieceIPhone = null; renderAll(); haut(); }
@@ -3211,7 +3232,7 @@ async function rangerM(){
   setPref("dejaRange", "1");
   if(P.url) URL.revokeObjectURL(P.url);
   S.pieceIPhone = null; renderAll(); haut();
-  toast("C'est rangé. L'ordinateur rattachera la pièce à la prochaine ouverture du dossier.");
+  toast("C'est rangé ✓");
 }
 /* Pièces déjà déposées depuis cet iPhone (le fichier de données, lui, n'est pas modifié) */
 function deposees(){ try{ return JSON.parse(pref("deposees", "{}")) || {}; }catch(_){ return {}; } }
@@ -3222,35 +3243,44 @@ function dossierMemorise(){ try{ return JSON.parse(localStorage.getItem("dossier
 function reprendreMemorise(){ const m = dossierMemorise(); if(!m) return; try{ chargerDonnees(m.obj, m.fichier); }catch(e){ avertir(e.message); } }
 
 /* ---- Mes opérations ---- */
-const segM = () => `${marqueM()}<h1>Mes opérations</h1><div class="m-seg" role="group" aria-label="Regrouper">
-  <button aria-pressed="${S.m.mode === "mois"}" onclick="S.m.mode='mois';renderAll()">Par mois</button><button aria-pressed="${S.m.mode === "fourn"}" onclick="S.m.mode='fourn';renderAll()">Par fournisseur</button></div>`;
+/* Choix Par mois / Par fournisseur : le curseur glisse vers le choix, le contenu arrive du même côté. Changer de mois ou d'année fait glisser la liste. */
+function segM(corps, periode){
+  const b = basculeM("mode", S.m.mode, v => v === "fourn" ? 1 : 0), p = basculeM("periode:" + S.m.mode, periode, v => String(v));
+  const pos = v => v === "fourn" ? "translateX(100%)" : "translateX(0)";
+  return `${marqueM()}<h1>Mes opérations</h1><div class="m-seg" role="group" aria-label="Regrouper"><span class="m-seg-ind" style="transform:${pos(b.avant)}" data-vers="${pos(S.m.mode)}"></span>
+  <button aria-pressed="${S.m.mode === "mois"}" onclick="S.m.mode='mois';renderAll()">Par mois</button><button aria-pressed="${S.m.mode === "fourn"}" onclick="S.m.mode='fourn';renderAll()">Par fournisseur</button></div>
+  <div class="m-corps ${b.cls || p.cls}">${corps}</div>`;
+}
 const navM = (lib, prec, suiv, avant, apres) => `<div class="m-nav"><button class="m-rond" aria-label="${avant}" ${prec ? `onclick="${prec}"` : "disabled"}>${svgM("gauche", 20, 2.2)}</button>
   <b>${lib}</b><button class="m-rond" aria-label="${apres}" ${suiv ? `onclick="${suiv}"` : "disabled"}>${svgM("droite", 20, 2.2)}</button></div>`;
+const rienM = (titre, texte, ic = "liste") => `<div class="m-rien"><span class="m-rien-ic">${svgM(ic, 36, 1.6)}</span><b>${titre}</b>${texte ? `<small>${texte}</small>` : ""}</div>`;
 const tuilesM = L => { const rec = L.filter(o => o.entree).reduce((s, o) => s + o.montant, 0), dep = L.filter(o => !o.entree).reduce((s, o) => s + o.montant, 0);
   const r = `<div><small>Reçu</small><b class="in">${eurM(r2(rec))}</b></div>`, d = `<div><small>Dépensé</small><b>${eurM(r2(dep))}</b></div>`;
   return `<div class="m-tuiles">${rec && dep ? r + d : rec ? r : dep ? d : r + d}</div>`; };
 function vueMoisM(){
   const ops = opsM();
-  if(!ops.length) return segM() + `<div class="m-liste m-vide">Aucune opération pour l'instant.</div>`;
-  const mois = ops.map(o => o.date.slice(0, 7)), max = mois[0], min = mois[mois.length - 1], ce = aujourdhui().slice(0, 7);
-  if(!S.m.mois || S.m.mois < min || S.m.mois > max) S.m.mois = mois.find(k => k <= ce) || max;
+  if(!ops.length) return segM(rienM("Pas encore d'opération", ""));
+  // Un exercice ouvert mais encore vide (début d'année) reste consultable : on va jusqu'au mois en cours
+  const mois = ops.map(o => o.date.slice(0, 7)), ce = aujourdhui().slice(0, 7), anOuvert = !!exercice(yearOf(ce)) && !isHistorique(yearOf(ce));
+  const max = anOuvert && ce > mois[0] ? ce : mois[0], min = mois[mois.length - 1];
+  if(!S.m.mois || S.m.mois < min || S.m.mois > max) S.m.mois = anOuvert ? ce : (mois.find(k => k <= ce) || max);
   const k = S.m.mois, L = ops.filter(o => o.date.startsWith(k));
-  return segM() + navM(moisM(k), k > min && `S.m.mois='${decalerMois(k, -1)}';renderAll()`, k < max && `S.m.mois='${decalerMois(k, 1)}';renderAll()`, "Mois précédent", "Mois suivant")
-    + tuilesM(L) + (L.length ? `<div class="m-liste">${L.map(o => ligneM(o, `ficheM('${o.id}')`)).join("")}</div>` : `<div class="m-liste m-vide">Rien ce mois-ci.</div>`);
+  return segM(navM(moisM(k), k > min && `S.m.mois='${decalerMois(k, -1)}';renderAll()`, k < max && `S.m.mois='${decalerMois(k, 1)}';renderAll()`, "Mois précédent", "Mois suivant")
+    + (L.length ? tuilesM(L) + `<div class="m-liste">${L.map(o => ligneM(o, `ficheM('${o.id}')`)).join("")}</div>` : rienM("Rien ce mois-ci", "")), k);
 }
-const anneesM = ops => [...new Set(ops.map(o => yearOf(o.date)))].sort((a, b) => a - b);
+const anneesM = ops => [...new Set([...ops.map(o => yearOf(o.date)), ...Object.keys(S.data.exercices).map(Number).filter(y => !isHistorique(y))])].sort((a, b) => a - b);
 function anM(ops){ const ans = anneesM(ops); if(!ans.includes(S.m.an)) S.m.an = ans.includes(S.year) ? S.year : ans[ans.length - 1]; return ans; }
 function vueFournM(){
   const ops = opsM();
-  if(!ops.length) return segM() + `<div class="m-liste m-vide">Aucune opération pour l'instant.</div>`;
+  if(!ops.length) return segM(rienM("Pas encore d'opération", ""));
   const ans = anM(ops), y = S.m.an, i = ans.indexOf(y), L = ops.filter(o => yearOf(o.date) === y), F = {};
   for(const o of L){ const f = F[o.fourn] ??= {nom:o.fourn, n:0, total:0, entree:o.entree, icone:o.icone, manque:0}; f.n++; f.total += o.montant; if(etatM(o).manque) f.manque++; }
   const liste = Object.values(F).sort((a, b) => b.total - a.total), haut_ = Math.max(...liste.map(f => f.total), 1);
-  return segM() + navM(String(y), i > 0 && `S.m.an=${ans[i - 1]};renderAll()`, i < ans.length - 1 && `S.m.an=${ans[i + 1]};renderAll()`, "Année précédente", "Année suivante")
-    + tuilesM(L) + `<div class="m-liste">${liste.map(f => `<button class="m-ligne" onclick="S.m.fourn=${jsq(f.nom)};renderAll();haut()"><span class="m-ic ${f.entree ? "in" : ""}">${svgM(f.icone)}</span>
+  return segM(navM(String(y), i > 0 && `S.m.an=${ans[i - 1]};renderAll()`, i < ans.length - 1 && `S.m.an=${ans[i + 1]};renderAll()`, "Année précédente", "Année suivante")
+    + (!liste.length ? rienM(`Rien en ${y} pour l'instant`, "") : tuilesM(L)) + `<div class="m-liste" ${liste.length ? "" : "hidden"}>${liste.map(f => `<button class="m-ligne" onclick="S.m.fourn=${jsq(f.nom)};renderAll();haut()"><span class="m-ic ${f.entree ? "in" : ""}">${svgM(f.icone)}</span>
       <span class="tx"><b>${esc(f.nom)}</b><small class="${f.manque ? "manque" : ""}">${f.n} opération${pl(f.n)}${f.manque ? ` · ${f.manque} facture${pl(f.manque)} à ajouter` : ""}</small>
       <span class="m-barre ${f.entree ? "in" : ""}" style="width:${Math.max(4, Math.round(f.total / haut_ * 100))}%"></span></span>
-      <span class="mt ${f.entree ? "in" : ""}">${eurM(r2(f.total))}</span></button>`).join("")}</div>`;
+      <span class="mt ${f.entree ? "in" : ""}">${eurM(r2(f.total))}</span></button>`).join("")}</div>`, y);
 }
 function vueFournDetailM(){
   const L = opsM().filter(o => o.fourn === S.m.fourn && yearOf(o.date) === S.m.an);
@@ -3268,10 +3298,10 @@ function vueFicheM(){
   if(o.entree || o.pret) piece = "";
   else if(e.piece) piece = `<h2>Justificatif <span class="m-pastille">joint ✓</span></h2>
     <div class="m-liste m-piece"><span class="m-vignette petite">${svgM("trombone", 22, 1.7)}</span><span class="tx"><b>${esc(e.piece.split("/").pop())}</b><small>Le Carnet › ${esc(e.piece.split("/").slice(0, -1).join(" › "))}</small></span></div>
-    <p class="m-note">La pièce est bien rangée avec cette opération. Pour l'ouvrir, passez par l'ordinateur.</p>`;
-  else if(et.t === "photo déposée") piece = `<h2>Justificatif</h2><p class="m-note">Photo déposée depuis cet iPhone. Elle sera rattachée à la prochaine ouverture du dossier sur l'ordinateur.</p>`;
-  else if(et.manque) piece = `<h2>Justificatif</h2><p class="m-note">Il manque la facture de cette dépense.</p><button class="m-btn" onclick="photoM('${e.id}')">${svgM("photo", 20, 1.9)}Prendre la facture en photo</button>`;
-  else piece = `<p class="m-note">Pas besoin de justificatif pour ce type d'opération.</p>`;
+`;
+  else if(et.t === "photo déposée") piece = `<h2>Justificatif <span class="m-pastille">photo déposée</span></h2>`;
+  else if(et.manque)  piece = `<button class="m-btn" style="margin-top:18px" onclick="photoM('${e.id}')">${svgM("photo", 20, 1.9)}Prendre la facture en photo</button>`;
+  else piece = "";
   const lignes = o.pret ? o.parts.map(p => `<div class="m-kv"><span>${esc(mot(p.nature))}</span><span>${eurM(p.montant)}</span></div>`).join("")
     : `<div class="m-kv"><span>C'est quoi</span><span>${esc(mot(e.nature))}</span></div>${e.libelleBanque ? `<div class="m-kv"><span>Sur le relevé</span><span>${esc(e.libelleBanque)}</span></div>` : ""}`;
   return `<button class="m-retour" onclick="S.m.op=null;renderAll();haut()">${svgM("gauche", 18, 2.2)}${retour}</button>
