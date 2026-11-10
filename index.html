@@ -760,6 +760,9 @@ html.mobile body:has(.m-accueil) .app{background:transparent}
 .m-photo b{font-size:19px;font-weight:600}.m-photo small{font-size:14px;color:#EAD7D7}
 .m-liste{background:var(--surface);border:1px solid var(--line);border-radius:18px;overflow:hidden;margin:0 0 10px}
 .m-vide{padding:18px 16px;color:var(--muted)}
+.m-rien{display:flex;flex-direction:column;align-items:center;text-align:center;gap:6px;padding:34px 18px 10px}
+.m-rien-ic{width:88px;height:88px;margin-bottom:10px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:var(--accent);background:radial-gradient(circle at 30% 25%,var(--surface) 0%,var(--accent-soft) 70%);box-shadow:0 10px 28px rgba(109,70,107,.16)}
+.m-rien b{font-size:20px;font-weight:700}.m-rien small{font-size:15px;color:var(--muted);line-height:1.45;max-width:290px}
 .m-ligne{display:flex;align-items:center;gap:12px;width:100%;min-height:62px;padding:12px 16px;border:0;border-bottom:1px solid var(--line);background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer}
 .m-ligne:last-child,.m-liste>label:last-child,.m-kv:last-child{border-bottom:0}
 .mob .tx{flex:1;min-width:0;display:block}.mob .tx b{display:block;font-size:17px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mob .tx small{display:block;font-size:14px;color:var(--muted);line-height:1.35}
@@ -3226,30 +3229,31 @@ const segM = () => `${marqueM()}<h1>Mes opérations</h1><div class="m-seg" role=
   <button aria-pressed="${S.m.mode === "mois"}" onclick="S.m.mode='mois';renderAll()">Par mois</button><button aria-pressed="${S.m.mode === "fourn"}" onclick="S.m.mode='fourn';renderAll()">Par fournisseur</button></div>`;
 const navM = (lib, prec, suiv, avant, apres) => `<div class="m-nav"><button class="m-rond" aria-label="${avant}" ${prec ? `onclick="${prec}"` : "disabled"}>${svgM("gauche", 20, 2.2)}</button>
   <b>${lib}</b><button class="m-rond" aria-label="${apres}" ${suiv ? `onclick="${suiv}"` : "disabled"}>${svgM("droite", 20, 2.2)}</button></div>`;
+const rienM = (titre, texte, ic = "liste") => `<div class="m-rien"><span class="m-rien-ic">${svgM(ic, 36, 1.6)}</span><b>${titre}</b><small>${texte}</small></div>`;
 const tuilesM = L => { const rec = L.filter(o => o.entree).reduce((s, o) => s + o.montant, 0), dep = L.filter(o => !o.entree).reduce((s, o) => s + o.montant, 0);
   const r = `<div><small>Reçu</small><b class="in">${eurM(r2(rec))}</b></div>`, d = `<div><small>Dépensé</small><b>${eurM(r2(dep))}</b></div>`;
   return `<div class="m-tuiles">${rec && dep ? r + d : rec ? r : dep ? d : r + d}</div>`; };
 function vueMoisM(){
   const ops = opsM();
-  if(!ops.length) return segM() + `<div class="m-liste m-vide">Aucune opération pour l'instant.</div>`;
+  if(!ops.length) return segM() + rienM("Pas encore d'opération", "Elles apparaîtront ici dès que le relevé de la banque sera saisi sur l'ordinateur.");
   // Un exercice ouvert mais encore vide (début d'année) reste consultable : on va jusqu'au mois en cours
   const mois = ops.map(o => o.date.slice(0, 7)), ce = aujourdhui().slice(0, 7), anOuvert = !!exercice(yearOf(ce)) && !isHistorique(yearOf(ce));
   const max = anOuvert && ce > mois[0] ? ce : mois[0], min = mois[mois.length - 1];
   if(!S.m.mois || S.m.mois < min || S.m.mois > max) S.m.mois = anOuvert ? ce : (mois.find(k => k <= ce) || max);
   const k = S.m.mois, L = ops.filter(o => o.date.startsWith(k));
   return segM() + navM(moisM(k), k > min && `S.m.mois='${decalerMois(k, -1)}';renderAll()`, k < max && `S.m.mois='${decalerMois(k, 1)}';renderAll()`, "Mois précédent", "Mois suivant")
-    + tuilesM(L) + (L.length ? `<div class="m-liste">${L.map(o => ligneM(o, `ficheM('${o.id}')`)).join("")}</div>` : `<div class="m-liste m-vide">Pas encore d'opération ce mois-ci. Elles apparaissent ici une fois le relevé saisi sur l'ordinateur.</div>`);
+    + (L.length ? tuilesM(L) + `<div class="m-liste">${L.map(o => ligneM(o, `ficheM('${o.id}')`)).join("")}</div>` : rienM("Rien ce mois-ci", k === aujourdhui().slice(0, 7) ? "Les opérations du mois apparaîtront ici dès que le relevé sera saisi sur l'ordinateur." : "Aucune opération n'a été enregistrée ce mois-là."));
 }
 const anneesM = ops => [...new Set([...ops.map(o => yearOf(o.date)), ...Object.keys(S.data.exercices).map(Number).filter(y => !isHistorique(y))])].sort((a, b) => a - b);
 function anM(ops){ const ans = anneesM(ops); if(!ans.includes(S.m.an)) S.m.an = ans.includes(S.year) ? S.year : ans[ans.length - 1]; return ans; }
 function vueFournM(){
   const ops = opsM();
-  if(!ops.length) return segM() + `<div class="m-liste m-vide">Aucune opération pour l'instant.</div>`;
+  if(!ops.length) return segM() + rienM("Pas encore d'opération", "Elles apparaîtront ici dès que le relevé de la banque sera saisi sur l'ordinateur.");
   const ans = anM(ops), y = S.m.an, i = ans.indexOf(y), L = ops.filter(o => yearOf(o.date) === y), F = {};
   for(const o of L){ const f = F[o.fourn] ??= {nom:o.fourn, n:0, total:0, entree:o.entree, icone:o.icone, manque:0}; f.n++; f.total += o.montant; if(etatM(o).manque) f.manque++; }
   const liste = Object.values(F).sort((a, b) => b.total - a.total), haut_ = Math.max(...liste.map(f => f.total), 1);
   return segM() + navM(String(y), i > 0 && `S.m.an=${ans[i - 1]};renderAll()`, i < ans.length - 1 && `S.m.an=${ans[i + 1]};renderAll()`, "Année précédente", "Année suivante")
-    + tuilesM(L) + (!liste.length ? `<div class="m-liste m-vide">Aucune opération en ${y} pour l'instant. Elles apparaissent ici une fois le relevé saisi sur l'ordinateur.</div>` : "") + `<div class="m-liste" ${liste.length ? "" : "hidden"}>${liste.map(f => `<button class="m-ligne" onclick="S.m.fourn=${jsq(f.nom)};renderAll();haut()"><span class="m-ic ${f.entree ? "in" : ""}">${svgM(f.icone)}</span>
+    + (!liste.length ? rienM(`Rien en ${y} pour l'instant`, "Les opérations de l'année apparaîtront ici dès que le relevé sera saisi sur l'ordinateur.") : tuilesM(L)) + `<div class="m-liste" ${liste.length ? "" : "hidden"}>${liste.map(f => `<button class="m-ligne" onclick="S.m.fourn=${jsq(f.nom)};renderAll();haut()"><span class="m-ic ${f.entree ? "in" : ""}">${svgM(f.icone)}</span>
       <span class="tx"><b>${esc(f.nom)}</b><small class="${f.manque ? "manque" : ""}">${f.n} opération${pl(f.n)}${f.manque ? ` · ${f.manque} facture${pl(f.manque)} à ajouter` : ""}</small>
       <span class="m-barre ${f.entree ? "in" : ""}" style="width:${Math.max(4, Math.round(f.total / haut_ * 100))}%"></span></span>
       <span class="mt ${f.entree ? "in" : ""}">${eurM(r2(f.total))}</span></button>`).join("")}</div>`;
