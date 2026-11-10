@@ -1152,7 +1152,9 @@ function chargerDonnees(obj, nom){
   S.data = normalize(obj); S.fileName = nom; S.autoMsg = DEPOT ? "Lecture seule · dépôt de pièces" : ""; S.sauvegardeSession = false; S.versionLue = obj.derniereModification || null; S.conflit = false;
   rattacherEcheanciers(); // à l'ouverture : rattaché en mémoire, sans marquer le dossier comme modifié
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b);
-  S.year = ys.filter(y=>!isHistorique(y)).pop() ?? ys.pop();
+  // L'exercice affiché à l'ouverture : le plus récent encore ouvert, sinon le plus récent
+  const detailles = ys.filter(y=>!isHistorique(y));
+  S.year = detailles.filter(y=>!verrouille(y)).pop() ?? detailles.pop() ?? ys.pop();
   if(DEPOT){ S.instantane = JSON.stringify(S.data); S.tab = "depot"; memoriserDossier(obj, nom); }
   appliquerLienGL();
   setDirty(false); renderAll();
@@ -1409,6 +1411,9 @@ function vueAccueil(){
     return entete(`${y}`, "Année reprise de l'ancien fichier Excel.") +
       `<div class="tuiles">${tuile("Loyers", eur0(h.loyers), {col:"var(--pos)"})}${tuile("Charges", eur0((h.chargesExternes||0)+(h.impotsTaxes||0)+(h.interets||0)))}${tuile("Amortissements", eur0(h.dotationsAmortissements), {col:"var(--accent)"})}${tuile("Résultat", eur0(h.resultat), {cls:"fort"})}</div>`;
   }
+  // Dernier exercice clôturé et l'année suivante commencée : proposer de l'ouvrir
+  const suivant = verrouille(y) && !exercice(y+1) && aujourdhui() >= `${y+1}-01-01` && !S.consultation
+    ? `<div class="alert info noprint" style="align-items:center;flex-wrap:wrap;gap:8px"><span>${y} est clôturé. Ouvrez ${y+1} pour y saisir les opérations de cette année.</span><button class="btn small" style="margin-left:auto" onclick="nouvelExercice()">Ouvrir ${y+1}</button></div>` : "";
   const f = fiscalJusqua(y), c = f.c, ex = exercice(y), es = ex.ecritures || [];
   const amortDeduits = f.dotDeductible + f.ardUtilise, rf = f.resultatFiscal;
   const tmi = S.data.dossier.simu?.tmi ?? 0.30, impot = Math.max(0, rf - f.deficitsImputes) * (tmi + PS_REVENUS);
@@ -1429,6 +1434,7 @@ function vueAccueil(){
   const enCours = y >= new Date().getFullYear() && ex.statut !== "cloture";
   const suivi = (p, centre, lib, page, col) => `<div class="suivi" role="button" tabindex="0" onclick="allerA('${page}')">${anneau(p, centre, col)}<span>${lib}</span></div>`;
   return `<div class="dash-head"><h1>${y}</h1>${ex.statut==="cloture"?'<span class="pill ok">clôturé</span>':enCours?'<span class="pill">en cours</span>':'<span class="pill warn">à déclarer</span>'}</div>
+    ${suivant}
     ${change?`<div class="alert bad">Résultat modifié depuis la clôture : ${eur0(snap.resultatFiscal)} déclarés, ${eur0(rf)} maintenant.</div>`:""}
     ${!c.lmnpActif?`<div class="alert info">Location meublée à partir du ${fmtDate(debutLMNP())}.</div>`:""}
     ${aFaire(y)}
