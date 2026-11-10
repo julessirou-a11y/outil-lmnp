@@ -748,7 +748,6 @@ html.mobile main{padding:calc(18px + env(safe-area-inset-top)) 16px calc(110px +
 .m-accueil{display:flex;flex-direction:column;min-height:calc(100dvh - 60px);max-width:440px;margin:0 auto}
 .m-accueil .logo{height:30px;width:auto;color:var(--text);align-self:flex-start}
 .m-hero{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:30px 0}
-.m-hero img{width:92px;height:92px;border-radius:22px;box-shadow:0 14px 34px rgba(65,34,52,.28)}
 .m-hero h1{margin:8px 0 0;font-size:32px;line-height:1.15;font-weight:700;letter-spacing:-.025em}.m-hero p{margin:0;font-size:17px;color:var(--muted);line-height:1.45}
 .m-points{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}.m-points li{display:flex;align-items:center;gap:12px;font-size:16px}.m-points .m-ic{width:36px;height:36px;border-radius:11px}
 .m-actions{display:flex;flex-direction:column;gap:10px;padding-bottom:env(safe-area-inset-bottom)}
@@ -3126,7 +3125,7 @@ const marqueM = () => `<div class="m-marque">${logoM()}<span>${esc(S.data.dossie
 function vueBienvenueM(){
   const m = dossierMemorise();
   return `<div class="m-accueil mob">${logoM()}
-    <div class="m-hero"><img src="icone-512.png" alt=""><h1>Votre location meublée, dans la poche</h1>
+    <div class="m-hero"><h1>Votre location meublée, dans la poche</h1>
       <p>Le Carnet garde vos factures et vous montre ce qui entre et ce qui sort. Rien n'est envoyé sur internet.</p>
       <ul class="m-points"><li><span class="m-ic">${svgM("photo")}</span>Prendre une facture en photo</li><li><span class="m-ic in">${svgM("liste")}</span>Voir ses opérations, mois par mois</li></ul></div>
     <div class="m-actions">
