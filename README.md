@@ -18,7 +18,7 @@ Ce dépôt ne contient **que le code**. Les données comptables sont dans un fic
 
 **Ne jamais ajouter de fichier `.json` de données dans ce dépôt.**
 
-La police (IBM Plex Sans, licence SIL OFL 1.1) est servie depuis `polices/` : la page ne contacte aucun service tiers à l'ouverture. Seule la lecture d'un PDF charge la bibliothèque pdf.js depuis jsDelivr (le PDF lui-même reste sur l'appareil). Le site demande aux moteurs de recherche de ne pas l'indexer (`noindex`).
+La police (IBM Plex Sans, licence SIL OFL 1.1) est servie depuis `polices/`, et le lecteur de PDF (pdf.js 4.10.38, licence Apache 2.0) depuis `pdfjs/` : la page ne contacte aucun service tiers. Une politique de sécurité (CSP) interdit au navigateur de charger un script ou d'envoyer des données vers un autre site. Le site demande aux moteurs de recherche de ne pas l'indexer (`noindex`).
 
 ## Utilisation
 
