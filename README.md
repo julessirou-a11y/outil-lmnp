@@ -23,8 +23,8 @@ La police (IBM Plex Sans, licence SIL OFL 1.1) est servie depuis `polices/`, et 
 ## Utilisation
 
 - **Mac, Chrome ou Edge** : bouton « Ouvrir le dossier LMNP… », puis choisir le dossier iCloud. Chaque enregistrement met à jour le fichier et ajoute une copie datée dans `Sauvegardes/`.
-- **Safari, iPhone** : consultation et impression ; l'enregistrement télécharge le fichier, qu'il faut ensuite replacer dans le dossier iCloud.
+- **Safari, iPhone** : une version à part, en deux onglets. « Justificatifs » : prendre une facture en photo et la ranger, par la feuille de partage (« Enregistrer dans Fichiers »), dans le dossier `A ranger` du dossier LMNP. « Mes opérations » : les opérations par mois ou par fournisseur, et la fiche de chacune. L'iPhone ne modifie jamais le fichier de données.
 
-Les pièces se déposent sur la page Pièces, ou directement dans `Justificatifs/<année>/` (app Fichiers de l'iPhone) : l'outil les y retrouve, reconnaît les factures électroniques et propose de rattacher le reste. Rien n'est envoyé sur internet.
+Les pièces se déposent sur la page Pièces, dans `A ranger/` depuis l'iPhone (l'ordinateur les classe dans `Justificatifs/<année>/` à l'ouverture), ou directement dans `Justificatifs/<année>/` : l'outil les y retrouve, reconnaît les factures électroniques et propose de rattacher le reste. Rien n'est envoyé sur internet.
 
 Les montants produits sont à vérifier avant chaque déclaration.
