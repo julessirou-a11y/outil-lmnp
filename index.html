@@ -746,9 +746,10 @@ html.mobile main{padding:calc(18px + env(safe-area-inset-top)) 16px calc(110px +
 .m-ok-ic i{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--accent-2)}.m-ok-ic i:nth-child(2){top:-6px;right:2px}.m-ok-ic i:nth-child(3){bottom:4px;left:-10px;width:7px;height:7px;background:var(--pos)}.m-ok-ic i:nth-child(4){top:20px;left:-16px;width:5px;height:5px}
 .m-ok b{font-size:20px;font-weight:700}.m-ok small{font-size:15px;color:var(--muted);line-height:1.45;max-width:280px}
 .m-accueil{display:flex;flex-direction:column;min-height:calc(100dvh - 60px);max-width:440px;margin:0 auto}
-.m-vitrine{position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:210px;border-radius:30px;background:linear-gradient(150deg,#412234 0%,#6D466B 62%,#8E6A9A 100%);box-shadow:0 18px 40px rgba(65,34,52,.28);--accent:#EAD7D7;--accent-2:#B49FCC}
-.m-vitrine .logo{position:relative;height:62px;width:auto;color:#fff}
-.m-vitrine i{position:absolute;border-radius:50%;background:rgba(255,255,255,.08)}.m-vitrine i:nth-child(1){width:220px;height:220px;top:-90px;right:-70px}.m-vitrine i:nth-child(2){width:150px;height:150px;bottom:-70px;left:-40px;background:rgba(180,159,204,.18)}.m-vitrine i:nth-child(3){width:14px;height:14px;top:34px;left:40px;background:rgba(234,215,215,.55)}
+.m-vitrine{display:flex;justify-content:flex-start;padding:6vh 0 0}
+.m-vitrine .logo{height:64px;width:auto;color:var(--text)}
+html.mobile body:has(.m-accueil){background:radial-gradient(120% 60% at 0% 0%,var(--accent-soft) 0%,transparent 70%),var(--bg);background-attachment:fixed}
+html.mobile body:has(.m-accueil) .app{background:transparent}
 .m-hero{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;padding:26px 0}
 .m-hero h1{margin:8px 0 0;font-size:32px;line-height:1.15;font-weight:700;letter-spacing:-.025em}.m-hero p{margin:0;font-size:17px;color:var(--muted);line-height:1.45}
 .m-points{list-style:none;margin:6px 0 0;padding:0;display:flex;flex-direction:column;gap:10px}.m-points li{display:flex;align-items:center;gap:12px;font-size:16px}.m-points .m-ic{width:36px;height:36px;border-radius:11px}
@@ -3126,7 +3127,7 @@ const marqueM = () => `<div class="m-marque">${logoM()}<span>${esc(S.data.dossie
 /* Accueil sur iPhone, avant d'ouvrir le dossier */
 function vueBienvenueM(){
   const m = dossierMemorise();
-  return `<div class="m-accueil mob"><div class="m-vitrine" aria-label="Le Carnet"><i></i><i></i><i></i>${logoM()}</div>
+  return `<div class="m-accueil mob"><div class="m-vitrine">${logoM()}</div>
     <div class="m-hero"><h1>Votre location meublée, dans la poche</h1>
       <p>Le Carnet garde vos factures et vous montre ce qui entre et ce qui sort. Rien n'est envoyé sur internet.</p>
       <ul class="m-points"><li><span class="m-ic">${svgM("photo")}</span>Prendre une facture en photo</li><li><span class="m-ic in">${svgM("liste")}</span>Voir ses opérations, mois par mois</li></ul></div>
