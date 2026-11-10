@@ -773,16 +773,18 @@ html.mobile body:has(.m-accueil) .app{background:transparent}
 .m-lien{border:0;background:none;padding:6px 0;min-height:36px;color:var(--accent);font:inherit;font-size:15px;text-align:left;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .m-note{margin:10px 0;font-size:14px;color:var(--muted);line-height:1.45}
 .m-seg{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:3px;margin:14px 0 16px;border-radius:12px;background:var(--line)}
-.m-seg-ind{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:10px;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.1);transition:transform .38s cubic-bezier(.3,1.25,.5,1)}
+.m-seg-ind{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:10px;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.1);transition:transform .32s cubic-bezier(.25,.8,.25,1);will-change:transform}
 .m-seg button{position:relative;z-index:1}
 .m-seg button{border:0;background:none;padding:9px 0;border-radius:10px;color:var(--muted);font:inherit;font-size:15px;cursor:pointer}
 .m-seg button{transition:color .25s}.m-seg button[aria-pressed="true"]{color:var(--text);font-weight:600}
-.m-tabs-ind{position:absolute;top:6px;bottom:6px;left:6px;width:calc(50% - 8px);border-radius:999px;background:var(--accent-soft);transition:transform .42s cubic-bezier(.3,1.3,.5,1)}
+.m-tabs-ind{position:absolute;top:6px;bottom:6px;left:6px;width:calc(50% - 8px);border-radius:999px;background:var(--accent-soft);transition:transform .32s cubic-bezier(.25,.8,.25,1);will-change:transform}
 .m-tabs button{position:relative;z-index:1}
-@keyframes m-de-droite{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
-@keyframes m-de-gauche{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
-@keyframes m-fondu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-.m-de-droite{animation:m-de-droite .34s cubic-bezier(.2,.8,.2,1) both}.m-de-gauche{animation:m-de-gauche .34s cubic-bezier(.2,.8,.2,1) both}.m-fondu{animation:m-fondu .3s ease-out both}
+@keyframes m-de-droite{from{opacity:0;transform:translate3d(16px,0,0)}to{opacity:1;transform:none}}
+@keyframes m-de-gauche{from{opacity:0;transform:translate3d(-16px,0,0)}to{opacity:1;transform:none}}
+@keyframes m-fondu{from{opacity:0}to{opacity:1}}
+.m-de-droite{animation:m-de-droite .26s cubic-bezier(.25,.8,.25,1) both}.m-de-gauche{animation:m-de-gauche .26s cubic-bezier(.25,.8,.25,1) both}.m-fondu{animation:m-fondu .2s ease-out both}
+html.mobile main{overflow-x:clip}
+.m-tabs[hidden]{display:none}
 .m-tabs button:active,.m-seg button:active,.m-photo:active,.m-btn:active,.m-ligne:active,.m-rond:active{transform:scale(.97)}
 .m-photo,.m-btn,.m-ligne,.m-rond{transition:transform .15s}
 @media (prefers-reduced-motion:reduce){.m-de-droite,.m-de-gauche,.m-fondu{animation:none}.m-seg-ind,.m-tabs-ind{transition:none}}
@@ -1338,8 +1340,8 @@ function renderAll(){
   ajusterMenu();
   const m = $("#main");
   document.documentElement.classList.toggle("mobile", DEPOT);
-  if(!S.data){ m.innerHTML = DEPOT ? vueBienvenueM() : vueBienvenue(); return; }
-  if(DEPOT){ m.innerHTML = vueMobile(); animerM(); return; }
+  if(!S.data){ if(DEPOT) tabsM(null); m.innerHTML = DEPOT ? vueBienvenueM() : vueBienvenue(); return; }
+  if(DEPOT){ m.innerHTML = vueMobile(); tabsM(S.pieceIPhone ? null : S.tab === "ops" ? "ops" : "depot"); return; }
   m.innerHTML = (({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab] || vueAccueil)();
   if(S.tab === "pieces") scanPieces(S.year);
 }
@@ -3124,28 +3126,46 @@ const manquantesM = () => Object.keys(S.data.exercices).map(Number).filter(y => 
   .flatMap(y => aDeposer(y)).sort((a, b) => b.date.localeCompare(a.date));
 
 /* Animations : chaque bascule (onglet, regroupement, période, profondeur d'écran) compare la valeur affichée à la précédente.
-   Le contenu arrive du côté où l'on va ; les curseurs partent de l'ancienne position (data-vers, appliqué après le rendu). */
+   Le contenu arrive du côté où l'on va ; les curseurs glissent parce que leurs éléments restent en place (tabsM, majPartielleM). */
 function basculeM(cle, val, rang){
   const vu = S.m.vu ??= {}, avant = cle in vu ? vu[cle] : val; vu[cle] = val;
   if(avant === val) return {avant, cls:""};
   const a = rang(avant), b = rang(val);
   return {avant, cls: a === b ? "m-fondu" : b > a ? "m-de-droite" : "m-de-gauche"};
 }
-function animerM(){
-  const ind = document.querySelectorAll("#main [data-vers], .m-tabs [data-vers]");
-  if(!ind.length) return;
-  void document.body.offsetWidth; // l'ancienne position est posée avant la transition
-  ind.forEach(el => { el.style.transform = el.dataset.vers; });
-}
 function vueMobile(){
   const t = S.tab === "ops" ? "ops" : "depot";
   const prof = S.pieceIPhone ? 3 : S.m.op ? 2 : t === "ops" && S.m.fourn ? 1 : 0;
-  const bt = basculeM("tab", t, v => v === "ops" ? 1 : 0), bp = basculeM("profondeur", prof, v => v);
+  const bt = basculeM("tab", t, () => 0), bp = basculeM("profondeur", prof, v => v);
   const ecran = S.pieceIPhone ? vueDeposerM() : S.m.op ? vueFicheM() : t === "ops" ? (S.m.fourn ? vueFournDetailM() : S.m.mode === "fourn" ? vueFournM() : vueMoisM()) : vueJustifM();
-  const onglet = (k, l, ic) => `<button onclick="ongletM('${k}')" ${t === k ? 'aria-current="page"' : ""}>${svgM(ic, 24, t === k ? 1.9 : 1.7)}${l}</button>`;
-  const pos = v => v === "ops" ? "translateX(calc(100% + 4px))" : "translateX(0)";
-  return `<div class="mob ${bt.cls || bp.cls}">${ecran}</div>${S.pieceIPhone ? "" : `<nav class="m-tabs" aria-label="Onglets"><span class="m-tabs-ind" style="transform:${pos(bt.avant === t ? t : bt.avant)}" data-vers="${pos(t)}"></span>${onglet("depot", "Justificatifs", "photo")}${onglet("ops", "Mes opérations", "liste")}</nav>`}`;
+  return `<div class="mob ${bp.cls || bt.cls}">${ecran}</div>`;
 }
+/* Barre d'onglets : créée une seule fois puis seulement mise à jour, pour que le curseur glisse sans que la barre soit redessinée */
+function tabsM(t){
+  let nav = document.querySelector(".m-tabs");
+  if(!nav){
+    nav = document.createElement("nav"); nav.className = "m-tabs noprint"; nav.setAttribute("aria-label", "Onglets");
+    nav.innerHTML = `<span class="m-tabs-ind"></span><button data-t="depot" onclick="ongletM('depot')">${svgM("photo", 24, 1.8)}Justificatifs</button><button data-t="ops" onclick="ongletM('ops')">${svgM("liste", 24, 1.8)}Mes opérations</button>`;
+    document.body.appendChild(nav);
+  }
+  nav.hidden = !t;
+  if(!t) return;
+  nav.querySelectorAll("button").forEach(b => b.dataset.t === t ? b.setAttribute("aria-current", "page") : b.removeAttribute("aria-current"));
+  nav.querySelector(".m-tabs-ind").style.transform = t === "ops" ? "translateX(calc(100% + 4px))" : "translateX(0)";
+}
+/* Changement de regroupement ou de période : seul le contenu sous le sélecteur est remplacé, le sélecteur reste en place et son curseur glisse */
+function majPartielleM(){
+  const ancien = document.querySelector("#main .m-corps"), seg = document.querySelector("#main .m-seg");
+  if(!ancien || !seg){ renderAll(); return; }
+  const tmp = document.createElement("div"); tmp.innerHTML = vueMobile();
+  const neuf = tmp.querySelector(".m-corps"), segN = tmp.querySelector(".m-seg");
+  if(!neuf || !segN){ renderAll(); return; }
+  const bs = segN.querySelectorAll("button");
+  seg.querySelectorAll("button").forEach((b, i) => b.setAttribute("aria-pressed", bs[i].getAttribute("aria-pressed")));
+  seg.querySelector(".m-seg-ind").style.transform = segN.querySelector(".m-seg-ind").style.transform;
+  ancien.replaceWith(neuf);
+}
+function choisirModeM(mode){ if(S.m.mode === mode) return; S.m.mode = mode; majPartielleM(); }
 function ongletM(k){ S.tab = k; S.m.op = S.m.fourn = null; renderAll(); haut(); }
 const ligneM = (o, clic) => { const et = etatM(o);
   return `<button class="m-ligne" onclick="${clic}"><span class="m-ic ${o.entree ? "in" : ""}">${svgM(o.icone)}</span>
@@ -3247,8 +3267,8 @@ function reprendreMemorise(){ const m = dossierMemorise(); if(!m) return; try{ c
 function segM(corps, periode){
   const b = basculeM("mode", S.m.mode, v => v === "fourn" ? 1 : 0), p = basculeM("periode:" + S.m.mode, periode, v => String(v));
   const pos = v => v === "fourn" ? "translateX(100%)" : "translateX(0)";
-  return `${marqueM()}<h1>Mes opérations</h1><div class="m-seg" role="group" aria-label="Regrouper"><span class="m-seg-ind" style="transform:${pos(b.avant)}" data-vers="${pos(S.m.mode)}"></span>
-  <button aria-pressed="${S.m.mode === "mois"}" onclick="S.m.mode='mois';renderAll()">Par mois</button><button aria-pressed="${S.m.mode === "fourn"}" onclick="S.m.mode='fourn';renderAll()">Par fournisseur</button></div>
+  return `${marqueM()}<h1>Mes opérations</h1><div class="m-seg" role="group" aria-label="Regrouper"><span class="m-seg-ind" style="transform:${pos(S.m.mode)}"></span>
+  <button aria-pressed="${S.m.mode === "mois"}" onclick="choisirModeM('mois')">Par mois</button><button aria-pressed="${S.m.mode === "fourn"}" onclick="choisirModeM('fourn')">Par fournisseur</button></div>
   <div class="m-corps ${b.cls || p.cls}">${corps}</div>`;
 }
 const navM = (lib, prec, suiv, avant, apres) => `<div class="m-nav"><button class="m-rond" aria-label="${avant}" ${prec ? `onclick="${prec}"` : "disabled"}>${svgM("gauche", 20, 2.2)}</button>
@@ -3265,7 +3285,7 @@ function vueMoisM(){
   const max = anOuvert && ce > mois[0] ? ce : mois[0], min = mois[mois.length - 1];
   if(!S.m.mois || S.m.mois < min || S.m.mois > max) S.m.mois = anOuvert ? ce : (mois.find(k => k <= ce) || max);
   const k = S.m.mois, L = ops.filter(o => o.date.startsWith(k));
-  return segM(navM(moisM(k), k > min && `S.m.mois='${decalerMois(k, -1)}';renderAll()`, k < max && `S.m.mois='${decalerMois(k, 1)}';renderAll()`, "Mois précédent", "Mois suivant")
+  return segM(navM(moisM(k), k > min && `S.m.mois='${decalerMois(k, -1)}';majPartielleM()`, k < max && `S.m.mois='${decalerMois(k, 1)}';majPartielleM()`, "Mois précédent", "Mois suivant")
     + (L.length ? tuilesM(L) + `<div class="m-liste">${L.map(o => ligneM(o, `ficheM('${o.id}')`)).join("")}</div>` : rienM("Rien ce mois-ci", "")), k);
 }
 const anneesM = ops => [...new Set([...ops.map(o => yearOf(o.date)), ...Object.keys(S.data.exercices).map(Number).filter(y => !isHistorique(y))])].sort((a, b) => a - b);
@@ -3276,7 +3296,7 @@ function vueFournM(){
   const ans = anM(ops), y = S.m.an, i = ans.indexOf(y), L = ops.filter(o => yearOf(o.date) === y), F = {};
   for(const o of L){ const f = F[o.fourn] ??= {nom:o.fourn, n:0, total:0, entree:o.entree, icone:o.icone, manque:0}; f.n++; f.total += o.montant; if(etatM(o).manque) f.manque++; }
   const liste = Object.values(F).sort((a, b) => b.total - a.total), haut_ = Math.max(...liste.map(f => f.total), 1);
-  return segM(navM(String(y), i > 0 && `S.m.an=${ans[i - 1]};renderAll()`, i < ans.length - 1 && `S.m.an=${ans[i + 1]};renderAll()`, "Année précédente", "Année suivante")
+  return segM(navM(String(y), i > 0 && `S.m.an=${ans[i - 1]};majPartielleM()`, i < ans.length - 1 && `S.m.an=${ans[i + 1]};majPartielleM()`, "Année précédente", "Année suivante")
     + (!liste.length ? rienM(`Rien en ${y} pour l'instant`, "") : tuilesM(L)) + `<div class="m-liste" ${liste.length ? "" : "hidden"}>${liste.map(f => `<button class="m-ligne" onclick="S.m.fourn=${jsq(f.nom)};renderAll();haut()"><span class="m-ic ${f.entree ? "in" : ""}">${svgM(f.icone)}</span>
       <span class="tx"><b>${esc(f.nom)}</b><small class="${f.manque ? "manque" : ""}">${f.n} opération${pl(f.n)}${f.manque ? ` · ${f.manque} facture${pl(f.manque)} à ajouter` : ""}</small>
       <span class="m-barre ${f.entree ? "in" : ""}" style="width:${Math.max(4, Math.round(f.total / haut_ * 100))}%"></span></span>
