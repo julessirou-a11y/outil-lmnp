@@ -3232,13 +3232,15 @@ const tuilesM = L => { const rec = L.filter(o => o.entree).reduce((s, o) => s + 
 function vueMoisM(){
   const ops = opsM();
   if(!ops.length) return segM() + `<div class="m-liste m-vide">Aucune opération pour l'instant.</div>`;
-  const mois = ops.map(o => o.date.slice(0, 7)), max = mois[0], min = mois[mois.length - 1], ce = aujourdhui().slice(0, 7);
-  if(!S.m.mois || S.m.mois < min || S.m.mois > max) S.m.mois = mois.find(k => k <= ce) || max;
+  // Un exercice ouvert mais encore vide (début d'année) reste consultable : on va jusqu'au mois en cours
+  const mois = ops.map(o => o.date.slice(0, 7)), ce = aujourdhui().slice(0, 7), anOuvert = !!exercice(yearOf(ce)) && !isHistorique(yearOf(ce));
+  const max = anOuvert && ce > mois[0] ? ce : mois[0], min = mois[mois.length - 1];
+  if(!S.m.mois || S.m.mois < min || S.m.mois > max) S.m.mois = anOuvert ? ce : (mois.find(k => k <= ce) || max);
   const k = S.m.mois, L = ops.filter(o => o.date.startsWith(k));
   return segM() + navM(moisM(k), k > min && `S.m.mois='${decalerMois(k, -1)}';renderAll()`, k < max && `S.m.mois='${decalerMois(k, 1)}';renderAll()`, "Mois précédent", "Mois suivant")
-    + tuilesM(L) + (L.length ? `<div class="m-liste">${L.map(o => ligneM(o, `ficheM('${o.id}')`)).join("")}</div>` : `<div class="m-liste m-vide">Rien ce mois-ci.</div>`);
+    + tuilesM(L) + (L.length ? `<div class="m-liste">${L.map(o => ligneM(o, `ficheM('${o.id}')`)).join("")}</div>` : `<div class="m-liste m-vide">Pas encore d'opération ce mois-ci. Elles apparaissent ici une fois le relevé saisi sur l'ordinateur.</div>`);
 }
-const anneesM = ops => [...new Set(ops.map(o => yearOf(o.date)))].sort((a, b) => a - b);
+const anneesM = ops => [...new Set([...ops.map(o => yearOf(o.date)), ...Object.keys(S.data.exercices).map(Number).filter(y => !isHistorique(y))])].sort((a, b) => a - b);
 function anM(ops){ const ans = anneesM(ops); if(!ans.includes(S.m.an)) S.m.an = ans.includes(S.year) ? S.year : ans[ans.length - 1]; return ans; }
 function vueFournM(){
   const ops = opsM();
@@ -3247,7 +3249,7 @@ function vueFournM(){
   for(const o of L){ const f = F[o.fourn] ??= {nom:o.fourn, n:0, total:0, entree:o.entree, icone:o.icone, manque:0}; f.n++; f.total += o.montant; if(etatM(o).manque) f.manque++; }
   const liste = Object.values(F).sort((a, b) => b.total - a.total), haut_ = Math.max(...liste.map(f => f.total), 1);
   return segM() + navM(String(y), i > 0 && `S.m.an=${ans[i - 1]};renderAll()`, i < ans.length - 1 && `S.m.an=${ans[i + 1]};renderAll()`, "Année précédente", "Année suivante")
-    + tuilesM(L) + `<div class="m-liste">${liste.map(f => `<button class="m-ligne" onclick="S.m.fourn=${jsq(f.nom)};renderAll();haut()"><span class="m-ic ${f.entree ? "in" : ""}">${svgM(f.icone)}</span>
+    + tuilesM(L) + (!liste.length ? `<div class="m-liste m-vide">Aucune opération en ${y} pour l'instant. Elles apparaissent ici une fois le relevé saisi sur l'ordinateur.</div>` : "") + `<div class="m-liste" ${liste.length ? "" : "hidden"}>${liste.map(f => `<button class="m-ligne" onclick="S.m.fourn=${jsq(f.nom)};renderAll();haut()"><span class="m-ic ${f.entree ? "in" : ""}">${svgM(f.icone)}</span>
       <span class="tx"><b>${esc(f.nom)}</b><small class="${f.manque ? "manque" : ""}">${f.n} opération${pl(f.n)}${f.manque ? ` · ${f.manque} facture${pl(f.manque)} à ajouter` : ""}</small>
       <span class="m-barre ${f.entree ? "in" : ""}" style="width:${Math.max(4, Math.round(f.total / haut_ * 100))}%"></span></span>
       <span class="mt ${f.entree ? "in" : ""}">${eurM(r2(f.total))}</span></button>`).join("")}</div>`;
