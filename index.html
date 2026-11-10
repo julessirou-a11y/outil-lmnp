@@ -2,6 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self'; worker-src 'self' blob:; frame-src 'self' blob:; object-src 'self' blob:; media-src 'self' blob:; base-uri 'none'; form-action 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Le Carnet</title>
 <meta name="description" content="Le Carnet : la comptabilité d'une location meublée (LMNP) au réel, tenue soi-même. Les données restent sur votre appareil.">
@@ -569,31 +570,6 @@ details.imx-conso>summary h3{margin:0} details.imx-conso>summary .imx-ouvrir{mar
 .an.plus:hover{border-color:var(--accent);background:var(--accent-soft)} .an.plus b{font-size:22px;font-weight:500}
 @media (max-width:700px){ .dosgrid{grid-template-columns:1fr} .form.f2{grid-template-columns:1fr} .idcard{flex-wrap:wrap} .idcomp{flex-direction:row;gap:8px} .an{min-width:0;flex:1 1 130px} }
 
-/* ---------- Simulations ---------- */
-.bac{display:grid;grid-template-columns:300px 1fr;gap:18px;align-items:start}
-.panneau{position:sticky;top:16px}
-.bac .tuiles{grid-template-columns:repeat(2,1fr)}
-.curseur{display:block;margin:0 0 16px}
-.curseur span{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
-.curseur output{font-weight:600;color:var(--text);font-size:15px}
-.curseur input{width:100%;accent-color:var(--accent);padding:0;border:0;background:none;height:22px}
-.lbl{font-size:13px;color:var(--muted);margin:4px 0 6px}
-.puces{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
-.puces button{font:inherit;font-size:13px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--text);cursor:pointer}
-.puces button.on{background:var(--accent);border-color:var(--accent);color:#fff}
-.duel{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:10px}
-.duel div{background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:18px 20px;position:relative}
-.duel div.win{border:2px solid var(--pos);background:color-mix(in srgb,var(--pos) 7%,var(--surface))}
-.duel span{display:block;font-size:13px;color:var(--muted)} .duel b{display:block;font-size:28px;font-weight:600;margin:4px 0}
-.duel small{color:var(--faint);font-size:12px} .duel i{position:absolute;top:14px;right:14px;font-style:normal;font-size:11.5px;font-weight:600;color:var(--pos)}
-.gain{margin:0 0 16px;font-size:14.5px;color:var(--muted)} .gain b{color:var(--pos);font-size:17px}
-.cbars.duo .paire{flex:1;width:100%;display:flex;align-items:flex-end;gap:2px} .cbars.duo .paire i{flex:1;border-radius:3px 3px 0 0;min-height:1px}
-.partage{display:flex;height:34px;border-radius:8px;overflow:hidden;gap:2px;margin:6px 0 12px}
-.leg.wrap{display:flex;flex-wrap:wrap;gap:6px 18px} .leg.wrap b{color:var(--text);font-weight:600;margin-left:4px}
-.jalons{display:flex;flex-wrap:wrap;gap:6px 20px;font-size:12.5px;color:var(--muted);margin-top:6px}
-@media (max-width:900px){ .bac{grid-template-columns:1fr} .panneau{position:static} }
-@media (max-width:500px){ .duel{grid-template-columns:1fr} .duel b{font-size:23px} }
-
 /* ---------- Déclaration : parcours et formulaires ---------- */
 .parcours{display:flex;align-items:center;gap:0;margin-bottom:16px}
 .pe{display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:0;font:inherit;color:var(--muted);cursor:pointer;padding:6px 8px;border-radius:var(--r-md);min-width:96px}
@@ -751,6 +727,14 @@ dialog#viewer::backdrop{background:rgba(10,15,25,.5)}
   main{padding:0;max-width:none}
   .card{border:0;padding:0;margin-bottom:18px}
 }
+/* Fenêtres du Carnet (à la place des alert, confirm et prompt du navigateur) */
+dialog.boite{border:1px solid var(--line);border-radius:var(--r-lg);background:var(--surface);color:var(--text);padding:22px 24px;width:min(460px,calc(100vw - 32px));box-shadow:0 20px 50px rgba(0,0,0,.25)}
+dialog.boite::backdrop{background:rgba(20,10,18,.45)}
+dialog.boite h3{margin:0 0 10px;font-size:17px}
+dialog.boite p{margin:0 0 14px;white-space:pre-line;line-height:1.5;color:var(--muted,var(--text))}
+dialog.boite input{width:100%;box-sizing:border-box;margin:0 0 14px;font:inherit;font-size:16px;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);color:var(--text)}
+dialog.boite .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex-start;flex-wrap:wrap} /* OK en premier dans le code : Entrée valide */
+@media print{dialog.boite{display:none}}
 </style>
 </head>
 <body>
@@ -846,6 +830,8 @@ const uid = () => Math.random().toString(36).slice(2,10);
 const yearOf = d => parseInt(String(d).slice(0,4),10);
 const monthOf = d => parseInt(String(d).slice(5,7),10);
 const MOIS = ["janv.","févr.","mars","avr.","mai","juin","juil.","août","sept.","oct.","nov.","déc."];
+/* Date du jour à l'heure de l'appareil (et non à l'heure universelle) */
+const aujourdhui = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; };
 const fmtDate = d => d ? d.slice(8,10)+"/"+d.slice(5,7)+"/"+d.slice(0,4) : "";
 
 function setDirty(v=true){
@@ -1158,7 +1144,7 @@ async function ouvrirDossier(){
     const dir = await window.showDirectoryPicker({id:"lmnp", mode:"readwrite"});
     S.dir = dir; await idb.set("dir", dir);
     await lireDepuisDossier();
-  }catch(e){ if(e.name !== "AbortError") alert("Impossible d'ouvrir ce dossier : " + e.message + "\n\nSi le dossier est dans iCloud Drive et que le navigateur le refuse, essayez un dossier de « Documents » synchronisé avec iCloud."); }
+  }catch(e){ if(e.name !== "AbortError") avertir("Impossible d'ouvrir ce dossier : " + e.message + "\n\nSi le dossier est dans iCloud Drive et que le navigateur le refuse, essayez un dossier de « Documents » synchronisé avec iCloud."); }
 }
 async function reprendreDossier(dir){
   if(await dir.requestPermission({mode:"readwrite"}) !== "granted") return;
@@ -1176,26 +1162,26 @@ async function lireDepuisDossier(){
       const noms = []; try{ for await (const [n, h] of S.dir.entries()) if(h.kind === "file") noms.push(n); }catch(_){}
       const nuage = noms.find(n => n.toLowerCase() === "." + FILE + ".icloud");
       const proches = noms.filter(n => /^lmnp-donnees.*\.json$/i.test(n));
-      if(nuage) return alert(`« ${FILE} » est dans iCloud mais pas encore téléchargé sur cet ordinateur.\n\nDans le Finder, ouvrez le dossier « ${S.dir.name} », faites un clic droit sur « ${FILE} » › « Télécharger maintenant », puis cliquez à nouveau sur « Reprendre ».`);
-      if(proches.length) return alert(`Pas de fichier « ${FILE} » dans « ${S.dir.name} », mais ${proches.length > 1 ? "ces fichiers ressemblent" : "ce fichier ressemble"} à un dossier du Carnet : ${proches.join(", ")}.\n\nDans le Finder, renommez le bon en « ${FILE} » (gardez les autres de côté), puis cliquez à nouveau sur « Reprendre ».`);
-      if(noms.length) return alert(`Pas de fichier « ${FILE} » dans « ${S.dir.name} ». Si votre dossier a changé de place, choisissez-le avec « Ouvrir le dossier LMNP… » : l'outil s'en souviendra ensuite.`);
-      if(confirm(`Le dossier « ${S.dir.name} » est vide. Y créer un dossier comptable vide ?`)){
+      if(nuage) return avertir(`« ${FILE} » est dans iCloud mais pas encore téléchargé sur cet ordinateur.\n\nDans le Finder, ouvrez le dossier « ${S.dir.name} », faites un clic droit sur « ${FILE} » › « Télécharger maintenant », puis cliquez à nouveau sur « Reprendre ».`);
+      if(proches.length) return avertir(`Pas de fichier « ${FILE} » dans « ${S.dir.name} », mais ${proches.length > 1 ? "ces fichiers ressemblent" : "ce fichier ressemble"} à un dossier du Carnet : ${proches.join(", ")}.\n\nDans le Finder, renommez le bon en « ${FILE} » (gardez les autres de côté), puis cliquez à nouveau sur « Reprendre ».`);
+      if(noms.length) return avertir(`Pas de fichier « ${FILE} » dans « ${S.dir.name} ». Si votre dossier a changé de place, choisissez-le avec « Ouvrir le dossier LMNP… » : l'outil s'en souviendra ensuite.`);
+      if(await confirmer(`Le dossier « ${S.dir.name} » est vide. Y créer un dossier comptable vide ?`, {ok:"Créer le dossier"})){
         chargerDonnees(newDossier(), S.dir.name + "/" + FILE); await enregistrer();
       }
-    } else alert("Lecture impossible : " + e.message);
+    } else avertir("Lecture impossible : " + e.message);
   }
 }
 function ouvrirFichier(){ $("#fileInput").click(); }
 $("#fileInput").addEventListener("change", async ev => {
   const f = ev.target.files[0]; if(!f) return;
-  try{ chargerDonnees(JSON.parse(await f.text()), f.name); S.dir = null; }catch(e){ alert(e.message); }
+  try{ chargerDonnees(JSON.parse(await f.text()), f.name); S.dir = null; }catch(e){ avertir(e.message); }
   ev.target.value = "";
 });
 function horodatage(){ const d=new Date(), p=n=>String(n).padStart(2,"0"); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}_${p(d.getHours())}h${p(d.getMinutes())}`; }
 async function enregistrer(){
   if(!S.data) return;
   if(DEPOT) return;
-  if(S.consultation) return alert("Cet onglet sert à consulter le grand livre : il n'enregistre rien. Faites vos modifications dans l'onglet d'origine du Carnet.");
+  if(S.consultation) return avertir("Cet onglet sert à consulter le grand livre : il n'enregistre rien. Faites vos modifications dans l'onglet d'origine du Carnet.");
   S.data.derniereModification = new Date().toISOString();
   const txt = JSON.stringify(S.data, null, 2);
   if(S.dir){
@@ -1205,7 +1191,7 @@ async function enregistrer(){
       S.autoMsg = "✓ Enregistré à " + new Date().toLocaleTimeString("fr-FR",{hour:"2-digit",minute:"2-digit"});
       setDirty(false); toast("Enregistré dans « "+S.dir.name+" » (+ copie dans Sauvegardes)");
       return;
-    }catch(e){ alert("Enregistrement dans le dossier impossible ("+e.message+"). Le fichier va être téléchargé à la place."); }
+    }catch(e){ avertir("Enregistrement dans le dossier impossible ("+e.message+"). Le fichier va être téléchargé à la place."); }
   }
   const a = document.createElement("a");
   a.href = URL.createObjectURL(new Blob([txt],{type:"application/json"}));
@@ -1214,6 +1200,28 @@ async function enregistrer(){
 }
 $("#saveBtn").addEventListener("click", enregistrer);
 document.addEventListener("keydown", e => { if((e.metaKey||e.ctrlKey) && e.key === "s"){ e.preventDefault(); enregistrer(); } });
+/* ============ Fenêtres du Carnet ============ */
+/* boite({titre, texte, champ, ok, annuler, danger}) → promesse : true/false, ou le texte saisi (null si annulé). Une seule fenêtre à la fois, les suivantes attendent. */
+let fileBoites = Promise.resolve();
+function boite(o){
+  // « Question ?\n\nExplication » : la question courte devient le titre de la fenêtre
+  if(!o.titre && /^[^\n]{1,70}\n\n/.test(o.texte || "")){ const k = o.texte.indexOf("\n\n"); o = {...o, titre:o.texte.slice(0, k), texte:o.texte.slice(k + 2)}; }
+  const p = fileBoites.then(() => new Promise(fin => {
+    const d = document.createElement("dialog"); d.className = "boite"; d.setAttribute("aria-labelledby", "boiteTitre");
+    d.innerHTML = `<form method="dialog">${o.titre ? `<h3 id="boiteTitre">${esc(o.titre)}</h3>` : ""}<p>${esc(o.texte || "")}</p>
+      ${o.champ ? `<input name="v" value="${esc(o.champ.defaut ?? "")}" placeholder="${esc(o.champ.placeholder || "")}" autocomplete="off">` : ""}
+      <div class="row"><button class="btn ${o.danger ? "danger" : ""}" value="oui" type="submit">${esc(o.ok || "OK")}</button>${o.annuler === false ? "" : `<button class="btn ghost" value="non" type="submit">${esc(o.annuler || "Annuler")}</button>`}</div></form>`;
+    document.body.appendChild(d);
+    const champ = d.querySelector("input");
+    d.addEventListener("close", () => { const oui = d.returnValue === "oui"; d.remove(); fin(o.champ ? (oui ? champ.value : null) : oui); });
+    d.showModal(); (champ || d.querySelector('[value="oui"]')).focus(); champ?.select();
+  }));
+  fileBoites = p.catch(() => {});
+  return p;
+}
+const avertir = (texte, titre) => { boite({texte, titre, annuler:false}); };
+const confirmer = (texte, o = {}) => boite({texte, ok:"Confirmer", ...o});
+const demander = (texte, defaut = "", o = {}) => boite({texte, champ:{defaut}, ...o});
 function toast(msg){ const el = document.createElement("div"); el.className="alert ok toast noprint"; el.textContent=msg; document.body.appendChild(el); setTimeout(()=>el.remove(), 3500); }
 
 /* ============ Rendu ============ */
@@ -1225,12 +1233,11 @@ const IC = {
   pieces:'<path d="M14 4H7v16h10V7zM14 4v3h3M10 12h4M10 16h4"/>',
   immos:'<path d="M4 11l8-6 8 6v9H4zM10 20v-5h4v5"/>',
   emprunt:'<path d="M4 7h16v10H4zM4 11h16M8 15h3"/>',
-  simulations:'<path d="M4 19h16M7 16l4-5 3 3 5-7"/>',
   declaration:'<path d="M7 4h10v16H7zM10 8h4M10 12h4M10 16l1.5 1.5L14 15"/>',
   dossier:'<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/><circle cx="12" cy="12" r="6.5"/>'
 };
 const icon = k => `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${IC[k]}</svg>`;
-const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["banque","Banque"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["simulations","Simulations"],["sep"],["dossier","Paramètres du dossier"]];
+const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["banque","Banque"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["sep"],["dossier","Paramètres du dossier"]];
 function renderAll(){
   if(S.data && rattacherEcheanciers()) setDirty();
   $("#fileinfo").textContent = S.data ? S.data.dossier.nom : "Aucun dossier ouvert";
@@ -1254,7 +1261,7 @@ function renderAll(){
   ajusterMenu();
   const m = $("#main");
   if(!S.data){ m.innerHTML = vueBienvenue(); return; }
-  m.innerHTML = bandeauPieceIPhone() + ({depot:vueDepot, accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, simulations:vueSimulations, dossier:vueDossier, pieces:vuePieces})[S.tab]();
+  m.innerHTML = bandeauPieceIPhone() + (({depot:vueDepot, accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab] || vueAccueil)();
   if(S.tab === "pieces") scanPieces(S.year);
 }
 document.querySelectorAll(".logolink").forEach(a => a.addEventListener("click", e => { e.preventDefault(); allerA(DEPOT ? "depot" : "accueil"); }));
@@ -1725,17 +1732,17 @@ function ajouterJetons(js){
 }
 function retirerJeton(i){ S.fEcr = (S.fEcr || []).filter((_, k) => k !== i); renderAll(); }
 function viderFiltres(){ S.fEcr = []; S.qEcr = ""; S.qType = null; S.lignesEcr = ""; S.lignesGL = ""; renderAll(); }
-function enregistrerFiltre(){
+async function enregistrerFiltre(){
   const J = S.fEcr || []; if(!J.length) return;
   const sugg = J.map(libJeton).join(", ").replace(/[«»]/g,"").replace(/\s+/g," ").trim();
-  const nom = (prompt("Nom de ce filtre :", sugg.charAt(0).toUpperCase() + sugg.slice(1)) || "").trim(); if(!nom) return;
+  const nom = ((await demander("Nom de ce filtre :", sugg.charAt(0).toUpperCase() + sugg.slice(1), {ok:"Enregistrer"})) || "").trim(); if(!nom) return;
   const sv = S.data.filtresEcritures ??= [], deja = sv.find(f => f.nom.toLowerCase() === nom.toLowerCase());
-  if(deja){ if(!confirm(`Un filtre « ${nom} » existe déjà. Le remplacer ?`)) return; deja.jetons = J.map(j => ({...j})); }
+  if(deja){ if(!await confirmer(`Un filtre « ${nom} » existe déjà. Le remplacer ?`, {ok:"Remplacer"})) return; deja.jetons = J.map(j => ({...j})); }
   else sv.push({id:uid(), nom, jetons:J.map(j => ({...j}))});
   setDirty(); renderAll(); toast(`Filtre « ${nom} » enregistré : il apparaît en tête de la liste « Filtrez par… ».`);
 }
-function supprimerFiltre(id){
-  const f = (S.data.filtresEcritures||[]).find(x => x.id === id); if(!f || !confirm(`Supprimer le filtre enregistré « ${f.nom} » ?`)) return;
+async function supprimerFiltre(id){
+  const f = (S.data.filtresEcritures||[]).find(x => x.id === id); if(!f || !await confirmer(`Supprimer le filtre enregistré « ${f.nom} » ?`, {ok:"Supprimer", danger:true})) return;
   S.data.filtresEcritures = S.data.filtresEcritures.filter(x => x.id !== id);
   setDirty(); renderAll(); refocusBarre();
 }
@@ -1841,12 +1848,27 @@ function vueGrandLivre(y){
     ${filtre ? "" : `<tbody class="glx-gen"><tr><td colspan="4" style="text-align:right">Total général</td><td class="n dc">${num(TD)}</td><td class="n dc">${num(TC)}</td><td class="n mv"></td><td class="n"></td></tr></tbody>`}
   </table></div></div>`;
 }
-function parseMontant(s){ return Number(String(s).replace(/\s/g,"").replace(",", ".")); }
+/* Montant saisi à la française ou non : « 1 234,56 », « 1.234,56 », « 1,234.56 », « 1.500 » (milliers), « 12.5 », « 80 € » */
+function parseMontant(s){
+  let t = String(s ?? "").replace(/[\s€]/g, "");
+  const v = t.lastIndexOf(","), p = t.lastIndexOf(".");
+  if(v >= 0 && p >= 0) t = v > p ? t.replace(/\./g, "").replace(",", ".") : t.replace(/,/g, "");
+  else if(v >= 0) t = (t.match(/,/g).length > 1 ? t.replace(/,(?=\d{3}(,|$))/g, "") : t).replace(",", ".");
+  else if(/^-?\d{1,3}(\.\d{3})+$/.test(t)) t = t.replace(/\./g, "");
+  return t === "" ? NaN : Number(t);
+}
+/* Montant d'un champ facultatif : vide → null ; illisible → message et undefined (la saisie est ignorée, rien ne devient 0 en silence) */
+function montantChamp(v, lib){
+  if(String(v ?? "").trim() === "") return null;
+  const n = parseMontant(v);
+  if(isNaN(n)){ avertir(`« ${v} » n'est pas un montant lisible${lib ? ` (${lib})` : ""} : rien n'a été modifié.`); renderAll(); return undefined; }
+  return r2(n);
+}
 function saveEcriture(){
   const ex = exercice(S.year);
   const e = {date:$("#eDate").value, tiers:$("#eTiers").value.trim(), nature:$("#eNat").value, montant:r2(parseMontant($("#eMont").value)), commentaire:$("#eCom").value.trim()};
-  if(!e.date || isNaN(e.montant) || e.montant <= 0) return alert("Date et montant positif obligatoires.");
-  if(yearOf(e.date) !== S.year) return alert("La date doit être dans l'exercice " + S.year + ".");
+  if(!e.date || isNaN(e.montant) || e.montant <= 0) return avertir("Date et montant positif obligatoires.");
+  if(yearOf(e.date) !== S.year) return avertir("La date doit être dans l'exercice " + S.year + ".");
   e.sens = NATURES[e.nature].g === "recette" ? "recette" : "depense";
   if(!e.commentaire) delete e.commentaire;
   const pr = NAT_PRET[e.nature] && $("#ePret")?.value; if(pr) e.pret = pr;
@@ -1856,7 +1878,7 @@ function saveEcriture(){
   rapprocherFactures();
   setDirty(); renderAll(); setTimeout(()=>$("#eMont")?.focus(),0);
 }
-function delEcriture(id){ if(!confirm("Supprimer cette écriture ?")) return; const ex = exercice(S.year); ex.ecritures = ex.ecritures.filter(e=>e.id!==id); setDirty(); renderAll(); }
+async function delEcriture(id){ if(!await confirmer("Supprimer cette écriture ?", {ok:"Supprimer", danger:true})) return; const ex = exercice(S.year); ex.ecritures = ex.ecritures.filter(e=>e.id!==id); setDirty(); renderAll(); }
 
 /* ---- Immobilisations ---- */
 const IC_CAT = {construction:'<path d="M4 11l8-6 8 6v9H4zM10 20v-5h4v5"/>', travaux:'<path d="M4 20l8-8M13 5a4 4 0 0 0 6 6l-3 1-4-4z"/>', mobilier:'<path d="M5 11V7h14v4M4 11h16v5H4zM6 16v3M18 16v3"/>'};
@@ -2013,16 +2035,16 @@ function vueConsommes(y, replie){
 }
 function saveImmo(){
   const cour = S.editImmo !== "new" && S.data.immobilisations.find(i=>i.id===S.editImmo);
-  if(immoFigee(cour)){ if(!$("#iLib").value.trim()) return alert("Le libellé est obligatoire."); cour.libelle = $("#iLib").value.trim(); S.editImmo = null; setDirty(); renderAll(); return; }
+  if(immoFigee(cour)){ if(!$("#iLib").value.trim()) return avertir("Le libellé est obligatoire."); cour.libelle = $("#iLib").value.trim(); S.editImmo = null; setDirty(); renderAll(); return; }
   const v = {libelle:$("#iLib").value.trim(), categorie:$("#iCat").value, valeurOrigine:r2(parseMontant($("#iVal").value)),
     quotePartTerrain: $("#iCat").value === "construction" ? r2(parseMontant($("#iTer").value)/100 || 0) : 0, dureeAns: parseInt($("#iDur").value,10), miseEnService:$("#iDate").value};
-  if(v.miseEnService && anneeEntreeBilan(v) <= derniereCloture()) return alert(`${derniereCloture()} est clôturé : une immobilisation mise en service avant ou pendant cet exercice ne peut être ajoutée qu'après réouverture.`);
-  if(!v.libelle || !(v.valeurOrigine>0) || !(v.dureeAns>0) || !v.miseEnService) return alert("Libellé, valeur, durée et date sont obligatoires.");
+  if(v.miseEnService && anneeEntreeBilan(v) <= derniereCloture()) return avertir(`${derniereCloture()} est clôturé : une immobilisation mise en service avant ou pendant cet exercice ne peut être ajoutée qu'après réouverture.`);
+  if(!v.libelle || !(v.valeurOrigine>0) || !(v.dureeAns>0) || !v.miseEnService) return avertir("Libellé, valeur, durée et date sont obligatoires.");
   if(S.editImmo === "new"){ const id = uid(); S.data.immobilisations.push({id, ...v}); S.immoOuv = id; }
   else Object.assign(S.data.immobilisations.find(i=>i.id===S.editImmo), v);
   S.editImmo = null; setDirty(); renderAll();
 }
-function delImmo(){ if(immoFigee(S.data.immobilisations.find(i=>i.id===S.editImmo))) return; if(!confirm("Supprimer cette immobilisation ?")) return; S.data.immobilisations = S.data.immobilisations.filter(i=>i.id!==S.editImmo); S.editImmo=null; S.immoOuv=null; setDirty(); renderAll(); }
+async function delImmo(){ if(immoFigee(S.data.immobilisations.find(i=>i.id===S.editImmo))) return; if(!await confirmer("Supprimer cette immobilisation ?", {ok:"Supprimer", danger:true})) return; S.data.immobilisations = S.data.immobilisations.filter(i=>i.id!==S.editImmo); S.editImmo=null; S.immoOuv=null; setDirty(); renderAll(); }
 
 /* ---- Emprunt ---- */
 /* Courbe du capital restant dû, avec l'année affichée mise en évidence */
@@ -2031,14 +2053,16 @@ function vueEmprunt(){
   if(!S.data.emprunts.length) return `<div class="pagehead"><h1>Emprunt</h1></div><div class="card"><button class="btn" onclick="ajouterEmprunt()">+ Ajouter un emprunt</button></div>`;
   const L = S.data.emprunts, plusieurs = L.length > 1, c = !isHistorique(y) ? calculAnnee(y) : null;
   const ajout = `<button class="btn sec noprint" onclick="ajouterEmprunt()">+ Ajouter un emprunt</button>`;
+  // Le restant dû affiché est celui des comptes (bilan) ; s'il s'écarte de l'échéancier de la banque, on le dit tout de suite, avec un lien vers la régularisation
+  const ec = c ? ecartCRD(y) : 0, selonComptes = base => c ? `${base}${Math.abs(ec) >= 0.005 ? `<br><a href="#regulCRD" class="noprint" style="color:var(--warn)" onclick="event.preventDefault();document.getElementById('regulCRD')?.scrollIntoView({behavior:'smooth'})">écart de ${eur0(Math.abs(ec))} avec l'échéancier&nbsp;↓</a>` : ""}` : base;
   // Plusieurs prêts : le total (celui du bilan) en tête, puis chaque prêt d'après son échéancier et ses écritures
   const tete = plusieurs ? `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Emprunts</h1></div>${ajout}</div>
-    <div class="tuiles">${tuile("Capital emprunté", eur0(L.reduce((t,l) => t + l.capital, 0)))}${tuile(`Restant dû fin ${y}`, eur0(c ? c.crd : crdEcheancier(y)), {col:"var(--accent)", sous:"au bilan, tous prêts"})}${tuile(`Intérêts ${y} comptabilisés`, eur0(c ? c.interets : L.reduce((t,l) => t + empruntAnnee(l,y).interets, 0)), {sous:"tous prêts"})}${tuile("Prêts", L.length)}</div>` : "";
+    <div class="tuiles">${tuile("Capital emprunté", eur0(L.reduce((t,l) => t + l.capital, 0)))}${tuile(`Restant dû fin ${y}`, eur0(c ? c.crd : crdEcheancier(y)), {col:"var(--accent)", sous:selonComptes("au bilan, tous prêts")})}${tuile(`Intérêts ${y} comptabilisés`, eur0(c ? c.interets : L.reduce((t,l) => t + empruntAnnee(l,y).interets, 0)), {sous:"tous prêts"})}${tuile("Prêts", L.length)}</div>` : "";
   return tete + L.map((l,idx) => {
     const rows = echeancier(l), der = rows[rows.length-1], a = empruntAnnee(l, y);
     const crd = plusieurs ? a.crdFin : c ? c.crd : a.crdFin, int = plusieurs ? (c ? interetsPret(l, y) : a.interets) : c ? c.interets : a.interets;
     return `<div class="row" style="justify-content:space-between;margin:${idx||plusieurs?"28px":"0"} 0 16px"><div class="pagehead" style="margin:0"><h1>${plusieurs ? `<span class="sub" style="font-size:.6em;display:block">Prêt ${idx+1}</span>` : ""}Emprunt ${esc(l.banque)}</h1></div>${plusieurs ? menu3([["Supprimer ce prêt", `supprimerEmprunt(${idx})`, "danger"]], "Actions du prêt") : ajout}</div>
-    <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)", sous: plusieurs ? "selon l'échéancier" : ""})}${tuile(`Intérêts ${y} comptabilisés`, eur0(int), {sous: c && !int ? "aucune écriture bancaire" : "déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
+    <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)", sous: plusieurs ? "selon l'échéancier" : selonComptes("selon les comptes")})}${tuile(`Intérêts ${y} comptabilisés`, eur0(int), {sous: c && !int ? "aucune écriture bancaire" : "déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
     ${carteContrat(l, idx)}
     ${carteEcheancier(l, y)}`;
   }).join("") + carteRegulCRD(y);
@@ -2048,7 +2072,7 @@ function carteRegulCRD(y){
   const ex = exercice(y); if(!ex || isHistorique(y)) return "";
   const e = ecartCRD(y), rg = ex.regulCRD, lock = verrouille(y);
   if(Math.abs(e) < 0.005 && !rg) return "";
-  return `<div class="card"><h3>Régularisation du restant dû</h3>
+  return `<div class="card" id="regulCRD"><h3>Régularisation du restant dû</h3>
     ${Math.abs(e) >= 0.005 ? `<div class="alert warn" style="align-items:center">Le grand livre donne ${eur(soldeGL164(y))} de restant dû au 31/12/${y}, l'échéancier de la banque ${eur(crdEcheancier(y))} : écart de ${eur(Math.abs(e))}.${lock ? "" : `<button class="btn small" style="margin-left:auto" onclick="regulariserCRD()">Régulariser</button>`}</div>` : ""}
     ${rg ? `<div class="row" style="align-items:center"><span>Régularisation passée au 31/12/${y} : <b>${eur(rg.montant)}</b> ${rg.montant > 0 ? "de restant dû en plus" : "de restant dû en moins"}${rg.motif ? ` · ${esc(rg.motif)}` : ""}</span>${lock ? "" : `<button class="btn small ghost" style="margin-left:auto" onclick="supprimerRegulCRD()">Supprimer</button>`}</div>` : ""}
     <p class="sub" style="margin:8px 0 0">L'écriture va de l'emprunt (164) au compte de l'exploitant (108), sans opération bancaire.</p></div>`;
@@ -2087,30 +2111,30 @@ function carteContrat(l, idx){
 function validerContrat(idx){
   const l = S.data.emprunts[idx], v = k => $(`#contrat${idx} [data-k="${k}"]`).value.trim();
   const n = {banque:v("banque"), capital:parseMontant(v("capital")), tauxAnnuel:parseMontant(v("taux"))/100, dureeMois:parseInt(v("dureeMois"),10), premiereEcheance:v("premiereEcheance"), mensualite:parseMontant(v("mensualite"))||0, assurance:r2(parseMontant(v("assurance"))||0)};
-  if(!(n.capital > 0) || !(n.dureeMois > 0) || !n.premiereEcheance || isNaN(n.tauxAnnuel)) return alert("Renseignez au moins le capital, le taux, la durée et la 1re échéance.");
+  if(!(n.capital > 0) || !(n.dureeMois > 0) || !n.premiereEcheance || isNaN(n.tauxAnnuel)) return avertir("Renseignez au moins le capital, le taux, la durée et la 1re échéance.");
   Object.assign(l, n); S.editPret = null; setDirty(); renderAll(); toast("Contrat de prêt mis à jour.");
 }
 async function telechargerChemin(chemin){
   if(!await dossierRequis()) return;
   try{ const f = await (await handleDepuisChemin(chemin)).getFile(), a = document.createElement("a");
     a.href = URL.createObjectURL(f); a.download = f.name; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000); }
-  catch(_){ alert(`Fichier introuvable : « ${chemin} ».`); }
+  catch(_){ avertir(`Fichier introuvable : « ${chemin} ».`); }
 }
 function ajouterEmprunt(){
   const id = uid(); S.data.emprunts.push({id, banque:"", capital:0, tauxAnnuel:0, dureeMois:240, premiereEcheance:`${S.year}-01-01`, mensualite:0});
   S.editPret = id; setDirty(); renderAll();
 }
-function supprimerEmprunt(idx){
+async function supprimerEmprunt(idx){
   const l = S.data.emprunts[idx]; if(!l) return;
   const lies = Object.entries(S.data.exercices).flatMap(([y, ex]) => (ex.ecritures||[]).filter(e => NAT_PRET[e.nature] && pretDe(e) === l.id).map(() => +y));
-  if(lies.some(y => verrouille(y) || isHistorique(y))) return alert("Ce prêt a des écritures dans un exercice clôturé : il ne peut pas être supprimé.");
-  if(!confirm(`Supprimer le prêt ${nomPret(l, idx)} ?${lies.length ? `\n\n${lies.length} écriture${pl(lies.length)} d'emprunt y ${lies.length>1?"sont rattachées":"est rattachée"} : elle${pl(lies.length)} resteront dans la comptabilité, à rattacher à un autre prêt.` : ""}`)) return;
+  if(lies.some(y => verrouille(y) || isHistorique(y))) return avertir("Ce prêt a des écritures dans un exercice clôturé : il ne peut pas être supprimé.");
+  if(!await confirmer(`Supprimer le prêt ${nomPret(l, idx)} ?${lies.length ? `\n\n${lies.length} écriture${pl(lies.length)} d'emprunt y ${lies.length>1?"sont rattachées":"est rattachée"} : elle${pl(lies.length)} resteront dans la comptabilité, à rattacher à un autre prêt.` : ""}`)) return;
   S.data.emprunts.splice(idx, 1);
   Object.values(S.data.exercices).forEach(ex => (ex.ecritures||[]).forEach(e => { if(e.pret === l.id) delete e.pret; }));
   setDirty(); renderAll();
 }
-function supprimerEcheancierBanque(idx){
-  if(!confirm("Supprimer l'échéancier de la banque ? L'outil reprend l'échéancier calculé d'après le contrat. Le fichier reste dans le dossier.")) return;
+async function supprimerEcheancierBanque(idx){
+  if(!await confirmer("Supprimer l'échéancier de la banque ? L'outil reprend l'échéancier calculé d'après le contrat. Le fichier reste dans le dossier.", {ok:"Supprimer", danger:true})) return;
   const l = S.data.emprunts[idx], d = l.echeancierDoc && docs().find(x => x.id === l.echeancierDoc);
   if(d){ ecrituresDuDoc(d).forEach(e => delete e.piece); S.data.documents = docs().filter(x => x !== d); }
   delete l.echeancierBanque; delete l.echeancierDoc; delete l.source; setDirty(); renderAll();
@@ -2136,11 +2160,12 @@ async function ajouterEcheancierPret(idx, ev){
 
 /* ---- Échéancier de la banque : tableau lu dans le PDF (ou collé), comparé à celui du dossier ---- */
 /* Lecteur PDF chargé seulement au besoin ; le fichier, lui, reste lu dans le navigateur */
-const PDFJS = "https://cdn.jsdelivr.net/npm/pdfjs-dist@4.10.38/build/";
+/* pdf.js 4.10.38 servi par le site lui-même (dossier pdfjs/) : aucun script extérieur ne s'exécute à côté des données */
+const PDFJS = "./pdfjs/";
 async function textePdf(file){
   const pdfjs = await import(PDFJS + "pdf.min.mjs");
   pdfjs.GlobalWorkerOptions.workerSrc = PDFJS + "pdf.worker.min.mjs";
-  const doc = await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer())}).promise;
+  const doc = await pdfjs.getDocument({data:new Uint8Array(await file.arrayBuffer()), isEvalSupported:false}).promise;
   let out = "";
   for(let p = 1; p <= doc.numPages; p++){
     const items = (await (await doc.getPage(p)).getTextContent()).items.filter(i => i.str && i.str.trim()).map(i => ({s:i.str, x:i.transform[4], y:i.transform[5]}));
@@ -2205,23 +2230,23 @@ function lireTableauEcheancier(texte){
 }
 async function lireEcheancierPdf(idx, file){
   try{ toast("Lecture du tableau d'amortissement…"); appliquerEcheancierBanque(idx, await textePdf(file), "pdf"); }
-  catch(e){ alert(`Le tableau n'a pas pu être lu dans ce PDF : ${e.message}\n\nVous pouvez copier le tableau depuis l'aperçu du PDF et le coller dans « Coller le tableau » sur la page Emprunt.`); }
+  catch(e){ avertir(`Le tableau n'a pas pu être lu dans ce PDF : ${e.message}\n\nVous pouvez copier le tableau depuis l'aperçu du PDF et le coller dans « Coller le tableau » sur la page Emprunt.`); }
 }
 async function lireEcheancierDoc(idx){
   if(!await dossierRequis()) return;
   const d = docs().find(x => x.id === S.data.emprunts[idx].echeancierDoc);
   try{ await lireEcheancierPdf(idx, await (await handleDepuisChemin(d.fichier)).getFile()); }
-  catch(_){ alert(`Fichier introuvable : « ${d.fichier} ».`); }
+  catch(_){ avertir(`Fichier introuvable : « ${d.fichier} ».`); }
 }
 function appliquerEcheancierBanque(idx, texte, origine){
   const res = lireTableauEcheancier(texte), l = S.data.emprunts[idx], L = res.lignes, a = L[0], z = L[L.length-1];
-  l.echeancierBanque = {origine, lu:new Date().toISOString().slice(0,10), capital:res.capital, colonnes:res.colonnes, lignes:L};
+  l.echeancierBanque = {origine, lu:aujourdhui(), capital:res.capital, colonnes:res.colonnes, lignes:L};
   setDirty(); renderAll();
   toast(`${L.length} échéances lues, de ${MOIS[monthOf(a.date)-1]} ${yearOf(a.date)} à ${MOIS[monthOf(z.date)-1]} ${yearOf(z.date)}.`);
 }
 function collerEcheancier(idx){
   const t = $("#echColle" + idx).value; if(!t.trim()) return;
-  try{ appliquerEcheancierBanque(idx, t, "colle"); } catch(e){ alert(e.message); }
+  try{ appliquerEcheancierBanque(idx, t, "colle"); } catch(e){ avertir(e.message); }
 }
 const IC_RP = {
   ok:'<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--pos)"/><path d="M6 10.3l2.6 2.6L14.2 7.4" fill="none" stroke="var(--surface)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
@@ -2379,14 +2404,19 @@ function form2031(y, L){
     `<div class="coche"><span class="box">✓</span>Comptabilité super-simplifiée (art. 302 septies A ter A du CGI)</div>`,
     `Cochez l'option chaque année, puis <b>Signer et envoyer</b>. Enregistrez l'accusé de réception dans <code>Justificatifs/${y+1}/</code>.`);
 }
+/* 2042-C-PRO : le bénéfice se déclare entier en 5NA ; les déficits LMNP des 10 années précédentes non encore imputés se déclarent à part,
+   une case par année d'origine (5GA pour y−10 … 5GJ pour y−1), et c'est l'administration qui les impute sur les revenus LMNP du foyer */
 function form2042(y, L){
-  const dcl = S.data.dossier.declarant === "2" ? 1 : 0, ben = L.rf >= 0, v = ben ? L.rf - L.def : -L.rf;
+  const dcl = S.data.dossier.declarant === "2" ? 1 : 0, ben = L.rf >= 0, v = Math.abs(L.rf);
   const cel = (k, code) => [code, k === dcl ? v : null];
+  const ant = (fiscalJusqua(y).deficitsDebut || []).filter(d => d.montant > 0.5 && d.annee >= y - 10 && d.annee < y).sort((a,b) => a.annee - b.annee);
   return feuille("2042-C-PRO", "Revenus des professions non salariées", y,
     bande("Locations meublées non professionnelles · régime réel") + lt(["Déclarant 1", "Déclarant 2"]) +
     lc("Revenus imposables (bénéfice)", ben ? [cel(0,"5NA"), cel(1,"5OA")] : [["5NA",null],["5OA",null]], ben?{tot:1}:{}) +
-    lc("Déficits", ben ? [["5NY",null],["5OY",null]] : [cel(0,"5NY"), cel(1,"5OY")], ben?{}:{tot:1}),
-    `Dans l'espace particulier, déclaration de revenus ${y} : cocher la rubrique « Revenus des professions non salariées » pour afficher la 2042-C-PRO.${L.def?` Bénéfice après ${eur0(L.def)} de déficits antérieurs imputés.`:""}`);
+    lc("Déficits", ben ? [["5NY",null],["5OY",null]] : [cel(0,"5NY"), cel(1,"5OY")], ben?{}:{tot:1}) +
+    (ant.length ? bande("Déficits des années antérieures non encore déduits") + lt(["Montant"]) +
+      ant.map(d => lc(`Déficit de ${d.annee}`, [["5G" + "ABCDEFGHIJ"[d.annee - (y - 10)], d.montant]])).join("") : ""),
+    `Dans l'espace particulier, déclaration de revenus ${y} : cocher la rubrique « Revenus des professions non salariées » pour afficher la 2042-C-PRO.${ant.length ? " Le bénéfice se déclare entier : l'administration impute elle-même les déficits antérieurs déclarés dans les cases 5GA à 5GJ." : ""}`);
 }
 function vueDeclaration(){
   const y = S.year, vue = S.vueDecl || "declarer";
@@ -2551,14 +2581,14 @@ function ecartCRD(y){
   if(!S.data.emprunts.length || !ex || ex.statut === "historique" || ex.statut === "cloture") return 0;
   return r2(crdEcheancier(y) - soldeGL164(y));
 }
-function regulariserCRD(){
+async function regulariserCRD(){
   const y = S.year, ex = exercice(y), e = ecartCRD(y); if(verrouille(y) || Math.abs(e) < 0.005) return;
-  const motif = prompt(`Régulariser ${eur(Math.abs(e))} au 31/12/${y} entre l'emprunt (164) et le compte de l'exploitant (108), pour que le grand livre retombe sur l'échéancier de la banque.\n\nMotif (facultatif) :`, ex.regulCRD?.motif || "Restant dû des bilans antérieurs");
+  const motif = await demander(`Régulariser ${eur(Math.abs(e))} au 31/12/${y} entre l'emprunt (164) et le compte de l'exploitant (108), pour que le grand livre retombe sur l'échéancier de la banque.\n\nMotif (facultatif) :`, ex.regulCRD?.motif || "Restant dû des bilans antérieurs", {titre:"Régulariser le restant dû", ok:"Régulariser"});
   if(motif === null) return;
-  ex.regulCRD = {montant:r2(regulCRD(y) + e), motif:motif.trim(), date:new Date().toISOString().slice(0,10)};
+  ex.regulCRD = {montant:r2(regulCRD(y) + e), motif:motif.trim(), date:aujourdhui()};
   setDirty(); renderAll();
 }
-function supprimerRegulCRD(){ const ex = exercice(S.year); if(verrouille(S.year) || !confirm("Supprimer la régularisation du restant dû ?")) return; delete ex.regulCRD; setDirty(); renderAll(); }
+async function supprimerRegulCRD(){ const ex = exercice(S.year); if(verrouille(S.year) || !await confirmer("Supprimer la régularisation du restant dû ?", {ok:"Supprimer", danger:true})) return; delete ex.regulCRD; setDirty(); renderAll(); }
 function balance(y){
   const b = {};
   ecrituresComptables(y).forEach(e => e.lignes.forEach(l => { const x = b[l.c] ??= {d:0, cr:0}; x.d += l.d||0; x.cr += l.cr||0; }));
@@ -2585,162 +2615,8 @@ function exporterFEC(y){
 }
 
 /* ---- Guide de saisie en ligne (mode EFI de l'espace professionnel) ---- */
-/* ============ Simulations : micro-BIC contre réel, plus-value à la revente ============ */
-const PS_REVENUS = 0.186;   // prélèvements sociaux sur les revenus LMNP depuis la LFSS 2026
-const PS_PLUSVALUE = 0.172; // plus-values immobilières : taux inchangé
-const MICRO = {plafond:77700, abattement:0.5, minimum:305}; // meublé de longue durée non classé
-function simu(){ S.data.dossier.simu ??= {}; return S.data.dossier.simu; }
-function majSimu(k, v){ simu()[k] = v; setDirty(); renderAll(); }
-/* Projection : mêmes loyers et charges que l'année de référence (ou ceux des curseurs), intérêts selon l'échéancier, amortissements selon les plans */
-function projection(y0, n, o){
-  const c0 = calculAnnee(y0), f0 = fiscalJusqua(y0);
-  const loyers = o?.loyers ?? c0.produits, charges = o?.charges ?? (c0.c242 + c0.c244);
-  let ard = o ? f0.ardDebut : f0.ardFin, out = [];
-  for(let y = y0; y < y0 + n; y++){
-    let interets = 0; S.data.emprunts.forEach(l => interets += empruntAnnee(l, y).interets);
-    if(y === y0) interets = c0.interets;
-    const dot = S.data.immobilisations.reduce((s,i)=>s + (anneeEntreeBilan(i) <= y ? amortAnnee(i,y).dotation : 0), 0);
-    const R0 = loyers - charges - interets;
-    let base;
-    if(y === y0 && !o) base = Math.max(0, f0.resultatFiscal - f0.deficitsImputes);
-    else { const ded = Math.max(0, Math.min(dot, R0)); const reste = Math.max(0, R0 - ded); const use = Math.min(ard, reste); ard = ard - use + (dot - ded); base = Math.max(0, reste - use); }
-    const micro = loyers <= MICRO.plafond ? Math.max(MICRO.minimum, loyers * (1 - MICRO.abattement)) : null;
-    out.push({y, interets, dot, base, micro, ard, estime: !!o || y !== y0});
-  }
-  return out;
-}
-function abattements(n){
-  const ir = n < 6 ? 0 : n <= 21 ? (n-5)*6 : 100;
-  const ps = n < 6 ? 0 : n <= 21 ? (n-5)*1.65 : n === 22 ? 28 : n < 30 ? 28 + (n-22)*9 : 100;
-  return {ir: Math.min(ir,100)/100, ps: Math.min(ps,100)/100};
-}
-function surtaxe(pv){
-  const T = [[50000,60000,0.02,1/20],[60000,100000,0.02],[100000,110000,0.03,1/10],[110000,150000,0.03],[150000,160000,0.04,0.15],[160000,200000,0.04],[200000,210000,0.05,0.2],[210000,250000,0.05],[250000,260000,0.06,0.25]];
-  if(pv <= 50000) return 0;
-  if(pv > 260000) return pv * 0.06;
-  const t = T.find(([a,b]) => pv > a && pv <= b);
-  return t[3] ? pv * t[2] - (t[1] - pv) * t[3] : pv * t[2];
-}
-function calculPlusValue(p){
-  const fraisAcq = p.fraisAcqForfait ? p.prixAchat * 0.075 : (p.fraisAcq||0);
-  const ans = Math.floor((Date.parse(p.dateVente) - Date.parse(p.dateAchat)) / (365.25*864e5));
-  const travaux = p.travauxForfait && ans > 5 ? p.prixAchat * 0.15 : (p.travaux||0);
-  const calc = amort => {
-    const prixRevient = p.prixAchat + fraisAcq + travaux - amort;
-    const pv = Math.max(0, p.prixVente - (p.fraisVente||0) - prixRevient);
-    const ab = abattements(ans), pvIR = pv * (1 - ab.ir), pvPS = pv * (1 - ab.ps);
-    const ir = pvIR * 0.19, ps = pvPS * PS_PLUSVALUE, st = surtaxe(pvIR);
-    return {prixRevient, pv, ab, pvIR, pvPS, ir, ps, st, total: ir + ps + st};
-  };
-  return {ans, fraisAcq, travaux, avec: calc(p.amortissements||0), sans: calc(0)};
-}
-
-/* ---- Bac à sable : curseurs et graphiques recalculés en direct ---- */
-function curseur(k, lib, v, min, max, pas, fmt = eur0){
-  return `<label class="curseur"><span>${lib}<output id="o_${k}">${fmt(v)}</output></span>
-    <input type="range" min="${min}" max="${max}" step="${pas}" value="${v}" oninput="simLive('${k}',this.value)" onchange="setDirty()"></label>`;
-}
-const FMT_SIM = {simLoyers:eur0, simCharges:eur0, horizon:v=>`${v} ans`, prixVente:eur0, fraisVente:eur0, anVente:v=>String(v)};
-function simLive(k, v){
-  v = Number(v); const s = simu();
-  if(k === "anVente"){ s.dateVente = `${v}${parametresVente().dateVente.slice(4)}`; } else s[k] = v;
-  const o = document.getElementById("o_"+k); if(o) o.textContent = FMT_SIM[k](v);
-  const res = document.getElementById("simRes"); if(res) res.innerHTML = (S.vueSim === "vente" ? resultatsVente : resultatsRevenus)();
-}
-function puces(k, opts, v){ return `<div class="puces">${opts.map(([o,l])=>`<button class="${o===v?"on":""}" onclick="majSimu('${k}',${JSON.stringify(o).replace(/"/g,"'")})">${l}</button>`).join("")}</div>`; }
-function courbes(xs, series, marque, h = 210){
-  const W = 640, px = 46, py = 14, pr = 22, max = Math.max(1, ...series.flatMap(s=>s.v)) * 1.08;
-  const X = k => px + k / Math.max(1, xs.length-1) * (W - px - pr), Y = v => py + (1 - v/max) * (h - py - 26);
-  const grad = [0, 0.5, 1].map(f => `<line x1="${px}" x2="${W-pr}" y1="${Y(max*f/1.08)}" y2="${Y(max*f/1.08)}" stroke="var(--line)" stroke-dasharray="${f?"3 4":""}"/><text x="${px-6}" y="${Y(max*f/1.08)+4}" text-anchor="end" font-size="10.5" fill="var(--faint)">${!f?"0":max>=3000?Math.round(max*f/1.08/1000)+" k":Math.round(max*f/1.08)}</text>`).join("");
-  const km = xs.indexOf(marque);
-  return `<svg viewBox="0 0 ${W} ${h}" width="100%" role="img" aria-label="${esc(series.map(s=>`${eur0(s.v[0])} en ${xs[0]}, ${eur0(s.v.at(-1))} en ${xs.at(-1)}`).join(" ; "))}">${grad}
-    ${series.map(s=>`<path d="${s.v.map((v,k)=>`${k?"L":"M"}${X(k).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")}" fill="none" stroke="${s.col}" stroke-width="${s.dash?2:2.5}" ${s.dash?'stroke-dasharray="5 5"':""}/>`).join("")}
-    ${xs.map((x,k)=>xs.length<=16||k%5===0||k===km?`<text x="${X(k).toFixed(1)}" y="${h-8}" text-anchor="middle" font-size="10.5" fill="${k===km?"var(--text)":"var(--faint)"}" font-weight="${k===km?600:400}">${x}</text>`:"").join("")}
-    ${km>=0?`<line x1="${X(km)}" x2="${X(km)}" y1="${py}" y2="${h-26}" stroke="var(--accent)" stroke-dasharray="2 3"/>${series.filter(s=>!s.dash).map(s=>`<circle cx="${X(km)}" cy="${Y(s.v[km])}" r="5.5" fill="${s.col}" stroke="var(--surface)" stroke-width="2"/>`).join("")}`:""}
-  </svg>`;
-}
-function parametresRevenus(){
-  const y = S.year, s = simu(), c0 = calculAnnee(y);
-  return {y, s, c0, loyers: s.simLoyers ?? Math.round(c0.produits), charges: s.simCharges ?? Math.round(c0.c242 + c0.c244), tmi: s.tmi ?? 0.30, n: s.horizon ?? 8};
-}
-function resultatsRevenus(){
-  const {y, loyers, charges, tmi, n, c0} = parametresRevenus(), taux = tmi + PS_REVENUS;
-  const o = (loyers !== Math.round(c0.produits) || charges !== Math.round(c0.c242 + c0.c244)) ? {loyers, charges} : null;
-  const pr = projection(y, n, o), totR = pr.reduce((a,r)=>a+r.base*taux,0), eligible = pr[0].micro != null;
-  const totM = eligible ? pr.reduce((a,r)=>a+r.micro*taux,0) : null, gagnant = !eligible || totR <= totM ? "reel" : "micro";
-  const max = Math.max(1, ...pr.map(r=>Math.max(r.base, r.micro||0)*taux));
-  return `<div class="duel">
-      <div class="${gagnant==="reel"?"win":""}"><span>Réel</span><b>${eur0(totR)}</b><small>d'impôt sur ${n} ans</small>${gagnant==="reel"?'<i>le plus avantageux</i>':""}</div>
-      <div class="${gagnant==="micro"?"win":""}"><span>Micro-BIC</span><b>${eligible?eur0(totM):"non éligible"}</b><small>${eligible?`d'impôt sur ${n} ans`:`loyers au-delà de ${eur0(MICRO.plafond)}`}</small>${gagnant==="micro"?'<i>le plus avantageux</i>':""}</div>
-    </div>
-    ${eligible?`<p class="gain">Économie avec le ${gagnant==="reel"?"réel":"micro-BIC"} : <b>${eur0(Math.abs(totR-totM))}</b></p>`:""}
-    <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Impôt chaque année</h3><span class="leg"><i style="background:var(--accent)"></i>Réel <i style="background:var(--seg-2)"></i>Micro-BIC</span></div>
-      <div class="cbars duo ${pr.length>12?"serre":""}" style="height:170px;margin-top:12px">${pr.map(r=>`<div class="cb" title="${r.y} : réel ${eur0(r.base*taux)}${eligible?`, micro ${eur0(r.micro*taux)}`:""}"><div class="paire"><i style="height:${(r.base*taux/max*100).toFixed(1)}%;background:var(--accent)"></i>${eligible?`<i style="height:${(r.micro*taux/max*100).toFixed(1)}%;background:var(--seg-2)"></i>`:""}</div><span>${String(r.y).slice(2)}</span></div>`).join("")}</div></div>
-    ${pr.some(r=>r.ard>1)?`<div class="card"><h3>Amortissements en réserve au réel</h3>${courbes(pr.map(r=>r.y), [{v:pr.map(r=>r.ard), col:"var(--seg-1)"}], null, 150)}</div>`:""}`;
-}
-function parametresVente(){
-  const y = S.year, s = simu(), constr = S.data.immobilisations.filter(i => i.categorie === "construction");
-  const t = typeof suiviAmortissements === "function" ? suiviAmortissements(y) : null;
-  const p = {
-    prixAchat: s.prixAchat ?? r2(constr.reduce((a,i)=>a+i.valeurOrigine,0)),
-    dateAchat: s.dateAchat ?? (constr.map(i=>i.miseEnService).sort()[0] || debutLMNP()),
-    fraisAcqForfait: s.fraisAcqForfait ?? true, fraisAcq: s.fraisAcq ?? 0,
-    travauxForfait: s.travauxForfait ?? false, travaux: s.travaux ?? r2(S.data.immobilisations.filter(i=>i.categorie==="travaux").reduce((a,i)=>a+i.valeurOrigine,0)),
-    fraisVente: s.fraisVente ?? 0, dateVente: s.dateVente ?? `${new Date().getFullYear()+1}-06-30`,
-    amortissements: s.amortissements ?? r2(t ? t.cumul : 0)
-  };
-  p.prixVente = s.prixVente || Math.round(p.prixAchat * 1.2 / 1000) * 1000;
-  return p;
-}
-function resultatsVente(){
-  const p = parametresVente(), r = calculPlusValue(p), A = r.avec, an = yearOf(p.dateVente);
-  const pret = S.data.emprunts.reduce((a,l)=>a + (an > yearOf(l.premiereEcheance) ? empruntAnnee(l, an-1).crdFin : l.capital), 0);
-  const net = p.prixVente - (p.fraisVente||0) - A.total - pret;
-  const segs = [["Net en poche", Math.max(0,net), "var(--pos)"], ["Prêt à solder", pret, "var(--seg-2)"], ["Impôt sur le revenu", A.ir + A.st, "var(--neg)"], ["Prélèvements sociaux", A.ps, "var(--warn)"], ["Frais de vente", p.fraisVente||0, "var(--faint)"]].filter(x=>x[1]>0.5);
-  const xs = [], av = [], sa = [];
-  for(let k = S.year; k <= Math.max(S.year + 30, yearOf(p.dateAchat) + 31); k++){ const q = {...p, dateVente:`${k}${p.dateVente.slice(4)}`}, rr = calculPlusValue(q); xs.push(k); av.push(rr.avec.total); sa.push(rr.sans.total); }
-  return `<div class="tuiles">${tuile("Plus-value", eur0(A.pv))}${tuile("Impôt total", eur0(A.total), {col:"var(--neg)", sous:`${r.ans} ans de détention`})}${tuile("Dû aux amortissements", eur0(A.total - r.sans.total), {sous:"réintégrés depuis 2025"})}${tuile("Net en poche", eur0(net), {col:"var(--pos)", sous:"après prêt et impôt"})}</div>
-    <div class="card"><h3>Où va le prix de vente</h3>
-      <div class="partage">${segs.map(([l,v,c])=>`<i style="flex:${v};background:${c}" title="${l} : ${eur0(v)}"></i>`).join("")}</div>
-      <div class="leg wrap">${segs.map(([l,v,c])=>`<span><i style="background:${c}"></i>${l} <b>${eur0(v)}</b></span>`).join("")}</div></div>
-    <div class="card"><div class="row" style="justify-content:space-between"><h3 style="margin:0">Impôt selon l'année de vente</h3><span class="leg"><i style="background:var(--neg)"></i>Avec amortissements <i style="background:var(--faint)"></i>Sans</span></div>
-      ${courbes(xs, [{v:sa, col:"var(--faint)", dash:true}, {v:av, col:"var(--neg)"}], an)}
-      <div class="jalons"><span>Exonération d'impôt sur le revenu : <b>${yearOf(p.dateAchat)+22}</b></span><span>Exonération totale : <b>${yearOf(p.dateAchat)+30}</b></span></div></div>`;
-}
-function vueSimulations(){
-  const y = S.year, s = simu(), vue = S.vueSim || "revenus";
-  const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Simulations</h1></div>
-    ${segments("vueSim", [["revenus","Réel ou micro-BIC"],["vente","Revente"]], vue)}</div>`;
-  if(vue === "revenus"){
-    if(isHistorique(y) || !fiscalJusqua(y)?.c.lmnpActif) return tete + `<div class="card vide">Choisissez une année détaillée pour comparer réel et micro-BIC.</div>`;
-    const {loyers, charges, tmi, n, c0} = parametresRevenus(), maxL = Math.max(20000, Math.ceil(c0.produits*2/1000)*1000);
-    return tete + `<div class="bac"><div class="card panneau">
-      <h3>Vos hypothèses</h3>
-      ${curseur("simLoyers","Loyers par an",loyers,0,maxL,100)}
-      ${curseur("simCharges","Charges par an (hors intérêts)",charges,0,Math.max(10000,Math.ceil(loyers/1000)*1000),50)}
-      ${curseur("horizon","Durée simulée",n,3,20,1,FMT_SIM.horizon)}
-      <div class="lbl">Tranche d'imposition</div>${puces("tmi", [0,0.11,0.30,0.41,0.45].map(t=>[t, Math.round(t*100)+" %"]), tmi)}
-      ${s.simLoyers!=null||s.simCharges!=null?`<button class="btn small ghost" style="margin-top:14px" onclick="delete simu().simLoyers;delete simu().simCharges;setDirty();renderAll()">↺ Revenir à ${y}</button>`:""}
-    </div><div id="simRes">${resultatsRevenus()}</div></div>`;
-  }
-  const p = parametresVente(), an = yearOf(p.dateVente), num = (k, lib, v) => `<label>${lib}<input inputmode="decimal" value="${String(v).replace(".",",")}" onchange="majSimu('${k}', r2(parseMontant(this.value))||0)"></label>`;
-  return tete + `<div class="bac"><div class="card panneau">
-    <h3>Vos hypothèses</h3>
-    ${curseur("prixVente","Prix de vente",p.prixVente,Math.round(p.prixAchat*0.5/1000)*1000,Math.round(p.prixAchat*2.5/1000)*1000,1000)}
-    ${curseur("anVente","Année de vente",an,S.year,yearOf(p.dateAchat)+32,1,FMT_SIM.anVente)}
-    ${curseur("fraisVente","Frais d'agence et diagnostics",p.fraisVente||0,0,Math.round(p.prixAchat*0.1/500)*500,500)}
-    <div class="lbl">Frais d'achat</div>${puces("fraisAcqForfait", [[true,"Forfait 7,5 %"],[false,"Réels"]], p.fraisAcqForfait)}
-    <div class="lbl">Travaux</div>${puces("travauxForfait", [[false,"Factures"],[true,"Forfait 15 %"]], p.travauxForfait)}
-    <details style="margin-top:14px"><summary>Achat et amortissements</summary><div class="form" style="margin-top:10px">
-      ${num("prixAchat","Prix d'achat",p.prixAchat)}
-      <label>Date d'achat<input type="date" value="${p.dateAchat}" onchange="majSimu('dateAchat',this.value)"></label>
-      ${p.fraisAcqForfait?"":num("fraisAcq","Frais d'achat réels",p.fraisAcq)}
-      ${p.travauxForfait?"":num("travaux","Travaux (factures)",p.travaux)}
-      ${num("amortissements","Amortissements consommés",p.amortissements)}
-    </div></details>
-  </div><div id="simRes">${resultatsVente()}</div></div>
-  <p class="sub" style="margin-top:4px">Estimation à confirmer avec le notaire.</p>`;
-}
+/* Prélèvements sociaux sur les revenus LMNP depuis la LFSS 2026 (estimation de l'impôt du tableau de bord) */
+const PS_REVENUS = 0.186;
 
 /* ---- Contrôles avant déclaration ---- */
 /* Chaque contrôle : [niveau, texte, page] avec niveau "ok" (vérifié), "warn" (à regarder) ou "bad" (à corriger),
@@ -2890,7 +2766,7 @@ addEventListener("beforeprint", () => document.querySelectorAll("details.rv").fo
 /* La révision d'un exercice clôturé est figée avec lui : visible, non modifiable (il faut rouvrir l'exercice) */
 function majRevision(y, id, champs){
   if(verrouille(y)) return;
-  const ex = exercice(y), rev = (ex.revision ??= {}), r = {...(rev[id] || {}), ...champs, date:new Date().toISOString().slice(0,10)};
+  const ex = exercice(y), rev = (ex.revision ??= {}), r = {...(rev[id] || {}), ...champs, date:aujourdhui()};
   if(!r.statut && !r.commentaire && !r.piece) delete rev[id]; else rev[id] = r;
   if(!Object.keys(rev).length) delete ex.revision;
   setDirty(); renderAll();
@@ -2905,7 +2781,7 @@ async function joindreRevision(y, id){
   const piece = await copierDansDossier(f, ["Justificatifs", String(y), "Révision"], `revision_${slug(id)}`);
   majRevision(y, id, {piece, texte:sigPoint(x)}); toast("Pièce jointe au point de révision.");
 }
-function retirerPieceRevision(y, id){ if(confirm("Retirer cette pièce du point de révision ? (le fichier reste dans le dossier)")) majRevision(y, id, {piece:null}); }
+async function retirerPieceRevision(y, id){ if(await confirmer("Retirer cette pièce du point de révision ? (le fichier reste dans le dossier)")) majRevision(y, id, {piece:null}); }
 function majReleve(y, k, v){ if(verrouille(y)) return; const ex = exercice(y), n = parseMontant(v); ex.releve ??= {}; if(v === "" || isNaN(n)) delete ex.releve[k]; else ex.releve[k] = n; if(!Object.keys(ex.releve).length) delete ex.releve; setDirty(); renderAll(); }
 const NIV = {bloque:["bloquant","✕","var(--neg)"], afaire:["à vérifier","!","var(--warn)"], fait:["validé","✓","var(--pos)"], ok:["validé","✓","var(--pos)"]};
 const niveauPoste = p => p.some(x => x.etat === "bloque") ? "bloque" : p.some(x => x.etat === "afaire") ? "afaire" : "ok";
@@ -2984,16 +2860,26 @@ const CHAMPS_DOSSIER = {
   conseil: ["Accompagnement", "M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7z", [
     ["comptable","Comptable (facultatif)", "large"], ["oga","Organisme de gestion agréé", "large"] ]],
 };
+/* Paramètres qui changent les chiffres des années passées : figés dès qu'une année est clôturée (il faut la rouvrir) */
+const CHAMPS_FIGES = new Set(["debutLocationMeublee"]);
+const figeParCloture = () => derniereCloture() > -Infinity;
+const titreFige = () => `${derniereCloture()} est clôturé : ce paramètre change les chiffres déjà déclarés. Rouvrez ${derniereCloture()} pour le modifier.`;
 function champDossier([k, lib, type, opt]){
-  const d = S.data.dossier, v = d[k] ?? "", on = `majDossier('${k}',this.value)`;
+  const d = S.data.dossier, v = d[k] ?? "", on = `majDossier('${k}',this.value)`, fige = CHAMPS_FIGES.has(k) && figeParCloture();
   const cls = type==="large" ? ' class="large"' : "";
   if(type==="select") return `<label${cls}>${lib}<select onchange="${on}">${opt.map(([o,l])=>`<option value="${o}" ${String(v)===o?"selected":""}>${l}</option>`).join("")}</select></label>`;
-  return `<label${cls}>${lib}<input ${type==="date"?'type="date"':type==="num"?'inputmode="decimal"':""} value="${esc(v)}" ${typeof opt==="string"?`placeholder="${esc(opt)}"`:""} onchange="${on}"></label>`;
+  return `<label${cls}>${lib}<input ${type==="date"?'type="date"':type==="num"?'inputmode="decimal"':""} value="${esc(v)}" ${typeof opt==="string"?`placeholder="${esc(opt)}"`:""} ${fige?`disabled title="${esc(titreFige())}"`:""} onchange="${on}"></label>`;
+}
+function majReserveOuverture(v){
+  if(figeParCloture()) return renderAll();
+  const n = montantChamp(v, "amortissements en réserve"); if(n === undefined) return;
+  S.data.reports.amortissementsDifferes = n ?? 0; setDirty(); renderAll();
 }
 function majDossier(k, v){
   v = String(v).trim();
   if(k==="siren"||k==="siret"||k==="numeroFiscal") v = v.replace(/\D/g,"");
-  if(k==="surface"||k==="loyerMensuel"||k==="provisionCharges") v = parseMontant(v) || "";
+  if(CHAMPS_FIGES.has(k) && figeParCloture()) return renderAll();
+  if(k==="surface"||k==="loyerMensuel"||k==="provisionCharges"){ const n = montantChamp(v); if(n === undefined) return; v = n == null ? "" : n; }
   if(k==="siret" && v.length===14 && !S.data.dossier.siren) S.data.dossier.siren = v.slice(0,9);
   if(v === "") delete S.data.dossier[k]; else S.data.dossier[k] = v;
   setDirty(); renderAll();
@@ -3023,11 +2909,12 @@ function vueDossier(){
     ${ys.map(y=>{ const st = S.data.exercices[y].statut||"en-cours", [lib,col] = STAT[st]||[st,"var(--line)"];
       return `<div class="an" style="--c:${col}"><b>${y}</b><span>${lib}</span>${isHistorique(y)?`<button class="btn small sec" onclick="ouvrirReprise(${y})">Détailler…</button>`:st==="cloture"
         ?(y === derniereCloture() ? `<button class="btn small sec" onclick="rouvrirExercice(${y})">Rouvrir…</button>` : `<button class="btn small sec" disabled title="Rouvrez d'abord ${derniereCloture()}">Rouvrir…</button>`)
-        :`<button class="btn small sec" onclick="S.cloture=${y};renderAll();haut()">Clôturer…</button>`}</div>`; }).join("")}
+        :(motifNonCloturable(y) ? `<button class="btn small sec" disabled title="${esc(motifNonCloturable(y))}">Clôturer…</button>` : `<button class="btn small sec" onclick="S.cloture=${y};renderAll();haut()">Clôturer…</button>`)}</div>`; }).join("")}
     <button class="an plus" onclick="nouvelExercice()"><b>+</b><span>Ouvrir ${Math.max(...ys)+1}</span></button>
   </div></div>
   <div class="dosgrid">
-    <div class="card"><h3>Reports d'ouverture</h3><div class="form"><label>Amortissements en réserve (art. 39 C)<input inputmode="decimal" value="${rp.amortissementsDifferes}" onchange="S.data.reports.amortissementsDifferes=r2(parseMontant(this.value))||0;setDirty();renderAll()"></label></div>
+    <div class="card"><h3>Reports d'ouverture</h3><div class="form"><label>Amortissements en réserve (art. 39 C)<input inputmode="decimal" value="${String(rp.amortissementsDifferes).replace(".",",")}" ${figeParCloture()?`disabled title="${esc(titreFige())}"`:""} onchange="majReserveOuverture(this.value)"></label></div>
+      ${figeParCloture()?`<p class="sub" style="margin:8px 0 0">Figé : ${derniereCloture()} est clôturé. Rouvrez-le pour modifier les reports d'ouverture.</p>`:""}
       <p class="sub" style="margin:8px 0 0">Déficits antérieurs : ${rp.deficits.length?rp.deficits.map(x=>x.annee+" : "+eur(x.montant)).join(", "):"aucun"}</p></div>
     <div class="card"><h3>Fichier</h3><p class="sub" style="margin:0 0 10px">${S.dir?`Dossier « ${esc(S.dir.name)} » · copie datée dans « Sauvegardes » à chaque enregistrement`:`Lecture seule : l'enregistrement télécharge un fichier`}</p>
       <div class="row">${FS?`<button class="btn sec" onclick="ouvrirDossier()">Autre dossier…</button>`:""}<button class="btn sec" onclick="ouvrirFichier()">Ouvrir un fichier…</button></div></div>
@@ -3043,7 +2930,7 @@ function vueDossier(){
     <p>GitHub, Inc. (GitHub Pages), 88 Colin P. Kelly Jr. Street, San Francisco, CA 94107, États-Unis.</p>
     <h4>Confidentialité</h4>
     <p>Le Carnet n'a ni compte, ni serveur, ni cookie, ni mesure d'audience. Les données du dossier restent dans le fichier <code>lmnp-donnees.json</code>, sur votre appareil ou dans votre dossier iCloud : elles ne sont jamais envoyées sur internet.</p>
-    <p>Comme tout hébergeur, GitHub voit l'adresse IP de qui ouvre la page (<a href="https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">sa déclaration de confidentialité</a>). Au premier PDF déposé, le lecteur de PDF est chargé depuis jsDelivr, qui voit alors aussi l'adresse IP ; le PDF lui-même reste sur l'appareil.</p>
+    <p>Comme tout hébergeur, GitHub voit l'adresse IP de qui ouvre la page (<a href="https://docs.github.com/fr/site-policy/privacy-policies/github-general-privacy-statement" target="_blank" rel="noopener">sa déclaration de confidentialité</a>). Le lecteur de PDF est servi par le site lui-même, et la page interdit au navigateur d'envoyer quoi que ce soit vers un autre site : les données et les pièces restent sur l'appareil.</p>
     <p>Le navigateur garde sur cet appareil le thème choisi et l'accès au dossier ouvert, pour ne pas les redemander.</p>
     <h4>Responsabilité</h4>
     <p>Les montants produits sont à vérifier avant chaque déclaration. Le Carnet ne remplace pas l'avis d'un expert-comptable.</p>
@@ -3061,7 +2948,7 @@ function cellPiece(e){
 }
 const slug = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,30) || "piece";
 async function dossierRequis(){
-  if(!S.dir){ alert(PARTAGE ? "Sur iPhone, l'outil ne peut pas lire le dossier LMNP : ouvrez la pièce depuis l'app Fichiers (dossier Justificatifs), ou sur ordinateur dans Chrome." : "Les justificatifs sont rangés dans le dossier LMNP : ouvrez l'outil dans Chrome via « Ouvrir le dossier LMNP… »."); return false; }
+  if(!S.dir){ avertir(PARTAGE ? "Sur iPhone, l'outil ne peut pas lire le dossier LMNP : ouvrez la pièce depuis l'app Fichiers (dossier Justificatifs), ou sur ordinateur dans Chrome." : "Les justificatifs sont rangés dans le dossier LMNP : ouvrez l'outil dans Chrome via « Ouvrir le dossier LMNP… »."); return false; }
   if(await S.dir.queryPermission({mode:"readwrite"}) !== "granted" && await S.dir.requestPermission({mode:"readwrite"}) !== "granted") return false;
   return true;
 }
@@ -3098,12 +2985,13 @@ async function attacherPiece(id){
    Le nom date_tiers_nature permet à l'ordinateur de rattacher la pièce seul (scanPieces) ; sans écriture, il la propose au rattachement. */
 const nomPiece = e => `${e.date}_${slug(e.tiers)}_${slug(e.nature)}`;
 function choisirPieceIPhone(id){
+  // Fenêtre du navigateur gardée ici : Safari n'ouvre le choix du fichier que dans le geste de l'utilisateur, sans attente
   const e = id && findEcr(id), libelle = !e && prompt("Quelle pièce ? (par exemple « Ticket Ikea »)");
   if(!e && libelle == null) return;
   const inp = document.createElement("input"); inp.type = "file"; inp.accept = "image/*,.pdf";
   inp.onchange = () => { const file = inp.files[0]; if(!file) return;
     const ext = (file.name.match(/\.[A-Za-z0-9]+$/)||[file.type === "application/pdf" ? ".pdf" : ".jpg"])[0].toLowerCase();
-    const jour = new Date().toISOString().slice(0,10), nom = (e ? nomPiece(e) : `${jour}_${slug(libelle)}`) + ext;
+    const jour = aujourdhui(), nom = (e ? nomPiece(e) : `${jour}_${slug(libelle)}`) + ext;
     S.pieceIPhone = {id, nom, annee:e ? yearOf(e.date) : Number(jour.slice(0,4)), file:new File([file], nom, {type:file.type || "application/octet-stream"})};
     renderAll(); haut(); };
   inp.click();
@@ -3111,7 +2999,7 @@ function choisirPieceIPhone(id){
 async function rangerPieceIPhone(){
   const P = S.pieceIPhone; if(!P) return;
   try{ if(!navigator.canShare({files:[P.file]})) throw new Error("ce type de fichier ne peut pas être partagé"); await navigator.share({files:[P.file]}); }
-  catch(err){ if(err.name !== "AbortError") alert("Partage impossible (" + err.message + ")."); return; }
+  catch(err){ if(err.name !== "AbortError") avertir("Partage impossible (" + err.message + ")."); return; }
   if(P.id){ const d = deposees(); d[P.id] = P.nom; setPref("deposees", JSON.stringify(d)); }
   S.pieceIPhone = null; renderAll(); toast("Pièce déposée. Elle sera rattachée à la prochaine ouverture du dossier sur l'ordinateur.");
 }
@@ -3121,7 +3009,7 @@ function deposees(){ try{ return JSON.parse(pref("deposees", "{}")) || {}; }catc
 const aDeposer = y => piecesManquantes(y).filter(e => !deposees()[e.id]);
 function memoriserDossier(obj, nom){ try{ localStorage.setItem("dossierIPhone", JSON.stringify({nom:obj.dossier?.nom || nom, fichier:nom, le:new Date().toLocaleString("fr-FR",{dateStyle:"short",timeStyle:"short"}), obj})); }catch(_){} }
 function dossierMemorise(){ try{ return JSON.parse(localStorage.getItem("dossierIPhone")); }catch(_){ return null; } }
-function reprendreMemorise(){ const m = dossierMemorise(); if(!m) return; try{ chargerDonnees(m.obj, m.fichier); }catch(e){ alert(e.message); } }
+function reprendreMemorise(){ const m = dossierMemorise(); if(!m) return; try{ chargerDonnees(m.obj, m.fichier); }catch(e){ avertir(e.message); } }
 function vueDepot(){
   const y = S.year, dep = deposees();
   const manq = piecesManquantes(y).sort((a,b)=>b.date.localeCompare(a.date)), reste = manq.filter(e => !dep[e.id]), faites = manq.filter(e => dep[e.id]);
@@ -3141,7 +3029,7 @@ async function ouvrirPiece(id){
     $("#vTitle").textContent = `${fmtDate(e.date)} · ${e.tiers||""} · ${e.nature} · ${eur(e.montant)}`;
     $("#vFrame").src = url; $("#vOpen").href = url;
     S.pieceOuverte = id; ouvrirViewer();
-  }catch(err){ alert("Justificatif introuvable : « "+e.piece+" ». A-t-il été déplacé ou renommé ?"); }
+  }catch(err){ avertir("Justificatif introuvable : « "+e.piece+" ». A-t-il été déplacé ou renommé ?"); }
 }
 function urlPiece(file){
   const ext = (file.name.split(".").pop()||"").toLowerCase();
@@ -3151,7 +3039,7 @@ function urlPiece(file){
 function ouvrirViewer(){ document.documentElement.classList.add("modal-open"); $("#viewer").showModal(); }
 function fermerPiece(){ $("#viewer").close(); }
 $("#viewer").addEventListener("close", () => { document.documentElement.classList.remove("modal-open"); const f = $("#vFrame"); if(f.src.startsWith("blob:")) URL.revokeObjectURL(f.src); f.src = "about:blank"; });
-function detacherPiece(id){ const e = findEcr(id); if(!confirm("Détacher ce justificatif de l'écriture ? (le fichier reste dans le dossier)")) return; delete e.piece; factures().filter(f => f.ecriture === id).forEach(f => { delete f.ecriture; f.manuel = true; }); setDirty(); renderAll(); }
+async function detacherPiece(id){ const e = findEcr(id); if(!await confirmer("Détacher ce justificatif de l'écriture ? (le fichier reste dans le dossier)", {ok:"Détacher"})) return; delete e.piece; factures().filter(f => f.ecriture === id).forEach(f => { delete f.ecriture; f.manuel = true; }); setDirty(); renderAll(); }
 function marquerSansPiece(id, v){ const e = findEcr(id); if(v) e.sansPiece = true; else delete e.sansPiece; setDirty(); renderAll(); }
 /* ---- Documents partagés (échéanciers…) : un fichier rattaché à plusieurs écritures ---- */
 const TYPES_DOC = {echeancier:"Échéancier", contrat:"Contrat / bail", autre:"Autre document"};
@@ -3174,9 +3062,9 @@ async function choisirFichier(){
 async function deposerDocument(type, file, libelle){
   if(!await dossierRequis()) return null;
   file ??= await choisirFichier(); if(!file) return null;
-  libelle ??= prompt("Nom du document :", file.name.replace(/\.[^.]+$/, "")); if(libelle == null) return null;
+  libelle ??= await demander("Nom du document :", file.name.replace(/\.[^.]+$/, ""), {ok:"Enregistrer"}); if(libelle == null) return null;
   const fichier = await copierDansDossier(file, ["Justificatifs", "Documents"], `${type}_${slug(libelle)}`);
-  const d = {id:uid(), type, libelle:libelle.trim() || file.name, fichier, date:new Date().toISOString().slice(0,10)};
+  const d = {id:uid(), type, libelle:libelle.trim() || file.name, fichier, date:aujourdhui()};
   docs().push(d); S.rattDoc = type === "echeancier" ? d.id : null;
   setDirty(); renderAll(); toast(`« ${d.libelle} » rangé dans ${fichier}.`);
   return d.id;
@@ -3186,7 +3074,7 @@ async function ouvrirChemin(chemin, titre){
   if(!await dossierRequis()) return;
   try{ const file = await (await handleDepuisChemin(chemin)).getFile(), url = urlPiece(file);
     $("#vTitle").textContent = titre; $("#vFrame").src = url; $("#vOpen").href = url; ouvrirViewer(); }
-  catch(err){ alert("Fichier introuvable : « "+chemin+" »."); }
+  catch(err){ avertir("Fichier introuvable : « "+chemin+" »."); }
 }
 function enregistrerRattachement(id){
   const d = docs().find(x=>x.id===id), coches = new Set([...document.querySelectorAll("#ratt input:checked")].map(i=>i.value));
@@ -3195,8 +3083,8 @@ function enregistrerRattachement(id){
   }));
   S.rattDoc = null; setDirty(); renderAll(); toast(`« ${d.libelle} » rattaché à ${coches.size} écriture${pl(coches.size)}.`);
 }
-function supprimerDocument(id){
-  const d = docs().find(x=>x.id===id); if(!confirm(`Retirer « ${d.libelle} » de l'outil ? Les écritures rattachées n'auront plus de justificatif (le fichier reste dans le dossier).`)) return;
+async function supprimerDocument(id){
+  const d = docs().find(x=>x.id===id); if(!await confirmer(`Retirer « ${d.libelle} » de l'outil ? Les écritures rattachées n'auront plus de justificatif (le fichier reste dans le dossier).`)) return;
   ecrituresDuDoc(d).forEach(e => delete e.piece);
   S.data.documents = docs().filter(x=>x.id!==id); setDirty(); renderAll();
 }
@@ -3235,7 +3123,7 @@ function vuePieces(){
       <div><b>${esc(d.libelle)}</b><small>${TYPES_DOC[d.type]||d.type} · ${n} écriture${n>1?"s":""}</small></div>
       <div class="row noprint" style="margin-left:auto;gap:4px"><button class="btn small sec" onclick="ouvrirChemin(${jsq(d.fichier)},${jsq(d.libelle)})">Voir</button><button class="btn small" onclick="S.rattDoc='${d.id}';renderAll()">Rattacher…</button><button class="btn small ghost" aria-label="Retirer" onclick="supprimerDocument('${d.id}')">${I_DEL}</button></div></div>`; }).join("")}</div></div>` : ""}
   <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">À fournir · ${manq.length}</h3>
-    ${manq.length>3?`<button class="btn small ghost noprint" onclick="if(confirm('Marquer les ${manq.length} écritures comme ne demandant pas de justificatif ?')){piecesManquantes(${y}).forEach(e=>e.sansPiece=true);setDirty();renderAll()}">Tout marquer « non requis »</button>`:""}</div>
+    ${manq.length>3?`<button class="btn small ghost noprint" onclick="confirmer('Marquer les ${manq.length} écritures comme ne demandant pas de justificatif ?', {ok:'Marquer'}).then(ok=>{if(ok){piecesManquantes(${y}).forEach(e=>e.sansPiece=true);setDirty();renderAll()}})">Tout marquer « non requis »</button>`:""}</div>
     ${manq.length ? manq.map(e=>ligne(e, `<button class="btn small" onclick="attacherPiece('${e.id}')">Ajouter</button>${dd.length?`<select class="btn small sec" style="padding:4px 6px" onchange="if(this.value){const d=docs().find(x=>x.id===this.value);findEcr('${e.id}').piece=d.fichier;setDirty();renderAll()}"><option value="">Document…</option>${dd.map(d=>`<option value="${d.id}">${esc(d.libelle)}</option>`).join("")}</select>`:""}<button class="btn small ghost" title="Pas besoin de justificatif" onclick="marquerSansPiece('${e.id}',true)">Non requis</button>`)).join("")
       : `<div class="blx-0" style="margin:6px 0 0">✓ Tout est justifié</div>`}</div>
   ${ok.length?`<div class="card"><details><summary>Pièces rangées · ${ok.length}</summary><div style="margin-top:8px">
@@ -3290,12 +3178,12 @@ async function scanOuverture(){
 const cheminsLies = () => new Set([...Object.values(S.data.exercices).flatMap(ex=>(ex.ecritures||[]).map(e=>e.piece)), ...factures().flatMap(f=>[f.fichier, f.xml]), ...docs().map(d=>d.fichier)].filter(Boolean));
 const cheminLibre = i => `Justificatifs/${S.libres.y}/${S.libres.noms[i]}`;
 /* Un seul menu par fichier : l'écriture qu'il justifie, ou « échéancier » s'il en justifie plusieurs */
-function rattacherLibre(i, v){
+async function rattacherLibre(i, v){
   if(!v) return;
   const chemin = cheminLibre(i), nom = S.libres.noms[i];
   if(v === "__doc"){
-    const libelle = prompt("Nom de l'échéancier ou du document :", nom.replace(/\.[^.]+$/, "")); if(libelle == null) return;
-    const d = {id:uid(), type:"echeancier", libelle:libelle.trim() || nom, fichier:chemin, date:new Date().toISOString().slice(0,10)};
+    const libelle = await demander("Nom de l'échéancier ou du document :", nom.replace(/\.[^.]+$/, ""), {ok:"Enregistrer"}); if(libelle == null) return;
+    const d = {id:uid(), type:"echeancier", libelle:libelle.trim() || nom, fichier:chemin, date:aujourdhui()};
     docs().push(d); S.rattDoc = d.id; setDirty(); renderAll(); return;
   }
   const e = findEcr(v); e.piece = chemin; delete e.sansPiece; setDirty(); renderAll(); toast("Pièce rattachée.");
@@ -3412,7 +3300,7 @@ async function analyserFichiersFactures(files){
 function enregistrerFacture(meta, fichier, xml){
   const cle = `${meta.siren || norm(meta.fournisseur)}|${meta.numero}`;
   if(!meta.date || factures().some(f => f.cle === cle)) return false;
-  factures().push({id:uid(), cle, ...meta, montant:r2(meta.ttc || 0), fichier, ...(xml ? {xml} : {}), importee:new Date().toISOString().slice(0,10)});
+  factures().push({id:uid(), cle, ...meta, montant:r2(meta.ttc || 0), fichier, ...(xml ? {xml} : {}), importee:aujourdhui()});
   return true;
 }
 /* Zone de dépôt unique : factures électroniques lues et rangées à leur date, autres fichiers rangés dans l'année affichée puis proposés au rattachement */
@@ -3431,7 +3319,7 @@ async function deposerPieces(files){
   setDirty(); renderAll();
   const msg = [n && `${n} facture${pl(n)} électronique${pl(n)} lue${pl(n)}${lies?`, ${lies} rattachée${pl(lies)} à leur paiement`:""}`, deja && `${deja} déjà connue${pl(deja)}`, autres.length && `${autres.length} fichier${pl(autres.length)} à rattacher ci-dessous`].filter(Boolean);
   toast(msg.length ? msg.join(" · ") + "." : "Aucun fichier utilisable.");
-  if(illisibles.length) alert(`Fichier${pl(illisibles.length)} illisible${pl(illisibles.length)} : ${illisibles.join(", ")}.`);
+  if(illisibles.length) avertir(`Fichier${pl(illisibles.length)} illisible${pl(illisibles.length)} : ${illisibles.join(", ")}.`);
 }
 function deposerPiecesDrop(ev){ ev.preventDefault(); ev.currentTarget.classList.remove("survol"); const fs = [...ev.dataTransfer.files]; if(fs.length) deposerPieces(fs); }
 $("#pieceInput").addEventListener("change", ev => { const fs = [...ev.target.files]; ev.target.value = ""; if(fs.length) deposerPieces(fs); });
@@ -3470,11 +3358,11 @@ function rattacherFacture(id, v){
   const eid = v, f = factures().find(x => x.id === id); lierFacture(f, findEcr(eid)); setDirty(); renderAll(); toast("Facture rattachée à l'écriture."); }
 function creerEcritureFacture(id, nature){
   const f = factures().find(x => x.id === id), y = yearOf(f.date);
-  if(!exercice(y) || isHistorique(y) || verrouille(y)) return alert(`L'exercice ${y} est clôturé, repris de l'Excel ou n'existe pas.`);
+  if(!exercice(y) || isHistorique(y) || verrouille(y)) return avertir(`L'exercice ${y} est clôturé, repris de l'Excel ou n'existe pas.`);
   const ex = exercice(y), e = {id:uid(), date:f.date, tiers:f.fournisseur, nature, montant:f.montant, sens:"depense", commentaire:`Facture ${f.numero}, payée hors du compte importé`};
   (ex.ecritures ??= []).push(e); lierFacture(f, e); setDirty(); renderAll(); toast(`Écriture créée au ${fmtDate(f.date)}.`);
 }
-function ignorerFacture(id){ const f = factures().find(x => x.id === id); if(!confirm(`Ne plus proposer la facture ${f.numero} de ${f.fournisseur} ? (le fichier reste dans le dossier)`)) return; f.ignoree = true; setDirty(); renderAll(); }
+async function ignorerFacture(id){ const f = factures().find(x => x.id === id); if(!await confirmer(`Ne plus proposer la facture ${f.numero} de ${f.fournisseur} ? (le fichier reste dans le dossier)`)) return; f.ignoree = true; setDirty(); renderAll(); }
 function carteARattacher(y){
   const pris = cheminsLies(), libres = (S.libres?.y === y ? S.libres.noms : []).map((nom, i) => [nom, i]).filter(([nom]) => !pris.has(`Justificatifs/${y}/${nom}`));
   const att = facturesEnAttente().sort((a,b) => a.date.localeCompare(b.date));
@@ -3617,14 +3505,14 @@ function importerCSV(){ $("#csvInput").click(); }
 $("#csvInput").addEventListener("change", async ev => {
   const f = ev.target.files[0]; ev.target.value = ""; if(!f) return;
   try{ S.imp = analyserCSV(await lireTexte(f), f.name); S.tab = "banque"; renderAll(); haut(); }
-  catch(e){ alert(e.message); }
+  catch(e){ avertir(e.message); }
 });
 function majImport(k, v){ S.imp.map[k] = k === "mode" ? v : Number(v); renderAll(); }
 function validerImport(){
   const imp = S.imp, m = imp.map;
-  if(m.date < 0 || m.lib < 0 || (m.mode === "m" ? m.montant < 0 : m.debit < 0 || m.credit < 0)) return alert("Indiquez les colonnes de date, de libellé et de montant.");
+  if(m.date < 0 || m.lib < 0 || (m.mode === "m" ? m.montant < 0 : m.debit < 0 || m.credit < 0)) return avertir("Indiquez les colonnes de date, de libellé et de montant.");
   const {ops, rejets} = operationsImport(imp);
-  if(!ops.length) return alert("Aucune opération lisible avec ces colonnes. Vérifiez la colonne des dates et celle des montants.");
+  if(!ops.length) return avertir("Aucune opération lisible avec ces colonnes. Vérifiez la colonne des dates et celle des montants.");
   const B = S.data.banque, connues = clesConnues();
   const nouvelles = ops.filter(o => !connues.has(o.cle));
   let auto = 0;
@@ -3643,12 +3531,12 @@ function majOp(id, k, v){
   const o = trouverOp(id); o[k] = v; if(k === "nature"){ delete o.regle; if(v === IGNORER) delete o.doublon; else if(!o.pasDoublon) chercherDoublon(o); }
   setDirty(); if(k === "nature") renderAll();
 }
-function memoriserRegle(id){
+async function memoriserRegle(id){
   const o = trouverOp(id), B = S.data.banque;
-  if(!o.nature) return alert("Choisissez d'abord la nature de cette opération, ou « Ignorer ».");
-  const mc = prompt("Mot-clé à reconnaître dans le libellé bancaire. Les prochaines opérations qui le contiennent seront classées pareil :", motCleSuggere(o.libelle) || o.libelle.slice(0,20));
+  if(!o.nature) return avertir("Choisissez d'abord la nature de cette opération, ou « Ignorer ».");
+  const mc = await demander("Mot-clé à reconnaître dans le libellé bancaire. Les prochaines opérations qui le contiennent seront classées pareil :", motCleSuggere(o.libelle) || o.libelle.slice(0,20));
   if(!mc || !mc.trim()) return;
-  if(!norm(o.libelle).includes(norm(mc))) return alert("Ce mot-clé n'apparaît pas dans le libellé de cette opération.");
+  if(!norm(o.libelle).includes(norm(mc))) return avertir("Ce mot-clé n'apparaît pas dans le libellé de cette opération.");
   B.regles = B.regles.filter(r => !(norm(r.motCle) === norm(mc) && r.sens === sensOp(o)));
   B.regles.push({id:uid(), motCle:mc.trim(), sens:sensOp(o), nature:o.nature, tiers:o.nature === IGNORER ? "" : (o.tiers||"")});
   o.regle = mc.trim();
@@ -3656,15 +3544,15 @@ function memoriserRegle(id){
   B.aTrier.forEach(x => { if(!x.nature && !x.parent){ appliquerRegles(x); if(x.nature){ n++; if(x.nature === IGNORER) delete x.doublon; } } });
   setDirty(); renderAll(); toast(`Règle « ${mc.trim()} » mémorisée${n?`, ${n} autre${pl(n)} opération${pl(n)} classée${pl(n)}`:""}.`);
 }
-function scinderOp(id){
+async function scinderOp(id){
   const o = trouverOp(id), tot = Math.abs(o.montant), fr = x => x.toLocaleString("fr-FR", {minimumFractionDigits:2, maximumFractionDigits:2});
   // Échéance de prêt reconnue (même mois, même total) : la ventilation de l'échéancier est proposée, natures comprises
   const ech = S.data.emprunts.flatMap(l => echeancier(l)).find(r => r.date.slice(0,7) === o.date.slice(0,7) && Math.abs(r.interet + r.capital + (r.assurance||0) - tot) < 0.02);
   const defaut = ech ? [ech.interet, ...(ech.assurance > 0 ? [ech.capital] : [])].map(fr).join(" + ") : "";
-  const v = prompt(`Ventiler ${eur(tot)} sur plusieurs lignes.\nMontants des premières lignes, séparés par « + » : le reste va sur la dernière ligne.${ech ? `\n\nÉchéance de prêt reconnue : intérêts ${eur(ech.interet)}, capital ${eur(ech.capital)}${ech.assurance > 0 ? `, assurance ${eur(ech.assurance)}` : ""}.` : "\nPar exemple, pour une échéance de prêt : intérêts + capital, le reste étant l'assurance."}`, defaut);
+  const v = await demander(`Ventiler ${eur(tot)} sur plusieurs lignes.\nMontants des premières lignes, séparés par « + » : le reste va sur la dernière ligne.${ech ? `\n\nÉchéance de prêt reconnue : intérêts ${eur(ech.interet)}, capital ${eur(ech.capital)}${ech.assurance > 0 ? `, assurance ${eur(ech.assurance)}` : ""}.` : "\nPar exemple, pour une échéance de prêt : intérêts + capital, le reste étant l'assurance."}`, defaut);
   if(v == null || !v.trim()) return;
   const parts = v.split("+").map(x => r2(parseMontant(x))), reste = r2(tot - parts.reduce((t,x) => t + x, 0));
-  if(parts.some(x => !(x > 0)) || !(reste > 0)) return alert(`Chaque montant doit être positif, et leur total inférieur à ${eur(tot)}.`);
+  if(parts.some(x => !(x > 0)) || !(reste > 0)) return avertir(`Chaque montant doit être positif, et leur total inférieur à ${eur(tot)}.`);
   const montants = [...parts, reste], sg = Math.sign(o.montant), B = S.data.banque, i = B.aTrier.indexOf(o);
   const natEch = ech && v.trim() === defaut ? ["Intérêts emprunt", ...(ech.assurance > 0 ? ["Remboursement emprunt", "Assurance emprunt"] : ["Remboursement emprunt"])] : null;
   const lignes = montants.map((m, k) => ({...o, id:uid(), montant:r2(sg*m), parent:true, nature: natEch ? natEch[k] : k === 0 ? o.nature : "", tiers:o.tiers}));
@@ -3681,7 +3569,7 @@ function confirmerDoublon(id, oui){
 }
 function validerTri(){
   const B = S.data.banque, prets = B.aTrier.filter(o => o.nature);
-  if(!prets.length) return alert("Aucune opération classée pour l'instant.");
+  if(!prets.length) return avertir("Aucune opération classée pour l'instant.");
   const derniere = Math.max(...Object.keys(S.data.exercices).map(Number));
   let n = 0, ign = 0; const bloques = new Set(), faites = new Set();
   for(const o of prets){
@@ -3698,7 +3586,7 @@ function validerTri(){
   const lies = rapprocherFactures();
   setDirty(); renderAll();
   toast(`${n} écriture${pl(n)} créée${pl(n)}, ${ign} opération${pl(ign)} ignorée${pl(ign)}${lies?`, ${lies} facture${pl(lies)} reçue${pl(lies)} rattachée${pl(lies)}`:""}.`);
-  if(bloques.size) alert(`Certaines opérations restent à trier : l'exercice ${[...bloques].sort().join(", ")} est clôturé, repris de l'Excel ou n'existe pas. Rouvrez-le ou ignorez ces opérations.`);
+  if(bloques.size) avertir(`Certaines opérations restent à trier : l'exercice ${[...bloques].sort().join(", ")} est clôturé, repris de l'Excel ou n'existe pas. Rouvrez-le ou ignorez ces opérations.`);
 }
 function supprimerRegle(id){ const B = S.data.banque; B.regles = B.regles.filter(r => r.id !== id); setDirty(); renderAll(); }
 function majRegle(id, k, v){ const r = S.data.banque.regles.find(r => r.id === id); r[k] = v.trim(); setDirty(); }
@@ -3736,7 +3624,7 @@ function vueImport(){
 async function deposerCSV(ev){
   ev.preventDefault(); ev.currentTarget.classList.remove("survol");
   const f = ev.dataTransfer.files[0]; if(!f) return;
-  try{ S.imp = analyserCSV(await lireTexte(f), f.name); renderAll(); haut(); } catch(e){ alert(e.message); }
+  try{ S.imp = analyserCSV(await lireTexte(f), f.name); renderAll(); haut(); } catch(e){ avertir(e.message); }
 }
 const zoneDepot = (titre, sous, action, drop) => `<div class="depot noprint" role="button" tabindex="0" onclick="${action}" ondragover="event.preventDefault();this.classList.add('survol')" ondragleave="this.classList.remove('survol')" ondrop="${drop}">
   <svg width="34" height="34" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 15V4M7.5 8.5 12 4l4.5 4.5M5 15v4h14v-4"/></svg>
@@ -3826,27 +3714,35 @@ function vueCloture(y){
     <div class="form" style="margin-top:14px"><label>Date d'envoi de la déclaration (facultatif)<input type="date" id="clDecl" value="${ex.dateDeclaration||""}"></label></div>
     <p class="sub" style="margin:8px 0 0">Ces chiffres sont mémorisés : si une modification ultérieure les change, le tableau de bord vous préviendra.</p>`) +
   step(4, `Ce qui change en ${y+1}`, chg.length ? `<ul style="margin:0">${chg.map(t=>`<li>${t}</li>`).join("")}</ul>` : `<p class="sub" style="margin:0">Rien de particulier : mêmes amortissements et même emprunt.</p>`) +
-  `<div class="row"><button class="btn" onclick="cloturer(${y})" ${bad.length?"disabled":""}>Clôturer ${y}${exercice(y+1)?"":` et ouvrir ${y+1}`}</button><button class="btn ghost" onclick="S.cloture=null;renderAll()">Annuler</button></div>`;
+  (motifNonCloturable(y) ? `<div class="alert bad">${esc(motifNonCloturable(y))}</div>` : "") + `<div class="row"><button class="btn" onclick="cloturer(${y})" ${bad.length||motifNonCloturable(y)?"disabled":""}>Clôturer ${y}${exercice(y+1)?"":` et ouvrir ${y+1}`}</button><button class="btn ghost" onclick="S.cloture=null;renderAll()">Annuler</button></div>`;
 }
 /* Réouverture d'un exercice clôturé : la plus récente seulement, confirmée par la saisie de l'année, motif conservé dans le dossier */
-function rouvrirExercice(y){
+async function rouvrirExercice(y){
   const ex = exercice(y); if(ex?.statut !== "cloture" || y !== derniereCloture()) return;
   const decl = ex.dateDeclaration;
-  if(!confirm(`Rouvrir ${y} ?\n\n${y} est clôturé${decl ? ` et déclaré le ${fmtDate(decl)}` : ""} : ses chiffres ont pu être transmis à l'administration. Une fois rouvert, ses écritures et ses immobilisations redeviennent modifiables, et toute modification change le résultat ${y} et les reports des années suivantes, qu'il faudrait alors déclarer à nouveau (déclaration rectificative).`)) return;
-  const t = prompt(`Pour confirmer, tapez l'année à rouvrir (${y}) :`); if(t === null) return;
-  if(t.trim() !== String(y)) return alert("L'année tapée ne correspond pas : rien n'a été rouvert.");
-  const motif = (prompt("Motif de la réouverture (obligatoire, conservé dans le dossier) :") || "").trim();
-  if(!motif) return alert("Sans motif, rien n'a été rouvert.");
-  (ex.reouvertures ??= []).push({date:new Date().toISOString().slice(0,10), motif, cloture:ex.cloture || null});
+  if(!await confirmer(`Rouvrir ${y} ?\n\n${y} est clôturé${decl ? ` et déclaré le ${fmtDate(decl)}` : ""} : ses chiffres ont pu être transmis à l'administration. Une fois rouvert, ses écritures et ses immobilisations redeviennent modifiables, et toute modification change le résultat ${y} et les reports des années suivantes, qu'il faudrait alors déclarer à nouveau (déclaration rectificative).`, {ok:"Rouvrir…", danger:true})) return;
+  const t = await demander(`Pour confirmer, tapez l'année à rouvrir (${y}) :`, "", {titre:`Rouvrir ${y}`, ok:"Continuer"}); if(t === null) return;
+  if(t.trim() !== String(y)) return avertir("L'année tapée ne correspond pas : rien n'a été rouvert.");
+  const motif = ((await demander("Motif de la réouverture (obligatoire, conservé dans le dossier) :", "", {titre:`Rouvrir ${y}`, ok:"Rouvrir", danger:true})) || "").trim();
+  if(!motif) return avertir("Sans motif, rien n'a été rouvert.");
+  (ex.reouvertures ??= []).push({date:aujourdhui(), motif, cloture:ex.cloture || null});
   ex.statut = "en-cours";
   setDirty(); renderAll(); toast(`${y} est rouvert. Pensez à le clôturer à nouveau une fois la correction faite.`);
 }
+/* Clôture dans l'ordre (l'année précédente détaillée doit être clôturée) et seulement une fois l'année terminée */
+function motifNonCloturable(y){
+  const prec = exercice(y-1);
+  if(prec && !isHistorique(y-1) && prec.statut !== "cloture") return `Clôturez d'abord ${y-1} : les reports de ${y} en dépendent.`;
+  if(aujourdhui() < `${y+1}-01-01`) return `${y} n'est pas terminé : la clôture sera possible à partir du 1er janvier ${y+1}.`;
+  return "";
+}
 function cloturer(y){
-  if(restantRevision(y).some(x => x.etat === "bloque")) return alert("Il reste des erreurs bloquantes dans la révision : corrigez-les ou expliquez-les avant de clôturer.");
-  if(!$("#clRegul").checked) return alert("Cochez d'abord la vérification des sommes dues et à recevoir au 31/12 (étape 2).");
+  { const m = motifNonCloturable(y); if(m) return avertir(m); }
+  if(restantRevision(y).some(x => x.etat === "bloque")) return avertir("Il reste des erreurs bloquantes dans la révision : corrigez-les ou expliquez-les avant de clôturer.");
+  if(!$("#clRegul").checked) return avertir("Cochez d'abord la vérification des sommes dues et à recevoir au 31/12 (étape 2).");
   const ex = exercice(y), f = fiscalJusqua(y), d = $("#clDecl").value;
   ex.statut = "cloture";
-  ex.cloture = {date:new Date().toISOString().slice(0,10), resultatFiscal:r2(f.resultatFiscal), ardFin:r2(f.ardFin), deficitsFin:r2(f.deficitsFin.reduce((s,x)=>s+x.montant,0)), crdFin:r2(f.c.crd)};
+  ex.cloture = {date:aujourdhui(), resultatFiscal:r2(f.resultatFiscal), ardFin:r2(f.ardFin), deficitsFin:r2(f.deficitsFin.reduce((s,x)=>s+x.montant,0)), crdFin:r2(f.c.crd)};
   if(d) ex.dateDeclaration = d; else delete ex.dateDeclaration;
   const nouveau = !exercice(y+1);
   if(nouveau) S.data.exercices[y+1] = {statut:"en-cours", ecritures:[]};
@@ -3936,7 +3832,7 @@ function ecrituresReprise(R){
 /* Écrit la reprise dans les données d mais ne clôture pas (la clôture a besoin des calculs) */
 function appliquerReprise(d, R){
   const avant = d.exercices[R.y] || {}, ex = {statut:"en-cours", ecritures:ecrituresReprise(R)};
-  ex.reprise = {source:"Excel", fichier:R.lu.fichier, date:new Date().toISOString().slice(0,10), chiffres:R.lu.ctl};
+  ex.reprise = {source:"Excel", fichier:R.lu.fichier, date:aujourdhui(), chiffres:R.lu.ctl};
   if(avant.chiffres) ex.reprise.anciensChiffres = avant.chiffres;
   d.exercices[R.y] = ex;
   return ex;
@@ -3958,21 +3854,21 @@ async function lireRepriseExcel(f){
   if(!f) return;
   try{
     const lu = analyserDossierExcel(await lireClasseur(new Uint8Array(await f.arrayBuffer())), f.name), R = S.reprise;
-    if(lu.annee && lu.annee !== R.y) return alert(`Ce classeur porte sur ${lu.annee}, pas sur ${R.y}.`);
+    if(lu.annee && lu.annee !== R.y) return avertir(`Ce classeur porte sur ${lu.annee}, pas sur ${R.y}.`);
     R.lu = lu; R.natures = {};
     lu.lignes.forEach(l => R.natures[cleXL(l)] ??= natureXL(l.lib, l.recette));
     renderAll();
-  }catch(e){ alert("Lecture impossible : " + e.message); }
+  }catch(e){ avertir("Lecture impossible : " + e.message); }
 }
 function deposerRepriseExcel(ev){ ev.preventDefault(); ev.currentTarget.classList.remove("survol"); lireRepriseExcel(ev.dataTransfer.files[0]); }
 function validerReprise(){
   const R = S.reprise, y = R.y, ex = exercice(y);
-  if(ex && !isHistorique(y) && (ex.ecritures||[]).length) return alert(`${y} contient déjà des écritures : la reprise ne peut se faire que sur une année absente ou reprise en synthèse.`);
+  if(ex && !isHistorique(y) && (ex.ecritures||[]).length) return avertir(`${y} contient déjà des écritures : la reprise ne peut se faire que sur une année absente ou reprise en synthèse.`);
   const nouv = appliquerReprise(S.data, R);
   if(R.cloturer){
     const f = fiscalJusqua(y);
     nouv.statut = "cloture";
-    nouv.cloture = {date:new Date().toISOString().slice(0,10), resultatFiscal:r2(f.resultatFiscal), ardFin:r2(f.ardFin), deficitsFin:r2(f.deficitsFin.reduce((s,x)=>s+x.montant,0)), crdFin:r2(f.c.crd)};
+    nouv.cloture = {date:aujourdhui(), resultatFiscal:r2(f.resultatFiscal), ardFin:r2(f.ardFin), deficitsFin:r2(f.deficitsFin.reduce((s,x)=>s+x.montant,0)), crdFin:r2(f.c.crd)};
   }
   S.reprise = null; S.year = y; S.tab = "ecritures"; setDirty(); renderAll(); haut();
   toast(`${y} repris de l'Excel : ${nouv.ecritures.length} écritures${R.cloturer ? ", année clôturée" : ""}.`);
