@@ -3137,7 +3137,7 @@ function basculeM(cle, val, rang){
 function vueMobile(){
   const t = S.tab === "ops" ? "ops" : "depot";
   const prof = S.pieceIPhone ? 3 : S.m.op ? 2 : t === "ops" && S.m.fourn ? 1 : 0;
-  const bt = {cls:""}; basculeM("tab", t, () => 0), bp = basculeM("profondeur", prof, v => v);
+  basculeM("tab", t, () => 0); const bt = {cls:""}, bp = basculeM("profondeur", prof, v => v);
   const ecran = S.pieceIPhone ? vueDeposerM() : S.m.op ? vueFicheM() : t === "ops" ? (S.m.fourn ? vueFournDetailM() : S.m.mode === "fourn" ? vueFournM() : vueMoisM()) : vueJustifM();
   return `<div class="mob ${bp.cls || bt.cls}">${ecran}</div>`;
 }
