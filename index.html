@@ -779,13 +779,14 @@ html.mobile body:has(.m-accueil) .app{background:transparent}
 .m-seg button{transition:color .25s}.m-seg button[aria-pressed="true"]{color:var(--text);font-weight:600}
 .m-tabs-ind{position:absolute;top:6px;bottom:6px;left:6px;width:calc(50% - 8px);border-radius:999px;background:var(--accent-soft);transition:transform .32s cubic-bezier(.25,.8,.25,1);will-change:transform}
 .m-tabs button{position:relative;z-index:1}
-@keyframes m-de-droite{from{opacity:0;transform:translate3d(16px,0,0)}to{opacity:1;transform:none}}
-@keyframes m-de-gauche{from{opacity:0;transform:translate3d(-16px,0,0)}to{opacity:1;transform:none}}
-@keyframes m-fondu{from{opacity:0}to{opacity:1}}
+@keyframes m-de-droite{from{opacity:.6;transform:translate3d(12px,0,0)}to{opacity:1;transform:none}}
+@keyframes m-de-gauche{from{opacity:.6;transform:translate3d(-12px,0,0)}to{opacity:1;transform:none}}
+@keyframes m-fondu{from{opacity:1}to{opacity:1}}
 .m-de-droite{animation:m-de-droite .26s cubic-bezier(.25,.8,.25,1) both}.m-de-gauche{animation:m-de-gauche .26s cubic-bezier(.25,.8,.25,1) both}.m-fondu{animation:m-fondu .2s ease-out both}
 html.mobile main{overflow-x:clip}
+html.mobile,html.mobile button,.m-tabs button{-webkit-tap-highlight-color:transparent}
 .m-tabs[hidden]{display:none}
-.m-tabs button:active,.m-seg button:active,.m-photo:active,.m-btn:active,.m-ligne:active,.m-rond:active{transform:scale(.97)}
+.m-seg button:active,.m-photo:active,.m-btn:active,.m-ligne:active,.m-rond:active{transform:scale(.97)}
 .m-photo,.m-btn,.m-ligne,.m-rond{transition:transform .15s}
 @media (prefers-reduced-motion:reduce){.m-de-droite,.m-de-gauche,.m-fondu{animation:none}.m-seg-ind,.m-tabs-ind{transition:none}}
 .m-nav{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px}.m-nav b{font-size:20px;font-weight:600}
@@ -3136,7 +3137,7 @@ function basculeM(cle, val, rang){
 function vueMobile(){
   const t = S.tab === "ops" ? "ops" : "depot";
   const prof = S.pieceIPhone ? 3 : S.m.op ? 2 : t === "ops" && S.m.fourn ? 1 : 0;
-  const bt = basculeM("tab", t, () => 0), bp = basculeM("profondeur", prof, v => v);
+  const bt = {cls:""}; basculeM("tab", t, () => 0), bp = basculeM("profondeur", prof, v => v);
   const ecran = S.pieceIPhone ? vueDeposerM() : S.m.op ? vueFicheM() : t === "ops" ? (S.m.fourn ? vueFournDetailM() : S.m.mode === "fourn" ? vueFournM() : vueMoisM()) : vueJustifM();
   return `<div class="mob ${bp.cls || bt.cls}">${ecran}</div>`;
 }
@@ -3269,7 +3270,7 @@ function segM(corps, periode){
   const pos = v => v === "fourn" ? "translateX(100%)" : "translateX(0)";
   return `${marqueM()}<h1>Mes opérations</h1><div class="m-seg" role="group" aria-label="Regrouper"><span class="m-seg-ind" style="transform:${pos(S.m.mode)}"></span>
   <button aria-pressed="${S.m.mode === "mois"}" onclick="choisirModeM('mois')">Par mois</button><button aria-pressed="${S.m.mode === "fourn"}" onclick="choisirModeM('fourn')">Par fournisseur</button></div>
-  <div class="m-corps ${b.cls || p.cls}">${corps}</div>`;
+  <div class="m-corps ${p.cls}">${corps}</div>`;
 }
 const navM = (lib, prec, suiv, avant, apres) => `<div class="m-nav"><button class="m-rond" aria-label="${avant}" ${prec ? `onclick="${prec}"` : "disabled"}>${svgM("gauche", 20, 2.2)}</button>
   <b>${lib}</b><button class="m-rond" aria-label="${apres}" ${suiv ? `onclick="${suiv}"` : "disabled"}>${svgM("droite", 20, 2.2)}</button></div>`;
