@@ -288,6 +288,32 @@ details summary{cursor:pointer;color:var(--accent);font-size:13.5px}
 .suivis{display:flex;gap:10px 26px;flex-wrap:wrap}
 .suivi{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--muted);text-align:center;width:104px}
 .suivi:hover span{color:var(--accent)}
+/* Accueil sans dossier, création d'un dossier, « Pour bien démarrer » */
+.bv{max-width:560px;margin:8vh auto 0;text-align:center}
+.bv-logo .logo{width:min(320px,80%);height:auto}
+.bv-slogan{color:var(--muted);margin:14px 0 28px;line-height:1.55}
+.bv-reprendre{margin:0 auto 22px;font-size:15.5px;padding:11px 22px}
+.bv-choix{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bv-carte{display:flex;flex-direction:column;align-items:center;gap:6px;padding:26px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);font:inherit;color:var(--text);cursor:pointer;transition:border-color .15s,transform .15s}
+.bv-carte:hover{border-color:var(--accent);transform:translateY(-2px)}
+.bv-carte svg{width:26px;height:26px;color:var(--accent);margin-bottom:4px}
+.bv-carte b{font-size:16px;font-weight:600}.bv-carte span{font-size:13.5px;color:var(--muted)}
+.bv-json{margin-top:22px;color:var(--muted)}
+.as{max-width:540px;margin:6vh auto 0}
+.as-retour{margin-left:-10px;color:var(--muted)}
+.as-pas{display:flex;gap:6px;margin:18px 0 14px}.as-pas i{width:28px;height:4px;border-radius:2px;background:var(--line)}.as-pas i.on{background:var(--accent)}
+.as h1{font-size:26px;margin:0 0 10px}
+.as-txt{color:var(--muted);line-height:1.55;margin:0 0 20px}
+.as-ok{display:flex;align-items:center;gap:8px;font-weight:500;margin-bottom:18px}.as-ok svg{color:var(--pos)}
+.as-form{grid-template-columns:1fr 1fr;margin:8px 0 22px}.as-form .large{grid-column:1/-1}
+.as-actions .btn:not(.ghost){font-size:15.5px;padding:10px 22px}
+.demarrage .dm-l{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
+.demarrage .dm-l:first-of-type{border-top:0}
+.dm-c{flex:none;width:22px;height:22px;border-radius:50%;border:1.6px solid var(--line);display:grid;place-items:center}
+.dm-l.ok .dm-c{background:var(--pos);border-color:var(--pos);color:#fff}.dm-c svg{width:14px;height:14px}
+.dm-t{flex:1;display:flex;flex-direction:column;gap:2px}.dm-t span{font-size:13px;color:var(--muted)}
+.dm-l.ok .dm-t b{color:var(--muted);font-weight:500}
+@media (max-width:640px){.bv-choix,.as-form{grid-template-columns:1fr}}
 .pastilles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
 .pastille{border:0;border-radius:99px;padding:7px 14px;font:inherit;font-size:13.5px;font-weight:500;cursor:pointer}
 .pastille.warn{background:var(--warn-soft);color:var(--warn)} .pastille.bad{background:var(--neg-soft);color:var(--neg)} .pastille.go{background:var(--accent);color:var(--accent-ink)}
@@ -1384,21 +1410,93 @@ $("#themeBtn").addEventListener("click", () => { const t = themeActuel() === "da
 function entete(titre, sous){ return `<div class="pagehead"><h1>${titre}</h1>${sous?`<p>${sous}</p>`:""}</div>`; }
 
 function vueBienvenue(){
-  setTimeout(async () => { const d = await idb.get("dir"); if(d && FS){ const b = $("#resume"); if(b){ b.classList.remove("hide"); b.textContent = "Reprendre « "+d.name+" »"; b.onclick = () => reprendreDossier(d); } } }, 0);
+  setTimeout(async () => { const d = await idb.get("dir"); if(d && FS){ const b = $("#resume"); if(b){ b.classList.remove("hide"); b.innerHTML = `Reprendre « ${esc(d.name)} »`; b.onclick = () => reprendreDossier(d); } } }, 0);
+  if(FS && S.assistant) return vueAssistant();
+  if(FS) return `<div class="bv">
+    <div class="bv-logo">${logoM()}</div>
+    <p class="bv-slogan">La comptabilité de votre location meublée.<br>Vos données restent chez vous, rien n'est envoyé sur internet.</p>
+    <button class="btn bv-reprendre hide" id="resume"></button>
+    <div class="bv-choix">
+      <button class="bv-carte" onclick="S.assistant={etape:1};renderAll()">${svgI('<path d="M12 5v14M5 12h14"/>')}<b>Créer mon dossier</b><span>Je commence avec le Carnet</span></button>
+      <button class="bv-carte" onclick="ouvrirDossier()">${svgI('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')}<b>Ouvrir mon dossier</b><span>J'ai déjà un dossier du Carnet</span></button>
+    </div>
+    <button class="btn ghost small bv-json" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button></div>`;
   return `<div style="max-width:620px;margin:6vh auto 0">
-    ${entete("Bienvenue dans votre carnet", "La comptabilité de la location meublée, tenue à deux. Les données restent dans votre dossier iCloud : rien n'est envoyé sur internet.")}
+    ${entete("Bienvenue dans votre carnet", "La comptabilité de la location meublée. Les données restent dans votre dossier iCloud : rien n'est envoyé sur internet.")}
     <div class="card">
-    ${FS ? `<div class="row"><button class="btn hide" id="resume"></button>
-      <button class="btn" onclick="ouvrirDossier()">Ouvrir le dossier LMNP…</button></div>
-      <p class="sub" style="margin:14px 0 0">Choisissez le dossier qui contient <code>${FILE}</code>. Les modifications y sont enregistrées automatiquement, avec une copie datée dans « Sauvegardes ».</p>`
-    : DEPOT ? `${dossierMemorise() ? `<div class="row" style="margin-bottom:12px"><button class="btn" onclick="reprendreMemorise()">Reprendre « ${esc(dossierMemorise().nom)} »</button></div>
+    ${DEPOT ? `${dossierMemorise() ? `<div class="row" style="margin-bottom:12px"><button class="btn" onclick="reprendreMemorise()">Reprendre « ${esc(dossierMemorise().nom)} »</button></div>
         <p class="sub" style="margin:0 0 12px">Version ouverte le ${esc(dossierMemorise().le)}. Si le dossier a changé depuis sur l'ordinateur, rouvrez le fichier.</p>` : ""}
       <div class="row"><button class="btn ${dossierMemorise() ? "sec" : ""}" onclick="ouvrirFichier()">Ouvrir ${FILE}…</button></div>
       <p class="sub" style="margin:14px 0 0">Sur iPhone, le Carnet sert à <b>prendre vos factures en photo</b> et à voir vos opérations. Choisissez <code>${FILE}</code> dans le dossier du Carnet, sur iCloud Drive. L'ordinateur range les photos à la prochaine ouverture du dossier.</p>`
-    : `<div class="alert info">Ce navigateur permet de consulter et d'imprimer. Pour modifier et enregistrer dans iCloud, ouvrez l'outil dans Chrome ou Edge sur Mac.</div>`}
+    : `<div class="alert info">Ce navigateur permet de consulter et d'imprimer. Pour créer un dossier, modifier et enregistrer dans iCloud, ouvrez le Carnet dans Chrome ou Edge sur Mac.</div>`}
     </div>
-    ${DEPOT ? "" : `<div class="row"><button class="btn ghost" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button>
-      <button class="btn ghost" onclick="chargerDonnees(newDossier(),'nouveau dossier');setDirty(true)">Créer un dossier vide</button></div>`}</div>`;
+    ${DEPOT ? "" : `<div class="row"><button class="btn ghost" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button></div>`}</div>`;
+}
+/* ---- Création d'un dossier : deux étapes (où ranger, la location), puis « Pour bien démarrer » sur le tableau de bord ---- */
+function vueAssistant(){
+  const A = S.assistant, an = new Date().getFullYear();
+  const pas = `<div class="as-pas">${[1,2].map(n => `<i class="${n <= A.etape ? "on" : ""}"></i>`).join("")}</div>`;
+  const retour = A.etape === 1 ? `S.assistant=null;renderAll()` : `lireAssistant();S.assistant.etape=1;renderAll()`;
+  const corps = A.etape === 1 ? `
+      <h1>Où ranger votre dossier ?</h1>
+      <p class="as-txt">Dans le Finder, créez un dossier vide dans iCloud Drive, par exemple « Ma location », puis choisissez-le ici. Le Carnet y enregistre tout lui-même, et l'iPhone le retrouve.</p>
+      ${A.dir ? `<div class="as-ok">${svgI('<path d="M20 6 9 17l-5-5"/>')}« ${esc(A.dir.name)} »<button class="btn ghost small" onclick="choisirDossierAssistant()">Changer</button></div>` : ""}
+      <div class="row as-actions">${A.dir ? `<button class="btn" onclick="S.assistant.etape=2;renderAll()">Continuer</button>` : `<button class="btn" onclick="choisirDossierAssistant()">Choisir le dossier…</button>`}</div>`
+  : `
+      <h1>Votre location</h1>
+      <div class="form as-form">
+        <label class="large">Votre nom et prénom<input id="asNom" value="${esc(A.nom || "")}" autocomplete="name"></label>
+        <label class="large">Adresse du logement loué<input id="asAdresse" value="${esc(A.adresse || "")}" autocomplete="street-address"></label>
+        <label>Début de la location meublée<input id="asDebut" type="date" value="${esc(A.debut || an + "-01-01")}" max="${an}-12-31"></label>
+        <label>Loyer mensuel hors charges<input id="asLoyer" inputmode="decimal" value="${esc(A.loyer || "")}" placeholder="facultatif"></label>
+      </div>
+      <div class="row as-actions"><button class="btn" onclick="creerDossierAssistant()">Créer mon dossier</button></div>`;
+  return `<div class="as"><button class="btn ghost small as-retour" onclick="${retour}">← Retour</button>${pas}${corps}</div>`;
+}
+async function choisirDossierAssistant(){
+  let dir; try{ dir = await window.showDirectoryPicker({id:"lmnp", mode:"readwrite"}); }catch(e){ if(e.name !== "AbortError") avertir("Impossible d'ouvrir ce dossier : " + e.message); return; }
+  const noms = []; try{ for await (const [n] of dir.entries()) if(!n.startsWith(".")) noms.push(n); }catch(_){}
+  if(noms.includes(FILE)){
+    if(await confirmer(`« ${dir.name} » contient déjà un dossier du Carnet.\n\nL'ouvrir plutôt que d'en créer un nouveau ?`, {ok:"Ouvrir ce dossier"})){ S.assistant = null; S.dir = dir; await idb.set("dir", dir); await lireDepuisDossier(); }
+    return;
+  }
+  if(noms.length && !await confirmer(`« ${dir.name} » n'est pas vide.\n\nIl contient ${noms.length} élément${noms.length > 1 ? "s" : ""}. Le Carnet y ajoutera ses fichiers à côté. Mieux vaut un dossier vide, rien que pour le Carnet.`, {ok:"Utiliser quand même", annuler:"Choisir un autre"})) return;
+  S.assistant.dir = dir; renderAll();
+}
+function lireAssistant(){ const A = S.assistant; for(const [k, id] of [["nom","asNom"],["adresse","asAdresse"],["debut","asDebut"],["loyer","asLoyer"]]){ const el = $("#" + id); if(el) A[k] = el.value.trim(); } return A; }
+async function creerDossierAssistant(){
+  const A = lireAssistant(), an = new Date().getFullYear();
+  if(!A.nom) return avertir("Indiquez votre nom et prénom : ils figurent sur la déclaration.");
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(A.debut || "")) return avertir("Indiquez la date de début de la location meublée.");
+  const loyer = A.loyer ? montantChamp(A.loyer, "loyer") : null; if(loyer === undefined) return;
+  // Premier exercice : l'année du début, ou l'an dernier tant que sa déclaration (mai) n'est pas passée ; les années d'avant ont été déclarées ailleurs
+  const debutAn = Math.min(yearOf(A.debut), an), premier = Math.max(debutAn, aujourdhui() < `${an}-06-01` ? an - 1 : an);
+  const d = newDossier();
+  d.dossier = {...d.dossier, nom:A.dir.name, nomExploitant:A.nom, debutLocationMeublee:A.debut, ...(A.adresse ? {adresseBien:A.adresse} : {}), ...(loyer ? {loyerMensuel:loyer} : {}), demarrage:true};
+  d.exercices = {}; for(let y = premier; y <= an; y++) d.exercices[y] = {statut:"en-cours", ecritures:[]};
+  const dir = A.dir;
+  try{ if(await dir.queryPermission({mode:"readwrite"}) !== "granted" && await dir.requestPermission({mode:"readwrite"}) !== "granted") return; }catch(_){}
+  S.assistant = null; S.dir = dir; await idb.set("dir", dir); S.tab = "accueil";
+  chargerDonnees(d, dir.name + "/" + FILE); S.year = premier; await enregistrer();
+  if(debutAn < premier) avertir(`Votre location a commencé en ${debutAn}.\n\nLe Carnet démarre en ${premier}. Si les années d'avant ont été déclarées, reportez leurs chiffres dans Paramètres du dossier (déficits et amortissements en réserve).`);
+}
+/* Pour bien démarrer : affiché sur le tableau de bord d'un dossier créé avec le Carnet, jusqu'à ce que tout soit fait */
+function demarrage(){
+  const d = S.data.dossier; if(!d.demarrage || S.consultation) return "";
+  const ecr = Object.values(S.data.exercices).some(ex => (ex.ecritures || []).length) || (S.data.banque?.aTrier || []).length;
+  const etapes = [
+    [S.data.immobilisations.length, "Le logement et le mobilier", "Prix d'achat, frais, meubles : ils s'amortissent.", `allerA('immos');ouvrirImmo('new')`, "Ajouter"],
+    [S.data.emprunts.length || d.sansPret, "Le prêt", "Le tableau d'amortissement de la banque.", `allerA('emprunt');ajouterEmprunt()`, "Ajouter", `S.data.dossier.sansPret=true;setDirty();renderAll()`],
+    [ecr, "Les opérations de l'année", "Importez le relevé de votre banque.", `allerA('banque')`, "Importer"],
+    [d.siret, "Le numéro SIRET", "Obligatoire pour déclarer.", `allerA('dossier')`, "Renseigner"],
+  ];
+  const faits = etapes.filter(e => e[0]).length;
+  if(faits === etapes.length) return "";
+  return `<div class="card demarrage noprint"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">Pour bien démarrer</h3>
+      <span class="sub">${faits} sur ${etapes.length}<button class="btn ghost small" style="margin-left:8px" onclick="delete S.data.dossier.demarrage;setDirty();renderAll()">Masquer</button></span></div>
+    ${etapes.map(([ok, titre, txt, go, lib, non]) => `<div class="dm-l ${ok ? "ok" : ""}"><span class="dm-c">${ok ? svgI('<path d="M20 6 9 17l-5-5"/>') : ""}</span>
+      <div class="dm-t"><b>${titre}</b>${ok ? "" : `<span>${txt}</span>`}</div>
+      ${ok ? "" : `<div class="row">${non ? `<button class="btn ghost small" onclick="${non}">Pas de prêt</button>` : ""}<button class="btn small" onclick="${go}">${lib}</button></div>`}</div>`).join("")}</div>`;
 }
 
 /* ============ Graphiques (SVG, sans bibliothèque) ============ */
@@ -1467,6 +1565,7 @@ function vueAccueil(){
   const suivi = (p, centre, lib, page, col) => `<div class="suivi" role="button" tabindex="0" onclick="allerA('${page}')">${anneau(p, centre, col)}<span>${lib}</span></div>`;
   return `<div class="dash-head"><h1>${y}</h1>${ex.statut==="cloture"?'<span class="pill ok">clôturé</span>':enCours?'<span class="pill">en cours</span>':'<span class="pill warn">à déclarer</span>'}</div>
     ${suivant}
+    ${demarrage()}
     ${change?`<div class="alert bad">Résultat modifié depuis la clôture : ${eur0(snap.resultatFiscal)} déclarés, ${eur0(rf)} maintenant.</div>`:""}
     ${!c.lmnpActif?`<div class="alert info">Location meublée à partir du ${fmtDate(debutLMNP())}.</div>`:""}
     ${aFaire(y)}
