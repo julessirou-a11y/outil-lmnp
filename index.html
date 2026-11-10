@@ -773,16 +773,27 @@ html.mobile body:has(.m-accueil) .app{background:transparent}
 .m-lien{border:0;background:none;padding:6px 0;min-height:36px;color:var(--accent);font:inherit;font-size:15px;text-align:left;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
 .m-note{margin:10px 0;font-size:14px;color:var(--muted);line-height:1.45}
 .m-version{margin-top:22px}.m-version .m-lien{font-size:14px;padding:0;min-height:0}
-.m-seg{display:grid;grid-template-columns:1fr 1fr;padding:3px;margin:14px 0 16px;border-radius:12px;background:var(--line)}
+.m-seg{position:relative;display:grid;grid-template-columns:1fr 1fr;padding:3px;margin:14px 0 16px;border-radius:12px;background:var(--line)}
+.m-seg-ind{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:10px;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.1);transition:transform .38s cubic-bezier(.3,1.25,.5,1)}
+.m-seg button{position:relative;z-index:1}
 .m-seg button{border:0;background:none;padding:9px 0;border-radius:10px;color:var(--muted);font:inherit;font-size:15px;cursor:pointer}
-.m-seg button[aria-pressed="true"]{background:var(--surface);color:var(--text);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.m-seg button{transition:color .25s}.m-seg button[aria-pressed="true"]{color:var(--text);font-weight:600}
+.m-tabs-ind{position:absolute;top:6px;bottom:6px;left:6px;width:calc(50% - 8px);border-radius:999px;background:var(--accent-soft);transition:transform .42s cubic-bezier(.3,1.3,.5,1)}
+.m-tabs button{position:relative;z-index:1}
+@keyframes m-de-droite{from{opacity:0;transform:translateX(28px)}to{opacity:1;transform:none}}
+@keyframes m-de-gauche{from{opacity:0;transform:translateX(-28px)}to{opacity:1;transform:none}}
+@keyframes m-fondu{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+.m-de-droite{animation:m-de-droite .34s cubic-bezier(.2,.8,.2,1) both}.m-de-gauche{animation:m-de-gauche .34s cubic-bezier(.2,.8,.2,1) both}.m-fondu{animation:m-fondu .3s ease-out both}
+.m-tabs button:active,.m-seg button:active,.m-photo:active,.m-btn:active,.m-ligne:active,.m-rond:active{transform:scale(.97)}
+.m-photo,.m-btn,.m-ligne,.m-rond{transition:transform .15s}
+@media (prefers-reduced-motion:reduce){.m-de-droite,.m-de-gauche,.m-fondu{animation:none}.m-seg-ind,.m-tabs-ind{transition:none}}
 .m-nav{display:flex;align-items:center;justify-content:space-between;margin:0 0 14px}.m-nav b{font-size:20px;font-weight:600}
 .m-rond{width:44px;height:44px;border-radius:50%;border:0;background:var(--surface);color:var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer}.m-rond:disabled{opacity:.3;cursor:default}
 .m-tuiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:10px;margin:0 0 14px}
 .m-tuiles div{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:12px 14px}.m-tuiles small{display:block;font-size:14px;color:var(--muted)}.m-tuiles b{font-size:24px;font-weight:600}
 .m-barre{display:block;height:5px;margin-top:6px;border-radius:3px;background:var(--accent-2)}.m-barre.in{background:var(--pos)}
 .m-tabs{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:20;display:grid;grid-template-columns:1fr 1fr;gap:4px;width:min(300px,calc(100% - 48px));padding:6px;border-radius:999px;background:color-mix(in srgb,var(--surface) 82%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);border:1px solid color-mix(in srgb,var(--line) 70%,transparent);box-shadow:0 10px 30px rgba(43,24,34,.16),0 2px 6px rgba(43,24,34,.08)}
-.m-tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;border:0;border-radius:999px;background:none;color:var(--muted);font:inherit;font-size:11.5px;cursor:pointer;transition:background .2s,color .2s}.m-tabs button[aria-current]{background:var(--accent-soft);color:var(--accent);font-weight:600}
+.m-tabs button{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:52px;border:0;border-radius:999px;background:none;color:var(--muted);font:inherit;font-size:11.5px;cursor:pointer;transition:background .2s,color .2s}.m-tabs button[aria-current]{color:var(--accent);font-weight:600}
 .m-retour{display:inline-flex;align-items:center;gap:4px;min-height:44px;margin:0 0 6px;padding:0 10px 0 0;border:0;background:none;color:var(--accent);font:inherit;font-size:17px;cursor:pointer}
 .m-tete{display:flex;flex-direction:column;align-items:center;gap:4px;margin:4px 0 18px;text-align:center}
 .m-tete .m-ic{width:56px;height:56px;border-radius:16px}.m-tete h1{font-size:24px}.m-tete .mt{font-size:34px;font-weight:700;letter-spacing:-.02em}.m-tete small{font-size:15px;color:var(--muted)}
@@ -1329,7 +1340,7 @@ function renderAll(){
   const m = $("#main");
   document.documentElement.classList.toggle("mobile", DEPOT);
   if(!S.data){ m.innerHTML = DEPOT ? vueBienvenueM() : vueBienvenue(); return; }
-  if(DEPOT){ m.innerHTML = vueMobile(); return; }
+  if(DEPOT){ m.innerHTML = vueMobile(); animerM(); return; }
   m.innerHTML = (({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab] || vueAccueil)();
   if(S.tab === "pieces") scanPieces(S.year);
 }
@@ -3113,11 +3124,28 @@ function etatM(o){
 const manquantesM = () => Object.keys(S.data.exercices).map(Number).filter(y => !isHistorique(y) && !verrouille(y))
   .flatMap(y => aDeposer(y)).sort((a, b) => b.date.localeCompare(a.date));
 
+/* Animations : chaque bascule (onglet, regroupement, période, profondeur d'écran) compare la valeur affichée à la précédente.
+   Le contenu arrive du côté où l'on va ; les curseurs partent de l'ancienne position (data-vers, appliqué après le rendu). */
+function basculeM(cle, val, rang){
+  const vu = S.m.vu ??= {}, avant = cle in vu ? vu[cle] : val; vu[cle] = val;
+  if(avant === val) return {avant, cls:""};
+  const a = rang(avant), b = rang(val);
+  return {avant, cls: a === b ? "m-fondu" : b > a ? "m-de-droite" : "m-de-gauche"};
+}
+function animerM(){
+  const ind = document.querySelectorAll("#main [data-vers], .m-tabs [data-vers]");
+  if(!ind.length) return;
+  void document.body.offsetWidth; // l'ancienne position est posée avant la transition
+  ind.forEach(el => { el.style.transform = el.dataset.vers; });
+}
 function vueMobile(){
   const t = S.tab === "ops" ? "ops" : "depot";
+  const prof = S.pieceIPhone ? 3 : S.m.op ? 2 : t === "ops" && S.m.fourn ? 1 : 0;
+  const bt = basculeM("tab", t, v => v === "ops" ? 1 : 0), bp = basculeM("profondeur", prof, v => v);
   const ecran = S.pieceIPhone ? vueDeposerM() : S.m.op ? vueFicheM() : t === "ops" ? (S.m.fourn ? vueFournDetailM() : S.m.mode === "fourn" ? vueFournM() : vueMoisM()) : vueJustifM();
   const onglet = (k, l, ic) => `<button onclick="ongletM('${k}')" ${t === k ? 'aria-current="page"' : ""}>${svgM(ic, 24, t === k ? 1.9 : 1.7)}${l}</button>`;
-  return `<div class="mob">${ecran}</div>${S.pieceIPhone ? "" : `<nav class="m-tabs" aria-label="Onglets">${onglet("depot", "Justificatifs", "photo")}${onglet("ops", "Mes opérations", "liste")}</nav>`}`;
+  const pos = v => v === "ops" ? "translateX(calc(100% + 4px))" : "translateX(0)";
+  return `<div class="mob ${bt.cls || bp.cls}">${ecran}</div>${S.pieceIPhone ? "" : `<nav class="m-tabs" aria-label="Onglets"><span class="m-tabs-ind" style="transform:${pos(bt.avant === t ? t : bt.avant)}" data-vers="${pos(t)}"></span>${onglet("depot", "Justificatifs", "photo")}${onglet("ops", "Mes opérations", "liste")}</nav>`}`;
 }
 function ongletM(k){ S.tab = k; S.m.op = S.m.fourn = null; renderAll(); haut(); }
 const ligneM = (o, clic) => { const et = etatM(o);
@@ -3225,8 +3253,14 @@ function dossierMemorise(){ try{ return JSON.parse(localStorage.getItem("dossier
 function reprendreMemorise(){ const m = dossierMemorise(); if(!m) return; try{ chargerDonnees(m.obj, m.fichier); }catch(e){ avertir(e.message); } }
 
 /* ---- Mes opérations ---- */
-const segM = () => `${marqueM()}<h1>Mes opérations</h1><div class="m-seg" role="group" aria-label="Regrouper">
-  <button aria-pressed="${S.m.mode === "mois"}" onclick="S.m.mode='mois';renderAll()">Par mois</button><button aria-pressed="${S.m.mode === "fourn"}" onclick="S.m.mode='fourn';renderAll()">Par fournisseur</button></div>`;
+/* Choix Par mois / Par fournisseur : le curseur glisse vers le choix, le contenu arrive du même côté. Changer de mois ou d'année fait glisser la liste. */
+function segM(corps, periode){
+  const b = basculeM("mode", S.m.mode, v => v === "fourn" ? 1 : 0), p = basculeM("periode:" + S.m.mode, periode, v => String(v));
+  const pos = v => v === "fourn" ? "translateX(100%)" : "translateX(0)";
+  return `${marqueM()}<h1>Mes opérations</h1><div class="m-seg" role="group" aria-label="Regrouper"><span class="m-seg-ind" style="transform:${pos(b.avant)}" data-vers="${pos(S.m.mode)}"></span>
+  <button aria-pressed="${S.m.mode === "mois"}" onclick="S.m.mode='mois';renderAll()">Par mois</button><button aria-pressed="${S.m.mode === "fourn"}" onclick="S.m.mode='fourn';renderAll()">Par fournisseur</button></div>
+  <div class="m-corps ${b.cls || p.cls}">${corps}</div>`;
+}
 const navM = (lib, prec, suiv, avant, apres) => `<div class="m-nav"><button class="m-rond" aria-label="${avant}" ${prec ? `onclick="${prec}"` : "disabled"}>${svgM("gauche", 20, 2.2)}</button>
   <b>${lib}</b><button class="m-rond" aria-label="${apres}" ${suiv ? `onclick="${suiv}"` : "disabled"}>${svgM("droite", 20, 2.2)}</button></div>`;
 const rienM = (titre, texte, ic = "liste") => `<div class="m-rien"><span class="m-rien-ic">${svgM(ic, 36, 1.6)}</span><b>${titre}</b><small>${texte}</small></div>`;
@@ -3235,28 +3269,28 @@ const tuilesM = L => { const rec = L.filter(o => o.entree).reduce((s, o) => s + 
   return `<div class="m-tuiles">${rec && dep ? r + d : rec ? r : dep ? d : r + d}</div>`; };
 function vueMoisM(){
   const ops = opsM();
-  if(!ops.length) return segM() + rienM("Pas encore d'opération", "Elles apparaîtront ici dès que le relevé de la banque sera saisi sur l'ordinateur.");
+  if(!ops.length) return segM(rienM("Pas encore d'opération", "Elles apparaîtront ici dès que le relevé de la banque sera saisi sur l'ordinateur."));
   // Un exercice ouvert mais encore vide (début d'année) reste consultable : on va jusqu'au mois en cours
   const mois = ops.map(o => o.date.slice(0, 7)), ce = aujourdhui().slice(0, 7), anOuvert = !!exercice(yearOf(ce)) && !isHistorique(yearOf(ce));
   const max = anOuvert && ce > mois[0] ? ce : mois[0], min = mois[mois.length - 1];
   if(!S.m.mois || S.m.mois < min || S.m.mois > max) S.m.mois = anOuvert ? ce : (mois.find(k => k <= ce) || max);
   const k = S.m.mois, L = ops.filter(o => o.date.startsWith(k));
-  return segM() + navM(moisM(k), k > min && `S.m.mois='${decalerMois(k, -1)}';renderAll()`, k < max && `S.m.mois='${decalerMois(k, 1)}';renderAll()`, "Mois précédent", "Mois suivant")
-    + (L.length ? tuilesM(L) + `<div class="m-liste">${L.map(o => ligneM(o, `ficheM('${o.id}')`)).join("")}</div>` : rienM("Rien ce mois-ci", k === aujourdhui().slice(0, 7) ? "Les opérations du mois apparaîtront ici dès que le relevé sera saisi sur l'ordinateur." : "Aucune opération n'a été enregistrée ce mois-là."));
+  return segM(navM(moisM(k), k > min && `S.m.mois='${decalerMois(k, -1)}';renderAll()`, k < max && `S.m.mois='${decalerMois(k, 1)}';renderAll()`, "Mois précédent", "Mois suivant")
+    + (L.length ? tuilesM(L) + `<div class="m-liste">${L.map(o => ligneM(o, `ficheM('${o.id}')`)).join("")}</div>` : rienM("Rien ce mois-ci", k === aujourdhui().slice(0, 7) ? "Les opérations du mois apparaîtront ici dès que le relevé sera saisi sur l'ordinateur." : "Aucune opération n'a été enregistrée ce mois-là.")), k);
 }
 const anneesM = ops => [...new Set([...ops.map(o => yearOf(o.date)), ...Object.keys(S.data.exercices).map(Number).filter(y => !isHistorique(y))])].sort((a, b) => a - b);
 function anM(ops){ const ans = anneesM(ops); if(!ans.includes(S.m.an)) S.m.an = ans.includes(S.year) ? S.year : ans[ans.length - 1]; return ans; }
 function vueFournM(){
   const ops = opsM();
-  if(!ops.length) return segM() + rienM("Pas encore d'opération", "Elles apparaîtront ici dès que le relevé de la banque sera saisi sur l'ordinateur.");
+  if(!ops.length) return segM(rienM("Pas encore d'opération", "Elles apparaîtront ici dès que le relevé de la banque sera saisi sur l'ordinateur."));
   const ans = anM(ops), y = S.m.an, i = ans.indexOf(y), L = ops.filter(o => yearOf(o.date) === y), F = {};
   for(const o of L){ const f = F[o.fourn] ??= {nom:o.fourn, n:0, total:0, entree:o.entree, icone:o.icone, manque:0}; f.n++; f.total += o.montant; if(etatM(o).manque) f.manque++; }
   const liste = Object.values(F).sort((a, b) => b.total - a.total), haut_ = Math.max(...liste.map(f => f.total), 1);
-  return segM() + navM(String(y), i > 0 && `S.m.an=${ans[i - 1]};renderAll()`, i < ans.length - 1 && `S.m.an=${ans[i + 1]};renderAll()`, "Année précédente", "Année suivante")
+  return segM(navM(String(y), i > 0 && `S.m.an=${ans[i - 1]};renderAll()`, i < ans.length - 1 && `S.m.an=${ans[i + 1]};renderAll()`, "Année précédente", "Année suivante")
     + (!liste.length ? rienM(`Rien en ${y} pour l'instant`, "Les opérations de l'année apparaîtront ici dès que le relevé sera saisi sur l'ordinateur.") : tuilesM(L)) + `<div class="m-liste" ${liste.length ? "" : "hidden"}>${liste.map(f => `<button class="m-ligne" onclick="S.m.fourn=${jsq(f.nom)};renderAll();haut()"><span class="m-ic ${f.entree ? "in" : ""}">${svgM(f.icone)}</span>
       <span class="tx"><b>${esc(f.nom)}</b><small class="${f.manque ? "manque" : ""}">${f.n} opération${pl(f.n)}${f.manque ? ` · ${f.manque} facture${pl(f.manque)} à ajouter` : ""}</small>
       <span class="m-barre ${f.entree ? "in" : ""}" style="width:${Math.max(4, Math.round(f.total / haut_ * 100))}%"></span></span>
-      <span class="mt ${f.entree ? "in" : ""}">${eurM(r2(f.total))}</span></button>`).join("")}</div>`;
+      <span class="mt ${f.entree ? "in" : ""}">${eurM(r2(f.total))}</span></button>`).join("")}</div>`, y);
 }
 function vueFournDetailM(){
   const L = opsM().filter(o => o.fourn === S.m.fourn && yearOf(o.date) === S.m.an);
