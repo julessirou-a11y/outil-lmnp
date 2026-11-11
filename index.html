@@ -116,6 +116,51 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .rv-rel{gap:8px;margin:4px 0 6px;align-items:flex-end}.rv-rel label{display:flex;flex-direction:column;font-size:12px;color:var(--muted);gap:2px}.rv-rel input{width:120px;font:inherit;padding:5px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text)}
 .rv-txt{width:100%;margin-top:2px;font:inherit;font-size:13.5px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);resize:vertical}
 .rv-com{margin-top:4px;font-size:13.5px;color:var(--muted);font-style:italic}
+/* Révision par cycles : liste des cycles, balance N / N-1, fenêtre d'un cycle */
+.cy-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}.cy-g>.card{margin:0}
+.cy-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px}.cy-h h3{margin:0}.cy-h span{font-size:13px;color:var(--muted)}
+.cy-l{display:flex;align-items:center;gap:14px;width:100%;padding:14px 6px;border:0;border-top:1px solid var(--line);background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;border-radius:0}
+.cy-l:first-of-type{border-top:0}.cy-l:hover .cy-t b{color:var(--accent)}
+.cy-d{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);color:var(--muted);font-weight:700}.cy-d svg,.ti svg,.rv-sym svg{width:15px;height:15px}
+.cy-l.vise .cy-d,.cy-l.valide .cy-d{background:var(--pos);border-color:var(--pos);color:#fff}.cy-l.devise .cy-d{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.cy-l.cur{background:var(--accent-soft);border-radius:12px;padding-left:10px;padding-right:10px;border-top-color:transparent}.cy-l.cur+.cy-l{border-top-color:transparent}.cy-l.cur .cy-d{border-color:var(--accent)}
+.cy-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.cy-t b{font-weight:600;font-size:15px}.cy-t span{font-size:13px;color:var(--muted)}
+.cy-st{flex:none;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
+.vise .cy-st,.valide .cy-st{background:var(--pos-soft);color:var(--pos)}.devise .cy-st{background:var(--warn-soft);color:var(--warn)}.cur .cy-st{background:var(--surface);color:var(--accent)}
+.cy-pied{border-style:dashed;text-align:center;color:var(--muted)}.cy-pied.ok{border-style:solid;color:var(--pos);font-weight:600;display:flex;gap:8px;justify-content:center;align-items:center}.cy-pied svg{width:16px;height:16px}
+.bt{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
+.bt th{font-size:11.5px;font-weight:500;color:var(--faint);text-align:right;padding:4px 8px 6px}.bt th:first-child{text-align:left;padding-left:12px}
+.bt td{padding:5px 8px;border-top:1px solid var(--line);white-space:nowrap}.bt td:first-child{padding-left:12px;white-space:normal}.bt td a.lgl{color:inherit;text-decoration:none}
+.bt tr>td:first-child{box-shadow:inset 3px 0 var(--line)}.bt tr.vise>td:first-child,.bt tr.valide>td:first-child{box-shadow:inset 3px 0 var(--pos)}.bt tr.devise>td:first-child{box-shadow:inset 3px 0 var(--warn)}
+.bt tr.g{cursor:pointer}.bt tr.g td{background:var(--surface-2);padding-top:6px;padding-bottom:6px}.bt tr.g b{font-size:12.5px;font-weight:600}.bt tr.g:hover b{color:var(--accent)}
+.bp{float:right;font-size:11.5px;font-weight:600;color:var(--muted)}.vise .bp,.valide .bp{color:var(--pos)}.devise .bp{color:var(--warn)}
+.bn{display:inline-block;width:34px;font-size:11.5px;color:var(--faint)}
+.bt td.n{text-align:right}.bt td.p1{color:var(--muted)}.bt td.var{color:var(--muted);font-size:12.5px}.bt td.var.fort{color:var(--warn);font-weight:600}
+.cy-fen{width:min(1040px,100%)}.cy-dv{align-items:center;gap:14px;margin:4px 0 14px}
+.cy-chg{display:grid;grid-template-columns:minmax(0,1fr) 120px 120px;gap:4px 12px;margin-top:8px;font-size:13.5px}.cy-chg small{text-align:right;color:var(--muted)}.cy-chg .n{text-align:right;font-variant-numeric:tabular-nums}
+.acs{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+.ac{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:baseline}
+.ac small{font-size:11px;color:var(--faint)}.ac span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ac b{grid-column:1/-1;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}.ac em{grid-column:1/-1;font-style:normal;font-size:12px;color:var(--muted)}.ac em.up{color:var(--warn);font-weight:600}
+.mk-k{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:20px 0 4px}
+.ck{display:grid;grid-template-columns:30px minmax(0,1fr) 110px 110px 100px;gap:6px 14px;align-items:center;padding:11px 10px;border-top:1px solid var(--line);font-size:14px}
+.ck.hd{border-top:0;padding-bottom:2px;font-size:12px;color:var(--muted)}.ck .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ck .m{color:var(--faint)}.ck .e{color:var(--neg);font-weight:700}
+.ck.auto .ct{grid-column:2/-1}.ct b{display:block;font-weight:600}.ck.auto .ct b{font-weight:500}.ct small{font-size:12px;color:var(--muted)}.ck.ok .ct b{font-weight:500}
+.ck.ko{background:var(--neg-soft);border-radius:12px;border-top-color:transparent;margin:2px 0}.ck.ko+.ck{border-top-color:transparent}
+.ti{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);font-weight:700}
+.ck.ok .ti,.qc.ok .ti{background:var(--pos-soft);color:var(--pos)}.ck.ko .ti{background:var(--warn);color:#fff}.ck.bl .ti{background:var(--neg)}.ck.ko .e{color:var(--warn)}.ck.bl .e{color:var(--neg)}
+.act{grid-column:2/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}.act-e{flex:1;min-width:220px}.act .rv-txt{margin:0;background:var(--surface)}.act .rv-rel{margin:0}
+.ck.perso .ti{background:var(--accent-soft);color:var(--accent)}.ck.perso.ok .ti{background:var(--pos-soft);color:var(--pos)}.ck.perso .n{display:flex;gap:4px;justify-content:flex-end;grid-column:3/-1}
+.tag{font-style:normal;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:99px;padding:2px 8px;margin-left:6px;vertical-align:1px}
+.addp{display:block;width:100%;text-align:left;padding:10px 10px 4px 54px;font:inherit;font-size:13.5px;font-weight:600;color:var(--accent);background:none;border:0;border-top:1px dashed var(--line);cursor:pointer}
+.qs{display:grid;grid-template-columns:1fr 1fr;gap:10px}.qc{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);font-size:14px}
+.qc:not(.ok){border-color:var(--accent)}.qc.non{border-color:var(--warn)}.qt{flex:1;min-width:0}.qn{flex-basis:100%;font-size:13px;color:var(--warn)}.qn .rv-txt{margin-top:6px}
+.yn{display:flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;flex:none}.yn button{padding:4px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer}
+.yn button.on.vu{background:var(--pos);color:#fff}.yn button.on.non{background:var(--warn);color:#fff}.yn button:disabled{cursor:default}
+.nz{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px}.nz textarea{width:100%;border:0;resize:vertical;font:inherit;font-size:14px;background:transparent;color:var(--text);outline:0}
+.pj{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}.pc{display:inline-flex;gap:4px;align-items:center;font-size:13px;background:var(--surface-2);border-radius:99px;padding:3px 10px}.pc button{background:none;border:0;font:inherit;color:inherit;cursor:pointer;padding:0;display:inline-flex;gap:4px;align-items:center}.pc svg{width:13px;height:13px}
+.cy-note{text-align:center;margin:14px 0 0}
+@media (max-width:1100px){ .cy-g{grid-template-columns:1fr} }
+@media (max-width:700px){ .ck{grid-template-columns:30px repeat(3,minmax(0,1fr))} .ck .ct{grid-column:2/-1} .ck.hd>span:nth-child(2){display:none} .qs{grid-template-columns:1fr} }
 @media (max-width:700px){ .rl{grid-template-columns:repeat(3,minmax(0,1fr))} .rl-n{font-size:13px} .rl-lib,.rl-s{grid-column:1/-1} .rl-s{justify-content:flex-start} .rl-auto{grid-template-columns:1fr} }
 .printonly{display:none}@media print{.printonly{display:block}.rv{break-inside:avoid}.rv ul{display:block!important}}
 .todo ul{list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:4px}
@@ -2010,9 +2055,10 @@ function etapesAnnee(y){
   if(premiere) t("cfe", "Formulaire de CFE (1447-C-SD)", "Seulement la première année, avant le 31 décembre. Pas de CFE à payer.", man("cfe"), "", "", "", {manuel:true, cocher:"Envoyé", quand:`avant le 31/12`});
   else t("cfe", "Payer la CFE", "Impôt local : l'avis arrive en novembre dans l'espace professionnel.", cfe ? "fait" : c.produits <= 5000 ? "sansobjet" : !anneeFinie && auj < `${y}-11-15` ? "plustard" : "afaire",
     cfe ? `${eur0(cfe)} payés` : c.produits <= 5000 ? "Pas due : recettes sous 5 000 €" : "", "allerA('ecritures')", "Saisir", {quand:"avant le 15/12"});
-  const rst = restantRevision(y), bad = rst.filter(x => x.etat === "bloque").length;
-  t("revision", "Laisser le Carnet vérifier", "Il signale ce qui cloche : corrigez ou expliquez chaque point.", clos ? "fait" : !anneeFinie ? "plustard" : bad ? "attention" : rst.length ? "afaire" : "fait",
-    clos ? "" : bad ? `${bad} point${pl(bad)} bloquant${pl(bad)}` : rst.length ? `${rst.length} point${pl(rst.length)} à voir` : "", "S.declEtape='1';allerA('declaration')", "Vérifier");
+  if(anneeFinie) poserVisas(y);
+  const cyc = clos || !anneeFinie ? null : etatCycles(y), nv = cyc ? cyc.filter(c => c.statut === "vise").length : 0, dv = cyc ? cyc.filter(c => c.statut === "devise").length : 0;
+  t("revision", "Réviser les six cycles", "Le Carnet contrôle chaque cycle et pose son visa quand tout est vert.", clos ? "fait" : !anneeFinie ? "plustard" : dv ? "attention" : nv < CYCLES.length ? "afaire" : "fait",
+    cyc ? `${nv} visé${pl(nv)} sur ${CYCLES.length}${dv ? `, ${dv} dévisé${pl(dv)}` : ""}` : "", "S.declEtape='1';allerA('declaration')", "Réviser");
   const dec = (id, et, titre, txt, lib, quand) => t(id, titre, txt, clos || coche[id] ? "fait" : !anneeFinie ? "plustard" : "afaire", "", `S.declEtape='${et}';allerA('declaration')`, lib, {manuel:anneeFinie && !clos, cocher:"Envoyé", quand});
   dec("liasse", "2", "Déclarer le résultat", "Espace professionnel impots.gouv : recopiez les cases que donne le Carnet.", "Voir les cases", "vers la mi-mai");
   dec("revenus", "3", "Le reporter sur vos revenus", "Espace particulier, déclaration de revenus : un seul montant à reporter.", "Voir le montant", "fin mai");
@@ -3168,10 +3214,12 @@ function vueDeclaration(){
   const f = fiscalJusqua(y);
   if(!f?.c.lmnpActif) return tete + `<div class="card vide">Pas de location meublée en ${y}.</div>`;
   if(vue === "etats") return tete + etatsFinanciers(y);
-  const L = liasse(y), P = n1(y), ex = exercice(y), rst = restantRevision(y), bad = rst.filter(x=>x.etat==="bloque").length, warn = rst.length - bad;
-  const et = S.declEtape || (bad ? "1" : "2"), clos = ex.statut === "cloture";
+  const L = liasse(y), P = n1(y), ex = exercice(y), clos = ex.statut === "cloture";
+  if(!clos && aujourdhui() >= `${y+1}-01-01`) poserVisas(y);
+  const cyc = etatCycles(y), nv = cyc.filter(c => c.statut === "vise" || c.statut === "valide").length, dv = cyc.some(c => c.statut === "devise");
+  const et = S.declEtape || (nv === cyc.length ? "2" : "1");
   const ETAPES = [
-    ["1", "Réviser", bad ? `${bad} bloquant${pl(bad)}` : warn ? `${warn} à vérifier` : "validée", bad ? "bad" : warn ? "warn" : "ok"],
+    ["1", "Réviser", clos ? "validée" : `${nv} cycle${pl(nv)} visé${pl(nv)} sur ${cyc.length}`, nv === cyc.length ? "ok" : dv ? "bad" : "warn"],
     ["2", "Résultat", "espace professionnel", clos ? "ok" : ""],
     ["3", "Revenus", "espace particulier", clos ? "ok" : ""],
     ["4", "Clôturer", clos ? "fait" : "après l'envoi", clos ? "ok" : ""]];
@@ -3590,6 +3638,16 @@ function controles(y){
     const ec = ecartCRD(y);
     chk("crd", "emprunt", Math.abs(ec) < 1, "Grand livre de l'emprunt conforme à l'échéancier de la banque.", "warn", `Le grand livre donne ${eur(soldeGL164(y))} de restant dû au 31/12, l'échéancier de la banque ${eur(crdEcheancier(y))} : écart de ${eur(Math.abs(ec))} à expliquer, et à régulariser le cas échéant sur la page Emprunt.`, "emprunt");
   }
+  const grosEnt = es.filter(e => e.nature === "Entretien et réparations" && e.montant >= SEUIL_GROS);
+  chk("gros-entretien", "charges", !grosEnt.length, `Aucune dépense d'entretien de ${SEUIL_GROS} € ou plus.`, "warn", `${grosEnt.length} dépense${pl(grosEnt.length)} d'entretien de ${SEUIL_GROS} € ou plus (${grosEnt.slice(0, 3).map(e => `${esc(e.tiers || fmtDate(e.date))} ${eur0(e.montant)}`).join(", ")}${grosEnt.length > 3 ? "…" : ""}) : si c'est une amélioration, elle s'amortit (page Immobilisations).`, "ecritures");
+  if(c.produits > 0){
+    chk("taxe-fonciere", "charges", !!c.t.parNature["Taxe foncière"], "Taxe foncière saisie.", "warn", "Aucune taxe foncière saisie : l'avis arrive en septembre dans votre espace particulier impots.gouv.", "ecritures");
+    chk("assurance-pno", "charges", !!c.t.parNature["Assurance"], "Assurance du logement saisie.", "warn", "Aucune assurance du logement saisie (propriétaire non occupant) : vérifiez votre contrat.", "ecritures");
+  }
+  const sansPiece = es.filter(e => (NATURES[e.nature]?.g || (e.sens === "recette" ? "recette" : "charge")) === "charge" && NATURES[e.nature]?.piece !== false && !e.piece);
+  chk("justificatifs", "charges", !sansPiece.length, "Chaque charge a son justificatif.", "warn", `${sansPiece.length} charge${pl(sansPiece.length)} sans justificatif joint : ajoutez la facture, ou notez où elle est rangée.`, "pieces");
+  const sansTerrain = S.data.immobilisations.filter(i => i.categorie === "construction" && anneeEntreeBilan(i) <= y && !(i.quotePartTerrain > 0));
+  chk("terrain", "immos", !sansTerrain.length, "Part de terrain isolée : le terrain ne s'amortit pas.", "warn", `Aucune part de terrain sur ${sansTerrain.map(i => esc(i.libelle)).join(", ")} : le terrain ne s'amortit pas (souvent 10 à 30 % du prix selon la zone).`, "immos");
   const prec = exercice(y-1);
   if(y > yearOf(debutLMNP())) chk("n1", "capitaux", !!prec && (!isHistorique(y-1) || prec.chiffres?.immobilisationsNettes != null), `Colonne N-1 (${y-1}) disponible pour la 2033-A.`, "warn", `Chiffres ${y-1} incomplets : la colonne « année précédente » du bilan (2033-A) sera à remplir à la main lors de la déclaration.`);
   if(repriseAn() != null && y === repriseAn() + 1) (controleReprise() || []).forEach(l => chk(`reprise-${l.k}`, l.k === "crd" ? "emprunt" : "immos", l.ok,
@@ -3597,6 +3655,7 @@ function controles(y){
   const xl = ex.reprise?.chiffres?.resultat;
   if(xl != null) chk("excel", "fiscal", Math.abs(c.resultatComptable - xl) < 1, `Résultat comptable identique à l'Excel repris (${eur(xl)}).`, "warn", `Résultat comptable de ${eur(c.resultatComptable)} contre ${eur(xl)} dans l'Excel repris : vérifiez les écritures et les immobilisations.`, "ecritures");
   const f = fiscalJusqua(y);
+  if(S.data.immobilisations.length){ const sa = suiviAmortissements(y); chk("cumul-amort", "fiscal", true, `Amortissements déduits depuis le début : ${eur(sa.cumul)}. Gardez ce suivi : depuis la loi de finances 2025, ceux du logement s'ajoutent à la plus-value en cas de vente.`); }
   if(f.perimes?.length) out.push(["warn", `Déficit${pl(f.perimes.length)} de plus de 10 ans perdu${pl(f.perimes.length)} cette année : ${f.perimes.map(d=>d.annee+" ("+eur(d.montant)+")").join(", ")}.`, null, "deficits-perimes", "fiscal"]);
   return out;
 }
@@ -3605,16 +3664,32 @@ function controles(y){
    relevé, tableau d'amortissement, clôture N−1) = Écart. Un écart se corrige dans le module d'origine, ou s'explique :
    l'explication est gardée dans exercice.revision[id] = {commentaire, texte, statut, date} et ne vaut que pour les
    montants expliqués (texte = « compta|attendu ») : si un montant change, l'écart est à revoir. */
-const CYCLES = [["recettes","Recettes","ecritures"],["emprunt","Emprunt","emprunt"],["immos","Immobilisations et amortissements","immos"],
-  ["tresorerie","Banque","banque"],["resultat","Résultat, reports et bilan","declaration"],["charges","Charges : comparaison avec l'an passé","ecritures"],
-  ["saisie","Saisie et justificatifs","ecritures"],["confirmer","Points à confirmer",""]];
-const REVUE_PCT = 0.20, REVUE_MIN = 150;
-const ATTEST = [
-  ["meuble", "Le logement est loué meublé, avec au moins le mobilier minimum (décret n° 2015-981)."],
-  ["travaux", "Aucune amélioration ou agrandissement n'est passé en « Entretien et réparations » : ces travaux s'amortissent."],
-  ["alur", "Copropriété : la cotisation au fonds de travaux (loi ALUR) n'est pas déduite tant que les travaux ne sont pas réalisés."],
-  ["caution", "Aucun dépôt de garantie encaissé n'est classé en recette."],
-  ["perso", "Aucune dépense personnelle n'est déduite."]
+/* Six cycles. Chaque compte de la balance appartient à un cycle ; un cycle dont tous les contrôles sont verts reçoit
+   son visa (exercice.visas[cycle] = {date, sig}), qui mémorise les soldes de ses comptes. Si un solde change, le cycle
+   passe « dévisé » et se revalide à la main. La clôture attend que les six cycles soient visés. */
+const CYCLES = [["recettes","Recettes","ecritures","Loyers et charges refacturées"],["charges","Charges","ecritures","Dépenses de l'année, comparées à l'an passé"],
+  ["emprunt","Emprunt","emprunt","Échéances comparées au tableau de la banque"],["immos","Immobilisations et amortissements","immos","Biens, achats et dotation"],
+  ["tresorerie","Trésorerie","banque","Compte bancaire et relevé"],["resultat","Résultat fiscal et reports","declaration","Se vise en dernier"]];
+const CYCLE_CTRL = {pieces:"prep", impots:"charges", capitaux:"resultat", fiscal:"resultat"};
+const cycleCompte = c => /^7/.test(c) ? "recettes" : ["164000","661160","616100"].includes(c) ? "emprunt" : /^(21|28)/.test(c) || c === "681120" ? "immos"
+  : c === "512000" ? "tresorerie" : /^6/.test(c) ? "charges" : "resultat";
+const REVUE_PCT = 0.20, REVUE_MIN = 150, SEUIL_GROS = 500, SEUIL_LMP = 23000;
+/* Questions : affirmations à confirmer. Oui = statut « vu » ; Non = « non », à expliquer ; « na » (ancienne réponse « Sans objet ») vaut confirmé */
+const QUESTIONS = [
+  ["caution", "recettes", "Aucun dépôt de garantie encaissé n'est classé en recette.", "Un dépôt de garantie se rend au locataire : ce n'est pas une recette. Reclassez-le dans Écritures."],
+  ["loue", "recettes", "Le logement a été loué toute l'année.", "Indiquez les mois sans locataire : ils expliquent l'écart sur les loyers."],
+  ["marche", "recettes", "Le loyer est au prix du marché : le locataire n'est pas un proche logé à prix réduit.", "Un loyer trop bas peut être réévalué par l'administration : expliquez la situation."],
+  ["perso", "charges", "Aucune dépense personnelle n'est déduite.", "Retirez les dépenses personnelles : elles ne se déduisent pas."],
+  ["travaux", "charges", "Aucune amélioration ou agrandissement n'est passé en « Entretien et réparations » : ces travaux s'amortissent.", "Ajoutez ces travaux dans Immobilisations et retirez-les des charges."],
+  ["alur", "charges", "Copropriété : la cotisation au fonds de travaux (loi ALUR) n'est pas déduite tant que les travaux ne sont pas réalisés.", "Retirez la cotisation au fonds de travaux des charges de copropriété."],
+  ["mixte", "charges", "Les dépenses mixtes (internet, téléphone) ne comptent que la part liée à la location.", "Ne gardez que la part liée à la location, et notez comment vous l'avez calculée."],
+  ["th", "charges", "Aucune taxe d'habitation n'est déduite, sauf pour un logement resté vide.", "La taxe d'habitation du locataire ou la vôtre ne se déduit pas."],
+  ["km", "charges", "Aucun frais kilométrique au barème n'est déduit : seuls les frais réels le sont.", "Le barème kilométrique n'est pas admis en location meublée : remplacez-le par les frais réels."],
+  ["meuble", "immos", "Le logement est loué meublé, avec au moins le mobilier minimum (décret n° 2015-981).", "Sans le mobilier minimum, la location n'est pas une location meublée."],
+  ["factures", "immos", "Vous gardez les factures des biens amortis, pendant toute leur durée d'amortissement.", "Retrouvez les factures : elles justifient l'amortissement en cas de contrôle."],
+  ["sorties", "immos", "Aucun bien vendu ou jeté n'est resté dans le tableau des immobilisations.", "Sortez ces biens du tableau, page Immobilisations."],
+  ["perso-banque", "tresorerie", "Les apports et retraits personnels sur le compte sont identifiés.", "Repérez-les dans Banque : ils ne sont ni des recettes ni des charges."],
+  ["lmp", "resultat", "Vos recettes de location meublée restent inférieures aux autres revenus d'activité du foyer.", `Au-delà de ${SEUIL_LMP.toLocaleString("fr-FR")} € de recettes et de vos autres revenus d'activité, vous devenez loueur professionnel (LMP) : faites le point avec un conseiller avant de déclarer.`]
 ];
 const sommeNature = (y, n, f = () => true) => r2((exercice(y)?.ecritures||[]).filter(e => e.nature === n && f(e)).reduce((s,e) => s + e.montant, 0));
 function moisLoues(y){
@@ -3669,9 +3744,9 @@ function rapprochements(y){
   // Charges et recettes : N contre N−1 (compte par compte)
   if(exercice(y-1) && !isHistorique(y-1)){
     const p = c.t.parNature, p1 = calculAnnee(y-1).t.parNature;
-    for(const n of Object.keys(NATURES).filter(n => NATURES[n].g !== "bilan" && ((p[n]||0) || (p1[n]||0)))){
+    for(const n of Object.keys(NATURES).filter(n => NATURES[n].g !== "bilan" && cycleCompte(NATURES[n].c) !== "emprunt" && ((p[n]||0) || (p1[n]||0)))){
       const v = r2(p[n]||0), v1 = r2(p1[n]||0), ecart = Math.abs(v - v1);
-      out.push({type:"revue", id:`revue-${slug(n)}`, cycle:"charges", lib:`${n} (${NATURES[n].c.slice(0,3)})`, compta:v, attendu:v1, source:"", gl:NATURES[n].c, page:"ecritures", significatif: ecart > REVUE_MIN && (!v1 || ecart > v1 * REVUE_PCT)});
+      out.push({type:"revue", id:`revue-${slug(n)}`, cycle:cycleCompte(NATURES[n].c), lib:`${n} (${NATURES[n].c.slice(0,3)})`, compta:v, attendu:v1, source:"", gl:NATURES[n].c, page:"ecritures", significatif: ecart > REVUE_MIN && (!v1 || ecart > v1 * REVUE_PCT)});
     }
   }
   out.filter(x => x.id === "loyers" || x.id === "provisions").forEach(x => x.nonBloquant = true); // vacance, révision du loyer : à regarder, sans bloquer
@@ -3681,9 +3756,10 @@ const revision = y => exercice(y)?.revision || {};
 const sigCalc = x => `${x.compta}|${x.attendu}`;
 function etatPoint(y, x){
   const r = revision(y)[x.id];
-  if(x.type === "q") return r?.statut === "vu" || r?.statut === "na" ? "fait" : "afaire";
+  if(x.type === "perso") return x.fait ? "fait" : "afaire";
+  if(x.type === "q") return r?.statut === "vu" || r?.statut === "na" || (r?.statut === "non" && r.commentaire) ? "fait" : "afaire";
   if(x.type === "calc" || x.type === "revue"){
-    if(x.attendu == null) return x.extra === "releve" && r?.statut === "na" ? "fait" : x.id === "acquisitions" ? (r?.statut === "vu" ? "fait" : "afaire") : "afaire";
+    if(x.attendu == null) return x.extra === "releve" && r?.statut === "na" ? "fait" : x.id === "acquisitions" ? (r?.statut === "vu" ? "fait" : "afaire") : r?.commentaire && r.texte === sigCalc(x) ? "fait" : "afaire";
     const ok = x.type === "revue" ? !x.significatif : Math.abs(x.compta - x.attendu) < 0.005;
     return ok ? "ok" : (r?.commentaire || r?.piece) && r.texte === sigCalc(x) ? "fait" : x.type === "revue" || x.nonBloquant ? "afaire" : "bloque";
   }
@@ -3691,12 +3767,14 @@ function etatPoint(y, x){
   if(x.niveau === "bad") return "bloque";
   return (r?.commentaire || r?.piece) && r.texte === x.texte ? "fait" : "afaire";
 }
-const GARDER = new Set(["dates","montants","natures","loyers-mois","cfe","justificatifs","doublons","petit-equipement","echeances","n1","excel","deficits-perimes"]);
+/* Ce qui se règle avant la révision (saisie, tri, dépôt du tableau du prêt) : rappelé en tête de la révision, hors des cycles.
+   Les erreurs de saisie (dates, montants, natures) empêchent la clôture. */
+const PREP = new Set(["dates","montants","natures","doublons","banque-tri","echeancier-banque","pret-rattache"]), HORS_CYCLE = new Set(["crd","interets-saisis"]);
 const echeancesJustifiees = y => pointsRevision(y).find(x => x.id === "echeances")?.etat === "fait";
-/* Ce qui se fait avant la révision (déposer, trier, rapprocher) : rappelé en tête de la révision, sans en faire partie */
 function preparatifs(y){
-  const out = controles(y).filter(x => ["banque-tri","echeancier-banque","pret-rattache"].includes(x[3]) && x[0] !== "ok")
-    .map(([, texte, page, id]) => ({id, page, texte: id === "banque-tri" ? texte.replace(/ bancaire(s?) de \d{4} encore/, "").replace(/\.$/, "") : id === "echeancier-banque" ? "Tableau du prêt à déposer" : texte.split(" (")[0], lib: id === "banque-tri" ? "Trier" : id === "echeancier-banque" ? "Déposer" : "Choisir le prêt"}));
+  const LIB = {"banque-tri":"Trier", "echeancier-banque":"Déposer", "pret-rattache":"Choisir le prêt", doublons:"Voir"};
+  const out = controles(y).filter(x => PREP.has(x[3]) && x[0] !== "ok")
+    .map(([niveau, texte, page, id]) => ({id, page, niveau, texte: id === "banque-tri" ? texte.replace(/ bancaire(s?) de \d{4} encore/, "").replace(/\.$/, "") : id === "echeancier-banque" ? "Tableau du prêt à déposer" : id === "pret-rattache" ? texte.split(" (")[0] : texte, lib: LIB[id] || "Corriger"}));
   if(S.data.emprunts.length && !echeancesJustifiees(y)){
     const n = S.data.emprunts.reduce((t, l) => t + etatsRapprochement(l, y).filter(e => e.c !== "ok").length, 0);
     if(n) out.push({id:"rp-main", texte:`${n} échéance${pl(n)} de prêt à rapprocher`, page:"emprunt", lib:"Rapprocher"});
@@ -3704,10 +3782,12 @@ function preparatifs(y){
   return out;
 }
 function pointsRevision(y){
-  const auto = controles(y).filter(x => GARDER.has(x[3])).map(([niveau, texte, page, id]) => ({type:"auto", niveau, texte, page, id, cycle:["echeancier-banque","pret-rattache","echeances"].includes(id) ? "emprunt" : id === "banque-tri" ? "tresorerie" : id === "deficits-perimes" || id === "n1" || id === "excel" ? "resultat" : "saisie"}));
-  const q = ATTEST.map(([id, texte]) => ({type:"q", id:"q-" + id, cycle:"confirmer", texte}));
+  const auto = controles(y).filter(x => !PREP.has(x[3]) && !HORS_CYCLE.has(x[3])).map(([niveau, texte, page, id, cy]) => ({type:"auto", niveau, texte, page, id, cycle:CYCLE_CTRL[cy] || cy}));
+  const recettes = calculAnnee(y).produits;
+  const q = QUESTIONS.filter(([id]) => id !== "lmp" || recettes > SEUIL_LMP).map(([id, cycle, texte, siNon]) => ({type:"q", id:"q-" + id, cycle, texte, siNon}));
+  const perso = (exercice(y).controlesPerso || []).map(p => ({type:"perso", id:"p-" + p.id, pid:p.id, cycle:p.cycle, texte:p.texte, fait:!!p.fait}));
   const rap = rapprochements(y), dejaVu = new Set(rap.map(x => x.id));
-  return [...rap, ...auto.filter(x => !(x.id === "cfe" && dejaVu.has("revue-CFE"))), ...q].map(x => ({...x, etat:etatPoint(y, x)}));
+  return [...rap, ...auto.filter(x => !(x.id === "cfe" && dejaVu.has("revue-CFE"))), ...q, ...perso].map(x => ({...x, etat:etatPoint(y, x)}));
 }
 const restantRevision = y => pointsRevision(y).filter(x => x.etat === "afaire" || x.etat === "bloque").map(x => ({...x, texte:x.texte || x.lib}));
 addEventListener("beforeprint", () => document.querySelectorAll("details.rv").forEach(d => d.open = true));
@@ -3732,66 +3812,170 @@ async function joindreRevision(y, id){
 async function retirerPieceRevision(y, id){ if(await confirmer("Retirer cette pièce du point de révision ? (le fichier reste dans le dossier)")) majRevision(y, id, {piece:null}); }
 function majReleve(y, k, v){ if(verrouille(y)) return; const ex = exercice(y), n = parseMontant(v); ex.releve ??= {}; if(v === "" || isNaN(n)) delete ex.releve[k]; else ex.releve[k] = n; if(!Object.keys(ex.releve).length) delete ex.releve; setDirty(); renderAll(); }
 const NIV = {bloque:["bloquant","✕","var(--neg)"], afaire:["à vérifier","!","var(--warn)"], fait:["validé","✓","var(--pos)"], ok:["validé","✓","var(--pos)"]};
-const niveauPoste = p => p.some(x => x.etat === "bloque") ? "bloque" : p.some(x => x.etat === "afaire") ? "afaire" : "ok";
+/* ---- Visa des cycles ---- */
+/* Soldes que le visa mémorise : ceux des comptes du cycle (et, pour le résultat, le résultat fiscal et les reports) */
+function signatureCycle(k, bal, f){
+  const s = {}; bal.filter(r => cycleCompte(r.c) === k).forEach(r => s[r.c] = r.solde);
+  if(k === "resultat"){ s.rf = r2(f.resultatFiscal); s.ard = r2(f.ardFin); s.def = r2(f.deficitsFin.reduce((t, d) => t + d.montant, 0)); }
+  return s;
+}
+const LIB_SIG = {rf:"Résultat fiscal", ard:"Amortissements en réserve", def:"Déficits reportables"};
+/* État de chaque cycle : vise, devise (visa posé puis un montant ou un point a changé), nonvise ; valide pour une année clôturée */
+function etatCycles(y){
+  const pts = pointsRevision(y), clos = verrouille(y), visas = exercice(y).visas || {}, bal = balance(y), f = fiscalJusqua(y);
+  return CYCLES.map(([k, l, pg, d]) => {
+    const p = pts.filter(x => x.cycle === k), vert = !p.some(x => x.etat === "bloque" || x.etat === "afaire"), sig = signatureCycle(k, bal, f), v = visas[k];
+    const change = v ? [...new Set([...Object.keys(v.sig || {}), ...Object.keys(sig)])].filter(c => Math.abs((v.sig?.[c] || 0) - (sig[c] || 0)) >= 0.005) : [];
+    return {k, l, pg, d, p, vert, sig, visa:v, change, statut: clos ? "valide" : v && vert && !change.length ? "vise" : v ? "devise" : "nonvise"};
+  });
+}
+const revisionVisee = y => verrouille(y) || etatCycles(y).every(c => c.statut === "vise");
+/* Le visa se pose tout seul quand un cycle jamais visé devient vert ; un cycle dévisé se revalide à la main */
+function poserVisas(y){
+  if(DEPOT || S.consultation || verrouille(y) || !exercice(y) || isHistorique(y) || aujourdhui() < `${y+1}-01-01`) return;
+  const ex = exercice(y); let pose = false;
+  etatCycles(y).forEach(c => { if(c.vert && !c.visa){ (ex.visas ??= {})[c.k] = {date:aujourdhui(), sig:c.sig}; pose = true; } });
+  if(pose) setDirty();
+}
+function revaliderCycle(y, k){
+  if(verrouille(y)) return;
+  const c = etatCycles(y).find(c => c.k === k); if(!c?.vert) return avertir("Réglez d'abord les contrôles de ce cycle.");
+  (exercice(y).visas ??= {})[k] = {date:aujourdhui(), sig:c.sig}; setDirty(); renderAll(); toast(`${c.l} : visa posé.`);
+}
+/* Contrôles ajoutés à la main, et notes libres de chaque cycle */
+async function ajouterControle(y, k){
+  if(verrouille(y)) return;
+  const t = ((await demander("Ce que vous voulez vérifier dans ce cycle :", "", {titre:"Ajouter un contrôle", ok:"Ajouter"})) || "").trim(); if(!t) return;
+  (exercice(y).controlesPerso ??= []).push({id:uid(), cycle:k, texte:t}); setDirty(); renderAll();
+}
+function cocherControle(y, id){ if(verrouille(y)) return; const p = (exercice(y).controlesPerso || []).find(p => p.id === id); if(!p) return; p.fait = !p.fait; if(!p.fait) delete p.fait; setDirty(); renderAll(); }
+async function retirerControle(y, id){
+  if(verrouille(y) || !await confirmer("Retirer ce contrôle ?", {ok:"Retirer", danger:true})) return;
+  const ex = exercice(y); ex.controlesPerso = (ex.controlesPerso || []).filter(p => p.id !== id); if(!ex.controlesPerso.length) delete ex.controlesPerso; setDirty(); renderAll();
+}
+function noteCycle(y, k, v){
+  if(verrouille(y)) return;
+  const ex = exercice(y), n = (ex.notesRevision ??= {})[k] ??= {}; n.texte = v.trim(); if(!n.texte) delete n.texte;
+  if(!n.texte && !n.pieces?.length) delete ex.notesRevision[k]; if(!Object.keys(ex.notesRevision).length) delete ex.notesRevision; setDirty(); renderAll();
+}
+async function joindreCycle(y, k){
+  if(verrouille(y) || !await dossierRequis()) return;
+  const f = await choisirFichier(); if(!f) return;
+  const piece = await copierDansDossier(f, ["Justificatifs", String(y), "Révision"], `revision_${k}`);
+  const n = (exercice(y).notesRevision ??= {})[k] ??= {}; (n.pieces ??= []).push(piece); setDirty(); renderAll(); toast("Pièce jointe au cycle.");
+}
+async function retirerPieceCycle(y, k, i){
+  if(verrouille(y) || !await confirmer("Retirer cette pièce du cycle ? (le fichier reste dans le dossier)")) return;
+  const ex = exercice(y), n = ex.notesRevision?.[k]; if(!n?.pieces) return; n.pieces.splice(i, 1); if(!n.pieces.length) delete n.pieces;
+  if(!n.texte && !n.pieces) delete ex.notesRevision[k]; setDirty(); renderAll();
+}
 function ouvrirPoste(k){ S.revPoste = k; renderAll(); }
 function fermerPoste(){ S.revPoste = null; renderAll(); }
 addEventListener("keydown", e => { if(e.key === "Escape" && S.revPoste){ fermerPoste(); } });
+const I_OK = svgI('<path d="M20 6 9 17l-5-5"/>'), I_KO = svgI('<path d="M6 6l12 12M18 6 6 18"/>');
+const ST_CYCLE = {vise:"Visé", devise:"Dévisé", nonvise:"Non visé", valide:"Validé"};
+/* Solde affiché dans le sens naturel du compte : crédit en positif pour les recettes, l'emprunt et le compte de l'exploitant */
+const soldeLu = (c, s) => /^(1|7)/.test(c) ? -s : s;
 function vueRevision(y){
-  const pts = pointsRevision(y), clos = verrouille(y), rev = revision(y), ex = exercice(y);
-  const bloq = pts.filter(x => x.etat === "bloque").length, nb = pts.filter(x => x.etat === "afaire").length;
-  const montant = (v, gl) => v == null ? `<span class="sub">–</span>` : gl ? lienGL({t:"compte", v:gl}, eur(v)) : eur(v);
-  const pj = (x, r) => clos ? (r.piece ? `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="ouvrirChemin(${jsq(r.piece)},'Pièce de révision')">${I_CLIP} ${esc(r.piece.split("/").pop())}</button></div>` : "")
-    : `<div class="row" style="gap:6px;margin-top:6px">${r.piece ? `<button class="btn small sec" onclick="ouvrirChemin(${jsq(r.piece)},'Pièce de révision')">${I_CLIP} ${esc(r.piece.split("/").pop())}</button><button class="btn small ghost" aria-label="Retirer la pièce" onclick="retirerPieceRevision(${y},'${x.id}')">×</button>` : `<button class="btn small sec" onclick="joindreRevision(${y},'${x.id}')">${I_CLIP} Joindre une pièce</button>`}</div>`;
-  const explication = (x, r) => clos ? `${r.commentaire ? `<div class="rv-com">${esc(r.commentaire)}</div>` : ""}${pj(x, r)}` : `<textarea class="rv-txt" rows="2" placeholder="${x.etat === "bloque" ? "Expliquer l'écart pour le valider (gardé dans le dossier)…" : "Explication (gardée dans le dossier)…"}" onchange="expliquerPoint(${y},'${x.id}',this)">${esc(r.commentaire || "")}</textarea>${pj(x, r)}`;
-  const pastille = x => { const [l, s, col] = NIV[x.etat]; return `<span class="rv-p" style="color:${col}">${s} ${x.etat === "fait" ? "validé (expliqué)" : x.etat === "afaire" && x.attendu === null && x.type === "calc" ? "à compléter" : l}</span>`; };
-  const ligneCalc = x => { const r = rev[x.id] || {}, ecart = x.attendu == null ? null : r2(x.compta - x.attendu), ko = x.etat === "afaire" || x.etat === "bloque";
-    const ancien = !clos && r.commentaire && r.texte !== sigCalc(x) && x.etat !== "ok";
-    let suite = "";
-    if(x.extra === "releve" && clos) suite = r.statut === "na" ? `<div class="sub" style="margin-top:6px">Pas de relevé disponible.</div>` : "";
-    else if(x.extra === "releve") suite = `<div class="row rv-rel"><label>Solde du relevé au 1/1<input inputmode="decimal" value="${ex.releve?.debut ?? ""}" onchange="majReleve(${y},'debut',this.value)"></label><label>au 31/12<input inputmode="decimal" value="${ex.releve?.fin ?? ""}" onchange="majReleve(${y},'fin',this.value)"></label>
-      <button class="btn small ${r.statut === "na" ? "" : "sec"}" onclick="majRevision(${y},'releve',{statut:${r.statut === "na" ? "null" : "'na'"}})">Pas de relevé disponible</button></div>`;
-    else if(x.id === "acquisitions" && clos) suite = r.statut === "vu" ? `<div class="sub" style="margin-top:6px">Factures vérifiées.</div>` : "";
-    else if(x.id === "acquisitions") suite = `<div class="row" style="margin-top:6px"><button class="btn small ${r.statut === "vu" ? "" : "sec"}" onclick="majRevision(${y},'acquisitions',{statut:${r.statut === "vu" ? "null" : "'vu'"}})">Factures vérifiées</button></div>`;
-    else if(x.id === "crd" && ko && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('emprunt')">Rapprocher les échéances</button><button class="btn small sec" onclick="S.year=${y};regulariserCRD()">Régulariser l'écart…</button></div>`;
-    else if(x.attendu == null && x.page === "dossier" && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('dossier')">Renseigner le bail dans les paramètres</button></div>`;
-    else if(ko && x.page && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('${x.page}')">${x.page === "emprunt" ? "Rapprocher les échéances" : `Corriger dans ${NOM_PAGE[x.page]}`} →</button></div>`;
-    const comptes = (x.gls || (x.gl ? [x.gl] : [])).map(c => lienGL({t:"compte", v:c}, c, "rv-cpt"));
-    return `<div class="rl rs-${x.etat}"><div class="rl-lib"><b>${x.lib.replace(/\s*\(\d{3}\)$/, "")}</b>${comptes.length ? `<span class="rv-cpts">${comptes.join("")}</span>` : ""}<small>${esc(x.source || "")}${x.extra && x.extra !== "releve" ? ` · ${esc(x.extra)}` : ""}</small></div>
-      <div class="rl-n"><small>${x.type === "revue" ? y : "Comptabilité"}</small>${montant(x.compta, x.gl)}</div><div class="rl-n"><small>${x.type === "revue" ? y-1 : "Attendu"}</small>${montant(x.attendu)}</div>
-      <div class="rl-n"><small>Écart</small>${ecart == null ? "–" : `<b style="color:${Math.abs(ecart) < 0.005 ? "inherit" : NIV[x.etat][2]}">${ecart > 0 ? "+" : ecart < 0 ? "−" : ""}${eur(Math.abs(ecart))}</b>`}</div>
-      <div class="rl-s">${pastille(x)}</div>
-      ${ko || x.etat === "fait" ? `<div class="rl-suite">${ancien ? `<div class="sub" style="margin:0 0 4px;color:var(--warn)">Les montants ont changé depuis l'explication du ${fmtDate(r.date)} : relisez-la et validez-la à nouveau.</div>` : ""}${suite}${x.attendu != null ? explication(x, r) : ""}</div>` : ""}</div>`; };
-  const ligneAuto = x => { const r = rev[x.id] || {};
-    return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s">${pastille(x)}</div>
-      ${x.etat === "afaire" || x.etat === "bloque" || x.etat === "fait" ? `<div class="rl-suite">${x.page && x.etat !== "fait" && !clos ? `<button class="btn small sec" style="margin-bottom:6px" onclick="S.revPoste=null;allerA('${x.page}')">${x.id === "echeances" ? "Rapprocher à la main" : `Corriger dans ${NOM_PAGE[x.page]}`} →</button>` : ""}${x.niveau === "warn" ? explication(x, r) : ""}</div>` : ""}</div>`; };
-  const ligneQ = x => { const r = rev[x.id] || {};
-    return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s">${[["vu","Oui"],["na","Sans objet"]].map(([k,l]) => `<button class="btn small ${r.statut===k?"":"sec"}" ${clos?`disabled title="Exercice clôturé : rouvrez-le pour modifier la révision"`:""} onclick="majRevision(${y},'${x.id}',{statut:${r.statut===k?"null":`'${k}'`}})">${l}</button>`).join("")}</div></div>`; };
-  const ligne = x => x.type === "calc" || x.type === "revue" ? ligneCalc(x) : x.type === "q" ? ligneQ(x) : ligneAuto(x);
-  const postes = CYCLES.map(([k, l, pg]) => ({k, l, pg, p:pts.filter(x => x.cycle === k)})).filter(c => c.p.length);
-  const resume = c => { const b = c.p.filter(x => x.etat === "bloque").length, a = c.p.filter(x => x.etat === "afaire").length, v = c.p.length - b - a;
-    return [b && `${b} erreur${pl(b)} bloquante${pl(b)}`, a && `${a} à vérifier`, !b && !a && `${v} contrôle${pl(v)} validé${pl(v)}`].filter(Boolean).join(" · "); };
-  const tuiles = postes.map(c => { const n = niveauPoste(c.p), [lib, sym, col] = NIV[n];
-    return `<button class="rv-tuile rt-${n}" onclick="ouvrirPoste('${c.k}')"><span class="rv-sym" style="background:${col}">${sym}</span><span class="rv-tt"><b>${c.l}</b><small>${resume(c)}</small></span><span class="rv-lib" style="color:${col}">${lib}</span></button>`; }).join("");
-  const c = postes.find(c => c.k === S.revPoste);
-  const ord = {bloque:0, afaire:1, fait:2, ok:3};
-  const groupe = (titre, liste, ouvert) => liste.length ? `<details class="rv-g" ${ouvert ? "open" : ""}><summary>${titre} · ${liste.length}</summary>${liste.map(ligne).join("")}</details>` : "";
-  const fenetre = c ? (() => { const n = niveauPoste(c.p), [lib, sym, col] = NIV[n], tri = c.p.slice().sort((a,b) => ord[a.etat] - ord[b.etat]);
-    return `<div class="rv-voile noprint" onclick="if(event.target===this)fermerPoste()"><div class="rv-fen" role="dialog" aria-modal="true" aria-label="${esc(c.l)}">
-      <div class="rv-fh"><span class="rv-sym" style="background:${col}">${sym}</span><div style="flex:1;min-width:0"><h2>${c.l}</h2><small style="color:${col}">${resume(c)}</small></div>
-        ${c.pg && c.pg !== "declaration" ? `<button class="btn small sec" onclick="S.revPoste=null;allerA('${c.pg}')">${NOM_PAGE[c.pg]} →</button>` : ""}<button class="btn small" onclick="fermerPoste()">Fermer</button></div>
-      <div class="rv-fc">${c.k === "charges" ? `<p class="sub" style="margin:0 0 6px">Une variation de plus de ${Math.round(REVUE_PCT*100)} % et de plus de ${eur0(REVUE_MIN)} est à vérifier.</p>` : ""}
-        ${groupe("Erreurs bloquantes", tri.filter(x => x.etat === "bloque"), true)}${groupe("À vérifier, non bloquant", tri.filter(x => x.etat === "afaire"), true)}${groupe("Validé", tri.filter(x => x.etat === "ok" || x.etat === "fait"), !tri.some(x => x.etat === "bloque" || x.etat === "afaire"))}</div></div></div>`; })() : "";
-  const tete = clos ? (ex.revision ? `Révision ${y} en lecture seule : l'exercice est clôturé. Pour la modifier, rouvrez ${y} (étape Clôturer).` : `${y} a été clôturé avant le module de révision : les points ci-dessous sont indicatifs (lecture seule).`)
-    : bloq ? `${bloq} erreur${pl(bloq)} bloquante${pl(bloq)} : la clôture attend qu'elles soient corrigées ou expliquées` : nb ? `Plus d'erreur bloquante : la clôture est possible (${nb} point${pl(nb)} à vérifier)` : "Révision validée : prêt à clôturer";
-  const imprimer = postes.map(c => `<div class="printonly rv-imp"><h3>${c.l} · ${NIV[niveauPoste(c.p)][0]}</h3>${c.p.map(x => `<div>${NIV[x.etat][1]} ${x.lib || x.texte}${x.type === "calc" && x.attendu != null ? ` : ${eur(x.compta)} / ${eur(x.attendu)}` : ""}${rev[x.id]?.commentaire ? ` · <i>${esc(rev[x.id].commentaire)}</i>` : ""}</div>`).join("")}</div>`).join("");
+  poserVisas(y);
+  const clos = verrouille(y), rev = revision(y), ex = exercice(y), cy = etatCycles(y);
+  const bal = balance(y), b1 = exercice(y-1) && !isHistorique(y-1) ? Object.fromEntries(balance(y-1).map(r => [r.c, r.solde])) : null;
+  const dt = r2(bal.reduce((s, x) => s + x.d, 0)), ct = r2(bal.reduce((s, x) => s + x.cr, 0));
+  const nv = cy.filter(c => c.statut === "vise" || c.statut === "valide").length, cur = clos ? null : cy.find(c => c.statut !== "vise");
+  const aVoir = c => { const b = c.p.filter(x => x.etat === "bloque" || x.etat === "afaire"), q = b.filter(x => x.type === "q").length, k = b.length - q;
+    return [k && `${k} contrôle${pl(k)} à régler`, q && `${q} question${pl(q)}`].filter(Boolean).join(", "); };
+  const resumeC = c => c.statut === "valide" ? "Exercice clôturé" : c.statut === "vise" ? c.d : c.statut === "devise" ? (c.change.length ? "Des montants ont changé depuis le visa" : aVoir(c) || "À revalider")
+    : aVoir(c) || c.d;
+  const pastille = c => c.statut === "vise" ? `Visé le ${fmtDate(c.visa.date).slice(0, 5)}` : ST_CYCLE[c.statut];
+  const ligneCycle = c => `<button class="cy-l ${c.statut} ${c === cur ? "cur" : ""}" onclick="ouvrirPoste('${c.k}')"><span class="cy-d">${c.statut === "vise" || c.statut === "valide" ? I_OK : c.statut === "devise" ? "!" : ""}</span>
+    <span class="cy-t"><b>${c.l}</b><span>${resumeC(c)}</span></span><span class="cy-st">${pastille(c)}</span></button>`;
+  const pct = (v, v1) => { if(v1 == null) return ["–", ""]; if(Math.abs(v1) < 0.005) return [Math.abs(v) < 0.005 ? "0 %" : "nouveau", Math.abs(v) >= 0.005 ? "fort" : ""];
+    const p = (v - v1) / v1; return [`${p > 0 ? "+" : p < 0 ? "−" : ""}${Math.abs(p * 100).toLocaleString("fr-FR", {maximumFractionDigits:1})} %`, Math.abs(p) > REVUE_PCT ? "fort" : ""]; };
+  const n0 = v => moins(Math.round(v).toLocaleString("fr-FR"));
+  const ligneBal = (c, r) => { const v = soldeLu(r.c, r.solde), v1 = b1 ? soldeLu(r.c, b1[r.c] || 0) : null, [p, fort] = pct(v, v1);
+    return `<tr class="${c.statut}"><td>${lienGL({t:"compte", v:r.c}, `<span class="bn">${r.c.slice(0, 3)}</span>${esc(r.lib)}`)}</td><td class="n"><b>${n0(v)}</b></td><td class="n p1">${v1 == null ? "–" : n0(v1)}</td><td class="n var ${fort}">${p}</td></tr>`; };
+  const tableBal = cy.map(c => { const rows = bal.filter(r => cycleCompte(r.c) === c.k); if(!rows.length) return "";
+    return `<tr class="g ${c.statut}" onclick="ouvrirPoste('${c.k}')"><td colspan="4"><b>${c.l}</b><span class="bp">${c.statut === "vise" || c.statut === "valide" ? "✓ " : c.statut === "devise" ? "! " : ""}${ST_CYCLE[c.statut]}</span></td></tr>${rows.map(r => ligneBal(c, r)).join("")}`; }).join("");
   const prep = clos ? [] : preparatifs(y);
   const avant = prep.length ? `<div class="card prep noprint"><h3 style="margin:0 0 6px">Avant de réviser</h3>
-    ${prep.map(x => `<div class="prep-l"><span class="ea-d"></span><span>${x.texte}</span>${x.page ? `<button class="btn small" onclick="S.revPoste=null;allerA('${x.page}')">${x.lib}</button>` : ""}</div>`).join("")}</div>` : "";
-  return avant + `<div class="card noprint"><h3 style="margin:0 0 4px;color:${clos ? "var(--text)" : bloq ? "var(--neg)" : nb ? "var(--warn)" : "var(--pos)"}">${tete}</h3>
-    <p class="sub" style="margin:0">Chaque poste rapproche la comptabilité d'une source indépendante (échéancier, bail, relevé, tableau d'amortissement, clôture ${y-1}). Touchez un poste pour voir le détail.</p>
-    <div class="row" style="margin-top:10px;gap:14px;flex-wrap:wrap"><span class="sub" style="margin:0"><b style="color:var(--neg)">✕</b> bloquant · <b style="color:var(--warn)">!</b> à vérifier, non bloquant · <b style="color:var(--pos)">✓</b> validé</span></div></div>
-  <div class="rv-grille noprint">${tuiles}</div>
-  <h2 class="printonly">Feuille de révision ${y} · ${esc(S.data.dossier.nom||"")}</h2>${imprimer}${fenetre}`;
+    ${prep.map(x => `<div class="prep-l"><span class="ea-d" ${x.niveau === "bad" ? `style="border-color:var(--neg)"` : ""}></span><span>${x.texte}</span>${x.page ? `<button class="btn small" onclick="S.revPoste=null;allerA('${x.page}')">${x.lib}</button>` : ""}</div>`).join("")}</div>` : "";
+  const bloquePrep = prep.some(x => x.niveau === "bad");
+  const pied = clos ? `<div class="card cy-pied">${y} est clôturé : la révision est validée. Pour la modifier, rouvrez ${y} (étape Clôturer).</div>`
+    : nv === cy.length && !bloquePrep ? `<div class="card cy-pied ok">${I_OK} Les six cycles sont visés : vous pouvez déclarer, puis clôturer ${y}.</div>`
+    : `<div class="card cy-pied">Clôturer ${y} : possible quand les six cycles sont visés${bloquePrep ? " et les erreurs de saisie corrigées" : ""}.</div>`;
+  const imprimer = cy.map(c => `<div class="printonly rv-imp"><h3>${c.l} · ${ST_CYCLE[c.statut]}${c.visa ? ` le ${fmtDate(c.visa.date)}` : ""}</h3>${c.p.map(x => `<div>${NIV[x.etat][1]} ${x.lib || x.texte}${x.type === "calc" && x.attendu != null ? ` : ${eur(x.compta)} / ${eur(x.attendu)}` : ""}${rev[x.id]?.commentaire ? ` · <i>${esc(rev[x.id].commentaire)}</i>` : ""}</div>`).join("")}${ex.notesRevision?.[c.k]?.texte ? `<div><i>Note : ${esc(ex.notesRevision[c.k].texte)}</i></div>` : ""}</div>`).join("");
+  const c = cy.find(c => c.k === S.revPoste);
+  return avant + `<div class="cy-g noprint">
+    <div class="card"><div class="cy-h"><h3>Cycles</h3><span>${clos ? "Validés" : `${nv} visé${pl(nv)} sur ${cy.length}`}</span></div>${cy.map(ligneCycle).join("")}</div>
+    <div class="card"><div class="cy-h"><h3>Balance ${y}</h3><span>${Math.abs(dt - ct) < 0.005 ? "débit = crédit ✓" : `<b style="color:var(--neg)">débit ≠ crédit</b>`}</span></div>
+      <table class="bt"><tr><th>Compte</th><th>${y}</th><th>${y-1}</th><th>Var.</th></tr>${tableBal}</table></div></div>
+    ${pied}<h2 class="printonly">Feuille de révision ${y} · ${esc(S.data.dossier.nom||"")}</h2>${imprimer}${c ? fenetreCycle(y, c) : ""}`;
+}
+/* Fenêtre d'un cycle : comptes, contrôles (les points à régler en tête), questions, contrôles ajoutés, notes et pièces */
+function fenetreCycle(y, c){
+  const clos = verrouille(y), rev = revision(y), ex = exercice(y), note = ex.notesRevision?.[c.k] || {};
+  const b1 = exercice(y-1) && !isHistorique(y-1) ? Object.fromEntries(balance(y-1).map(r => [r.c, r.solde])) : null;
+  const ko = x => x.etat === "afaire" || x.etat === "bloque";
+  const pj = (x, r) => clos ? (r.piece ? `<button class="btn small sec" onclick="ouvrirChemin(${jsq(r.piece)},'Pièce de révision')">${I_CLIP} ${esc(r.piece.split("/").pop())}</button>` : "")
+    : r.piece ? `<button class="btn small sec" onclick="ouvrirChemin(${jsq(r.piece)},'Pièce de révision')">${I_CLIP} ${esc(r.piece.split("/").pop())}</button><button class="btn small ghost" aria-label="Retirer la pièce" onclick="retirerPieceRevision(${y},'${x.id}')">×</button>`
+    : `<button class="btn small sec" onclick="joindreRevision(${y},'${x.id}')">Joindre</button>`;
+  const expl = (x, r, ph) => clos ? (r.commentaire ? `<div class="rv-com">${esc(r.commentaire)}</div>` : "")
+    : `<textarea class="rv-txt" rows="1" placeholder="${ph}" onchange="expliquerPoint(${y},'${x.id}',this)">${esc(r.commentaire || "")}</textarea>`;
+  const corriger = x => { if(clos) return "";
+    const r = rev[x.id] || {}, ex = exercice(y);
+    if(x.extra === "releve") return `<div class="row rv-rel"><label>Solde du relevé au 1/1<input inputmode="decimal" value="${ex.releve?.debut ?? ""}" onchange="majReleve(${y},'debut',this.value)"></label><label>au 31/12<input inputmode="decimal" value="${ex.releve?.fin ?? ""}" onchange="majReleve(${y},'fin',this.value)"></label>
+      <button class="btn small ${r.statut === "na" ? "" : "sec"}" onclick="majRevision(${y},'releve',{statut:${r.statut === "na" ? "null" : "'na'"}})">Pas de relevé disponible</button></div>`;
+    if(x.id === "acquisitions") return `<button class="btn small ${r.statut === "vu" ? "" : "sec"}" onclick="majRevision(${y},'acquisitions',{statut:${r.statut === "vu" ? "null" : "'vu'"}})">Factures vérifiées</button>`;
+    if(x.id === "crd") return `<button class="btn small" onclick="S.revPoste=null;allerA('emprunt')">Rapprocher les échéances</button><button class="btn small sec" onclick="S.year=${y};regulariserCRD()">Régulariser l'écart…</button>`;
+    if(x.attendu == null && x.page === "dossier") return `<button class="btn small" onclick="S.revPoste=null;allerA('dossier')">Renseigner le bail</button>`;
+    return x.page ? `<button class="btn small" onclick="S.revPoste=null;allerA('${x.page}')">${x.id === "echeances" ? "Rapprocher à la main" : "Corriger"}</button>` : ""; };
+  const sym = x => `<span class="ti">${x.etat === "ok" || x.etat === "fait" ? I_OK : x.etat === "bloque" ? I_KO : "!"}</span>`;
+  const signe = v => `${v > 0 ? "+" : v < 0 ? "−" : ""}${eur(Math.abs(v))}`;
+  const ligne = x => { const r = rev[x.id] || {}, k = ko(x);
+    if(x.type === "perso") return `<div class="ck perso ${x.fait ? "ok" : ""}"><span class="ti">${x.fait ? I_OK : "○"}</span><div class="ct"><b>${esc(x.texte)} <em class="tag">ajouté par vous</em></b></div>
+      <span class="n">${clos ? "" : `<button class="btn small ${x.fait ? "sec" : ""}" onclick="cocherControle(${y},'${x.pid}')">${x.fait ? "Rouvrir" : "Fait"}</button><button class="btn small ghost" aria-label="Retirer le contrôle" onclick="retirerControle(${y},'${x.pid}')">×</button>`}</span></div>`;
+    let num = x.type === "auto" ? "" : `<span></span><span></span><span></span>`;
+    if(x.type === "calc" || x.type === "revue"){ const e = x.attendu == null ? null : r2(x.compta - x.attendu);
+      num = `<span class="n">${lienGL({t:"compte", v:x.gl || ""}, eur(x.compta))}</span><span class="n">${x.attendu == null ? "–" : eur(x.attendu)}</span><span class="n ${k && e != null && Math.abs(e) >= 0.005 ? "e" : "m"}">${e == null || Math.abs(e) < 0.005 ? "–" : x.type === "revue" && x.attendu ? `${e > 0 ? "+" : "−"}${Math.round(Math.abs(e) / Math.abs(x.attendu) * 100)} %` : signe(e)}</span>`;
+      if(!x.gl) num = num.replace(/<a [^>]*>(.*?)<\/a>/, "$1"); }
+    const titre = x.type === "auto" ? `<b>${x.texte}</b>` : `<b>${(x.lib || "").replace(/\s*\(\d{3}\)$/, "")}</b><small>${x.type === "revue" ? `comparé à ${y-1}` : esc(x.source || "")}${x.extra && x.extra !== "releve" ? ` · ${esc(x.extra)}` : ""}</small>`;
+    const ancien = !clos && r.commentaire && x.etat !== "ok" && x.etat !== "fait";
+    const act = k ? `<div class="act">${ancien ? `<span class="sub" style="color:var(--warn);flex-basis:100%">Les montants ont changé depuis l'explication du ${fmtDate(r.date)} : relisez-la et validez-la à nouveau.</span>` : ""}${corriger(x)}${(x.type === "auto" ? x.niveau === "warn" : x.id !== "acquisitions") ? `<span class="act-e">${expl(x, r, x.etat === "bloque" ? "Ou expliquez l'écart pour le valider…" : "Ou expliquez pourquoi c'est normal…")}</span>${pj(x, r)}` : ""}</div>`
+      : x.etat === "fait" && (r.commentaire || r.piece) ? `<div class="act"><span class="act-e">${expl(x, r, "")}</span>${pj(x, r)}</div>` : "";
+    return `<div class="ck ${k ? "ko" : "ok"} ${x.etat === "bloque" ? "bl" : ""} ${x.type === "auto" ? "auto" : ""}">${sym(x)}<div class="ct">${titre}</div>${num}${act}</div>`; };
+  const ord = {bloque:0, afaire:1, fait:2, ok:3};
+  const ctrl = c.p.filter(x => x.type !== "q").sort((a, b) => ord[a.etat] - ord[b.etat] || (a.type === "perso") - (b.type === "perso"));
+  const qs = c.p.filter(x => x.type === "q");
+  const question = x => { const r = rev[x.id] || {}, oui = r.statut === "vu" || r.statut === "na", non = r.statut === "non";
+    const yn = [["vu", "Oui", oui], ["non", "Non", non]].map(([s, l, on]) => `<button class="${on ? "on " + s : ""}" ${clos ? "disabled" : ""} onclick="majRevision(${y},'${x.id}',{statut:${on ? "null" : `'${s}'`}})">${l}</button>`).join("");
+    return `<div class="qc ${x.etat === "fait" ? "ok" : non ? "non" : ""}"><span class="ti">${x.etat === "fait" ? I_OK : "?"}</span><span class="qt">${x.texte}</span><div class="yn">${yn}</div>
+      ${non ? `<div class="qn"><span>${x.siNon}</span>${expl(x, r, "Ou expliquez votre situation…")}</div>` : ""}</div>`; };
+  const comptes = Object.entries(c.sig).map(([k, v]) => { const lu = LIB_SIG[k] ? v : soldeLu(k, v), v1 = LIB_SIG[k] || !b1 ? null : soldeLu(k, b1[k] || 0);
+    const p = v1 == null || Math.abs(v1) < 0.005 ? "" : (lu - v1) / v1;
+    return `<div class="ac"><small>${LIB_SIG[k] ? "" : k.slice(0, 3)}</small><span>${esc(LIB_SIG[k] || COMPTES[k] || k)}</span><b>${eur0(lu)}</b><em class="${p !== "" && Math.abs(p) > REVUE_PCT ? "up" : ""}">${p === "" ? "&nbsp;" : Math.abs(p) < 0.0005 ? "= " + (y-1) : `${p > 0 ? "+" : "−"}${Math.abs(p * 100).toLocaleString("fr-FR", {maximumFractionDigits:0})} % sur un an`}</em></div>`; }).join("");
+  const nko = c.p.filter(ko).length;
+  const sous = c.statut === "valide" ? "Validé : l'exercice est clôturé" : c.statut === "vise" ? `Visé le ${fmtDate(c.visa.date)}` : c.statut === "devise" ? `Dévisé · visa du ${fmtDate(c.visa.date)}`
+    : nko ? `Non visé · encore ${nko} point${pl(nko)} à régler` : "Non visé";
+  const coul = {vise:"var(--pos)", valide:"var(--pos)", devise:"var(--warn)", nonvise:"var(--muted)"}[c.statut];
+  const devise = c.statut === "devise" ? `<div class="alert warn cy-dv"><div style="flex:1"><b>${c.change.length ? "Des montants ont changé depuis le visa" : "Un point est à revoir depuis le visa"}</b>
+      ${c.change.length ? `<div class="cy-chg"><span></span><small>Au visa</small><small>Aujourd'hui</small>${c.change.map(k => `<span>${LIB_SIG[k] || `${k.slice(0, 3)} ${esc(COMPTES[k] || "")}`}</span><span class="n">${eur(LIB_SIG[k] ? c.visa.sig[k] || 0 : soldeLu(k, c.visa.sig[k] || 0))}</span><span class="n">${eur(LIB_SIG[k] ? c.sig[k] || 0 : soldeLu(k, c.sig[k] || 0))}</span>`).join("")}</div>` : ""}</div>
+      ${c.vert ? `<button class="btn small" onclick="revaliderCycle(${y},'${c.k}')">Revalider le cycle</button>` : `<span class="sub" style="margin:0">Réglez d'abord les points ci-dessous.</span>`}</div>` : "";
+  return `<div class="rv-voile noprint" onclick="if(event.target===this)fermerPoste()"><div class="rv-fen cy-fen" role="dialog" aria-modal="true" aria-label="${esc(c.l)}">
+    <div class="rv-fh"><span class="rv-sym" style="background:${coul}">${c.statut === "vise" || c.statut === "valide" ? I_OK : c.statut === "devise" ? "!" : nko || ""}</span>
+      <div style="flex:1;min-width:0"><h2>${c.l}</h2><small style="color:${coul}">${sous}</small></div>
+      ${c.pg && c.pg !== "declaration" ? `<button class="btn small sec" onclick="S.revPoste=null;allerA('${c.pg}')">${NOM_PAGE[c.pg]} →</button>` : ""}<button class="btn small" onclick="fermerPoste()">Fermer</button></div>
+    <div class="rv-fc">${devise}
+      ${comptes ? `<div class="acs">${comptes}</div>` : ""}
+      <div class="mk-k">Contrôles</div>
+      <div class="cks"><div class="ck hd"><span></span><span></span><span class="n">Vos comptes</span><span class="n">Attendu</span><span class="n">Écart</span></div>${ctrl.map(ligne).join("")}</div>
+      ${clos ? "" : `<button class="addp" onclick="ajouterControle(${y},'${c.k}')">+ Ajouter un contrôle</button>`}
+      ${qs.length ? `<div class="mk-k">Vos réponses</div><div class="qs">${qs.map(question).join("")}</div>` : ""}
+      <div class="mk-k">Notes et pièces</div>
+      <div class="nz">${clos ? `<div class="rv-com" style="font-style:normal">${note.texte ? esc(note.texte) : "Aucune note."}</div>` : `<textarea rows="3" placeholder="Ce qu'il faut retenir sur ce cycle, en plus des contrôles…" onchange="noteCycle(${y},'${c.k}',this.value)">${esc(note.texte || "")}</textarea>`}
+        <div class="pj">${(note.pieces || []).map((p, i) => `<span class="pc"><button class="lien" onclick="ouvrirChemin(${jsq(p)},'Pièce de révision')">${I_CLIP} ${esc(p.split("/").pop())}</button>${clos ? "" : `<button class="lien" aria-label="Retirer la pièce" onclick="retirerPieceCycle(${y},'${c.k}',${i})">×</button>`}</span>`).join("")}
+          ${clos ? "" : `<button class="btn small sec" onclick="joindreCycle(${y},'${c.k}')">+ Joindre</button>`}</div></div>
+      ${c.statut === "nonvise" ? `<p class="sub cy-note">Le visa se pose tout seul quand tout est vert.</p>` : ""}
+    </div></div></div>`;
 }
 const NOM_PAGE = Object.fromEntries(TABS.filter(t=>t[0]!=="h"&&t[0]!=="sep"));
 function allerA(pg){ S.tab = pg; S.editId=null; S.editImmo=null; S.immoOuv=null; S.composer=false; S.cloture=null; S.reprise=null; document.body.classList.remove("menu-open"); renderAll(); haut(); }
@@ -4911,13 +5095,12 @@ function changementsAnnee(y){
   return out;
 }
 function vueCloture(y){
-  const ex = exercice(y), rst = restantRevision(y), bad = rst.filter(x=>x.etat==="bloque"), warn = rst.filter(x=>x.etat==="afaire");
+  const ex = exercice(y), cyc = etatCycles(y).filter(c => c.statut !== "vise"), prepBad = preparatifs(y).filter(x => x.niveau === "bad"), bad = [...cyc, ...prepBad];
   const f = fiscalJusqua(y), c = f.c, chg = changementsAnnee(y);
   const step = (n, titre, corps) => `<div class="card"><h3><span class="case" style="margin-right:8px">${n}</span>${titre}</h3>${corps}</div>`;
   return entete(`Clôturer ${y}`, "Vérifier, figer les chiffres déclarés, puis ouvrir l'année suivante. La clôture verrouille les saisies ; vous pourrez rouvrir l'année si besoin.") +
-  step(1, "Révision", (bad.length ? `<div class="alert bad">${bad.length} erreur${pl(bad.length)} bloquante${pl(bad.length)} : à corriger ou expliquer avant de clôturer.</div><ul>${bad.map(x=>`<li>${x.texte}${x.page?lienPage(x.page):""}</li>`).join("")}</ul>` : `<div class="alert ok">Aucune erreur bloquante.</div>`)
-      + (warn.length ? `<p class="sub" style="margin:10px 0 6px">${warn.length} point${pl(warn.length)} non bloquant${pl(warn.length)}, à regarder si ce n'est pas fait :</p><ul class="sub">${warn.map(x=>`<li>${x.texte}</li>`).join("")}</ul>` : "")
-      + (rst.length ? `<button class="btn small" onclick="S.cloture=null;S.declEtape='1';allerA('declaration')">Ouvrir la révision →</button>` : "")) +
+  step(1, "Révision", (bad.length ? `<div class="alert bad">La clôture attend que les six cycles soient visés.</div><ul>${cyc.map(c => `<li>${c.l} : ${ST_CYCLE[c.statut].toLowerCase()}</li>`).join("")}${prepBad.map(x => `<li>${x.texte}${x.page ? lienPage(x.page) : ""}</li>`).join("")}</ul>
+      <button class="btn small" onclick="S.cloture=null;S.declEtape='1';allerA('declaration')">Ouvrir la révision →</button>` : `<div class="alert ok">Les six cycles sont visés. La clôture valide toutes les opérations de ${y}.</div>`)) +
   step(2, "Sommes dues et à recevoir au 31/12", `<p class="sub" style="margin:0 0 10px">En comptabilité super-simplifiée, seules les sommes dues ou à recevoir au 31 décembre s'ajoutent à la trésorerie. Par exemple : un loyer de décembre encaissé en janvier, une facture de décembre payée en janvier. Saisissez-les comme écritures datées du 31/12/${y}.</p>
     <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" id="clRegul"> J'ai vérifié les sommes dues et à recevoir au 31/12/${y}.</label>`) +
   step(3, "Chiffres figés à la clôture", `<table>
@@ -4952,7 +5135,7 @@ function motifNonCloturable(y){
 }
 function cloturer(y){
   { const m = motifNonCloturable(y); if(m) return avertir(m); }
-  if(restantRevision(y).some(x => x.etat === "bloque")) return avertir("Il reste des erreurs bloquantes dans la révision : corrigez-les ou expliquez-les avant de clôturer.");
+  if(!revisionVisee(y) || preparatifs(y).some(x => x.niveau === "bad")) return avertir("La clôture attend que les six cycles de la révision soient visés.");
   if(!$("#clRegul").checked) return avertir("Cochez d'abord la vérification des sommes dues et à recevoir au 31/12 (étape 2).");
   const ex = exercice(y), f = fiscalJusqua(y), d = $("#clDecl").value;
   ex.statut = "cloture";
