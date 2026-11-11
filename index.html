@@ -61,8 +61,12 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .brand small{display:block;color:var(--muted);font-size:12.5px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
 .yearbox{padding:0 6px}
 .ylab{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);position:relative}
-#yearBtn{position:relative;width:100%;display:flex;align-items:center;justify-content:center;font:inherit;font-size:14.5px;font-weight:600;color:var(--text);background:var(--surface-2);border:1px solid transparent;border-radius:12px;padding:8px 12px;cursor:pointer;transition:background-color .2s,border-color .2s}
-#yearBtn:hover{border-color:var(--line)}#yearBtn[aria-expanded="true"]{background:var(--line)}
+#yearBtn{position:relative;width:100%;display:flex;align-items:center;justify-content:center;font:inherit;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text);border-radius:20px;padding:8px 12px;cursor:pointer;
+  background:linear-gradient(180deg,rgba(255,255,255,.9),rgba(255,255,255,.45)),var(--accent-soft);border:1px solid rgba(60,30,60,.08);box-shadow:inset 0 1px 1px rgba(255,255,255,.9),0 2px 8px rgba(40,20,40,.06);
+  transition:box-shadow .25s,transform .25s cubic-bezier(.34,1.4,.64,1),border-color .25s}
+#yearBtn:hover{box-shadow:inset 0 1px 1px rgba(255,255,255,.9),0 4px 14px rgba(40,20,40,.10);transform:translateY(-1px)}#yearBtn:active{transform:scale(.97)}
+#yearBtn[aria-expanded="true"]{transform:none;box-shadow:none;border-color:transparent}
+:root[data-theme="dark"] #yearBtn{background:linear-gradient(180deg,rgba(255,255,255,.09),rgba(255,255,255,.03));border-color:rgba(255,255,255,.10);box-shadow:inset 0 1px 1px rgba(255,255,255,.10),0 2px 8px rgba(0,0,0,.25)}
 #yearBtn span{display:inline-block}#yearBtn svg{position:absolute;right:10px;width:15px;height:15px;color:var(--muted);transition:transform .3s cubic-bezier(.34,1.4,.64,1)}#yearBtn[aria-expanded="true"] svg{transform:rotate(180deg)}#yearBtn span{transition:opacity .2s,filter .2s}#yearBtn[aria-expanded="true"] span{opacity:0;filter:blur(4px)}
 .menu{display:flex;flex-direction:column;gap:2px}
 /* Le menu se tasse de lui-même quand la colonne manque de hauteur : les boutons rétrécissent (jusqu'à 28 px) au lieu de faire dépasser la colonne */
@@ -145,7 +149,7 @@ main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
 /* Menu toujours visible en entier : ajusterMenu() le resserre par paliers (c1, c2, c3) tant qu'il dépasse de la fenêtre */
 .side.c1{gap:12px;padding:14px 14px}
 .side.c1 .ylab{flex-direction:row;align-items:center;gap:10px}
-.side.c1 #yearBtn{flex:1;padding:5px 8px}
+.side.c1 #yearBtn{flex:1;padding:5px 8px;border-radius:16px}
 .side.c1 .menu button{padding:6px 10px}
 .side.c1 .menu .sep{margin:5px 10px}
 .side.c1 .sidefoot{gap:8px}
@@ -1545,7 +1549,7 @@ function ouvrirRoue(){
 }
 /* La bulle naît du bouton (même place, même taille, mêmes coins) et s'y résorbe */
 function cadresRoue(btn){
-  const cx = btn.offsetLeft + btn.offsetWidth / 2, cy = btn.offsetTop + btn.offsetHeight / 2, W = 150, H = 114;
+  const cx = btn.offsetLeft + btn.offsetWidth / 2, cy = btn.offsetTop + btn.offsetHeight / 2, W = btn.offsetWidth, H = 114; // même largeur que le bouton : la bulle ne fait que s'étirer en hauteur
   const px = n => n + "px", rb = getComputedStyle(btn).borderTopLeftRadius;
   return [{left:px(btn.offsetLeft), top:px(btn.offsetTop), width:px(btn.offsetWidth), height:px(btn.offsetHeight), borderRadius:rb},
           {left:px(cx - W / 2), top:px(cy - H / 2), width:px(W), height:px(H), borderRadius:"24px"}];
