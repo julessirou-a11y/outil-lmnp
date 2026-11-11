@@ -841,6 +841,14 @@ dialog.boite::backdrop{background:rgba(20,10,18,.45)}
 dialog.boite h3{margin:0 0 10px;font-size:17px}
 dialog.boite p{margin:0 0 14px;white-space:pre-line;line-height:1.5;color:var(--muted,var(--text))}
 dialog.boite input{width:100%;box-sizing:border-box;margin:0 0 14px;font:inherit;font-size:16px;padding:9px 11px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);color:var(--text)}
+dialog.exp{width:min(440px,calc(100vw - 32px))}
+.exp-l{display:flex;flex-direction:column;gap:8px;margin:4px 0 16px}
+.exp-o{display:flex;align-items:center;gap:14px;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);color:var(--text);font:inherit;cursor:pointer;transition:border-color .15s,background-color .15s,transform .15s}
+.exp-o:hover,.exp-o:focus-visible{border-color:var(--accent);background:var(--accent-soft);outline:0}
+.exp-o:active{transform:scale(.99)}
+.exp-x{flex:none;width:46px;height:46px;border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:700;letter-spacing:.03em;background:var(--accent-soft);color:var(--accent)}
+.exp-o:hover .exp-x,.exp-o:focus-visible .exp-x{background:var(--accent);color:var(--surface)}
+.exp-t{display:flex;flex-direction:column;gap:2px;min-width:0}.exp-t b{font-weight:600;font-size:14.5px}.exp-t small{color:var(--muted);font-size:12.5px;line-height:1.4}
 dialog.boite .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex-start;flex-wrap:wrap} /* OK en premier dans le code : Entrée valide */
 @media print{dialog.boite{display:none}}
 /* ---------- Version iPhone : deux onglets, gros boutons, sans menu latéral ---------- */
@@ -1618,7 +1626,8 @@ $("#themeBtn").addEventListener("click", ev => {
 function entete(titre, sous){ return `<div class="pagehead"><h1>${titre}</h1>${sous?`<p>${sous}</p>`:""}</div>`; }
 /* En-tête de page avec ses actions, toujours dans le même ordre à droite : vues, Imprimer, Ajouter */
 function tetePage(titre, ...actions){ return `<div class="row tetep"><div class="pagehead" style="margin:0"><h1>${titre}</h1></div><div class="row tetep-act">${actions.filter(Boolean).join("")}</div></div>`; }
-const btnImprimer = (titre = "Imprimer ou enregistrer en PDF") => `<button class="btn sec btn-ic noprint" onclick="print()" title="${titre}">${svgI('<path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>')}Imprimer</button>`;
+/* Un seul bouton Exporter par page : il ouvre une petite fenêtre qui propose ce que la page sait produire (PDF, CSV, FEC) */
+const btnExporter = () => `<button class="btn sec btn-ic noprint" onclick="ouvrirExport()" title="PDF, tableur ou FEC">${svgI('<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>')}Exporter</button>`;
 const btnAjouter = (lib, go) => `<button class="btn btn-ic noprint" onclick="${go}">${svgI('<path d="M12 5v14M5 12h14"/>')}${lib}</button>`;
 
 function vueBienvenue(){
@@ -1937,7 +1946,7 @@ function vueEcritures(){
   const ouvert = !lock && (S.composer || ed);
   const t = totauxEcritures(y);
   const tete = tetePage(`Écritures ${y}`, segments("vueEcr", [["journal","Écritures"],["balance","Balance"],["grandlivre","Grand livre"]], vue),
-    vue === "grandlivre" ? `<button class="btn sec noprint" onclick="exporterFEC(${y})" title="Fichier des écritures comptables, à remettre en cas de contrôle">Exporter le FEC</button>` : "", btnImprimer(),
+    btnExporter(),
     lock ? "" : btnAjouter("Ajouter une écriture", "S.composer=true;S.editId=null;S.vueEcr='journal';renderAll();haut()"));
   // La barre de filtres est au même endroit dans les trois vues, juste sous l'en-tête
   const barre = fv => `<div class="row fbarre noprint">${zoneFiltres(fv)}</div>`;
@@ -2381,7 +2390,7 @@ function vueImmos(){
     .sort((p,q) => p.i.miseEnService.localeCompare(q.i.miseEnService));
   const auBilan = immos.filter(x => x.entree <= y);
   const T = auBilan.reduce((s,x)=>({val:s.val+x.i.valeurOrigine, cum:s.cum+x.a.cumulFin, dot:s.dot+x.a.dotation}), {val:0,cum:0,dot:0});
-  const tete = tetePage("Immobilisations", immos.length ? segments("vueImmo", [["exercice",`Exercice ${y}`],["plan","Plan pluriannuel"]], vue) : "", immos.length ? btnImprimer() : "", btnAjouter("Ajouter une immobilisation", "ouvrirImmo('new')"));
+  const tete = tetePage("Immobilisations", immos.length ? segments("vueImmo", [["exercice",`Exercice ${y}`],["plan","Plan pluriannuel"]], vue) : "", immos.length ? btnExporter() : "", btnAjouter("Ajouter une immobilisation", "ouvrirImmo('new')"));
   const tuiles = `<div class="tuiles">${tuile("Valeur brute", eur0(T.val))}${tuile(`Dotation ${y}`, eur0(T.dot), {col:"var(--accent)"})}${tuile(`Amortissements fin ${y}`, eur0(T.cum))}${tuile(`Valeur nette fin ${y}`, eur0(T.val - T.cum))}</div>`;
   if(!immos.length) return tete + `<div class="card"><p class="sub" style="margin:0">Aucune immobilisation. Ajoutez le logement, les travaux et le mobilier de plus de 500 € HT.</p></div>` + fenetreImmo(y);
   return tete + tuiles + (vue === "plan" ? tableauPlanGlobal(y, immos) : tableauAmortExercice(y, auBilan, immos.filter(x => x.entree > y))) + vueConsommes(y, true) + fenetreImmo(y);
@@ -2555,7 +2564,7 @@ function vueEmprunt(){
   const y = S.year;
   if(!S.data.emprunts.length) return tetePage("Emprunt", btnAjouter("Ajouter un emprunt", "ajouterEmprunt()")) + `<div class="card"><p class="sub" style="margin:0">Aucun emprunt. Ajoutez le prêt qui a financé le logement, avec le tableau d'amortissement de la banque.</p></div>`;
   const L = S.data.emprunts, plusieurs = L.length > 1, c = !isHistorique(y) ? calculAnnee(y) : null;
-  const ajout = btnImprimer() + btnAjouter("Ajouter un emprunt", "ajouterEmprunt()");
+  const ajout = btnExporter() + btnAjouter("Ajouter un emprunt", "ajouterEmprunt()");
   // Le restant dû affiché est celui des comptes (bilan) ; s'il s'écarte de l'échéancier de la banque, on le dit tout de suite, avec un lien vers la régularisation
   const ec = c ? ecartCRD(y) : 0, selonComptes = base => c ? `${base}${Math.abs(ec) >= 0.005 ? `<br><a href="#regulCRD" class="noprint" style="color:var(--warn)" onclick="event.preventDefault();document.getElementById('regulCRD')?.scrollIntoView({behavior:'smooth'})">écart de ${eur0(Math.abs(ec))} avec l'échéancier&nbsp;↓</a>` : ""}` : base;
   // Plusieurs prêts : le total (celui du bilan) en tête, puis chaque prêt d'après son échéancier et ses écritures
@@ -2924,7 +2933,7 @@ function form2042(y, L){
 function vueDeclaration(){
   const y = S.year, vue = S.vueDecl || "declarer";
   const tete = tetePage(`Déclaration ${y}`, segments("vueDecl", [["declarer","Déclarer"],["etats","États financiers"]], vue),
-    isHistorique(y) ? "" : btnImprimer(vue === "etats" ? "Imprimer ou enregistrer en PDF les comptes annuels" : "Imprimer la feuille de révision"));
+    isHistorique(y) ? "" : btnExporter());
   if(isHistorique(y)) return tete + `<div class="card vide">${y} a été déclarée ${histLiasse(y) ? "avant le Carnet" : "avec l'ancien fichier Excel"}.</div>`;
   const f = fiscalJusqua(y);
   if(!f?.c.lmnpActif) return tete + `<div class="card vide">Pas de location meublée en ${y}.</div>`;
@@ -3097,6 +3106,73 @@ function balance(y){
   return Object.entries(b).sort((a,b)=>a[0].localeCompare(b[0])).map(([c,x]) => ({c, lib:COMPTES[c]||"", d:r2(x.d), cr:r2(x.cr), solde:r2(x.d-x.cr)}));
 }
 /* Fichier des écritures comptables (art. A.47 A-1 du LPF) : 18 colonnes, tabulations, ISO-8859-15 */
+/* ---- Exporter : ce que la page affichée peut produire ---- */
+function optionsExport(){
+  const y = S.year, pg = S.tab, ve = S.vueEcr || "journal", vd = S.vueDecl || "declarer";
+  const pdf = d => ({ext:"PDF", t:"PDF", d, go:() => print()});
+  const csv = (d, f) => ({ext:"CSV", t:"Tableur (CSV)", d:d + " · s'ouvre dans Excel ou Numbers", go:f});
+  const filtre = (S.fEcr || []).length || (ve === "journal" ? S.lignesEcr : S.lignesGL) ? ", avec les filtres en cours" : "";
+  if(pg === "ecritures") return [
+    pdf(ve === "balance" ? "La balance telle qu'affichée" : ve === "grandlivre" ? "Le grand livre tel qu'affiché" : "Le journal tel qu'affiché"),
+    csv(ve === "balance" ? `Les comptes et leurs soldes${filtre}` : ve === "grandlivre" ? `Les lignes du grand livre${filtre}` : `Les écritures${filtre}`, () => csvEcritures(y, ve)),
+    {ext:"FEC", t:"Fichier des écritures comptables", d:"Toute l'année, au format demandé en cas de contrôle fiscal", go:() => exporterFEC(y)}];
+  if(pg === "immos") return [pdf(S.vueImmo === "plan" ? "Le plan d'amortissement" : `Le tableau des amortissements ${y}`), csv(`Les immobilisations et leurs amortissements ${y}`, () => csvImmos(y))];
+  if(pg === "emprunt") return [pdf("Le prêt et son échéancier"), csv("L'échéancier de chaque prêt", () => csvEmprunt())];
+  if(pg === "declaration") return [pdf(vd === "etats" ? `Les comptes annuels ${y}` : `La déclaration ${y} et la feuille de révision`)];
+  return [pdf("La page affichée")];
+}
+function ouvrirExport(){
+  const opts = optionsExport(), d = document.createElement("dialog");
+  d.className = "boite exp"; d.setAttribute("aria-labelledby", "expTitre");
+  d.innerHTML = `<form method="dialog"><h3 id="expTitre">Exporter</h3>
+    <div class="exp-l">${opts.map((o, i) => `<button class="exp-o" value="${i}" type="submit"><span class="exp-x">${o.ext}</span><span class="exp-t"><b>${esc(o.t)}</b><small>${esc(o.d)}</small></span></button>`).join("")}</div>
+    <div class="row"><button class="btn ghost" value="" type="submit">Annuler</button></div></form>`;
+  document.body.appendChild(d);
+  d.addEventListener("close", () => { const o = opts[d.returnValue]; d.remove(); if(o) setTimeout(o.go, 60); });
+  d.showModal(); d.querySelector(".exp-o").focus();
+}
+/* CSV pour un tableur français : point-virgule, virgule décimale, UTF-8 avec BOM (accents lus par Excel) */
+function telechargerCSV(nom, lignes){
+  const cel = v => { if(v == null) return ""; if(typeof v === "number") return String(r2(v)).replace(".", ",");
+    const t = String(v); return /[";\n\r]/.test(t) ? `"${t.replace(/"/g, '""')}"` : t; };
+  const txt = "﻿" + lignes.map(l => l.map(cel).join(";")).join("\r\n") + "\r\n";
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([txt], {type:"text/csv;charset=utf-8"}));
+  a.download = nom; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  toast(`${nom} téléchargé : ${lignes.length - 1} ligne${lignes.length > 2 ? "s" : ""}.`);
+}
+function csvEcritures(y, vue){
+  const J = S.fEcr || [];
+  if(vue === "balance"){
+    const lg = S.lignesGL || "", rows = balance(y).filter(r => passeLignesGL({c:r.c}, lg) && passeCompteBalance(r.c, J));
+    const avant = exercice(y-1) && !isHistorique(y-1) ? Object.fromEntries(balance(y-1).map(r => [r.c, r.solde])) : null;
+    return telechargerCSV(`balance-${y}.csv`, [["Compte", "Intitulé", "Débit", "Crédit", `Solde ${y}`, ...(avant ? [`Solde ${y-1}`] : [])],
+      ...rows.map(r => [r.c, r.lib, r.d, r.cr, r.solde, ...(avant ? [avant[r.c] ?? 0] : [])])]);
+  }
+  if(vue === "grandlivre"){
+    const lg = S.lignesGL || "", out = [];
+    ecrituresComptables(y).forEach(e => e.lignes.forEach(l => {
+      const autres = [...new Set(e.lignes.filter(o => o.c !== l.c).map(o => o.c))];
+      const x = {c:l.c, date:e.date, j:e.journal, lib:e.lib, d:l.d||0, cr:l.cr||0, src:e.src, cp: autres.length === 1 ? autres[0] : "Divers"};
+      if(passeLignesGL(x, lg) && passeFiltre(x, J, "gl")) out.push(x); }));
+    out.sort((a, b) => a.c.localeCompare(b.c) || a.date.localeCompare(b.date));
+    return telechargerCSV(`grand-livre-${y}.csv`, [["Compte", "Intitulé", "Date", "Journal", "Contrepartie", "Libellé", "Débit", "Crédit"],
+      ...out.map(x => [x.c, COMPTES[x.c] || "", fmtDate(x.date), x.j, x.cp, x.lib, x.d, x.cr])]);
+  }
+  const lg = S.lignesEcr || "", list = [...(exercice(y)?.ecritures || [])].filter(e => passeLignes(e, lg) && passeFiltre(e, J, "journal")).sort((a, b) => a.date.localeCompare(b.date));
+  telechargerCSV(`ecritures-${y}.csv`, [["Date", "Tiers", "Nature", "Compte", "Montant", "Recette ou dépense", "Pointée sur le relevé", "Justificatif", "Commentaire"],
+    ...list.map(e => [fmtDate(e.date), e.tiers || "", e.nature, NATURES[e.nature]?.c || "", e.montant, grpNature(e) === "recette" ? "Recette" : "Dépense", e.banque ? "oui" : "non", e.piece ? "oui" : (pieceRequise(e) ? "manquant" : ""), e.commentaire || ""])]);
+}
+function csvImmos(y){
+  const L = S.data.immobilisations.filter(i => anneeEntreeBilan(i) <= y).sort((a, b) => a.miseEnService.localeCompare(b.miseEnService));
+  telechargerCSV(`immobilisations-${y}.csv`, [["Immobilisation", "Catégorie", "Mise en service", "Durée (ans)", "Valeur brute", "Terrain non amorti", `Cumul au 01/01/${y}`, `Dotation ${y}`, `Cumul au 31/12/${y}`, `Valeur nette au 31/12/${y}`],
+    ...L.map(i => { const a = amortAnnee(i, y); return [i.libelle, CATEGORIES[i.categorie] || i.categorie, fmtDate(i.miseEnService), i.dureeAns, i.valeurOrigine, r2(i.valeurOrigine - a.base), a.cumulDebut, a.dotation, a.cumulFin, r2(i.valeurOrigine - a.cumulFin)]; })]);
+}
+function csvEmprunt(){
+  const out = [["Prêt", "Échéance", "Année", "Mois", "Intérêts", "Capital", "Assurance", "Restant dû"]];
+  S.data.emprunts.forEach((l, k) => echeancier(l).forEach(r => out.push([nomPret(l, k), r.n, r.annee, r.mois, r.interet, r.capital, r.assurance || 0, r.crd])));
+  telechargerCSV("emprunt-echeancier.csv", out);
+}
 function exporterFEC(y){
   const num = v => (v||0).toFixed(2).replace(".", ","), dt = d => d.replace(/-/g,"");
   const net = t => String(t||"").replace(/[\t\r\n|]+/g," ").trim();
