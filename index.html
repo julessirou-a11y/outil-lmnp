@@ -2751,7 +2751,7 @@ function vueEmprunt(){
     <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)", sous: plusieurs ? "selon l'échéancier" : selonComptes("selon les comptes")})}${tuile(`Intérêts ${y} comptabilisés`, eur0(int), {sous: c && !int ? "aucune écriture bancaire" : "déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
     ${carteSuiviPret(l, idx, y)}
     ${carteContrat(l, idx)}
-    ${carteEcheancier(l, y)}`;
+    ${carteEcheancier(l, y, idx)}`;
   }).join("") + (plusieurs || exercice(y)?.regulCRD ? carteRegulCRD(y) : "");
 }
 /* Écart entre le grand livre (164) et l'échéancier de la banque, et sa régularisation enregistrée dans le dossier */
@@ -2786,11 +2786,12 @@ function carteContrat(l, idx){
 /* Suivi du prêt, en trois temps : déposer le tableau de la banque (une fois, puis à nouveau si le prêt change),
    le rapprochement automatique de chaque échéance avec les opérations bancaires (à la main s'il le faut),
    et, s'il reste un écart, sa justification dans la révision. Quand tout concorde, tout est vert et il n'y a rien à faire. */
-function carteSuiviPret(l, idx, y){
-  const B = lignesBanque(l), eb = l.echeancierBanque, doc = l.echeancierDoc && docs().find(d => d.id === l.echeancierDoc), tenu = !!exercice(y) && !isHistorique(y);
-  const ok = svgI('<path d="M20 6 9 17l-5-5"/>');
-  const etape = (etat, k, titre, txt, st, act = "", sous = "") => `<div class="ea-t ${etat}"><span class="ea-d">${etat === "fait" ? ok : etat === "attention" ? "!" : ""}</span>
+/* Étape du suivi (pastille, titre, état, action) */
+const etapeEp = (etat, k, titre, txt, st, act = "", sous = "") => `<div class="ea-t ${etat}"><span class="ea-d">${etat === "fait" ? svgI('<path d="M20 6 9 17l-5-5"/>') : etat === "attention" ? "!" : ""}</span>
     <div class="ea-tx"><small class="ep-k">${k}</small><b>${titre}</b>${txt ? `<span>${txt}</span>` : ""}</div>${st ? `<span class="ea-st">${st}</span>` : ""}<div class="ea-a">${act}</div></div>${sous ? `<div class="ep-sous">${sous}</div>` : ""}`;
+/* Le tableau de la banque se dépose une fois (ou à chaque changement du prêt) : il vit avec l'échéancier, pas dans le suivi de l'année */
+function depotPret(l, idx){
+  const B = lignesBanque(l), eb = l.echeancierBanque, doc = l.echeancierDoc && docs().find(d => d.id === l.echeancierDoc), etape = etapeEp;
   // 1. Le tableau de la banque, déposé une fois
   const coller = ouvert => `<details class="coller" ${ouvert ? "open" : ""}><summary>${B ? "Coller un nouveau tableau" : "Le PDF ne se lit pas ? Coller le tableau"}</summary>
       <textarea id="echColle${idx}" rows="4" style="width:100%;margin-top:8px" placeholder="05/11/2016   729,86   122,00   607,86   119 392,14 …"></textarea>
@@ -2802,7 +2803,11 @@ function carteSuiviPret(l, idx, y){
     : doc ? etape("afaire", "Dépôt", "Tableau de la banque", "", "Non lu", `<button class="btn small" onclick="lireEcheancierDoc(${idx})">Lire le tableau</button>`, coller(false))
     : etape("afaire", "Dépôt", "Déposer le tableau de la banque", "", "À déposer", "",
       zoneDepot("Déposer le tableau de la banque", "le PDF reçu avec l'offre de prêt", `ajouterEcheancierPret(${idx})`, `ajouterEcheancierPret(${idx},event)`).replace('class="depot noprint"','class="depot noprint compact"') + coller(false));
-  if(!tenu) return `<div class="card ea ep"><div class="ea-h"><h3>Suivi du prêt</h3></div>${e1}</div>`;
+  return `<div class="ea ep ep-dep">${e1}</div>`;
+}
+function carteSuiviPret(l, idx, y){
+  const tenu = !!exercice(y) && !isHistorique(y), etape = etapeEp;
+  if(!tenu) return "";
   // 2. Rapprochement automatique, à la main pour ce qu'il n'a pas trouvé
   const E = etatsRapprochement(l, y), pb = E.filter(e => e.c !== "ok"), pts = pointsRevision(y), pt = id => pts.find(x => x.id === id);
   const justifie = pb.length > 0 && pt("echeances")?.etat === "fait";  // = echeancesJustifiees(y)
@@ -2817,8 +2822,8 @@ function carteSuiviPret(l, idx, y){
       "Un commentaire ou un justificatif suffit.", `${reste.length} écart${pl(reste.length)}`, `<button class="btn small" onclick="${allerRev}">Justifier</button>`)
     : just.length ? etape("fait", "Révision", "Écart justifié", "", `${just.length} justifié${pl(just.length)}`, `<button class="btn ghost small" onclick="${allerRev}">Voir</button>`)
     : etape("fait", "Révision", "Aucun écart", "", "");
-  const nb = [B ? 0 : 1, pb.length && !justifie ? 1 : 0, reste.length && (!pb.length || justifie) ? 1 : 0].reduce((s, x) => s + x, 0);
-  return `<div class="card ea ep"><div class="ea-h"><h3>Suivi ${y}</h3><span class="ep-et ${nb ? "afaire" : "fait"}">${nb ? `${nb} à faire` : "Tout est en ordre"}</span></div>${e1}${e2}${e3}</div>`;
+  const nb = [pb.length && !justifie ? 1 : 0, reste.length && (!pb.length || justifie) ? 1 : 0].reduce((s, x) => s + x, 0);
+  return `<div class="card ea ep"><div class="ea-h"><h3>Suivi ${y}</h3><span class="ep-et ${nb ? "afaire" : "fait"}">${nb ? `${nb} à faire` : "Tout est en ordre"}</span></div>${e2}${e3}</div>`;
 }
 /* Rapprochement à la main d'une échéance : les opérations qui la composent, cochées parmi celles des mois voisins */
 function ouvrirRpMain(pret, k){
@@ -3059,7 +3064,7 @@ function etatEcheance(l, r, cache = {}){
 }
 /* Échéances passées d'une année avec leur état */
 function etatsRapprochement(l, y){ const cache = {}; return echeancier(l).filter(r => r.annee === y).map(r => ({r, ...etatEcheance(l, r, cache)})).filter(e => e.c); }
-function carteEcheancier(l, y){
+function carteEcheancier(l, y, idx){
   const banque = lignesBanque(l), rows0 = echeancier(l), ass = banque ? !!l.echeancierBanque.colonnes?.assurance : l.assurance > 0;
   const ans = [...new Set(rows0.map(r => r.annee))];
   const an = S.echAn === "tout" ? "tout" : ans.includes(Number(S.echAn)) ? Number(S.echAn) : ans.includes(y) ? y : ans[0];
@@ -3078,7 +3083,7 @@ function carteEcheancier(l, y){
   const resume = etats.length ? `<div class="rp-leg">${nb("ok") ? `<span>${IC_RP.ok}${nb("ok")} rapprochée${nb("ok")>1?"s":""}</span>` : ""}${nb("part") ? `<span class="part">${IC_RP.part}${nb("part")} en partie</span>` : ""}${nb("ko") ? `<span class="ko">${IC_RP.ko}${nb("ko")} non retrouvée${nb("ko")>1?"s":""} ou avec écart</span>` : ""}${vus.some(r => !etat(r) && !!exercice(r.annee) && !isHistorique(r.annee)) ? `<span>${IC_RP.avenir}à venir</span>` : ""}</div>` : "";
   return `<div class="card" id="echeancier"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">Échéancier</h3>
       <div class="row"><span class="pill">${banque ? "de la banque" : "saisi, en attendant celui de la banque"}</span>${choixAn}</div></div>
-    ${resume}
+    ${depotPret(l, idx)}${resume}
     <div class="tablewrap echtab ${an === "tout" ? "long" : ""}"><table><tr><th>Échéance</th><th class="n">Mensualité</th><th class="n">Intérêts</th><th class="n">Capital</th>${ass?`<th class="n">Assurance</th>`:""}<th class="n">Restant dû</th><th class="noprint"></th></tr>
       ${corps}</table></div></div>`;
 }
