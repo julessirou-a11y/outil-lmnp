@@ -763,13 +763,19 @@ details.imx-conso>summary h3{margin:0} details.imx-conso>summary .imx-ouvrir{mar
 .ecr .c{grid-column:2 / -1;font-size:13px;color:var(--muted)}
 @media (max-width:600px){ .ecr{grid-template-columns:38px minmax(0,1fr) auto} .ecr .a{grid-column:2 / -1;justify-content:flex-start} }
 .composer{border:1px dashed var(--line);background:var(--surface-2)}
-.fzone{display:flex;gap:8px;align-items:center;margin-left:auto;flex:0 1 560px;min-width:min(100%,300px)}
-.fzone>select{flex:none;width:auto;padding:8px 30px 8px 10px}
+.fbarre{position:relative;z-index:20;margin-bottom:14px} /* au-dessus des tableaux, même pendant l'animation d'entrée */
+.fzone{display:flex;gap:8px;align-items:flex-start;flex:1 1 auto;min-width:min(100%,300px)}
+.fzone>select{flex:none;width:220px;height:40px;padding:8px 30px 8px 10px} /* même largeur dans les trois vues : la barre commence au même endroit */
 .qwrap{position:relative;flex:1 1 auto;min-width:0}
-.qbar{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:0 8px 0 10px;height:40px;cursor:text}
+.qbar{display:flex;align-items:center;flex-wrap:wrap;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:5px 8px 5px 10px;min-height:40px;box-sizing:border-box;cursor:text}
+.qbar .qtok{flex:none;max-width:320px}
+.qfin{display:flex;align-items:center;gap:2px;margin-left:auto;flex:none}
+.qnb{font-size:12.5px;color:var(--muted);margin-right:6px;white-space:nowrap}
+.qact{border:0;background:none;color:var(--muted);font:inherit;font-size:15px;line-height:1;width:26px;height:26px;border-radius:6px;cursor:pointer}
+.qact:hover{background:var(--surface-2);color:var(--text)}
 .qbar:focus-within{border-color:var(--accent);outline:2px solid var(--accent-soft)}
 .qbar>svg{color:var(--faint);flex:none}
-.qbar input{border:0;outline:0;padding:6px 2px;flex:1 1 auto;min-width:60px;background:none;font-size:14.5px}
+.qbar input{border:0;outline:0;padding:4px 2px;flex:1 1 120px;min-width:120px;background:none;font-size:14.5px}
 .qbar input:focus{outline:0}
 .qtype{flex:none;font-size:12.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:3px 8px;white-space:nowrap}
 .qmenu{position:absolute;z-index:30;left:0;right:0;min-width:300px;top:calc(100% + 4px);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:0 10px 30px rgba(40,20,35,.14);padding:6px;max-height:min(440px,62vh);overflow:auto}
@@ -1930,19 +1936,20 @@ function vueEcritures(){
   const ed = S.editId ? ex.ecritures.find(e=>e.id===S.editId) : null;
   const ouvert = !lock && (S.composer || ed);
   const t = totauxEcritures(y);
-  const tete = tetePage(`Écritures ${y}`, segments("vueEcr", [["journal","Écritures"],["balance","Balance"],["grandlivre","Grand livre"]], vue), btnImprimer(),
+  const tete = tetePage(`Écritures ${y}`, segments("vueEcr", [["journal","Écritures"],["balance","Balance"],["grandlivre","Grand livre"]], vue),
+    vue === "grandlivre" ? `<button class="btn sec noprint" onclick="exporterFEC(${y})" title="Fichier des écritures comptables, à remettre en cas de contrôle">Exporter le FEC</button>` : "", btnImprimer(),
     lock ? "" : btnAjouter("Ajouter une écriture", "S.composer=true;S.editId=null;S.vueEcr='journal';renderAll();haut()"));
-  if(vue === "balance") return tete + vueBalanceVisuelle(y);
-  if(vue === "grandlivre") return tete + `<div class="row noprint" style="margin-bottom:14px"><button class="btn sec" onclick="exporterFEC(${y})" title="Fichier des écritures comptables, à remettre en cas de contrôle">Exporter le FEC</button>${zoneFiltres("gl")}</div>` + vueGrandLivre(y);
+  // La barre de filtres est au même endroit dans les trois vues, juste sous l'en-tête
+  const barre = fv => `<div class="row fbarre noprint">${zoneFiltres(fv)}</div>`;
+  if(vue === "balance"){ const corps = vueBalanceVisuelle(y); return tete + barre("balance") + corps; }
+  if(vue === "grandlivre"){ const corps = vueGrandLivre(y); return tete + barre("gl") + corps; }
   const J = S.fEcr || [], lignes = S.lignesEcr || "", nbF = J.length + (lignes ? 1 : 0);
   const list = [...ex.ecritures].filter(e => passeLignes(e, lignes) && passeFiltre(e, J, "journal")).sort((a,b)=> a.date.localeCompare(b.date));
+  S.nbFiltre = list.length;
   const natOpts = sel => Object.keys(NATURES).map(n=>optNature(n, sel)).join("");
-  return tete + `
+  return tete + barre("journal") + `
   ${lock ? `<div class="alert warn" style="align-items:center">Année clôturée : écritures verrouillées. Pour les modifier, rouvrez l'année dans les paramètres du dossier.</div>` : ""}
   <div class="tuiles ejx-tu">${tuile("Encaissé", eur0(t.recettes), {col:"var(--pos)"})}${tuile("Payé", eur0(t.c242+t.c244+t.c294+t.remb))}${tuile("Écritures", ex.ecritures.length)}${tuile("Sans justificatif", piecesManquantes(y).length, {page:"pieces", col:piecesManquantes(y).length?"var(--warn)":""})}</div>
-  <div class="row noprint" style="margin-bottom:14px">
-    ${zoneFiltres("journal")}
-  </div>
   ${ouvert ? `<div class="card composer noprint"><div class="form">
     <label>Date<input type="date" id="eDate" value="${ed?ed.date:(list.length?list[list.length-1].date:y+"-01-01")}"></label>
     <label>Tiers<input id="eTiers" list="tiersList" value="${esc(ed?ed.tiers:"")}" placeholder="Syndic, banque…"></label>
@@ -1953,7 +1960,6 @@ function vueEcritures(){
     <div class="row"><button class="btn" onclick="saveEcriture()">${ed?"Enregistrer":"Ajouter"}</button><button class="btn ghost" onclick="S.editId=null;S.composer=false;renderAll()">Annuler</button></div>
   </div>
   <datalist id="tiersList">${[...new Set(ex.ecritures.map(e=>e.tiers).filter(Boolean))].map(t=>`<option value="${esc(t)}">`).join("")}</datalist></div>` : ""}
-  ${jetonsActifs("journal", list.length)}
   ${list.length ? tableEcritures(list, lock, nbF) : `<div class="card">${nbF ? `<p class="sub" style="margin:4px 8px">Aucune écriture ne correspond aux filtres. <a href="#" onclick="event.preventDefault();viderFiltres()">Retirer les filtres</a></p>`
     : `<p class="sub" style="margin:4px 8px">Aucune écriture. Importez le relevé (page Banque) ou ajoutez-en une.</p>`}</div>`}`;
 }
@@ -2091,6 +2097,15 @@ function passeFiltre(x, J, vue){
 /* Liste « Toutes les lignes » : tri rapide, à côté de la barre */
 const LIGNES = {journal:[["","Toutes les lignes"],["recette","Recettes"],["depense","Dépenses"],["nonpointees","Non pointées"],["sanspiece","Justificatif manquant"]],
   gl:[["","Tous les comptes"],["bilan","Comptes de bilan (1 à 5)"],["charges","Charges (6)"],["produits","Produits (7)"]]};
+LIGNES.balance = LIGNES.gl;
+/* Balance : seuls les filtres qui portent sur un compte s'appliquent (numéro, début du numéro, intitulé) */
+const BAL_J = ["compte", "comptePref", "libPref", "texte"];
+function passeCompteBalance(c, J){
+  const lib = sansAccents(COMPTES[c] || ""), t = j => j.t === "compte" ? c === j.v : j.t === "comptePref" ? c.startsWith(j.v)
+    : j.t === "libPref" ? lib.startsWith(sansAccents(j.v)) : j.t === "texte" ? lib.includes(sansAccents(j.v)) : true;
+  const parType = {}; J.filter(j => BAL_J.includes(j.t)).forEach(j => (parType[j.t] ??= []).push(j));
+  return Object.entries(parType).every(([ty, js]) => OU_J.includes(ty) ? js.some(t) : js.every(t));
+}
 function passeLignes(e, v){
   if(!v) return true;
   if(v === "recette") return grpNature(e) === "recette";
@@ -2135,7 +2150,7 @@ function devine(q){
 }
 /* Contenu de la liste déroulante : [{titre, items:[{jetons|type|filtre, ic, lib, aide}]}] */
 function suggestions(vue){
-  const q = S.qEcr || "", n = sansAccents(q).trim(), groupes = [], sv = S.data.filtresEcritures || [];
+  const q = S.qEcr || "", n = sansAccents(q).trim(), groupes = [];
   const deja = new Set((S.fEcr || []).map(cleJeton)), ty = FILTRES.find(f => f.k === S.qType);
   const itJ = j => ({jetons:[j], ic:(FILTRES.find(f => f.k === j.t) || {ic:j.t==="montant"?"euro":"texte"}).ic, lib:esc(libJeton(j)), aide:TYPES_J[j.t]});
   const push = (titre, items) => { items = items.filter(x => !x.jetons || x.jetons.some(j => !deja.has(cleJeton(j)))); if(items.length) groupes.push({titre, items}); };
@@ -2144,40 +2159,44 @@ function suggestions(vue){
     else { const j = ty.saisie(q); push(ty.lib, j ? [{...itJ(j), lib:`Ajouter <b>${esc(libJeton(j))}</b>`, aide:"Entrée"}] : []); }
     return groupes;
   }
-  push("Filtres enregistrés", sv.filter(f => !n || sansAccents(f.nom).includes(n)).map(f => ({filtre:f.id, ic:"etoile", lib:`<b>${esc(f.nom)}</b>`, aide:esc(f.jetons.map(libJeton).join(", "))})));
-  if(n) push("Suggestions", devine(q).map(itJ));
-  push("Filtrez par", FILTRES.filter(f => (!f.vue || f.vue === vue) && (!n || sansAccents(f.lib).includes(n))).map(f => ({type:f.k, ic:f.ic, lib:f.lib})));
+  if(n) push("Suggestions", devine(q).filter(j => vue !== "balance" || BAL_J.includes(j.t)).map(itJ));
+  push("Filtrez par", FILTRES.filter(f => (!f.vue || f.vue === vue) && (vue !== "balance" || BAL_J.includes(f.k)) && (!n || sansAccents(f.lib).includes(n))).map(f => ({type:f.k, ic:f.ic, lib:f.lib})));
   return groupes;
 }
 function zoneFiltres(vue){
-  const cle = vue === "gl" ? "lignesGL" : "lignesEcr", ty = FILTRES.find(f => f.k === S.qType);
+  const cle = vue === "journal" ? "lignesEcr" : "lignesGL", ty = FILTRES.find(f => f.k === S.qType);
   return `<div class="fzone noprint">
     <select aria-label="Lignes affichées" onchange="S['${cle}']=this.value;renderAll()">${LIGNES[vue].map(([k,l]) => `<option value="${k}" ${(S[cle]||"")===k?"selected":""}>${l}</option>`).join("")}</select>
-    <div class="qwrap"><div class="qbar" onclick="$('#qEcr').focus()">${I_LOUPE}${ty ? `<span class="qtype">${esc(ty.lib.replace("…",""))}</span>` : ""}
+    <div class="qwrap"><div class="qbar" onclick="if(!event.target.closest('button'))$('#qEcr').focus()">${I_LOUPE}${pastillesFiltres(vue)}${ty ? `<span class="qtype">${esc(ty.lib.replace("…",""))}</span>` : ""}
       <input id="qEcr" type="text" autocomplete="off" spellcheck="false" aria-label="Filtrer" placeholder="${ty ? esc(ty.aide || (ty.liste ? "Chercher…" : "Valeur…")) : "Filtrez par…"}"
         value="${esc(S.qEcr||"")}" onfocus="ouvrirMenu()" oninput="S.qEcr=this.value;S.qSel=0;majMenu()" onkeydown="toucheRecherche(event)" onblur="setTimeout(fermerMenu,120)">
+      ${finBarre(vue)}
     </div><div id="qMenu" class="qmenu hide" role="listbox"></div></div></div>`;
 }
-function jetonsActifs(vue, nb){
-  const J = S.fEcr || [], cle = vue === "gl" ? "lignesGL" : "lignesEcr", lg = S[cle] || "";
+/* Filtres appliqués : une pastille par filtre, dans la barre de recherche (⌫ sur la barre vide retire la dernière) */
+function pastillesFiltres(vue){
+  return (S.fEcr || []).map((j, i) => { const off = vue === "balance" && !BAL_J.includes(j.t);
+    return `<span class="qtok${off ? " off" : ""}" ${off ? `title="Ne s'applique pas à la balance, seulement aux écritures et au grand livre"` : ""}><i>${TYPES_J[j.t]}</i><b>${esc(libJeton(j))}</b><button aria-label="Retirer ce filtre" title="Retirer" onclick="event.stopPropagation();retirerJeton(${i})">×</button></span>`; }).join("");
+}
+/* À droite de la barre : le nombre de lignes retenues et les actions, seulement quand un filtre est actif */
+function finBarre(vue){
+  const J = S.fEcr || [], lg = S[vue === "journal" ? "lignesEcr" : "lignesGL"] || "";
   if(!J.length && !lg) return "";
-  const lgLib = lg ? LIGNES[vue].find(x => x[0] === lg)[1] : "";
-  return `<div class="ftoks"><span class="sub" style="margin:0 4px 0 0">${nb} ${vue === "gl" ? "ligne" : "écriture"}${nb>1?"s":""}</span>
-    ${lg ? `<span class="qtok"><b>${esc(lgLib)}</b><button aria-label="Retirer" title="Retirer" onclick="S['${cle}']='';renderAll()">×</button></span>` : ""}
-    ${J.map((j, i) => `<span class="qtok"><i>${TYPES_J[j.t]}</i><b>${esc(libJeton(j))}</b><button aria-label="Retirer ce filtre" title="Retirer" onclick="retirerJeton(${i})">×</button></span>`).join("")}
-    <span class="noprint" style="margin-left:auto;display:flex;gap:2px">${J.length ? `<button class="btn ghost small" title="Enregistrer ces filtres sous un nom" onclick="enregistrerFiltre()">☆ Enregistrer</button>` : ""}<button class="btn ghost small" onclick="viderFiltres()">Tout effacer</button></span></div>`;
+  const nb = S.nbFiltre ?? 0, quoi = vue === "gl" ? "ligne" : vue === "balance" ? "compte" : "écriture";
+  return `<span class="qfin"><span class="qnb">${nb} ${quoi}${nb > 1 ? "s" : ""}</span>
+    <button class="qact" title="Retirer tous les filtres" aria-label="Retirer tous les filtres" onclick="event.stopPropagation();viderFiltres()">×</button></span>`;
 }
 function ouvrirMenu(){ S.qOuvert = true; S.qSel ??= 0; majMenu(); }
 function fermerMenu(force){ if(!force && document.activeElement?.id === "qEcr") return; S.qOuvert = false; $("#qMenu")?.classList.add("hide"); }
 function majMenu(){
   const menu = $("#qMenu"); if(!menu) return;
   if(!S.qOuvert){ menu.classList.add("hide"); return; }
-  const gs = suggestions(S.vueEcr === "grandlivre" ? "gl" : "journal"); S.qItems = gs.flatMap(g => g.items);
+  const gs = suggestions(S.vueEcr === "grandlivre" ? "gl" : S.vueEcr === "balance" ? "balance" : "journal"); S.qItems = gs.flatMap(g => g.items);
   if(S.qSel >= S.qItems.length) S.qSel = 0;
   const ty = FILTRES.find(f => f.k === S.qType);
   let k = 0;
   menu.innerHTML = gs.map(g => `<div class="h">${g.titre}</div>` + g.items.map(x => { const i = k++;
-    return `<div class="it ${i===S.qSel?"on":""}" role="option" aria-selected="${i===S.qSel}" onmousedown="event.preventDefault();choisirSugg(${i})" onmousemove="if(S.qSel!==${i}){S.qSel=${i};majMenu()}">${icF(x.ic)}<span>${x.lib}</span>${x.aide?`<i>${x.aide}</i>`:""}${x.filtre?`<button class="x" title="Supprimer ce filtre enregistré" onmousedown="event.preventDefault();event.stopPropagation();supprimerFiltre('${x.filtre}')">×</button>`:""}</div>`; }).join("")).join("")
+    return `<div class="it ${i===S.qSel?"on":""}" role="option" aria-selected="${i===S.qSel}" onmousedown="event.preventDefault();choisirSugg(${i})" onmousemove="if(S.qSel!==${i}){S.qSel=${i};majMenu()}">${icF(x.ic)}<span>${x.lib}</span>${x.aide?`<i>${x.aide}</i>`:""}</div>`; }).join("")).join("")
     || `<div class="qvide">${ty ? (ty.liste ? "Aucune valeur ne correspond." : `Tapez la valeur${ty.aide ? ` (${esc(ty.aide)})` : ""}, puis Entrée.`) : "Aucune suggestion."}</div>`;
   if(ty) menu.innerHTML += `<div class="qvide">⌫ sur la barre vide ou Échap pour changer de type de filtre.</div>`;
   menu.classList.remove("hide");
@@ -2199,7 +2218,6 @@ function toucheRecherche(ev){
 function choisirSugg(i){
   const x = (S.qItems || [])[i]; if(!x) return;
   if(x.type){ S.qType = x.type; S.qEcr = ""; S.qSel = 0; renderAll(); refocusBarre(); return; }
-  if(x.filtre){ const f = S.data.filtresEcritures.find(f => f.id === x.filtre); if(f) ajouterJetons(f.jetons); return; }
   ajouterJetons(x.jetons);
 }
 /* Après un rendu complet, on remet le curseur dans la barre, liste ouverte */
@@ -2214,20 +2232,6 @@ function ajouterJetons(js){
 }
 function retirerJeton(i){ S.fEcr = (S.fEcr || []).filter((_, k) => k !== i); renderAll(); }
 function viderFiltres(){ S.fEcr = []; S.qEcr = ""; S.qType = null; S.lignesEcr = ""; S.lignesGL = ""; renderAll(); }
-async function enregistrerFiltre(){
-  const J = S.fEcr || []; if(!J.length) return;
-  const sugg = J.map(libJeton).join(", ").replace(/[«»]/g,"").replace(/\s+/g," ").trim();
-  const nom = ((await demander("Nom de ce filtre :", sugg.charAt(0).toUpperCase() + sugg.slice(1), {ok:"Enregistrer"})) || "").trim(); if(!nom) return;
-  const sv = S.data.filtresEcritures ??= [], deja = sv.find(f => f.nom.toLowerCase() === nom.toLowerCase());
-  if(deja){ if(!await confirmer(`Un filtre « ${nom} » existe déjà. Le remplacer ?`, {ok:"Remplacer"})) return; deja.jetons = J.map(j => ({...j})); }
-  else sv.push({id:uid(), nom, jetons:J.map(j => ({...j}))});
-  setDirty(); renderAll(); toast(`Filtre « ${nom} » enregistré : il apparaît en tête de la liste « Filtrez par… ».`);
-}
-async function supprimerFiltre(id){
-  const f = (S.data.filtresEcritures||[]).find(x => x.id === id); if(!f || !await confirmer(`Supprimer le filtre enregistré « ${f.nom} » ?`, {ok:"Supprimer", danger:true})) return;
-  S.data.filtresEcritures = S.data.filtresEcritures.filter(x => x.id !== id);
-  setDirty(); renderAll(); refocusBarre();
-}
 /* « / » place le curseur dans la barre de filtres */
 document.addEventListener("keydown", ev => {
   if(ev.key !== "/" || ev.metaKey || ev.ctrlKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) return;
@@ -2237,7 +2241,8 @@ document.addEventListener("keydown", ev => {
 function vueBalanceVisuelle(y){
   const rows = balance(y), avant = exercice(y-1) && !isHistorique(y-1) ? balance(y-1) : null;
   const p = {}; (avant||[]).forEach(r => p[r.c] = r.solde);
-  const comptes = [...new Set([...rows.map(r=>r.c), ...Object.keys(p)])].sort();
+  const J = S.fEcr || [], lgB = S.lignesGL || "", filtre = J.some(j => BAL_J.includes(j.t)) || !!lgB;
+  const comptes = [...new Set([...rows.map(r=>r.c), ...Object.keys(p)])].sort().filter(c => passeLignesGL({c}, lgB) && passeCompteBalance(c, J));
   const N = {}; rows.forEach(r => N[r.c] = r.solde);
   const num = x => eur(x).replace(/\s€$/, "");
   const sens = s => s >= 0.005 ? "D" : s <= -0.005 ? "C" : "";
@@ -2271,10 +2276,13 @@ function vueBalanceVisuelle(y){
   const res = M => { const t = Object.entries(M).reduce((s,[c,v]) => s + (c[0]==="7"||c[0]==="6" ? -v : 0), 0); return r2(t); };
   const rN = res(N), rA = avant ? res(p) : null;
   const tot = rows.reduce((s,r)=>({d:s.d+r.d, cr:s.cr+r.cr}),{d:0,cr:0});
-  const bar = `<div class="glx-bar"><span><b>${rows.length}</b> compte${rows.length>1?"s":""}</span>
+  const bar = `<div class="glx-bar"><span><b>${comptes.length}</b> compte${comptes.length>1?"s":""}</span>
     ${Math.abs(tot.d-tot.cr) < 0.005 ? '<span class="ok">Balance équilibrée ✓</span>' : `<span class="anorm">Écart débit − crédit : ${eur(tot.d-tot.cr)}</span>`}
     ${avant ? "" : `<span class="lien" style="color:var(--faint)">Pas d'écritures ${y-1} : colonne N-1 vide</span>`}</div>`;
-  return bar + `<div class="card glxw"><div class="tablewrap"><table class="blx">
+  S.nbFiltre = comptes.length;
+  const tete = filtre ? "" : bar;
+  if(!comptes.length) return tete + `<p class="sub" style="margin:14px 8px">Aucun compte ne correspond aux filtres. <a href="#" onclick="event.preventDefault();viderFiltres()">Retirer les filtres</a></p>`;
+  return tete + `<div class="card glxw"><div class="tablewrap"><table class="blx">
     <thead><tr><th class="cpt">Compte</th><th class="lib">Libellé</th><th class="n so">Solde ${y}</th><th class="n so n1">Solde ${y-1}</th><th class="n va">Variation</th></tr></thead>
     ${corps}
     <tbody class="blx-res"><tr><td class="cptl"><span class="blx-l">Résultat comptable</span></td><td class="lib">Résultat comptable (produits − charges)</td><td class="n">${rN<0?"−":""}${num(Math.abs(rN))}${avant ? mob(rN, rA, 1, (rA<0?"−":"") + num(Math.abs(rA))) : ""}</td>
@@ -2300,7 +2308,8 @@ function vueGrandLivre(y){
     const x = {c:l.c, date:e.date, j:e.journal, lib:e.lib, d:l.d||0, cr:l.cr||0, src:e.src, cp: autres.length === 1 ? autres[0] : "Divers"};
     if(passeLignesGL(x, lignes) && passeFiltre(x, J, "gl")) (parC[l.c] ??= []).push(x); }));
   const comptes = Object.keys(parC).sort(), n = comptes.reduce((s,c)=>s+parC[c].length,0);
-  if(filtre && !n) return jetonsActifs("gl", 0) + `<p class="sub" style="margin:14px 8px">Aucune ligne ne correspond aux filtres. <a href="#" onclick="event.preventDefault();viderFiltres()">Retirer les filtres</a></p>`;
+  S.nbFiltre = n;
+  if(filtre && !n) return `<p class="sub" style="margin:14px 8px">Aucune ligne ne correspond aux filtres. <a href="#" onclick="event.preventDefault();viderFiltres()">Retirer les filtres</a></p>`;
   const num = x => eur(x).replace(/\s€$/, "");
   const sens = s => s >= 0.005 ? "D" : s <= -0.005 ? "C" : "";
   // Le solde passe en rouge seulement quand il est dans le sens inhabituel du compte (banque créditrice, charge créditrice…)
@@ -2324,7 +2333,7 @@ function vueGrandLivre(y){
   const bar = `<div class="glx-bar"><span><b>${comptes.length}</b> compte${comptes.length>1?"s":""} · <b>${n}</b> ligne${n>1?"s":""}</span>
     <span class="stat">Débit <b>${eur(TD)}</b> · Crédit <b>${eur(TC)}</b>${Math.abs(TD-TC) < 0.005 ? ' <span class="ok">· équilibré ✓</span>' : ""}</span>
     <span class="lien noprint"><button onclick="toutReplierGL(false)">Tout déplier</button><button onclick="toutReplierGL(true)">Tout replier</button></span></div>`;
-  return (filtre ? jetonsActifs("gl", n) : bar) + `<div class="card glxw"><div class="tablewrap"><table class="glx">
+  return (filtre ? "" : bar) + `<div class="card glxw"><div class="tablewrap"><table class="glx">
     <thead><tr><th class="d">Date</th><th class="j">Jnl</th><th class="cp">Contrepartie</th><th>Libellé</th><th class="n dc">Débit</th><th class="n dc">Crédit</th><th class="n mv">Mouvement</th><th class="n so">Solde</th></tr></thead>
     ${corps}
     ${filtre ? "" : `<tbody class="glx-gen"><tr><td colspan="4" style="text-align:right">Total général</td><td class="n dc">${num(TD)}</td><td class="n dc">${num(TC)}</td><td class="n mv"></td><td class="n"></td></tr></tbody>`}
