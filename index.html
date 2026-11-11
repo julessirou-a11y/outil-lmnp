@@ -119,11 +119,11 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 /* Révision par cycles : liste des cycles, balance N / N-1, fenêtre d'un cycle */
 .cy-g{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:20px;align-items:start}.cy-g>.card{margin:0}
 .cy-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:6px}.cy-h h3{margin:0}.cy-h span{font-size:13px;color:var(--muted)}
-.cy-l{display:flex;align-items:center;gap:14px;width:100%;padding:14px 6px;border:0;border-top:1px solid var(--line);background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;border-radius:0}
+.cy-l{display:flex;align-items:center;gap:14px;width:100%;padding:14px 10px;border:0;border-top:1px solid var(--line);background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;border-radius:0}
 .cy-l:first-of-type{border-top:0}.cy-l:hover .cy-t b{color:var(--accent)}
 .cy-d{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);color:var(--muted);font-weight:700}.cy-d svg,.ti svg,.rv-sym svg{width:15px;height:15px}
 .cy-l.vise .cy-d,.cy-l.valide .cy-d{background:var(--pos);border-color:var(--pos);color:#fff}.cy-l.devise .cy-d{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
-.cy-l.cur{background:var(--accent-soft);border-radius:12px;padding-left:10px;padding-right:10px;border-top-color:transparent}.cy-l.cur+.cy-l{border-top-color:transparent}.cy-l.cur .cy-d{border-color:var(--accent)}
+.cy-l.cur{background:var(--accent-soft);border-radius:12px;border-top-color:transparent}.cy-l.cur+.cy-l{border-top-color:transparent}.cy-l.cur .cy-d{border-color:var(--accent)}
 .cy-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.cy-t b{font-weight:600;font-size:15px}.cy-t span{font-size:13px;color:var(--muted)}
 .cy-st{flex:none;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
 .vise .cy-st,.valide .cy-st{background:var(--pos-soft);color:var(--pos)}.cur .cy-st{background:var(--surface);color:var(--accent)}.cy-l .cy-st.dv,.cy-l.cur .cy-st.dv{background:var(--warn-soft);color:var(--warn)}
@@ -142,23 +142,23 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .ac{border:1px solid var(--line);border-radius:12px;padding:10px 12px;background:var(--surface);display:grid;grid-template-columns:auto 1fr;gap:2px 8px;align-items:baseline}
 .ac small{font-size:11px;color:var(--faint)}.ac span{font-size:13px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.ac b{grid-column:1/-1;font-size:17px;font-weight:600;font-variant-numeric:tabular-nums}.ac em{grid-column:1/-1;font-style:normal;font-size:12px;color:var(--muted)}.ac em.up{color:var(--warn);font-weight:600}
 .mk-k{font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);margin:20px 0 4px}
-.ck{display:grid;grid-template-columns:30px minmax(0,1fr) 110px 110px 100px;gap:6px 14px;align-items:center;padding:11px 10px;border-top:1px solid var(--line);font-size:14px}
-.ck.hd{border-top:0;padding-bottom:2px;font-size:12px;color:var(--muted)}.ck .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ck .m{color:var(--faint)}.ck .e{color:var(--neg);font-weight:700}
+.ck{display:grid;grid-template-columns:30px minmax(0,1fr) 110px 110px 100px;gap:6px 14px;align-items:center;padding:11px 10px;border:1px solid transparent;border-left-width:3px;border-top-color:var(--line);font-size:14px}
+.ck.hd{border-top-color:transparent;padding-bottom:2px;font-size:12px;color:var(--muted)}.ck .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ck .m{color:var(--faint)}.ck .e{color:var(--neg);font-weight:700}
 .ck.auto .ct{grid-column:2/-1}.ct b{display:block;font-weight:600}.ck.auto .ct b{font-weight:500}.ct small{font-size:12px;color:var(--muted)}.ck.ok .ct b{font-weight:500}
 .ck.ko{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:12px;margin:6px 0}.ck.ko.bl{border-left-color:var(--neg)}.ck.ko+.ck{border-top-color:transparent}
 .ti{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);font-weight:700}
 .ck.ok .ti,.qc.ok .ti{background:var(--pos-soft);color:var(--pos)}.ck.ko .ti{background:var(--warn-soft);color:var(--warn)}.ck.bl .ti{background:var(--neg-soft);color:var(--neg)}.ck.ko .e{color:var(--warn)}.ck.bl .e{color:var(--neg)}
-.act{grid-column:2/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}.act-e{flex:1;min-width:220px}.act .rv-txt{margin:0;background:var(--surface)}.act .rv-rel{margin:0}
+.act{grid-column:2/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}.act-e{flex:1;min-width:220px}.act .rv-txt{margin:0;background:var(--surface)}.act .rv-rel{margin:0 0 4px;flex-basis:100%;align-items:flex-end}.act .rv-rel input{height:32px;box-sizing:border-box}
 .ck.perso .ti{background:var(--accent-soft);color:var(--accent)}.ck.perso.ok .ti{background:var(--pos-soft);color:var(--pos)}.ck.perso .n{display:flex;gap:4px;justify-content:flex-end;grid-column:3/-1}
 .tag{font-style:normal;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:99px;padding:2px 8px;margin-left:6px;vertical-align:1px}
 .addp{display:block;width:100%;text-align:left;padding:10px 10px 4px 54px;font:inherit;font-size:13.5px;font-weight:600;color:var(--accent);background:none;border:0;border-top:1px dashed var(--line);cursor:pointer}
-.qs{display:grid;grid-template-columns:1fr 1fr;gap:10px}.qc{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);font-size:14px}
+.qs{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:start}.qc{display:flex;align-items:center;gap:12px;flex-wrap:wrap;border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:var(--surface);font-size:14px}
 .qc:not(.ok){border-color:var(--accent)}.qc.non{border-color:var(--warn)}.qt{flex:1;min-width:0}.qn{flex-basis:100%;font-size:13px;color:var(--warn)}.qn .rv-txt{margin-top:6px}
 .yn{display:flex;border:1px solid var(--line);border-radius:99px;overflow:hidden;flex:none}.yn button{padding:4px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--muted);background:none;border:0;cursor:pointer}
 .yn button.on.vu{background:var(--pos);color:#fff}.yn button.on.non{background:var(--warn);color:#fff}.yn button:disabled{cursor:default}
 .nz{border:1px solid var(--line);border-radius:12px;background:var(--surface);padding:12px}.nz textarea{width:100%;border:0;resize:vertical;font:inherit;font-size:14px;background:transparent;color:var(--text);outline:0}
 .pj{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:6px}.pc{display:inline-flex;gap:4px;align-items:center;font-size:13px;background:var(--surface-2);border-radius:99px;padding:3px 10px}.pc button{background:none;border:0;font:inherit;color:inherit;cursor:pointer;padding:0;display:inline-flex;gap:4px;align-items:center}.pc svg{width:13px;height:13px}
-.cy-note{text-align:center;margin:14px 0 0}
+.lien-b{background:none;border:0;padding:0;font:inherit;font-weight:600;color:var(--accent);text-decoration:underline;cursor:pointer}p.sub.cy-note{text-align:center;margin:14px auto 0;max-width:none}
 @media (max-width:1100px){ .cy-g{grid-template-columns:1fr} }
 @media (max-width:700px){ .ck{grid-template-columns:30px repeat(3,minmax(0,1fr))} .ck .ct{grid-column:2/-1} .ck.hd>span:nth-child(2){display:none} .qs{grid-template-columns:1fr} }
 @media (max-width:700px){ .rl{grid-template-columns:repeat(3,minmax(0,1fr))} .rl-n{font-size:13px} .rl-lib,.rl-s{grid-column:1/-1} .rl-s{justify-content:flex-start} .rl-auto{grid-template-columns:1fr} }
@@ -1610,9 +1610,11 @@ function renderAll(){
   document.documentElement.classList.toggle("mobile", DEPOT);
   if(!S.data){ if(DEPOT) tabsM(null); m.innerHTML = DEPOT ? vueBienvenueM() : vueBienvenue(); if(!DEPOT){ const c = "bv|" + (S.assistant?.etape || 0); m.classList.toggle("entree", MOUV && c !== S.animCle); S.animCle = c; } return; }
   if(DEPOT){ m.innerHTML = vueMobile(); tabsM(S.pieceIPhone ? null : S.tab === "ops" ? "ops" : "depot"); return; }
-  const avant = memoAnim();
+  const avant = memoAnim(), fc = m.querySelector(".rv-fen .rv-fc"), fcPos = fc && S.fcCle === S.tab + S.revPoste ? fc.scrollTop : 0;
   m.innerHTML = (({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab] || vueAccueil)();
   animer(avant, [S.tab, S.year, S.cloture, S.reprise?.y, S.vueEcr].join("|"));
+  /* Fenêtre ouverte (cycle de révision…) : on garde l'endroit où l'on était après un clic qui redessine la page */
+  const fc2 = m.querySelector(".rv-fen .rv-fc"); S.fcCle = fc2 ? S.tab + S.revPoste : null; if(fc2 && fcPos) fc2.scrollTop = fcPos;
   if(S.tab === "pieces") scanPieces(S.year);
 }
 /* ============ Animations ============ */
@@ -3216,10 +3218,10 @@ function vueDeclaration(){
   if(vue === "etats") return tete + etatsFinanciers(y);
   const L = liasse(y), P = n1(y), ex = exercice(y), clos = ex.statut === "cloture";
   if(!clos && aujourdhui() >= `${y+1}-01-01`) poserVisas(y);
-  const cyc = etatCycles(y), nv = cyc.filter(c => c.statut === "vise" || c.statut === "valide").length, dv = cyc.some(c => c.statut === "devise");
+  const cyc = etatCycles(y), nv = cyc.filter(c => c.statut === "vise" || c.statut === "valide").length;
   const et = S.declEtape || (nv === cyc.length ? "2" : "1");
   const ETAPES = [
-    ["1", "Réviser", clos ? "validée" : `${nv} cycle${pl(nv)} visé${pl(nv)} sur ${cyc.length}`, nv === cyc.length ? "ok" : dv ? "bad" : "warn"],
+    ["1", "Réviser", clos ? "validée" : `${nv} cycle${pl(nv)} visé${pl(nv)} sur ${cyc.length}`, nv === cyc.length ? "ok" : "warn"],
     ["2", "Résultat", "espace professionnel", clos ? "ok" : ""],
     ["3", "Revenus", "espace particulier", clos ? "ok" : ""],
     ["4", "Clôturer", clos ? "fait" : "après l'envoi", clos ? "ok" : ""]];
@@ -3800,6 +3802,7 @@ function majRevision(y, id, champs){
   setDirty(); renderAll();
 }
 const sigPoint = x => x.type === "auto" ? x.texte : sigCalc(x);
+function garderExplication(y, id){ const x = pointsRevision(y).find(p => p.id === id); if(x) majRevision(y, id, {texte:sigPoint(x)}); }
 function expliquerPoint(y, id, el){ const x = pointsRevision(y).find(p => p.id === id); majRevision(y, id, {commentaire:el.value.trim(), texte:sigPoint(x)}); }
 /* Pièce justifiant un point de révision : copiée dans Justificatifs/<année>/Révision */
 async function joindreRevision(y, id){
@@ -3940,7 +3943,7 @@ function fenetreCycle(y, c){
       if(!x.gl) num = num.replace(/<a [^>]*>(.*?)<\/a>/, "$1"); }
     const titre = x.type === "auto" ? `<b>${x.texte}</b>` : `<b>${(x.lib || "").replace(/\s*\(\d{3}\)$/, "")}</b><small>${x.type === "revue" ? `comparé à ${y-1}` : esc(x.source || "")}${x.extra && x.extra !== "releve" ? ` · ${esc(x.extra)}` : ""}</small>`;
     const ancien = !clos && r.commentaire && x.etat !== "ok" && x.etat !== "fait";
-    const act = k ? `<div class="act">${ancien ? `<span class="sub" style="color:var(--warn);flex-basis:100%">Les montants ont changé depuis l'explication du ${fmtDate(r.date)} : relisez-la et validez-la à nouveau.</span>` : ""}${corriger(x)}${(x.type === "auto" ? x.niveau === "warn" : x.id !== "acquisitions") ? `<span class="act-e">${expl(x, r, x.etat === "bloque" ? "Ou expliquez l'écart pour le valider…" : "Ou expliquez pourquoi c'est normal…")}</span>${pj(x, r)}` : ""}</div>`
+    const act = k ? `<div class="act">${ancien ? `<span class="sub" style="color:var(--warn);flex-basis:100%">Les montants ont changé depuis l'explication du ${fmtDate(r.date)} : relisez-la, puis <button class="lien-b" onclick="garderExplication(${y},'${x.id}')">gardez-la</button> ou modifiez-la.</span>` : ""}${corriger(x)}${(x.type === "auto" ? x.niveau === "warn" : x.id !== "acquisitions") ? `<span class="act-e">${expl(x, r, x.etat === "bloque" ? "Ou expliquez l'écart pour le valider…" : "Ou expliquez pourquoi c'est normal…")}</span>${pj(x, r)}` : ""}</div>`
       : x.etat === "fait" && (r.commentaire || r.piece) ? `<div class="act"><span class="act-e">${expl(x, r, "")}</span>${pj(x, r)}</div>` : "";
     return `<div class="ck ${k ? "ko" : "ok"} ${x.etat === "bloque" ? "bl" : ""} ${x.type === "auto" ? "auto" : ""}">${sym(x)}<div class="ct">${titre}</div>${num}${act}</div>`; };
   const ord = {bloque:0, afaire:1, fait:2, ok:3};
