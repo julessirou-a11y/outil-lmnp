@@ -281,7 +281,7 @@ label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--mute
 .ep-sous .depot{margin:0}
 .ep-pb{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r-md);background:var(--surface-2);font-size:14px}
 .ep-pb .rpi{margin:0} .ep-pb b{font-weight:600;min-width:120px} .ep-pb span:not(.rpi){flex:1;color:var(--muted);font-size:13px} .ep-pb .btn{margin-left:auto}
-.rpm{border:1px solid var(--accent);border-radius:var(--r-md);padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:12px}
+.rpm-tr>td{padding:6px 0 14px!important;white-space:normal;text-align:left;background:none}.rpm-tr:hover>td{background:none}.rpm{border:1px solid var(--accent);border-radius:var(--r-md);padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:12px}
 .rpm .alert{margin:0}
 .rpm-cmp small{display:block;font-size:12px;margin-top:2px} .rpm-cmp small.ok{color:var(--pos)} .rpm-cmp small.ko{color:var(--warn)}
 td.rp-act{width:1%;white-space:nowrap;text-align:right} td.rp-act .btn{opacity:0;padding:2px 8px} tr:hover td.rp-act .btn,td.rp-act .btn:focus,td.rp-act .btn.ko{opacity:1} td.rp-act .btn.ko{color:var(--accent)}
@@ -2806,17 +2806,13 @@ function carteSuiviPret(l, idx, y){
   // 2. Rapprochement automatique, à la main pour ce qu'il n'a pas trouvé
   const E = etatsRapprochement(l, y), pb = E.filter(e => e.c !== "ok"), pts = pointsRevision(y), pt = id => pts.find(x => x.id === id);
   const justifie = pb.length > 0 && pt("echeances")?.etat === "fait";  // = echeancesJustifiees(y)
-  const liste = pb.map(e => `<div class="ep-pb"><span class="rpi">${IC_RP[e.c]}</span><b>${libEch(cleEch(e.r))}</b><span title="${e.t}">${e.s}</span>${verrouille(e.r.annee) ? "" : `<button class="btn small sec" onclick="ouvrirRpMain('${l.id}','${cleEch(e.r)}')">Rapprocher</button>`}</div>`).join("");
-  const panneau = panneauRpMain(l);
-  const e2 = !E.length ? etape("plustard", "Rapprochement", "Échéances retrouvées", "", "aucune encore", "", panneau)
-    : !pb.length ? etape("fait", "Rapprochement", "Échéances retrouvées", "", `${E.length} sur ${E.length}`, "", panneau)
-    : etape(justifie ? "fait" : "afaire", "Rapprochement", justifie ? "Échéances retrouvées" : "Échéances à rapprocher", "",
-      justifie ? `écart${pl(pb.length)} justifié${pl(pb.length)}` : `${pb.length} à rapprocher`, "", liste + panneau);
+  const voirEch = `document.getElementById('echeancier')?.scrollIntoView({behavior:'smooth'})`;
+  const e2 = pb.length && !justifie ? etape("afaire", "Échéancier", "Échéances à rapprocher", "Utilisez « Rapprocher » sur les lignes signalées de l'échéancier.", `${pb.length} à rapprocher`, `<button class="btn small" onclick="${voirEch}">Voir</button>`) : "";
   // 3. L'écart qui reste se justifie dans la révision (commentaire, justificatif), ou se régularise pour le restant dû
   const P = [`capital-${l.id}`, `interets-${l.id}`, `assurance-${l.id}`, "echeances", ...(S.data.emprunts.length === 1 ? ["crd"] : [])].map(pt).filter(Boolean);
   const reste = P.filter(x => x.etat === "afaire" || x.etat === "bloque"), just = P.filter(x => x.etat === "fait");
   const allerRev = `S.declEtape='1';S.revPoste='emprunt';allerA('declaration')`;
-  const e3 = pb.length && !justifie && reste.length ? etape("plustard", "Révision", "Écart restant à justifier", "", "ensuite")
+  const e3 = pb.length && !justifie && reste.length ? ""
     : reste.length ? etape(reste.some(x => x.etat === "bloque") ? "attention" : "afaire", "Révision", "Écart à justifier",
       "Un commentaire ou un justificatif suffit.", `${reste.length} écart${pl(reste.length)}`, `<button class="btn small" onclick="${allerRev}">Justifier</button>`)
     : just.length ? etape("fait", "Révision", "Écart justifié", "", `${just.length} justifié${pl(just.length)}`, `<button class="btn ghost small" onclick="${allerRev}">Voir</button>`)
@@ -3033,6 +3029,7 @@ function collerEcheancier(idx){ // remplace aussi les échéances à partir de l
 const IC_RP = {
   ok:'<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--pos)"/><path d="M6 10.3l2.6 2.6L14.2 7.4" fill="none" stroke="var(--surface)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   part:'<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="8.2" fill="none" stroke="var(--mid)" stroke-width="1.8"/><path d="M10 1.8a8.2 8.2 0 0 1 0 16.4z" fill="var(--mid)"/></svg>',
+  avenir:'<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="8.2" fill="none" stroke="var(--faint)" stroke-width="1.6" stroke-dasharray="2.6 2.4"/></svg>',
   ko:'<svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="var(--neg)"/><path d="M10 5.5v5.5" stroke="var(--surface)" stroke-width="2.2" stroke-linecap="round"/><circle cx="10" cy="14.4" r="1.3" fill="var(--surface)"/></svg>'};
 /* Échéancier, une année ou tout le prêt, avec l'état du rapprochement de chaque échéance passée :
    vert = intérêts, capital (et assurance) comptabilisés au bon montant, jaune = en partie, rouge = aucune écriture ou un écart.
@@ -3073,11 +3070,12 @@ function carteEcheancier(l, y){
   const icone = (c, t) => `<span class="rpi ${c}" tabindex="0" role="img" aria-label="${t}" data-tip="${t}">${IC_RP[c]}</span>`;
   const vus = rows0.filter(r => an === "tout" || r.annee === an), etats = vus.map(etat).filter(Boolean);
   const nb = c => etats.filter(e => e.c === c).length;
+  const panneau = panneauRpMain(l), ncol = ass ? 7 : 6, tenuAn = a => !!exercice(a) && !isHistorique(a);
   const ligne = r => { const e = etat(r), main = e && !verrouille(r.annee);
-    return `<tr><td>${e ? icone(e.c, e.t) : `<span class="rpi"></span>`}${MOIS[r.mois-1]} ${r.annee}</td><td class="n">${eur(mens(r))}</td><td class="n">${eur(r.interet)}</td><td class="n">${eur(r.capital)}</td>${ass?`<td class="n">${eur(r.assurance)}</td>`:""}<td class="n">${eur(r.crd)}</td><td class="rp-act noprint">${main ? `<button class="btn ghost small ${e.c === "ok" ? "" : "ko"}" onclick="ouvrirRpMain('${l.id}','${cleEch(r)}')">${e.c === "ok" ? "Opérations" : "Rapprocher"}</button>` : ""}</td></tr>`; };
+    return `<tr><td>${e ? icone(e.c, e.t) : tenuAn(r.annee) ? icone("avenir", "À venir : pas encore échue") : `<span class="rpi"></span>`}${MOIS[r.mois-1]} ${r.annee}</td><td class="n">${eur(mens(r))}</td><td class="n">${eur(r.interet)}</td><td class="n">${eur(r.capital)}</td>${ass?`<td class="n">${eur(r.assurance)}</td>`:""}<td class="n">${eur(r.crd)}</td><td class="rp-act noprint">${main ? `<button class="btn ghost small ${e.c === "ok" ? "" : "ko"}" onclick="ouvrirRpMain('${l.id}','${cleEch(r)}')">${e.c === "ok" ? "Opérations" : "Rapprocher"}</button>` : ""}</td></tr>${panneau && S.rpMain.k === cleEch(r) ? `<tr class="rpm-tr noprint"><td colspan="${ncol}">${panneau}</td></tr>` : ""}`; };
   const total = (lib, g) => `<tr class="tot"><td><span class="rpi"></span>${lib}</td><td class="n">${eur(somme(g,"interet") + somme(g,"capital") + (ass ? somme(g,"assurance") : 0))}</td><td class="n">${eur(somme(g,"interet"))}</td><td class="n">${eur(somme(g,"capital"))}</td>${ass?`<td class="n">${eur(somme(g,"assurance"))}</td>`:""}<td class="n">${g.length ? eur(g[g.length-1].crd) : ""}</td><td class="noprint"></td></tr>`;
   const corps = (an === "tout" ? ans : [an]).map(a => { const g = rows0.filter(r => r.annee === a); return g.map(ligne).join("") + total(`Total ${a}`, g); }).join("");
-  const resume = etats.length ? `<div class="rp-leg"><span>${IC_RP.ok}${nb("ok")} rapprochée${nb("ok")>1?"s":""}</span><span class="part">${IC_RP.part}${nb("part")} en partie</span><span class="ko">${IC_RP.ko}${nb("ko")} non retrouvée${nb("ko")>1?"s":""} ou avec écart</span></div>` : "";
+  const resume = etats.length ? `<div class="rp-leg">${nb("ok") ? `<span>${IC_RP.ok}${nb("ok")} rapprochée${nb("ok")>1?"s":""}</span>` : ""}${nb("part") ? `<span class="part">${IC_RP.part}${nb("part")} en partie</span>` : ""}${nb("ko") ? `<span class="ko">${IC_RP.ko}${nb("ko")} non retrouvée${nb("ko")>1?"s":""} ou avec écart</span>` : ""}${vus.some(r => !etat(r) && !!exercice(r.annee) && !isHistorique(r.annee)) ? `<span>${IC_RP.avenir}à venir</span>` : ""}</div>` : "";
   return `<div class="card" id="echeancier"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">Échéancier</h3>
       <div class="row"><span class="pill">${banque ? "de la banque" : "saisi, en attendant celui de la banque"}</span>${choixAn}</div></div>
     ${resume}
