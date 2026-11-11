@@ -225,6 +225,22 @@ label{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--mute
 .contrat-pdf{display:flex;flex-direction:column;gap:8px} .contrat-pdf>.sub{margin:0;font-size:12.5px}
 
 .coller summary{font-size:12.5px;color:var(--muted);cursor:pointer}
+/* Suivi du prêt : dépôt, rapprochement, révision */
+.ep .ea-h{margin-bottom:4px}
+.prep{border-color:var(--accent)} .prep-l{display:flex;align-items:center;gap:12px;padding:10px 0;border-top:1px solid var(--line);font-size:14.5px} .prep-l>span:nth-child(2){flex:1} .prep-l .ea-d{width:22px;height:22px}
+.ep-et{font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--warn-soft);color:var(--warn)!important} .ep-et.fait{background:var(--pos-soft);color:var(--pos)!important}
+.ep-k{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--faint)}
+.ep .ea-t.fait .ea-tx span{display:block}
+.ep .ea-t+.ep-sous+.ea-t,.ep .ep-sous+.ea-t{border-top:1px solid var(--line)}
+.ep-sous{padding:0 0 14px 44px;display:flex;flex-direction:column;gap:10px}
+.ep-sous .depot{margin:0}
+.ep-pb{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--r-md);background:var(--surface-2);font-size:14px}
+.ep-pb .rpi{margin:0} .ep-pb b{font-weight:600;min-width:120px} .ep-pb span:not(.rpi){flex:1;color:var(--muted);font-size:13px} .ep-pb .btn{margin-left:auto}
+.rpm{border:1px solid var(--accent);border-radius:var(--r-md);padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:12px}
+.rpm .alert{margin:0}
+.rpm-cmp small{display:block;font-size:12px;margin-top:2px} .rpm-cmp small.ok{color:var(--pos)} .rpm-cmp small.ko{color:var(--warn)}
+td.rp-act{width:1%;white-space:nowrap;text-align:right} td.rp-act .btn{opacity:0;padding:2px 8px} tr:hover td.rp-act .btn,td.rp-act .btn:focus,td.rp-act .btn.ko{opacity:1} td.rp-act .btn.ko{color:var(--accent)}
+@media (max-width:700px){ .ep-sous{padding-left:0} .ep-pb{flex-wrap:wrap} }
 .pdfdoc{display:flex;align-items:center;gap:4px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface-2);padding:4px 4px 4px 0}
 .pdfopen{flex:1;min-width:0;display:flex;align-items:center;gap:12px;border:0;background:none;padding:8px 12px;text-align:left;font:inherit;color:var(--text);cursor:pointer;border-radius:var(--r-md)}
 .pdfopen:not(:disabled):hover b{text-decoration:underline} .pdfopen:disabled{cursor:default}
@@ -387,7 +403,9 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 /* L'année en six étapes (tableau de bord) */
 .ea{margin-bottom:18px}
 .ea-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.ea-h h3{margin:0}.ea-h span{font-size:13.5px;color:var(--muted)}
-.ea-rail{list-style:none;margin:18px 0 6px;padding:0;display:grid;grid-template-columns:repeat(6,1fr);position:relative}
+.ea-ph{display:grid;grid-template-columns:repeat(6,1fr);margin:16px 0 0}
+.ea-ph span{margin:0 8px;padding-bottom:5px;border-bottom:1.5px solid var(--line);text-align:center;font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--faint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ea-rail{list-style:none;margin:12px 0 6px;padding:0;display:grid;grid-template-columns:repeat(6,1fr);position:relative}
 .ea-rail::before,.ea-rail::after{content:"";position:absolute;top:28.5px;left:calc(100%/12);right:calc(100%/12);height:3px;border-radius:2px;background:var(--line)}
 .ea-rail::after{right:auto;width:calc((100% - 100%/6) * var(--p));background:var(--pos)}
 .ea-s{position:relative;z-index:1;display:flex;justify-content:center}
@@ -413,7 +431,7 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 .ea-t.fait .ea-st{background:var(--pos-soft,var(--surface-2));color:var(--pos)} .ea-t.attention .ea-st{background:var(--neg-soft);color:var(--neg)} .ea-t.plustard .ea-st,.ea-t.sansobjet .ea-st{background:var(--surface-2);color:var(--muted);font-weight:500}
 .ea-a{flex:none;display:flex;gap:8px;align-items:center}
 @media (max-width:700px){ .ea-rail{grid-template-columns:repeat(6,minmax(0,1fr))} .ea-s .ea-ic{width:38px;height:38px} .ea-s .ea-ic svg{width:18px;height:18px} .ea-rail::before,.ea-rail::after{top:23.5px}
-  .ea-s b{font-size:11px} .ea-s small{display:none} .ea-t{flex-wrap:wrap} .ea-a{width:100%;padding-left:44px} .ea-st{margin-left:44px} }
+  .ea-s b{font-size:11px} .ea-s small{display:none} .ea-ph span{font-size:9.5px;letter-spacing:.03em;margin:0 3px} .ea-t{flex-wrap:wrap} .ea-a{width:100%;padding-left:44px} .ea-st{margin-left:44px} }
 .pastille{border:0;border-radius:99px;padding:7px 14px;font:inherit;font-size:13.5px;font-weight:500;cursor:pointer}
 .pastille.warn{background:var(--warn-soft);color:var(--warn)} .pastille.bad{background:var(--neg-soft);color:var(--neg)} .pastille.go{background:var(--accent);color:var(--accent-ink)}
 .jauge{display:flex;border-radius:99px;overflow:hidden;background:var(--surface-2)}
@@ -1980,8 +1998,11 @@ function etapesAnnee(y){
   const nm = moisLoues(y), ml = new Set(es.filter(e => e.nature === "Loyer").map(e => monthOf(e.date))).size;
   t("loyers", "Un loyer pour chaque mois", "Un mois vide, c'est souvent une opération pas encore triée.", nm === 0 ? "plustard" : ml >= nm ? "fait" : "afaire", nm ? `${Math.min(ml, nm)} mois sur ${nm}` : "", "allerA('ecritures')", "Voir");
   if(S.data.emprunts.length){
-    const sansEch = S.data.emprunts.some(l => !lignesBanque(l)), rp = S.data.emprunts.reduce((n, l) => n + etatsRapprochement(l, y).filter(e => e.c !== "ok").length, 0), crd = Math.abs(ecartCRD(y)) >= 1;
-    t("pret", "Le tableau du prêt", "Déposez celui de la banque : le Carnet sépare intérêts et capital.", sansEch || rp || crd ? "afaire" : "fait", sansEch ? "À déposer" : rp ? `${rp} échéance${pl(rp)} à vérifier` : crd ? "Restant dû à corriger" : "", "allerA('emprunt')", sansEch ? "Déposer" : "Vérifier");
+    const sansEch = S.data.emprunts.filter(l => !lignesBanque(l)).length, E = S.data.emprunts.flatMap(l => etatsRapprochement(l, y)), rp = E.filter(e => e.c !== "ok").length;
+    const justif = rp > 0 && echeancesJustifiees(y);
+    t("pret", "Déposer le tableau du prêt", "", sansEch ? "afaire" : "fait", sansEch ? "À déposer" : "Déposé", "allerA('emprunt')", "Déposer");
+    t("pret-rp", "Rapprocher les échéances", "", !E.length ? "plustard" : !rp || justif ? "fait" : "afaire",
+      !E.length ? "" : !rp ? `${E.length} sur ${E.length}` : justif ? "Écart justifié" : `${rp} à rapprocher`, "allerA('emprunt')", "Rapprocher");
   }
   const acq = S.data.immobilisations.filter(i => anneeEntreeBilan(i) === y).length;
   t("achats", "Les achats de plus de 500 €", "Meubles, électroménager, travaux : ils s'ajoutent dans Immobilisations.", man("achats"), acq ? `${acq} ajouté${pl(acq)} en ${y}` : "", "allerA('immos')", "Ajouter", {manuel:true, cocher:"Aucun autre"});
@@ -2001,7 +2022,7 @@ function etapesAnnee(y){
   const ETAPES = [
     ["banque", "La banque", "Tout part de votre compte bancaire.", ["siret", "banque", "trier"], `toute l'année`],
     ["papiers", "Les loyers", "On vérifie qu'aucun mois ne manque.", ["loyers"], "toute l'année"],
-    ["maison", "Prêt et achats", "Ce qui se rembourse ou s'use sur plusieurs années.", ["pret", "achats", "cfe"], "toute l'année"],
+    ["maison", "Prêt et achats", "Ce qui se rembourse ou s'use sur plusieurs années.", ["pret", "pret-rp", "achats", "cfe"], "toute l'année"],
     ["loupe", "Vérifier", "Le Carnet relit vos comptes avant de déclarer.", ["revision"], `janvier ${y+1}`],
     ["envoi", "Déclarer", "Deux déclarations en ligne, le Carnet vous donne les chiffres.", ["liasse", "revenus"], `mai ${y+1}`],
     ["cadenas", "Clôturer", "L'année est terminée.", ["cloture"], `après l'envoi`]
@@ -2013,11 +2034,12 @@ function etapesAnnee(y){
   const rail = ETAPES.map((e, n) => `<li class="ea-s ${e.etat}${e === cur ? " cur" : ""}${e === vue ? " vue" : ""}"><button onclick="S.eaVue='${e.k}';renderAll()" aria-pressed="${e === vue}">
       <span class="ea-ic">${e.etat === "fait" ? ok : svgI(IC[e.k])}</span><b>${e.titre}</b><small>${e.etat === "fait" ? "fait" : e.etat === "attention" ? "à corriger" : e === cur ? "maintenant" : e.quand}</small></button></li>`).join("");
   const tache = x => `<div class="ea-t ${x.etat}"><span class="ea-d">${x.etat === "fait" ? ok : x.etat === "attention" ? "!" : ""}</span>
-      <div class="ea-tx"><b>${x.titre}</b><span>${x.txt}</span></div>
+      <div class="ea-tx"><b>${x.titre}</b>${x.txt ? `<span>${x.txt}</span>` : ""}</div>
       ${x.etat === "fait" ? `<span class="ea-st">${x.detail || "Fait"}</span>` : x.etat === "sansobjet" ? `<span class="ea-st">${x.detail || "Pas concerné"}</span>` : x.detail || x.quand ? `<span class="ea-st">${[x.detail, x.quand].filter(Boolean).join(" · ")}</span>` : ""}
       <div class="ea-a">${x.etat === "fait" ? (x.manuel && coche[x.id] && !clos ? `<button class="btn ghost small" onclick="cocherEtape(${y},'${x.id}',false)">Annuler</button>` : "")
         : x.etat === "sansobjet" || x.etat === "plustard" ? "" : `${x.manuel && !clos ? `<button class="btn ghost small btn-ic" onclick="cocherEtape(${y},'${x.id}',true)">${ok}${x.cocher}</button>` : ""}${x.go ? `<button class="btn small" onclick="${x.go}">${x.lib}</button>` : ""}`}</div></div>`;
   return `<div class="card ea noprint"><div class="ea-h"><h3>Votre année ${y}</h3><span>${nf === ETAPES.length ? "Tout est fait" : `${nf} sur ${ETAPES.length} terminée${pl(nf)}`}</span></div>
+    <div class="ea-ph" aria-hidden="true"><span style="grid-column:1/4">Déposer et trier</span><span style="grid-column:4/5">Réviser</span><span style="grid-column:5/7">Déclarer</span></div>
     <ol class="ea-rail" style="--p:${Math.min(1, nf / (ETAPES.length - 1)).toFixed(3)}">${rail}</ol>
     <div class="ea-f ${vue.etat}">${vue.etat === "plustard" ? `<p class="ea-pas">Pas encore le moment : cette étape commence ${vue.quand.startsWith("après") ? vue.quand : `en ${vue.quand}`}.</p>` : ""}${vue.ts.map(tache).join("")}</div></div>`;
 }
@@ -2670,7 +2692,7 @@ function vueEmprunt(){
   const L = S.data.emprunts, plusieurs = L.length > 1, c = !isHistorique(y) ? calculAnnee(y) : null;
   const ajout = btnExporter() + btnAjouter("Ajouter un emprunt", "ajouterEmprunt()");
   // Le restant dû affiché est celui des comptes (bilan) ; s'il s'écarte de l'échéancier de la banque, on le dit tout de suite, avec un lien vers la régularisation
-  const ec = c ? ecartCRD(y) : 0, selonComptes = base => c ? `${base}${Math.abs(ec) >= 0.005 ? `<br><a href="#regulCRD" class="noprint" style="color:var(--warn)" onclick="event.preventDefault();document.getElementById('regulCRD')?.scrollIntoView({behavior:'smooth'})">écart de ${eur0(Math.abs(ec))} avec l'échéancier&nbsp;↓</a>` : ""}` : base;
+  const ec = c ? ecartCRD(y) : 0, selonComptes = base => c ? `${base}${Math.abs(ec) >= 0.005 ? `<br><a href="#regulCRD" class="noprint" style="color:var(--warn)" onclick="event.preventDefault();(document.getElementById('regulCRD')||document.querySelector('.ep'))?.scrollIntoView({behavior:'smooth'})">écart de ${eur0(Math.abs(ec))} avec l'échéancier&nbsp;↓</a>` : ""}` : base;
   // Plusieurs prêts : le total (celui du bilan) en tête, puis chaque prêt d'après son échéancier et ses écritures
   const tete = plusieurs ? `${tetePage("Emprunts", ajout)}
     <div class="tuiles">${tuile("Capital emprunté", eur0(L.reduce((t,l) => t + l.capital, 0)))}${tuile(`Restant dû fin ${y}`, eur0(c ? c.crd : crdEcheancier(y)), {col:"var(--accent)", sous:selonComptes("au bilan, tous prêts")})}${tuile(`Intérêts ${y} comptabilisés`, eur0(c ? c.interets : L.reduce((t,l) => t + empruntAnnee(l,y).interets, 0)), {sous:"tous prêts"})}${tuile("Prêts", L.length)}</div>` : "";
@@ -2679,9 +2701,10 @@ function vueEmprunt(){
     const crd = plusieurs ? a.crdFin : c ? c.crd : a.crdFin, int = plusieurs ? (c ? interetsPret(l, y) : a.interets) : c ? c.interets : a.interets;
     return `<div class="row" style="justify-content:space-between;margin:${idx||plusieurs?"28px":"0"} 0 16px"><div class="pagehead" style="margin:0"><h1>${plusieurs ? `<span class="sub" style="font-size:.6em;display:block">Prêt ${idx+1}</span>` : ""}Emprunt ${esc(l.banque)}</h1></div><div class="row tetep-act">${plusieurs ? menu3([["Supprimer ce prêt", `supprimerEmprunt(${idx})`, "danger"]], "Actions du prêt") : ajout}</div></div>
     <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)", sous: plusieurs ? "selon l'échéancier" : selonComptes("selon les comptes")})}${tuile(`Intérêts ${y} comptabilisés`, eur0(int), {sous: c && !int ? "aucune écriture bancaire" : "déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
+    ${carteSuiviPret(l, idx, y)}
     ${carteContrat(l, idx)}
     ${carteEcheancier(l, y)}`;
-  }).join("") + carteRegulCRD(y);
+  }).join("") + (plusieurs || exercice(y)?.regulCRD ? carteRegulCRD(y) : "");
 }
 /* Écart entre le grand livre (164) et l'échéancier de la banque, et sa régularisation enregistrée dans le dossier */
 function carteRegulCRD(y){
@@ -2697,7 +2720,7 @@ function carteRegulCRD(y){
 const menu3 = (items, label = "Plus d'actions") => `<details class="menu3 noprint"><summary aria-label="${label}" title="${label}"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5" cy="12" r="1.8"/><circle cx="12" cy="12" r="1.8"/><circle cx="19" cy="12" r="1.8"/></svg></summary>
   <div class="m3">${items.filter(Boolean).map(([t, act, cls]) => `<button class="${cls||""}" onclick="this.closest('details').open=false;${act}">${t}</button>`).join("")}</div></details>`;
 document.addEventListener("click", e => document.querySelectorAll("details.menu3[open]").forEach(d => { if(!d.contains(e.target)) d.open = false; }));
-/* Contrat de prêt : ses caractéristiques (celles de l'offre signée, verrouillées) et l'échéancier PDF de la banque */
+/* Contrat de prêt : ses caractéristiques (celles de l'offre signée, verrouillées) */
 function carteContrat(l, idx){
   const edit = S.editPret === l.id || !l.capital, banque = !!lignesBanque(l), eb = l.echeancierBanque;
   const taux = (l.tauxAnnuel*100).toLocaleString("fr-FR",{maximumFractionDigits:3}) + " %";
@@ -2708,20 +2731,111 @@ function carteContrat(l, idx){
       ${champ("Durée (mois)", "dureeMois", l.dureeMois, "number")}${champ("1re échéance", "premiereEcheance", l.premiereEcheance, "date")}${champ("Mensualité hors assurance", "mensualite", l.mensualite, "num")}${champ("Assurance mensuelle (facultatif)", "assurance", l.assurance||"", "num")}
     </div><div class="row" style="justify-content:flex-end;margin-top:14px">${l.capital ? `<button class="btn small sec" onclick="S.editPret=null;renderAll()">Annuler</button>` : ""}<button class="btn small" onclick="validerContrat(${idx})">Valider</button></div>`
     : `<div class="fiche">${fiche.map(([k,v]) => `<div><span>${k}</span><b>${v}</b></div>`).join("")}</div>`;
-  // Échéancier de la banque : une vignette, ouverte d'un clic, actions dans « ⋯ »
-  const doc = l.echeancierDoc && docs().find(d => d.id === l.echeancierDoc);
-  const ouvrir = doc ? `ouvrirChemin(${jsq(doc.fichier)},${jsq(doc.libelle)})` : "";
-  const PDF = `<svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6v18h12V7zM14 3v4h4"/><path d="M8.5 13h7M8.5 16.5h7"/></svg>`;
-  const pdf = doc || eb?.lignes?.length ? `<div class="pdfdoc">
-      <button class="pdfopen" ${doc ? `onclick="${ouvrir}" title="Ouvrir l'échéancier en PDF"` : "disabled"}>${PDF}<span><b>${doc ? esc(doc.libelle) : "Échéancier de la banque"}</b><small>${banque ? `${eb.lignes.length} échéances lues${eb.origine === "colle" ? " (tableau collé)" : ""}` : "Tableau non lu"}${doc?.date ? ` · déposé le ${fmtDate(doc.date)}` : ""}</small></span></button>
-      ${menu3([doc && ["Ouvrir", ouvrir], doc && ["Télécharger", `telechargerChemin(${jsq(doc.fichier)})`], doc && !banque && ["Lire le tableau", `lireEcheancierDoc(${idx})`], ["Supprimer", `supprimerEcheancierBanque(${idx})`, "danger"]])}</div>`
-    : `${zoneDepot("Déposer l'échéancier de la banque", "PDF · il remplace l'échéancier calculé", `ajouterEcheancierPret(${idx})`, `ajouterEcheancierPret(${idx},event)`).replace('class="depot noprint"','class="depot noprint compact"')}
-      <details class="coller"><summary>Le PDF ne se lit pas ? Coller le tableau</summary>
-        <textarea id="echColle${idx}" rows="4" style="width:100%;margin-top:8px" placeholder="05/11/2016   729,86   122,00   607,86   119 392,14 …"></textarea>
-        <button class="btn small" style="margin-top:6px" onclick="collerEcheancier(${idx})">Lire le tableau</button></details>`;
   const crayon = `<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg>`;
   return `<div class="card contrat ${edit ? "edition" : ""}"><div class="row" style="justify-content:space-between;margin-bottom:12px"><h3 style="margin:0">${edit ? "Édition du contrat de prêt" : "Contrat de prêt"}</h3>${edit ? "" : `<button class="btn small sec" onclick="S.editPret='${l.id}';renderAll()">${crayon} Modifier le contrat</button>`}</div>
-    <div class="contrat-g"><div>${caract}</div><div class="contrat-pdf"><span class="sub">Échéancier de la banque</span>${pdf}</div></div></div>`;
+    ${caract}</div>`;
+}
+/* Suivi du prêt, en trois temps : déposer le tableau de la banque (une fois, puis à nouveau si le prêt change),
+   le rapprochement automatique de chaque échéance avec les opérations bancaires (à la main s'il le faut),
+   et, s'il reste un écart, sa justification dans la révision. Quand tout concorde, tout est vert et il n'y a rien à faire. */
+function carteSuiviPret(l, idx, y){
+  const B = lignesBanque(l), eb = l.echeancierBanque, doc = l.echeancierDoc && docs().find(d => d.id === l.echeancierDoc), tenu = !!exercice(y) && !isHistorique(y);
+  const ok = svgI('<path d="M20 6 9 17l-5-5"/>');
+  const etape = (etat, k, titre, txt, st, act = "", sous = "") => `<div class="ea-t ${etat}"><span class="ea-d">${etat === "fait" ? ok : etat === "attention" ? "!" : ""}</span>
+    <div class="ea-tx"><small class="ep-k">${k}</small><b>${titre}</b>${txt ? `<span>${txt}</span>` : ""}</div>${st ? `<span class="ea-st">${st}</span>` : ""}<div class="ea-a">${act}</div></div>${sous ? `<div class="ep-sous">${sous}</div>` : ""}`;
+  // 1. Le tableau de la banque, déposé une fois
+  const coller = ouvert => `<details class="coller" ${ouvert ? "open" : ""}><summary>${B ? "Coller un nouveau tableau" : "Le PDF ne se lit pas ? Coller le tableau"}</summary>
+      <textarea id="echColle${idx}" rows="4" style="width:100%;margin-top:8px" placeholder="05/11/2016   729,86   122,00   607,86   119 392,14 …"></textarea>
+      <button class="btn small" style="margin-top:6px" onclick="collerEcheancier(${idx})">Lire le tableau</button></details>`;
+  const z = B?.[B.length-1], ouvrir = doc ? `ouvrirChemin(${jsq(doc.fichier)},${jsq(doc.libelle)})` : "";
+  const e1 = B ? etape("fait", "Dépôt", "Tableau de la banque", eb.majDepuis ? `Mis à jour à partir de ${libEch(eb.majDepuis.slice(0,7))}` : "",
+      `${B.length} échéances`, `${doc ? `<button class="btn small sec" onclick="${ouvrir}">Voir</button>` : ""}<button class="btn small sec" title="Prêt renégocié ou remboursé en partie : le nouveau tableau remplace les échéances à partir de sa première date" onclick="ajouterEcheancierPret(${idx})">Nouveau tableau…</button>${menu3([doc && ["Télécharger le PDF", `telechargerChemin(${jsq(doc.fichier)})`], ["Coller un nouveau tableau", `S.colleEch='${l.id}';renderAll()`], ["Supprimer le tableau", `supprimerEcheancierBanque(${idx})`, "danger"]])}`,
+      S.colleEch === l.id ? coller(true) : "")
+    : doc ? etape("afaire", "Dépôt", "Tableau de la banque", "", "Non lu", `<button class="btn small" onclick="lireEcheancierDoc(${idx})">Lire le tableau</button>`, coller(false))
+    : etape("afaire", "Dépôt", "Déposer le tableau de la banque", "", "À déposer", "",
+      zoneDepot("Déposer le tableau de la banque", "le PDF reçu avec l'offre de prêt", `ajouterEcheancierPret(${idx})`, `ajouterEcheancierPret(${idx},event)`).replace('class="depot noprint"','class="depot noprint compact"') + coller(false));
+  if(!tenu) return `<div class="card ea ep"><div class="ea-h"><h3>Suivi du prêt</h3></div>${e1}</div>`;
+  // 2. Rapprochement automatique, à la main pour ce qu'il n'a pas trouvé
+  const E = etatsRapprochement(l, y), pb = E.filter(e => e.c !== "ok"), pts = pointsRevision(y), pt = id => pts.find(x => x.id === id);
+  const justifie = pb.length > 0 && pt("echeances")?.etat === "fait";  // = echeancesJustifiees(y)
+  const liste = pb.map(e => `<div class="ep-pb"><span class="rpi">${IC_RP[e.c]}</span><b>${libEch(cleEch(e.r))}</b><span title="${e.t}">${e.s}</span>${verrouille(e.r.annee) ? "" : `<button class="btn small sec" onclick="ouvrirRpMain('${l.id}','${cleEch(e.r)}')">Rapprocher</button>`}</div>`).join("");
+  const panneau = panneauRpMain(l);
+  const e2 = !E.length ? etape("plustard", "Rapprochement", "Échéances retrouvées", "", "aucune encore", "", panneau)
+    : !pb.length ? etape("fait", "Rapprochement", "Échéances retrouvées", "", `${E.length} sur ${E.length}`, "", panneau)
+    : etape(justifie ? "fait" : "afaire", "Rapprochement", justifie ? "Échéances retrouvées" : "Échéances à rapprocher", "",
+      justifie ? `écart${pl(pb.length)} justifié${pl(pb.length)}` : `${pb.length} à rapprocher`, "", liste + panneau);
+  // 3. L'écart qui reste se justifie dans la révision (commentaire, justificatif), ou se régularise pour le restant dû
+  const P = [`capital-${l.id}`, `interets-${l.id}`, `assurance-${l.id}`, "echeances", ...(S.data.emprunts.length === 1 ? ["crd"] : [])].map(pt).filter(Boolean);
+  const reste = P.filter(x => x.etat === "afaire" || x.etat === "bloque"), just = P.filter(x => x.etat === "fait");
+  const allerRev = `S.declEtape='1';S.revPoste='emprunt';allerA('declaration')`;
+  const e3 = pb.length && !justifie && reste.length ? etape("plustard", "Révision", "Écart restant à justifier", "", "ensuite")
+    : reste.length ? etape(reste.some(x => x.etat === "bloque") ? "attention" : "afaire", "Révision", "Écart à justifier",
+      "Un commentaire ou un justificatif suffit.", `${reste.length} écart${pl(reste.length)}`, `<button class="btn small" onclick="${allerRev}">Justifier</button>`)
+    : just.length ? etape("fait", "Révision", "Écart justifié", "", `${just.length} justifié${pl(just.length)}`, `<button class="btn ghost small" onclick="${allerRev}">Voir</button>`)
+    : etape("fait", "Révision", "Aucun écart", "", "");
+  const nb = [B ? 0 : 1, pb.length && !justifie ? 1 : 0, reste.length && (!pb.length || justifie) ? 1 : 0].reduce((s, x) => s + x, 0);
+  return `<div class="card ea ep"><div class="ea-h"><h3>Suivi ${y}</h3><span class="ep-et ${nb ? "afaire" : "fait"}">${nb ? `${nb} à faire` : "Tout est en ordre"}</span></div>${e1}${e2}${e3}</div>`;
+}
+/* Rapprochement à la main d'une échéance : les opérations qui la composent, cochées parmi celles des mois voisins */
+function ouvrirRpMain(pret, k){
+  const l = S.data.emprunts.find(x => x.id === pret); if(!l) return;
+  S.rpMain = {pret, k}; S.rpSel = new Set(saisiesPret(l)[k]?.ids || []); renderAll();
+  setTimeout(() => document.getElementById("rpMain")?.scrollIntoView({behavior:"smooth", block:"center"}), 60);
+}
+function basculerRp(id, oui){ oui ? S.rpSel.add(id) : S.rpSel.delete(id); renderAll(); }
+const ymdLocal = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+function candidatsRp(l, r){
+  const k = cleEch(r), ya = +k.slice(0,4), mo = +k.slice(5,7), lo = ymdLocal(new Date(ya, mo-3, 1)), hi = ymdLocal(new Date(ya, mo+1, 0));
+  // Une opération d'emprunt déjà rapprochée d'une autre échéance, conforme, n'est pas proposée
+  const R = Object.fromEntries(echeancier(l).map(x => [cleEch(x), x])), cache = {}, dejaBon = e => cleEcr(e) !== k && R[cleEcr(e)] && etatEcheance(l, R[cleEcr(e)], cache)?.c === "ok";
+  const tot = r.interet + r.capital + (assPret(l) ? r.assurance : 0), vals = [tot, r.interet, r.capital, r.assurance].filter(v => v > 0.004);
+  return Object.entries(S.data.exercices).filter(([yy]) => !isHistorique(+yy)).flatMap(([yy, ex]) => (ex.ecritures||[]).map(e => ({e, lock:verrouille(+yy)})))
+    .filter(({e}) => S.rpSel.has(e.id) || (e.date >= lo && e.date <= hi && (NAT_PRET[e.nature] ? (!pretDe(e) || pretDe(e) === l.id) && !dejaBon(e) : vals.some(v => Math.abs(e.montant - v) < 0.02))))
+    .sort((a, b) => a.e.date.localeCompare(b.e.date));
+}
+function panneauRpMain(l){
+  const m = S.rpMain; if(!m || m.pret !== l.id) return "";
+  const r = echeancier(l).find(r => cleEch(r) === m.k); if(!r) return "";
+  const ass = assPret(l), K = ["interet","capital", ...(ass ? ["assurance"] : [])], LIB = {interet:"Intérêts", capital:"Capital", assurance:"Assurance"};
+  const tot = r2(K.reduce((s, k) => s + r[k], 0)), C = candidatsRp(l, r), sel = C.filter(c => S.rpSel.has(c.e.id)), som = {interet:0, capital:0, assurance:0};
+  sel.forEach(({e}) => { const k = NAT_PRET[e.nature]; if(k) som[k] = r2(som[k] + e.montant); });
+  const autres = sel.filter(c => !NAT_PRET[c.e.nature]), conforme = !autres.length && K.every(k => Math.abs(som[k] - r[k]) < 0.01);
+  const repartir = sel.length === 1 && !sel[0].lock && Math.abs(sel[0].e.montant - tot) < 0.005 && !conforme;
+  const msg = conforme ? `<div class="alert ok">Ça correspond.</div>`
+    : repartir ? `<div class="alert info" style="align-items:center">Une seule ligne pour toute la mensualité.<button class="btn small" style="margin-left:auto" onclick="repartirRpMain()">Répartir selon l'échéancier</button></div>`
+    : !sel.length ? `<div class="alert warn">Cochez les opérations qui paient cette échéance.</div>`
+    : `<div class="alert warn">${autres.length ? "Une opération cochée n'est pas classée en emprunt. " : ""}Ça ne correspond pas encore.</div>`;
+  return `<div class="jx-ratt rpm" id="rpMain"><div class="row" style="justify-content:space-between;gap:8px"><div><h3 style="margin:0">Échéance de ${libEch(m.k)}</h3></div>
+      <div class="row" style="gap:6px"><button class="btn small" onclick="enregistrerRpMain()">Enregistrer</button><button class="btn small ghost" onclick="S.rpMain=null;renderAll()">Annuler</button></div></div>
+    <div class="fiche rpm-cmp">${K.map(k => `<div><span>${LIB[k]}</span><b>${eur(r[k])}</b><small class="${Math.abs(som[k] - r[k]) < 0.01 ? "ok" : "ko"}">${eur(som[k])} coché</small></div>`).join("")}<div><span>Mensualité</span><b>${eur(tot)}</b><small>${eur(sel.reduce((s, c) => s + c.e.montant, 0))} coché</small></div></div>
+    ${msg}
+    ${C.length ? `<div class="ratt">${C.map(({e, lock}) => `<label><input type="checkbox" ${S.rpSel.has(e.id) ? "checked" : ""} ${lock ? `disabled title="Exercice clôturé"` : ""} onchange="basculerRp('${e.id}',this.checked)"><span>${fmtDate(e.date).slice(0, 5)}</span><span>${esc(e.tiers) || "–"}${e.ech && e.ech !== "-" && e.ech !== m.k ? ` <small class="muted-s">(échéance de ${libEch(e.ech)})</small>` : ""}</span>${chipNature(e.nature)}<span class="m">${eur(e.montant)}</span></label>`).join("")}</div>`
+      : `<p class="sub" style="margin:10px 0 0">Aucune opération proche ne ressemble à cette échéance.</p>`}</div>`;
+}
+function enregistrerRpMain(){
+  const m = S.rpMain, l = m && S.data.emprunts.find(x => x.id === m.pret); if(!l) return;
+  Object.entries(S.data.exercices).filter(([y]) => !isHistorique(+y) && !verrouille(+y)).forEach(([, ex]) => (ex.ecritures||[]).forEach(e => {
+    if(!NAT_PRET[e.nature]) return;
+    if(S.rpSel.has(e.id)){ if(e.date.slice(0,7) === m.k) delete e.ech; else e.ech = m.k; e.pret = l.id; }
+    else if(pretDe(e) === l.id && cleEcr(e) === m.k) e.ech = "-";  // détachée : elle ne compte plus pour cette échéance
+  }));
+  const r = echeancier(l).find(r => cleEch(r) === m.k), et = etatEcheance(l, r);
+  S.rpMain = null; S.rpSel = null; setDirty(); renderAll();
+  toast(et?.c === "ok" ? `Échéance de ${libEch(m.k)} rapprochée.` : `Enregistré. Il reste un écart sur l'échéance de ${libEch(m.k)}.`);
+}
+/* Une opération qui paie toute la mensualité, classée d'un bloc : répartie en intérêts, capital (et assurance) d'après l'échéancier */
+function repartirRpMain(){
+  const m = S.rpMain, l = S.data.emprunts.find(x => x.id === m.pret), r = echeancier(l).find(r => cleEch(r) === m.k), [id] = [...S.rpSel];
+  const y = Object.keys(S.data.exercices).find(yy => !isHistorique(+yy) && (exercice(+yy).ecritures||[]).some(e => e.id === id));
+  if(y == null || verrouille(+y)) return;
+  const ex = exercice(+y), i = ex.ecritures.findIndex(e => e.id === id), e = ex.ecritures[i];
+  const NAT = {interet:"Intérêts emprunt", capital:"Remboursement emprunt", assurance:"Assurance emprunt"};
+  const lignes = ["interet","capital", ...(assPret(l) ? ["assurance"] : [])].filter(k => r[k] > 0.004).map(k => {
+    const n = {...e, id:uid(), nature:NAT[k], montant:r2(r[k]), sens:"depense", pret:l.id}; delete n.regle;
+    if(e.date.slice(0,7) === m.k) delete n.ech; else n.ech = m.k; return n; });
+  ex.ecritures.splice(i, 1, ...lignes);
+  S.rpMain = null; S.rpSel = null; setDirty(); renderAll();
+  toast(`Opération répartie : ${lignes.map(x => `${{"Intérêts emprunt":"intérêts","Remboursement emprunt":"capital","Assurance emprunt":"assurance"}[x.nature]} ${eur(x.montant)}`).join(", ")}. Échéance de ${libEch(m.k)} rapprochée.`);
 }
 /* Les caractéristiques ne changent qu'à la validation de l'édition */
 function validerContrat(idx){
@@ -2856,11 +2970,15 @@ async function lireEcheancierDoc(idx){
 }
 function appliquerEcheancierBanque(idx, texte, origine){
   const res = lireTableauEcheancier(texte), l = S.data.emprunts[idx], L = res.lignes, a = L[0], z = L[L.length-1];
-  l.echeancierBanque = {origine, lu:aujourdhui(), capital:res.capital, colonnes:res.colonnes, lignes:L};
-  setDirty(); renderAll();
-  toast(`${L.length} échéances lues, de ${MOIS[monthOf(a.date)-1]} ${yearOf(a.date)} à ${MOIS[monthOf(z.date)-1]} ${yearOf(z.date)}.`);
+  // Nouveau tableau (prêt renégocié, remboursement anticipé) : il remplace les échéances à partir de sa première date, les précédentes sont gardées
+  const av = lignesBanque(l) ? l.echeancierBanque : null, garde = (av?.lignes || []).filter(r => r.date.slice(0,7) < a.date.slice(0,7));
+  l.echeancierBanque = garde.length ? {origine, lu:aujourdhui(), capital:av.capital, colonnes:{...res.colonnes, assurance:res.colonnes.assurance || !!av.colonnes?.assurance}, lignes:[...garde, ...L], majLe:aujourdhui(), majDepuis:a.date}
+    : {origine, lu:aujourdhui(), capital:res.capital, colonnes:res.colonnes, lignes:L};
+  S.colleEch = null; setDirty(); renderAll();
+  toast(garde.length ? `Nouveau tableau pris en compte à partir de ${libEch(a.date.slice(0,7))} : ${L.length} échéances mises à jour, les ${garde.length} précédentes sont gardées.`
+    : `${L.length} échéances lues, de ${MOIS[monthOf(a.date)-1]} ${yearOf(a.date)} à ${MOIS[monthOf(z.date)-1]} ${yearOf(z.date)}.`);
 }
-function collerEcheancier(idx){
+function collerEcheancier(idx){ // remplace aussi les échéances à partir de la première date collée
   const t = $("#echColle" + idx).value; if(!t.trim()) return;
   try{ appliquerEcheancierBanque(idx, t, "colle"); } catch(e){ avertir(e.message); }
 }
@@ -2872,19 +2990,27 @@ const IC_RP = {
    vert = intérêts, capital (et assurance) comptabilisés au bon montant, jaune = en partie, rouge = aucune écriture ou un écart.
    Seules les écritures bancaires comptent en comptabilité : un mois sans écriture n'a rien passé en charge. */
 /* État du rapprochement d'une échéance passée avec les écritures bancaires du mois (null si à venir ou année non tenue) */
+/* Une échéance est repérée par son mois (« AAAA-MM ») ; une écriture va à l'échéance de son mois,
+   sauf si elle a été rapprochée à la main d'une autre (e.ech), ou détachée de toute échéance (e.ech = "-") */
+const cleEch = r => `${r.annee}-${String(r.mois).padStart(2,"0")}`;
+const cleEcr = e => e.ech || e.date.slice(0,7);
+const libEch = k => `${MOIS_LONG[+k.slice(5,7)-1]} ${k.slice(0,4)}`;
+function saisiesPret(l, cache = {}){
+  return cache["s" + l.id] ??= Object.entries(S.data.exercices).filter(([y]) => !isHistorique(+y)).flatMap(([, ex]) => ex.ecritures || []).reduce((m, e) => {
+    const k = NAT_PRET[e.nature]; if(k && pretDe(e) === l.id){ const s = m[cleEcr(e)] ??= {interet:0, capital:0, assurance:0, n:0, ids:[]}; s[k] = r2(s[k] + e.montant); s.n++; s.ids.push(e.id); } return m; }, {});
+}
+const assPret = l => lignesBanque(l) ? !!l.echeancierBanque.colonnes?.assurance : l.assurance > 0;
 function etatEcheance(l, r, cache = {}){
-  const banque = lignesBanque(l), ass = banque ? !!l.echeancierBanque.colonnes?.assurance : l.assurance > 0;
-  const NAT = {interet:"Intérêts emprunt", capital:"Remboursement emprunt", assurance:"Assurance emprunt"}, LIB = {interet:"intérêts", capital:"capital", assurance:"assurance"};
-  const K = ["interet","capital"].concat(ass ? ["assurance"] : []);
+  const LIB = {interet:"intérêts", capital:"capital", assurance:"assurance"};
+  const K = ["interet","capital"].concat(assPret(l) ? ["assurance"] : []);
   const auj = new Date();
   if(r.annee * 100 + r.mois > auj.getFullYear() * 100 + auj.getMonth() + 1 || !exercice(r.annee) || isHistorique(r.annee)) return null;
-  const saisi = cache[r.annee] ??= (exercice(r.annee).ecritures||[]).reduce((m, e) => { const k = Object.keys(NAT).find(k => NAT[k] === e.nature); if(k && pretDe(e) === l.id){ const s = m[monthOf(e.date)] ??= {interet:0, capital:0, assurance:0, n:0}; s[k] += e.montant; s.n++; } return m; }, {});
-  const s = saisi[r.mois];
-  if(!s?.n) return {c:"ko", t:"Aucune écriture bancaire pour cette échéance : rien n'est passé en charge"};
+  const s = saisiesPret(l, cache)[cleEch(r)];
+  if(!s?.n) return {c:"ko", s:"Introuvable", t:"Aucune opération bancaire retrouvée pour cette échéance"};
   const faux = K.filter(k => Math.abs(s[k]) > 0.004 && Math.abs(s[k] - r[k]) >= 0.01), manq = K.filter(k => Math.abs(s[k]) <= 0.004 && r[k] > 0.004);
-  if(faux.length) return {c:"ko", t:"Écart : " + faux.map(k => `${LIB[k]} ${eur(s[k])} au lieu de ${eur(r[k])}`).join(", ")};
-  if(manq.length) return {c:"part", t:"Sans écriture : " + manq.map(k => LIB[k]).join(", ")};
-  return {c:"ok", t:"Rapprochée : écritures conformes à l'échéancier"};
+  if(faux.length) return {c:"ko", s:"Montant différent", t:"Écart : " + faux.map(k => `${LIB[k]} ${eur(s[k])} au lieu de ${eur(r[k])}`).join(", ")};
+  if(manq.length) return {c:"part", s:"Manque : " + manq.map(k => LIB[k]).join(", "), t:"Manque : " + manq.map(k => LIB[k]).join(", ")};
+  return {c:"ok", t:"Rapprochée : opérations conformes à l'échéancier"};
 }
 /* Échéances passées d'une année avec leur état */
 function etatsRapprochement(l, y){ const cache = {}; return echeancier(l).filter(r => r.annee === y).map(r => ({r, ...etatEcheance(l, r, cache)})).filter(e => e.c); }
@@ -2899,15 +3025,15 @@ function carteEcheancier(l, y){
   const icone = (c, t) => `<span class="rpi ${c}" tabindex="0" role="img" aria-label="${t}" data-tip="${t}">${IC_RP[c]}</span>`;
   const vus = rows0.filter(r => an === "tout" || r.annee === an), etats = vus.map(etat).filter(Boolean);
   const nb = c => etats.filter(e => e.c === c).length;
-  const ligne = r => { const e = etat(r);
-    return `<tr><td>${e ? icone(e.c, e.t) : `<span class="rpi"></span>`}${MOIS[r.mois-1]} ${r.annee}</td><td class="n">${eur(mens(r))}</td><td class="n">${eur(r.interet)}</td><td class="n">${eur(r.capital)}</td>${ass?`<td class="n">${eur(r.assurance)}</td>`:""}<td class="n">${eur(r.crd)}</td></tr>`; };
-  const total = (lib, g) => `<tr class="tot"><td><span class="rpi"></span>${lib}</td><td class="n">${eur(somme(g,"interet") + somme(g,"capital") + (ass ? somme(g,"assurance") : 0))}</td><td class="n">${eur(somme(g,"interet"))}</td><td class="n">${eur(somme(g,"capital"))}</td>${ass?`<td class="n">${eur(somme(g,"assurance"))}</td>`:""}<td class="n">${g.length ? eur(g[g.length-1].crd) : ""}</td></tr>`;
+  const ligne = r => { const e = etat(r), main = e && !verrouille(r.annee);
+    return `<tr><td>${e ? icone(e.c, e.t) : `<span class="rpi"></span>`}${MOIS[r.mois-1]} ${r.annee}</td><td class="n">${eur(mens(r))}</td><td class="n">${eur(r.interet)}</td><td class="n">${eur(r.capital)}</td>${ass?`<td class="n">${eur(r.assurance)}</td>`:""}<td class="n">${eur(r.crd)}</td><td class="rp-act noprint">${main ? `<button class="btn ghost small ${e.c === "ok" ? "" : "ko"}" onclick="ouvrirRpMain('${l.id}','${cleEch(r)}')">${e.c === "ok" ? "Opérations" : "Rapprocher"}</button>` : ""}</td></tr>`; };
+  const total = (lib, g) => `<tr class="tot"><td><span class="rpi"></span>${lib}</td><td class="n">${eur(somme(g,"interet") + somme(g,"capital") + (ass ? somme(g,"assurance") : 0))}</td><td class="n">${eur(somme(g,"interet"))}</td><td class="n">${eur(somme(g,"capital"))}</td>${ass?`<td class="n">${eur(somme(g,"assurance"))}</td>`:""}<td class="n">${g.length ? eur(g[g.length-1].crd) : ""}</td><td class="noprint"></td></tr>`;
   const corps = (an === "tout" ? ans : [an]).map(a => { const g = rows0.filter(r => r.annee === a); return g.map(ligne).join("") + total(`Total ${a}`, g); }).join("");
-  const resume = etats.length ? `<div class="rp-leg"><span>${IC_RP.ok}${nb("ok")} rapprochée${nb("ok")>1?"s":""}</span><span class="part">${IC_RP.part}${nb("part")} en partie</span><span class="ko">${IC_RP.ko}${nb("ko")} sans écriture ou avec écart</span></div>` : "";
+  const resume = etats.length ? `<div class="rp-leg"><span>${IC_RP.ok}${nb("ok")} rapprochée${nb("ok")>1?"s":""}</span><span class="part">${IC_RP.part}${nb("part")} en partie</span><span class="ko">${IC_RP.ko}${nb("ko")} non retrouvée${nb("ko")>1?"s":""} ou avec écart</span></div>` : "";
   return `<div class="card" id="echeancier"><div class="row" style="justify-content:space-between;margin-bottom:8px"><h3 style="margin:0">Échéancier</h3>
       <div class="row"><span class="pill">${banque ? "de la banque" : "saisi, en attendant celui de la banque"}</span>${choixAn}</div></div>
     ${resume}
-    <div class="tablewrap echtab ${an === "tout" ? "long" : ""}"><table><tr><th>Échéance</th><th class="n">Mensualité</th><th class="n">Intérêts</th><th class="n">Capital</th>${ass?`<th class="n">Assurance</th>`:""}<th class="n">Restant dû</th></tr>
+    <div class="tablewrap echtab ${an === "tout" ? "long" : ""}"><table><tr><th>Échéance</th><th class="n">Mensualité</th><th class="n">Intérêts</th><th class="n">Capital</th>${ass?`<th class="n">Assurance</th>`:""}<th class="n">Restant dû</th><th class="noprint"></th></tr>
       ${corps}</table></div></div>`;
 }
 
@@ -3460,7 +3586,7 @@ function controles(y){
     chk("pret-rattache", "emprunt", !sansPret.length, "Chaque écriture d'emprunt est rattachée à son prêt.", "warn", `${sansPret.length} écriture${pl(sansPret.length)} d'emprunt sans prêt reconnu (montant différent de l'échéance de chaque prêt) : choisissez le prêt en modifiant l'écriture.`, "ecritures");
     const parPret = S.data.emprunts.map((l, i) => [l, i, etatsRapprochement(l, y).filter(e => e.c !== "ok")]).filter(x => x[2].length), rp = parPret.flatMap(x => x[2]);
     const moisRp = a => a.map(e => MOIS[e.r.mois-1]).join(", ").replace(/\.$/, "");
-    chk("echeances", "emprunt", !rp.length, "Échéances du prêt rapprochées des écritures bancaires.", "warn", `${rp.length} échéance${pl(rp.length)} de prêt sans écriture ou avec un écart : ${S.data.emprunts.length > 1 ? parPret.map(([l, i, a]) => `${nomPret(l, i)} (${moisRp(a)})`).join(", ") : moisRp(rp)}. L'échéancier de la page Emprunt détaille chaque mois.`, "emprunt");
+    chk("echeances", "emprunt", !rp.length, "Chaque échéance du prêt retrouvée dans les opérations de la banque.", "warn", `${rp.length} échéance${pl(rp.length)} de prêt non retrouvée${pl(rp.length)} ou avec un écart : ${S.data.emprunts.length > 1 ? parPret.map(([l, i, a]) => `${nomPret(l, i)} (${moisRp(a)})`).join(", ") : moisRp(rp)}. Si l'écart reste après le rapprochement à la main, justifiez-le ici.`, "emprunt");
     const ec = ecartCRD(y);
     chk("crd", "emprunt", Math.abs(ec) < 1, "Grand livre de l'emprunt conforme à l'échéancier de la banque.", "warn", `Le grand livre donne ${eur(soldeGL164(y))} de restant dû au 31/12, l'échéancier de la banque ${eur(crdEcheancier(y))} : écart de ${eur(Math.abs(ec))} à expliquer, et à régulariser le cas échéant sur la page Emprunt.`, "emprunt");
   }
@@ -3565,7 +3691,18 @@ function etatPoint(y, x){
   if(x.niveau === "bad") return "bloque";
   return (r?.commentaire || r?.piece) && r.texte === x.texte ? "fait" : "afaire";
 }
-const GARDER = new Set(["dates","montants","natures","loyers-mois","cfe","justificatifs","banque-tri","doublons","petit-equipement","echeancier-banque","pret-rattache","echeances","n1","excel","deficits-perimes"]);
+const GARDER = new Set(["dates","montants","natures","loyers-mois","cfe","justificatifs","doublons","petit-equipement","echeances","n1","excel","deficits-perimes"]);
+const echeancesJustifiees = y => pointsRevision(y).find(x => x.id === "echeances")?.etat === "fait";
+/* Ce qui se fait avant la révision (déposer, trier, rapprocher) : rappelé en tête de la révision, sans en faire partie */
+function preparatifs(y){
+  const out = controles(y).filter(x => ["banque-tri","echeancier-banque","pret-rattache"].includes(x[3]) && x[0] !== "ok")
+    .map(([, texte, page, id]) => ({id, page, texte: id === "banque-tri" ? texte.replace(/ bancaire(s?) de \d{4} encore/, "").replace(/\.$/, "") : id === "echeancier-banque" ? "Tableau du prêt à déposer" : texte.split(" (")[0], lib: id === "banque-tri" ? "Trier" : id === "echeancier-banque" ? "Déposer" : "Choisir le prêt"}));
+  if(S.data.emprunts.length && !echeancesJustifiees(y)){
+    const n = S.data.emprunts.reduce((t, l) => t + etatsRapprochement(l, y).filter(e => e.c !== "ok").length, 0);
+    if(n) out.push({id:"rp-main", texte:`${n} échéance${pl(n)} de prêt à rapprocher`, page:"emprunt", lib:"Rapprocher"});
+  }
+  return out;
+}
 function pointsRevision(y){
   const auto = controles(y).filter(x => GARDER.has(x[3])).map(([niveau, texte, page, id]) => ({type:"auto", niveau, texte, page, id, cycle:["echeancier-banque","pret-rattache","echeances"].includes(id) ? "emprunt" : id === "banque-tri" ? "tresorerie" : id === "deficits-perimes" || id === "n1" || id === "excel" ? "resultat" : "saisie"}));
   const q = ATTEST.map(([id, texte]) => ({type:"q", id:"q-" + id, cycle:"confirmer", texte}));
@@ -3615,9 +3752,9 @@ function vueRevision(y){
       <button class="btn small ${r.statut === "na" ? "" : "sec"}" onclick="majRevision(${y},'releve',{statut:${r.statut === "na" ? "null" : "'na'"}})">Pas de relevé disponible</button></div>`;
     else if(x.id === "acquisitions" && clos) suite = r.statut === "vu" ? `<div class="sub" style="margin-top:6px">Factures vérifiées.</div>` : "";
     else if(x.id === "acquisitions") suite = `<div class="row" style="margin-top:6px"><button class="btn small ${r.statut === "vu" ? "" : "sec"}" onclick="majRevision(${y},'acquisitions',{statut:${r.statut === "vu" ? "null" : "'vu'"}})">Factures vérifiées</button></div>`;
-    else if(x.id === "crd" && ko && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('emprunt')">Voir l'échéancier mois par mois</button><button class="btn small sec" onclick="S.year=${y};regulariserCRD()">Régulariser l'écart…</button></div>`;
+    else if(x.id === "crd" && ko && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('emprunt')">Rapprocher les échéances</button><button class="btn small sec" onclick="S.year=${y};regulariserCRD()">Régulariser l'écart…</button></div>`;
     else if(x.attendu == null && x.page === "dossier" && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('dossier')">Renseigner le bail dans les paramètres</button></div>`;
-    else if(ko && x.page && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('${x.page}')">${x.page === "emprunt" ? "Voir l'échéancier mois par mois" : `Corriger dans ${NOM_PAGE[x.page]}`} →</button></div>`;
+    else if(ko && x.page && !clos) suite = `<div class="row" style="margin-top:6px"><button class="btn small sec" onclick="S.revPoste=null;allerA('${x.page}')">${x.page === "emprunt" ? "Rapprocher les échéances" : `Corriger dans ${NOM_PAGE[x.page]}`} →</button></div>`;
     const comptes = (x.gls || (x.gl ? [x.gl] : [])).map(c => lienGL({t:"compte", v:c}, c, "rv-cpt"));
     return `<div class="rl rs-${x.etat}"><div class="rl-lib"><b>${x.lib.replace(/\s*\(\d{3}\)$/, "")}</b>${comptes.length ? `<span class="rv-cpts">${comptes.join("")}</span>` : ""}<small>${esc(x.source || "")}${x.extra && x.extra !== "releve" ? ` · ${esc(x.extra)}` : ""}</small></div>
       <div class="rl-n"><small>${x.type === "revue" ? y : "Comptabilité"}</small>${montant(x.compta, x.gl)}</div><div class="rl-n"><small>${x.type === "revue" ? y-1 : "Attendu"}</small>${montant(x.attendu)}</div>
@@ -3626,7 +3763,7 @@ function vueRevision(y){
       ${ko || x.etat === "fait" ? `<div class="rl-suite">${ancien ? `<div class="sub" style="margin:0 0 4px;color:var(--warn)">Les montants ont changé depuis l'explication du ${fmtDate(r.date)} : relisez-la et validez-la à nouveau.</div>` : ""}${suite}${x.attendu != null ? explication(x, r) : ""}</div>` : ""}</div>`; };
   const ligneAuto = x => { const r = rev[x.id] || {};
     return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s">${pastille(x)}</div>
-      ${x.etat === "afaire" || x.etat === "bloque" || x.etat === "fait" ? `<div class="rl-suite">${x.page && x.etat !== "fait" && !clos ? `<button class="btn small sec" style="margin-bottom:6px" onclick="S.revPoste=null;allerA('${x.page}')">Corriger dans ${NOM_PAGE[x.page]} →</button>` : ""}${x.niveau === "warn" ? explication(x, r) : ""}</div>` : ""}</div>`; };
+      ${x.etat === "afaire" || x.etat === "bloque" || x.etat === "fait" ? `<div class="rl-suite">${x.page && x.etat !== "fait" && !clos ? `<button class="btn small sec" style="margin-bottom:6px" onclick="S.revPoste=null;allerA('${x.page}')">${x.id === "echeances" ? "Rapprocher à la main" : `Corriger dans ${NOM_PAGE[x.page]}`} →</button>` : ""}${x.niveau === "warn" ? explication(x, r) : ""}</div>` : ""}</div>`; };
   const ligneQ = x => { const r = rev[x.id] || {};
     return `<div class="rl rl-auto rs-${x.etat}"><div class="rl-lib">${x.texte}</div><div class="rl-s">${[["vu","Oui"],["na","Sans objet"]].map(([k,l]) => `<button class="btn small ${r.statut===k?"":"sec"}" ${clos?`disabled title="Exercice clôturé : rouvrez-le pour modifier la révision"`:""} onclick="majRevision(${y},'${x.id}',{statut:${r.statut===k?"null":`'${k}'`}})">${l}</button>`).join("")}</div></div>`; };
   const ligne = x => x.type === "calc" || x.type === "revue" ? ligneCalc(x) : x.type === "q" ? ligneQ(x) : ligneAuto(x);
@@ -3647,7 +3784,10 @@ function vueRevision(y){
   const tete = clos ? (ex.revision ? `Révision ${y} en lecture seule : l'exercice est clôturé. Pour la modifier, rouvrez ${y} (étape Clôturer).` : `${y} a été clôturé avant le module de révision : les points ci-dessous sont indicatifs (lecture seule).`)
     : bloq ? `${bloq} erreur${pl(bloq)} bloquante${pl(bloq)} : la clôture attend qu'elles soient corrigées ou expliquées` : nb ? `Plus d'erreur bloquante : la clôture est possible (${nb} point${pl(nb)} à vérifier)` : "Révision validée : prêt à clôturer";
   const imprimer = postes.map(c => `<div class="printonly rv-imp"><h3>${c.l} · ${NIV[niveauPoste(c.p)][0]}</h3>${c.p.map(x => `<div>${NIV[x.etat][1]} ${x.lib || x.texte}${x.type === "calc" && x.attendu != null ? ` : ${eur(x.compta)} / ${eur(x.attendu)}` : ""}${rev[x.id]?.commentaire ? ` · <i>${esc(rev[x.id].commentaire)}</i>` : ""}</div>`).join("")}</div>`).join("");
-  return `<div class="card noprint"><h3 style="margin:0 0 4px;color:${clos ? "var(--text)" : bloq ? "var(--neg)" : nb ? "var(--warn)" : "var(--pos)"}">${tete}</h3>
+  const prep = clos ? [] : preparatifs(y);
+  const avant = prep.length ? `<div class="card prep noprint"><h3 style="margin:0 0 6px">Avant de réviser</h3>
+    ${prep.map(x => `<div class="prep-l"><span class="ea-d"></span><span>${x.texte}</span>${x.page ? `<button class="btn small" onclick="S.revPoste=null;allerA('${x.page}')">${x.lib}</button>` : ""}</div>`).join("")}</div>` : "";
+  return avant + `<div class="card noprint"><h3 style="margin:0 0 4px;color:${clos ? "var(--text)" : bloq ? "var(--neg)" : nb ? "var(--warn)" : "var(--pos)"}">${tete}</h3>
     <p class="sub" style="margin:0">Chaque poste rapproche la comptabilité d'une source indépendante (échéancier, bail, relevé, tableau d'amortissement, clôture ${y-1}). Touchez un poste pour voir le détail.</p>
     <div class="row" style="margin-top:10px;gap:14px;flex-wrap:wrap"><span class="sub" style="margin:0"><b style="color:var(--neg)">✕</b> bloquant · <b style="color:var(--warn)">!</b> à vérifier, non bloquant · <b style="color:var(--pos)">✓</b> validé</span></div></div>
   <div class="rv-grille noprint">${tuiles}</div>
