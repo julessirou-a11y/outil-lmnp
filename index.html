@@ -352,11 +352,11 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 .roue-an.au-centre small{max-width:110px;opacity:1}
 .roue-an b{color:var(--muted);transition:color .2s}.roue-an.au-centre b{color:var(--text)}
 /* Accueil sans dossier, création d'un dossier, « Pour bien démarrer » */
-.bv{max-width:560px;margin:8vh auto 0;text-align:center}
+.bv{max-width:780px;margin:8vh auto 0;text-align:center}
 .bv-logo .logo{width:min(320px,80%);height:auto}
 .bv-slogan{color:var(--muted);margin:14px 0 28px;line-height:1.55}
 .bv-reprendre{margin:0 auto 22px;font-size:15.5px;padding:11px 22px}
-.bv-choix{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.bv-choix{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
 .bv-carte{display:flex;flex-direction:column;align-items:center;gap:6px;padding:26px 18px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);font:inherit;color:var(--text);cursor:pointer;transition:border-color .15s,transform .15s}
 .bv-carte:hover{border-color:var(--accent);transform:translateY(-2px)}
 .bv-carte svg{width:26px;height:26px;color:var(--accent);margin-bottom:4px}
@@ -369,6 +369,11 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 .as-txt{color:var(--muted);line-height:1.55;margin:0 0 20px}
 .as-ok{display:flex;align-items:center;gap:8px;font-weight:500;margin-bottom:18px}.as-ok svg{color:var(--pos)}
 .as-form{grid-template-columns:1fr 1fr;margin:8px 0 22px}.as-form .large{grid-column:1/-1}
+.as-form small{color:var(--faint);font-weight:400;margin-left:4px;font-variant-numeric:tabular-nums}
+.as-gr{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;margin:10px 0 -4px;font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}.as-gr:first-child{margin-top:0}.as-gr span{text-transform:none;letter-spacing:0;font-weight:400;color:var(--faint)}
+.as-calc{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;padding:10px 14px;border-radius:var(--r-md);background:var(--surface-2);font-size:14px;color:var(--muted)}.as-calc b{color:var(--text);font-weight:600;font-variant-numeric:tabular-nums}
+.as-def{display:grid;grid-template-columns:1fr 1.4fr auto;gap:10px;align-items:end;grid-column:1/-1}
+.as-def .btn{margin-bottom:2px}
 .as-actions .btn:not(.ghost){font-size:15.5px;padding:10px 22px}
 .demarrage .dm-l{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--line)}
 .demarrage .dm-l:first-of-type{border-top:0}
@@ -1080,6 +1085,17 @@ function planAmort(i){
   const base = baseAmort(i), annuite = base / i.dureeAns;
   const y0 = yearOf(i.miseEnService), m0 = monthOf(i.miseEnService);
   const plan = []; let cumul = 0, y = y0;
+  // Dossier repris : les amortissements déjà pratiqués au 31/12 de la dernière année déclarée (tableau de l'ancien logiciel ou du comptable)
+  // remplacent le plan théorique jusque-là, puis l'annuité normale reprend jusqu'à la base amortissable
+  const R = repriseAn(), ant = R != null && i.amortAnterieurs != null && y0 <= R ? Math.max(0, Math.min(Number(i.amortAnterieurs) || 0, base)) : null;
+  if(ant != null){
+    const lig = (an, dot) => { cumul += dot; plan.push({annee:an, dotation:dot, cumul, vnc: base - cumul, avantLMNP: an < yearOf(debutLMNP()), repris: an <= R}); };
+    const theo = []; let c = 0;
+    for(let an = y0; an <= R; an++){ const d = Math.max(0, Math.min(annuite * (an === y0 ? 13 - m0 : 12) / 12, base - c)); c += d; theo.push([an, d]); }
+    theo.forEach(([an, d], n) => lig(an, c > 0.005 ? d * ant / c : (n === theo.length - 1 ? ant : 0)));
+    for(let an = R + 1; cumul < base - 0.005 && an <= R + i.dureeAns + 1; an++) lig(an, Math.min(annuite, base - cumul));
+    return plan;
+  }
   while(cumul < base - 0.005 && y < y0 + i.dureeAns + 2){
     const mois = (y === y0) ? 13 - m0 : 12;
     let dot = Math.min(annuite * mois / 12, base - cumul);
@@ -1162,6 +1178,11 @@ function empruntAnnee(l, y){
 /* ============ Calculs : exercice ============ */
 function exercice(y){ return S.data.exercices[y]; }
 function isHistorique(y){ const ex = exercice(y); return ex && ex.statut === "historique"; }
+/* Année déclarée avant le Carnet : reprise de l'ancien Excel, ou de la liasse 2033 d'un dossier repris (autre logiciel, comptable) */
+const histLiasse = y => exercice(y)?.source === "liasse";
+const histTexte = y => histLiasse(y) ? `${y} a été déclarée avant le Carnet : seuls ses totaux sont repris, pas ses écritures.` : "Année reprise de l'Excel : pas d'écritures détaillées.";
+/* Dossier repris : dernière année déclarée avant le Carnet (ses chiffres viennent de la liasse) */
+const repriseAn = () => { const a = S.data?.dossier?.reprise?.an; return a == null ? null : +a; };
 function anneesCalculees(){
   return Object.keys(S.data.exercices).map(Number).filter(y => !isHistorique(y)).sort((a,b)=>a-b);
 }
@@ -1521,7 +1542,7 @@ $("#tabs").addEventListener("click", e => { const b = e.target.closest("button[d
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
 /* ---- Roue des exercices : les années défilent comme une roue (glisser à deux doigts, molette, flèches, clic) ---- */
 const ROUE_H = 38; // hauteur d'une ligne
-function etatAnnee(y){ const ex = exercice(y); return isHistorique(y) ? "reprise Excel" : ex?.statut === "cloture" ? "clôturé" : "en cours"; }
+function etatAnnee(y){ const ex = exercice(y); return isHistorique(y) ? (histLiasse(y) ? "déclarée avant le Carnet" : "reprise Excel") : ex?.statut === "cloture" ? "clôturé" : "en cours"; }
 function ouvrirRoue(){
   const deja = $(".roue"); if(deja){ if(!deja.dataset.ferme) return fermerRoue(); deja.remove(); }
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b), btn = $("#yearBtn");
@@ -1588,7 +1609,8 @@ function vueBienvenue(){
     <p class="bv-slogan">La comptabilité de votre location meublée.<br>Vos données restent chez vous, rien n'est envoyé sur internet.</p>
     <button class="btn bv-reprendre hide" id="resume"></button>
     <div class="bv-choix">
-      <button class="bv-carte" onclick="S.assistant={etape:1};renderAll()">${svgI('<path d="M12 5v14M5 12h14"/>')}<b>Créer mon dossier</b><span>Je commence avec le Carnet</span></button>
+      <button class="bv-carte" onclick="S.assistant={etape:1};renderAll()">${svgI('<path d="M12 5v14M5 12h14"/>')}<b>Créer mon dossier</b><span>Je commence ma location</span></button>
+      <button class="bv-carte" onclick="S.assistant={etape:1,mode:'reprise'};renderAll()">${svgI('<path d="M4 4v6h6"/><path d="M20 12a8 8 0 0 0-14.9-4L4 10M4 14a8 8 0 0 0 14.9 4"/><path d="M20 20v-6h-6"/>')}<b>Reprendre ma compta</b><span>J'ai déjà déclaré ailleurs</span></button>
       <button class="bv-carte" onclick="ouvrirDossier()">${svgI('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')}<b>Ouvrir mon dossier</b><span>J'ai déjà un dossier du Carnet</span></button>
     </div>
     <button class="btn ghost small bv-json" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button></div>`;
@@ -1603,27 +1625,91 @@ function vueBienvenue(){
     </div>
     ${DEPOT ? "" : `<div class="row"><button class="btn ghost" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button></div>`}</div>`;
 }
-/* ---- Création d'un dossier : deux étapes (où ranger, la location), puis « Pour bien démarrer » sur le tableau de bord ---- */
+/* ---- Création d'un dossier : deux étapes (où ranger, la location), puis « Pour bien démarrer » sur le tableau de bord.
+   Reprise d'une compta tenue ailleurs (autre logiciel, comptable) : deux étapes de plus, recopiées de la dernière liasse 2033 déclarée
+   (ses totaux deviennent l'année « N-1 » du Carnet) et des reports (amortissements en réserve, déficits). ---- */
+const LIASSE_AS = {
+  resultat: [["asL218","loyers","Loyers et recettes","218"], ["asL242","chargesExternes","Charges externes","242"], ["asL244","impotsTaxes","Impôts et taxes","244"],
+             ["asL254","dotationsAmortissements","Dotations aux amortissements","254"], ["asL294","interets","Intérêts d'emprunt","294"]],
+  bilan: [["asL028","immobilisationsBrutes","Immobilisations (brut)","028"], ["asL030","amortissementsCumules","Amortissements cumulés","030"], ["asL156","capitalRestantDu","Emprunt restant dû","156"]],
+};
+const derniereDeclareeParDefaut = debut => { const an = new Date().getFullYear(); return Math.max(yearOf(debut || `${an-1}-01-01`), aujourdhui() < `${an}-06-01` ? an - 2 : an - 1); };
+/* Totaux de la liasse saisie : résultat et capital se déduisent des autres lignes, comme le Carnet les calcule */
+function chiffresLiasseAs(A){
+  const n = k => { const v = parseMontant(A[k] ?? ""); return isNaN(v) ? 0 : v; }, h = {};
+  [...LIASSE_AS.resultat, ...LIASSE_AS.bilan].forEach(([id, k]) => h[k] = r2(n(id)));
+  h.resultat = r2(h.loyers - h.chargesExternes - h.impotsTaxes - h.dotationsAmortissements - h.interets);
+  h.immobilisationsNettes = r2(h.immobilisationsBrutes - h.amortissementsCumules);
+  h.capitalExploitant = r2(h.immobilisationsNettes - h.resultat - h.capitalRestantDu);
+  return h;
+}
+function majCalculAs(){ lireAssistant(); const h = chiffresLiasseAs(S.assistant);
+  const r = $("#asRes"), c = $("#asCap"); if(r) r.textContent = eur(h.resultat); if(c) c.textContent = eur(h.capitalExploitant); }
 function vueAssistant(){
-  const A = S.assistant, an = new Date().getFullYear();
-  const pas = `<div class="as-pas">${[1,2].map(n => `<i class="${n <= A.etape ? "on" : ""}"></i>`).join("")}</div>`;
-  const retour = A.etape === 1 ? `S.assistant=null;renderAll()` : `lireAssistant();S.assistant.etape=1;renderAll()`;
-  const corps = A.etape === 1 ? `
+  const A = S.assistant, an = new Date().getFullYear(), rep = A.mode === "reprise", nb = rep ? 4 : 2;
+  const pas = `<div class="as-pas">${[...Array(nb).keys()].map(k => `<i class="${k < A.etape ? "on" : ""}"></i>`).join("")}</div>`;
+  const retour = A.etape === 1 ? `S.assistant=null;renderAll()` : `lireAssistant();S.assistant.etape--;renderAll()`;
+  const R = +A.derniere || derniereDeclareeParDefaut(A.debut);
+  const champ = ([id, , lib, ligne]) => `<label><span>${lib}<small>ligne ${ligne}</small></span><input id="${id}" inputmode="decimal" value="${esc(A[id] || "")}" placeholder="0" oninput="majCalculAs()"></label>`;
+  let corps;
+  if(A.etape === 1) corps = `
       <h1>Où ranger votre dossier ?</h1>
       <p class="as-txt">Dans le Finder, créez un dossier vide dans iCloud Drive, par exemple « Ma location », puis choisissez-le ici. Le Carnet y enregistre tout lui-même, et l'iPhone le retrouve.</p>
       ${A.dir ? `<div class="as-ok">${svgI('<path d="M20 6 9 17l-5-5"/>')}« ${esc(A.dir.name)} »<button class="btn ghost small" onclick="choisirDossierAssistant()">Changer</button></div>` : ""}
-      <div class="row as-actions">${A.dir ? `<button class="btn" onclick="S.assistant.etape=2;renderAll()">Continuer</button>` : `<button class="btn" onclick="choisirDossierAssistant()">Choisir le dossier…</button>`}</div>`
-  : `
+      <div class="row as-actions">${A.dir ? `<button class="btn" onclick="S.assistant.etape=2;renderAll()">Continuer</button>` : `<button class="btn" onclick="choisirDossierAssistant()">Choisir le dossier…</button>`}</div>`;
+  else if(A.etape === 2) corps = `
       <h1>Votre location</h1>
+      ${rep ? `<p class="as-txt">Le Carnet reprend votre comptabilité à partir de la première année que vous n'avez pas encore déclarée. Gardez sous la main votre dernière déclaration (liasse 2031 et 2033) et le tableau des amortissements.</p>` : ""}
       <div class="form as-form">
         <label class="large">Votre nom et prénom<input id="asNom" value="${esc(A.nom || "")}" autocomplete="name"></label>
         <label class="large">Adresse du logement loué<input id="asAdresse" value="${esc(A.adresse || "")}" autocomplete="street-address"></label>
-        <label>Début de la location meublée<input id="asDebut" type="date" value="${esc(A.debut || an + "-01-01")}" max="${an}-12-31"></label>
+        <label>Début de la location meublée<input id="asDebut" type="date" value="${esc(A.debut || (rep ? `${an-3}-01-01` : an + "-01-01"))}" max="${an}-12-31"></label>
+        ${rep ? `<label>Dernière année déclarée<select id="asDerniere">${[...Array(12).keys()].map(k => an - 1 - k).map(y => `<option value="${y}" ${y === R ? "selected" : ""}>${y}</option>`).join("")}</select></label>` : ""}
         <label>Loyer mensuel hors charges<input id="asLoyer" inputmode="decimal" value="${esc(A.loyer || "")}" placeholder="facultatif"></label>
         <label>Charges mensuelles demandées<input id="asCharges" inputmode="decimal" value="${esc(A.charges || "")}" placeholder="facultatif"></label>
       </div>
-      <div class="row as-actions"><button class="btn" onclick="creerDossierAssistant()">Créer mon dossier</button></div>`;
+      <div class="row as-actions">${rep ? `<button class="btn" onclick="etapeAssistant(3)">Continuer</button>` : `<button class="btn" onclick="creerDossierAssistant()">Créer mon dossier</button>`}</div>`;
+  else if(A.etape === 3){ const h = chiffresLiasseAs(A); corps = `
+      <h1>Votre déclaration ${R}</h1>
+      <p class="as-txt">Recopiez les montants de la liasse ${R}, au centime près ou à l'euro, comme ils ont été déclarés. Ils remplissent la colonne « année précédente » de votre prochaine déclaration et servent de point de départ.</p>
+      <div class="form as-form">
+        <div class="as-gr">Compte de résultat<span>2033-B</span></div>
+        ${LIASSE_AS.resultat.map(champ).join("")}
+        <div class="as-calc"><span>Résultat <small>ligne 310</small></span><b id="asRes">${eur(h.resultat)}</b></div>
+        <div class="as-gr">Bilan au 31/12/${R}<span>2033-A</span></div>
+        ${LIASSE_AS.bilan.map(champ).join("")}
+        <div class="as-calc"><span>Capital de l'exploitant <small>ligne 120</small></span><b id="asCap">${eur(h.capitalExploitant)}</b></div>
+      </div>
+      <p class="sub" style="margin:-8px 0 18px">Le résultat et le capital se déduisent des autres lignes : s'ils ne retombent pas sur votre liasse, vérifiez les montants saisis.</p>
+      <div class="row as-actions"><button class="btn" onclick="etapeAssistant(4)">Continuer</button></div>`; }
+  else { const defs = A.deficits || []; corps = `
+      <h1>Ce qui reste à reporter</h1>
+      <p class="as-txt">Deux montants passent d'une année à l'autre. Votre logiciel ou votre comptable les suit sur un tableau à part (ou sur la 2033-D pour les déficits). Laissez vide s'il n'y en a pas.</p>
+      <div class="form as-form">
+        <label class="large"><span>Amortissements en réserve au 31/12/${R}<small>art. 39 C</small></span><input id="asARD" inputmode="decimal" value="${esc(A.ard || "")}" placeholder="0"></label>
+        <div class="as-gr">Déficits restant à imputer<span>par année d'origine</span></div>
+        ${defs.map((x, k) => `<div class="as-def"><label>Année<select class="as-defan">${[...Array(DUREE_DEFICIT).keys()].map(j => R - j).map(y => `<option ${+x.annee === y ? "selected" : ""}>${y}</option>`).join("")}</select></label>
+          <label>Montant restant<input class="as-defm" inputmode="decimal" value="${esc(x.montant || "")}"></label><button class="btn ghost small" aria-label="Retirer" onclick="lireAssistant();S.assistant.deficits.splice(${k},1);renderAll()">✕</button></div>`).join("")}
+        <div class="large"><button class="btn sec small" onclick="lireAssistant();(S.assistant.deficits??=[]).push({annee:${R},montant:''});renderAll()">+ Ajouter un déficit</button></div>
+      </div>
+      <div class="row as-actions"><button class="btn" onclick="creerDossierAssistant()">Créer mon dossier</button></div>`; }
   return `<div class="as"><button class="btn ghost small as-retour" onclick="${retour}">← Retour</button>${pas}${corps}</div>`;
+}
+/* Passer à l'étape suivante de la reprise après contrôle de ce qui vient d'être saisi */
+function etapeAssistant(n){
+  const A = lireAssistant(), an = new Date().getFullYear();
+  if(n === 3){
+    if(!A.nom) return avertir("Indiquez votre nom et prénom : ils figurent sur la déclaration.");
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(A.debut || "")) return avertir("Indiquez la date de début de la location meublée.");
+    if(+A.derniere < yearOf(A.debut)) return avertir(`La location a commencé en ${yearOf(A.debut)} : la dernière année déclarée ne peut pas être ${A.derniere}.`);
+    const loyer = montantChamp(A.loyer, "loyer"); if(loyer === undefined || montantChamp(A.charges, "charges") === undefined) return;
+  }
+  if(n === 4){
+    for(const [id, , lib] of [...LIASSE_AS.resultat, ...LIASSE_AS.bilan]) if(String(A[id] ?? "").trim() && isNaN(parseMontant(A[id]))) return avertir(`« ${A[id]} » n'est pas un montant lisible (${lib.toLowerCase()}).`);
+    if(!(parseMontant(A.asL218 || "") > 0)) return avertir("Indiquez les loyers déclarés (ligne 218).");
+    if(!(parseMontant(A.asL028 || "") > 0)) return avertir("Indiquez la valeur brute des immobilisations (ligne 028) : le logement et le mobilier figurent au bilan.");
+  }
+  A.etape = n; renderAll();
 }
 async function choisirDossierAssistant(){
   let dir; try{ dir = await window.showDirectoryPicker({id:"lmnp", mode:"readwrite"}); }catch(e){ if(e.name !== "AbortError") avertir("Impossible d'ouvrir ce dossier : " + e.message); return; }
@@ -1635,33 +1721,59 @@ async function choisirDossierAssistant(){
   if(noms.length && !await confirmer(`« ${dir.name} » n'est pas vide.\n\nIl contient ${noms.length} élément${noms.length > 1 ? "s" : ""}. Le Carnet y ajoutera ses fichiers à côté. Mieux vaut un dossier vide, rien que pour le Carnet.`, {ok:"Utiliser quand même", annuler:"Choisir un autre"})) return;
   S.assistant.dir = dir; renderAll();
 }
-function lireAssistant(){ const A = S.assistant; for(const [k, id] of [["nom","asNom"],["adresse","asAdresse"],["debut","asDebut"],["loyer","asLoyer"],["charges","asCharges"]]){ const el = $("#" + id); if(el) A[k] = el.value.trim(); } return A; }
+function lireAssistant(){ const A = S.assistant;
+  for(const [k, id] of [["nom","asNom"],["adresse","asAdresse"],["debut","asDebut"],["loyer","asLoyer"],["charges","asCharges"],["derniere","asDerniere"],["ard","asARD"],
+      ...[...LIASSE_AS.resultat, ...LIASSE_AS.bilan].map(([id]) => [id, id])]){ const el = $("#" + id); if(el) A[k] = el.value.trim(); }
+  const ans = [...document.querySelectorAll(".as-defan")]; if(ans.length || A.etape === 4) A.deficits = ans.map((el, k) => ({annee:el.value, montant:document.querySelectorAll(".as-defm")[k].value.trim()}));
+  return A; }
 async function creerDossierAssistant(){
   const A = lireAssistant(), an = new Date().getFullYear();
   if(!A.nom) return avertir("Indiquez votre nom et prénom : ils figurent sur la déclaration.");
   if(!/^\d{4}-\d{2}-\d{2}$/.test(A.debut || "")) return avertir("Indiquez la date de début de la location meublée.");
   const loyer = montantChamp(A.loyer, "loyer"), charges = loyer === undefined ? null : montantChamp(A.charges, "charges"); if(loyer === undefined || charges === undefined) return;
-  // Premier exercice : l'année du début, ou l'an dernier tant que sa déclaration (mai) n'est pas passée ; les années d'avant ont été déclarées ailleurs
-  const debutAn = Math.min(yearOf(A.debut), an), premier = Math.max(debutAn, aujourdhui() < `${an}-06-01` ? an - 1 : an);
+  // Premier exercice : l'année du début, ou l'an dernier tant que sa déclaration (mai) n'est pas passée ; les années d'avant ont été déclarées ailleurs.
+  // Reprise : l'année qui suit la dernière déclarée, dont les totaux de la liasse sont gardés comme année « historique »
+  const rep = A.mode === "reprise", R = +A.derniere;
+  const debutAn = Math.min(yearOf(A.debut), an), premier = rep ? R + 1 : Math.max(debutAn, aujourdhui() < `${an}-06-01` ? an - 1 : an);
+  let ard = 0, deficits = [];
+  if(rep){
+    ard = montantChamp(A.ard, "amortissements en réserve"); if(ard === undefined) return;
+    for(const x of A.deficits || []){ if(!String(x.montant).trim()) continue; const m = montantChamp(x.montant, `déficit ${x.annee}`); if(m === undefined) return; if(m > 0) deficits.push({annee:+x.annee, montant:m}); }
+  }
   const d = newDossier();
-  d.dossier = {...d.dossier, nom:A.dir.name, nomExploitant:A.nom, debutLocationMeublee:A.debut, ...(A.adresse ? {adresseBien:A.adresse} : {}), ...(loyer ? {loyerMensuel:loyer} : {}), ...(charges ? {provisionCharges:charges} : {}), demarrage:true};
+  d.dossier = {...d.dossier, nom:A.dir.name, nomExploitant:A.nom, debutLocationMeublee:A.debut, ...(A.adresse ? {adresseBien:A.adresse} : {}), ...(loyer ? {loyerMensuel:loyer} : {}), ...(charges ? {provisionCharges:charges} : {}), demarrage:true,
+    ...(rep ? {reprise:{an:R, le:aujourdhui()}} : {})};
   d.exercices = {}; for(let y = premier; y <= an; y++) d.exercices[y] = {statut:"en-cours", ecritures:[]};
+  if(rep){ d.exercices[R] = {statut:"historique", source:"liasse", chiffres:chiffresLiasseAs(A)}; d.reports = {amortissementsDifferes:ard || 0, deficits}; }
   const dir = A.dir;
   try{ if(await dir.queryPermission({mode:"readwrite"}) !== "granted" && await dir.requestPermission({mode:"readwrite"}) !== "granted") return; }catch(_){}
   S.assistant = null; S.dir = dir; await idb.set("dir", dir); S.tab = "accueil";
   chargerDonnees(d, dir.name + "/" + FILE); S.year = premier; await enregistrer();
-  if(debutAn < premier) avertir(`Votre location a commencé en ${debutAn}.\n\nLe Carnet démarre en ${premier}. Si les années d'avant ont été déclarées, reportez leurs chiffres dans Paramètres du dossier (déficits et amortissements en réserve).`);
+  if(debutAn < premier && !rep) avertir(`Votre location a commencé en ${debutAn}.\n\nLe Carnet démarre en ${premier}. Si les années d'avant ont été déclarées, reportez leurs chiffres dans Paramètres du dossier (déficits et amortissements en réserve).`);
+}
+/* Dossier repris : les immobilisations et le prêt saisis doivent retomber sur le bilan de la dernière liasse déclarée */
+function controleReprise(){
+  const R = repriseAn(); if(R == null) return null;
+  const h = exercice(R)?.chiffres || {}, im = S.data.immobilisations.filter(i => i.miseEnService && anneeEntreeBilan(i) <= R);
+  const lignes = [["brut", "Immobilisations brutes (028)", r2(im.reduce((s,i) => s + i.valeurOrigine, 0)), h.immobilisationsBrutes],
+    ["amort", "Amortissements cumulés (030)", r2(im.reduce((s,i) => s + amortAnnee(i, R).cumulFin, 0)), h.amortissementsCumules],
+    S.data.emprunts.length ? ["crd", "Emprunt restant dû (156)", r2(crdEcheancier(R)), h.capitalRestantDu] : null];
+  return lignes.filter(l => l && l[3] != null).map(([k, lib, v, att]) => ({k, lib, v, att, ok: Math.abs(v - att) < 1}));
 }
 /* Pour bien démarrer : affiché sur le tableau de bord d'un dossier créé avec le Carnet, jusqu'à ce que tout soit fait */
 function demarrage(){
   const d = S.data.dossier; if(!d.demarrage || S.consultation) return "";
   const ecr = Object.values(S.data.exercices).some(ex => (ex.ecritures || []).length) || (S.data.banque?.aTrier || []).length;
+  const R = repriseAn(), ctl = controleReprise(), ecarts = (ctl || []).filter(l => !l.ok);
   const etapes = [
-    [S.data.immobilisations.length, "Le logement et le mobilier", "Prix d'achat, frais, meubles : ils s'amortissent.", `allerA('immos');ouvrirImmo('new')`, "Ajouter"],
+    R != null ? [S.data.immobilisations.length, "Le logement et le mobilier", `D'après le tableau des amortissements ${R} : prix, date, durée et cumul déjà amorti.`, `allerA('immos');ouvrirImmo('new')`, "Ajouter"]
+      : [S.data.immobilisations.length, "Le logement et le mobilier", "Prix d'achat, frais, meubles : ils s'amortissent.", `allerA('immos');ouvrirImmo('new')`, "Ajouter"],
     [S.data.emprunts.length || d.sansPret, "Le prêt", "Le tableau d'amortissement de la banque.", `allerA('emprunt');ajouterEmprunt()`, "Ajouter", `S.data.dossier.sansPret=true;setDirty();renderAll()`],
     [ecr, "Les opérations de l'année", "Importez le relevé de votre banque.", `allerA('banque')`, "Importer"],
     [d.siret && d.numeroFiscal, "Vos numéros pour les impôts", "SIRET, numéro fiscal, déclarant 1 ou 2.", `allerA('dossier')`, "Renseigner"],
   ];
+  if(R != null) etapes.splice(2, 0, [S.data.immobilisations.length && (S.data.emprunts.length || d.sansPret) && !ecarts.length, `Les comptes retombent sur la liasse ${R}`,
+    !S.data.immobilisations.length ? "À vérifier une fois le logement, le mobilier et le prêt saisis." : ecarts.map(l => `${l.lib} : ${eur(l.v)} au lieu de ${eur(l.att)}`).join(" · "), ecarts.length && ecarts.every(l => l.k === "crd") ? `allerA('emprunt')` : `allerA('immos')`, "Vérifier"]);
   const faits = etapes.filter(e => e[0]).length;
   if(faits === etapes.length) return "";
   return `<div class="card demarrage noprint"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">Pour bien démarrer</h3>
@@ -1710,7 +1822,7 @@ function vueAccueil(){
   const y = S.year;
   if(isHistorique(y)){
     const h = exercice(y).chiffres||{};
-    return entete(`${y}`, "Année reprise de l'ancien fichier Excel.") +
+    return entete(`${y}`, histLiasse(y) ? "Année déclarée avant le Carnet : chiffres repris de la liasse." : "Année reprise de l'ancien fichier Excel.") +
       `<div class="tuiles">${tuile("Loyers", eur0(h.loyers), {col:"var(--pos)"})}${tuile("Charges", eur0((h.chargesExternes||0)+(h.impotsTaxes||0)+(h.interets||0)))}${tuile("Amortissements", eur0(h.dotationsAmortissements), {col:"var(--accent)"})}${tuile("Résultat", eur0(h.resultat), {cls:"fort"})}</div>`;
   }
   // Dernier exercice clôturé et l'année suivante commencée : proposer de l'ouvrir
@@ -1799,7 +1911,7 @@ const chipNature = n => `<span class="chip" style="--c:${COUL_GROUPE[NATURES[n]?
 const segments = (cle, opts, val) => `<div class="seg noprint" role="tablist" data-cle="${cle}"><i class="seg-ind" aria-hidden="true"></i>${opts.map(([k,l])=>`<button role="tab" aria-selected="${k===val}" class="${k===val?"on":""}" onclick="S['${cle}']='${k}';renderAll()">${l}</button>`).join("")}</div>`;
 function vueEcritures(){
   const y = S.year;
-  if(isHistorique(y)) return entete(`Écritures ${y}`) + `<div class="alert info">Année reprise de l'Excel : pas d'écritures détaillées.</div>`;
+  if(isHistorique(y)) return entete(`Écritures ${y}`) + `<div class="alert info">${histTexte(y)}</div>`;
   const ex = exercice(y); ex.ecritures ??= [];
   const vue = S.vueEcr || "journal", lock = verrouille(y);
   const ed = S.editId ? ex.ecritures.find(e=>e.id===S.editId) : null;
@@ -2309,7 +2421,7 @@ function fenetreImmo(y){
   if(!S.immoOuv) return "";
   const neuf = S.immoOuv === "new";
   const logement = neuf && !S.data.immobilisations.some(x => x.categorie === "construction"), deb = debutLMNP();
-  const i = neuf ? {libelle:logement ? "Logement" : "", categorie:logement ? "construction" : "mobilier", valeurOrigine:"", quotePartTerrain:logement ? 0.15 : 0, dureeAns:logement ? 30 : 7, miseEnService:yearOf(deb) === y ? deb : y+"-01-01"} : S.data.immobilisations.find(x => x.id === S.immoOuv);
+  const i = neuf ? {libelle:logement ? "Logement" : "", categorie:logement ? "construction" : "mobilier", valeurOrigine:"", quotePartTerrain:logement ? 0.15 : 0, dureeAns:logement ? 30 : 7, miseEnService:yearOf(deb) === y || (repriseAn() != null && yearOf(deb) <= repriseAn()) ? deb : y+"-01-01"} : S.data.immobilisations.find(x => x.id === S.immoOuv);
   if(!i) return "";
   const edit = neuf || S.editImmo === i.id, fig = !neuf && immoFigee(i), col = COUL_CAT[i.categorie] || "var(--accent)";
   const ic = `<span class="imx-ic" style="color:${col}">${svgI(IC_CAT[i.categorie]||IC_CAT.travaux).replace('width="17" height="17"','width="22" height="22"')}</span>`;
@@ -2320,23 +2432,25 @@ function fenetreImmo(y){
     <label id="iTerL" class="${i.categorie==="construction"?"":"hide"}">Part terrain (%)<input id="iTer" inputmode="decimal" ${fig?"disabled":""} value="${String(r2((i.quotePartTerrain||0)*100)).replace(".",",")}"></label>
     <label>Durée (ans)<input id="iDur" type="number" min="1" ${fig?"disabled":""} value="${i.dureeAns}"></label>
     <label>Mise en service<input id="iDate" type="date" ${fig?"disabled":""} value="${i.miseEnService}"></label>
+    ${repriseAn() != null ? `<label>Déjà amorti au 31/12/${repriseAn()}<input id="iAnt" inputmode="decimal" ${fig?"disabled":""} value="${i.amortAnterieurs != null ? String(i.amortAnterieurs).replace(".",",") : ""}" placeholder="selon le plan"></label>` : ""}
     <div class="row imx-act"><button class="btn" onclick="saveImmo()">Enregistrer</button><button class="btn sec" onclick="${neuf ? "fermerImmo()" : "S.editImmo=null;renderAll()"}">Annuler</button>
     ${!neuf && !fig ? `<button class="btn danger" onclick="delImmo()">Supprimer</button>` : ""}</div></div>
-    <p class="sub" style="margin:10px 0 0">Durées usuelles : logement 25–30 ans, travaux 10–15 ans, mobilier 5–10 ans. Moins de 500 € HT : en charge.</p>`;
+    ${repriseAn() != null ? `<p class="sub" style="margin:10px 0 0">Reprenez le tableau des amortissements de votre déclaration ${repriseAn()} : prix, date, durée et cumul des amortissements au 31/12/${repriseAn()}. Le Carnet continue le plan à partir de ce cumul.</p>` : ""}<p class="sub" style="margin:10px 0 0">Durées usuelles : logement 25–30 ans, travaux 10–15 ans, mobilier 5–10 ans. Moins de 500 € HT : en charge.</p>`;
   let corps = form;
   if(!edit){
     const plan = planAmort(i), a = amortAnnee(i, y), base = a.base, terrain = i.valeurOrigine - base, cpt = CPT_IMMO[i.categorie] || CPT_IMMO.travaux;
     const avant = plan.filter(p => p.avantLMNP).reduce((s,p)=>s+p.dotation,0), fin = plan.length ? plan[plan.length-1].annee : yearOf(i.miseEnService);
     const m0 = monthOf(i.miseEnService);
     const fiche = [["Prix TTC", eur0(i.valeurOrigine)], terrain > 0.005 ? ["Terrain (non amorti)", eur0(terrain)] : null, ["Base amortissable", eur0(base)],
-      ["Durée", `${i.dureeAns} ans · ${String(r2(100 / i.dureeAns)).replace(".",",")} %`], ["Mise en service", fmtDate(i.miseEnService)], ["Fin", fin]].filter(Boolean);
+      ["Durée", `${i.dureeAns} ans · ${String(r2(100 / i.dureeAns)).replace(".",",")} %`], ["Mise en service", fmtDate(i.miseEnService)], ["Fin", fin],
+      plan.some(p => p.repris) ? [`Amorti au 31/12/${repriseAn()}`, eur0(i.amortAnterieurs)] : null].filter(Boolean);
     corps = `<div class="imx-fiche">${fiche.map(([l,v]) => `<div><span>${l}</span><b>${v}</b></div>`).join("")}</div>
       <div style="margin:14px 0 4px">${jauge([[avant,"var(--seg-2)","Avant la location meublée (non déduit)"],[a.cumulFin - avant, col, "Amorti"]], base, 10)}</div>
       <div class="leg" style="margin-bottom:14px">${avant > 0.005 ? `<span><i style="background:var(--seg-2)"></i>Avant la location meublée ${eur0(avant)}</span>` : ""}<span><i style="background:${col}"></i>Amorti en location ${eur0(a.cumulFin - avant)}</span><span><i style="background:var(--line)"></i>Reste ${eur0(base - a.cumulFin)}</span></div>
       <div class="card glxw" style="margin:0"><div class="tablewrap"><table class="glx imx">
         <thead><tr><th class="an">Année</th><th class="n m-x">Prorata</th><th class="n">Dotation</th><th class="n">Cumul</th><th class="n">Valeur nette</th></tr></thead><tbody>
         ${plan.map((p,k) => { const mois = k === 0 ? 13 - m0 : p === plan[plan.length-1] && p.dotation < base / i.dureeAns - 0.01 ? Math.round(p.dotation / (base / i.dureeAns) * 12) : 12;
-          return `<tr class="${p.annee === y ? "imx-cur" : p.avantLMNP ? "imx-avant" : p.annee > y ? "imx-prev" : ""}"><td>${p.annee}${p.avantLMNP ? ' <span class="pill"><span class="pl-long">avant LMNP, non déduit</span><span class="pl-court">avant LMNP</span></span>' : p.annee === y ? ' <span class="pill">exercice</span>' : ""}</td>
+          return `<tr class="${p.annee === y ? "imx-cur" : p.avantLMNP || p.repris ? "imx-avant" : p.annee > y ? "imx-prev" : ""}"><td>${p.annee}${p.avantLMNP ? ' <span class="pill"><span class="pl-long">avant LMNP, non déduit</span><span class="pl-court">avant LMNP</span></span>' : p.annee === y ? ' <span class="pill">exercice</span>' : p.repris ? ' <span class="pill" title="Le cumul au 31/12 vient de la déclaration ; la répartition par année est indicative">avant le Carnet</span>' : ""}</td>
           <td class="n m-x">${mois === 12 ? "12 mois" : `${mois} mois`}</td><td class="n imx-dot">${num0(p.dotation)}</td><td class="n">${num0(p.cumul)}</td><td class="n">${num0(i.valeurOrigine - p.cumul)}</td></tr>`; }).join("")}</tbody>
         <tbody class="glx-gen"><tr><td>Total</td><td class="m-x"></td><td class="n">${num0(base)}</td><td></td><td class="n">${num0(terrain)}</td></tr></tbody></table></div></div>
       <p class="sub" style="margin:10px 0 0">Comptes ${lienGL({t:"compte", v:cpt.brut}, cpt.brut, "rv-cpt")} ${lienGL({t:"compte", v:cpt.am}, cpt.am, "rv-cpt")} ${lienGL({t:"compte", v:"681120"}, "681120", "rv-cpt")}</p>`;
@@ -2353,7 +2467,10 @@ function fenetreImmo(y){
 function suiviAmortissements(yMax){
   const lignes = [];
   const hist = Object.keys(S.data.exercices).map(Number).filter(y => isHistorique(y) && y <= yMax).sort((a,b)=>a-b);
-  const dotHist = hist.reduce((s,y)=>s + (Number(exercice(y).chiffres?.dotationsAmortissements)||0), 0);
+  const R = repriseAn();
+  const dotHist = R != null && R <= yMax
+    ? r2(S.data.immobilisations.reduce((s,i) => s + planAmort(i).filter(p => p.annee <= R && !p.avantLMNP).reduce((t,p) => t + p.dotation, 0), 0))
+    : hist.reduce((s,y)=>s + (Number(exercice(y).chiffres?.dotationsAmortissements)||0), 0);
   const reserveOuverture = Number(S.data.reports.amortissementsDifferes)||0;
   hist.forEach(y => lignes.push({y, historique:true, dotations:Number(exercice(y).chiffres?.dotationsAmortissements)||0}));
   // Années reprises de l'Excel : seul le total est connu = dotations déclarées − réserve encore disponible à l'ouverture
@@ -2365,7 +2482,7 @@ function suiviAmortissements(yMax){
     lignes.push({y, dotations:f.c.dotations, deduites:f.dotDeductible, reserveUtilisee:f.ardUtilise, consommes, cumul, reserveFin:f.ardFin});
   });
   const der = lignes.filter(l => !l.historique).pop();
-  return {lignes, consommesHist, dotHist, reserveOuverture, cumul, reserveFin: der ? der.reserveFin : reserveOuverture};
+  return {lignes, consommesHist, dotHist, reserveOuverture, cumul, reserveFin: der ? der.reserveFin : reserveOuverture, avantCarnet: R != null};
 }
 function vueConsommes(y, replie){
   if(isHistorique(y)) return "";
@@ -2378,25 +2495,33 @@ function vueConsommes(y, replie){
     <div class="conso">
       <div class="centre">${donut([["Consommés", t.cumul, "var(--accent)"],["En réserve", t.reserveFin, "var(--warn)"]], eur0(tot), "amortissements")}
         <div class="leg col"><span><i style="background:var(--accent)"></i>Consommés ${eur0(t.cumul)}</span><span><i style="background:var(--warn)"></i>En réserve ${eur0(t.reserveFin)}</span></div></div>
-      <div><div class="cbars">${det.map(l => l.historique ? `<div class="cb"><div class="cbs" title="${l.y} (Excel) : ${eur0(l.dotations)} de dotations"><i style="height:${(l.dotations/max*100).toFixed(1)}%;background:var(--seg-2)"></i></div><span>${l.y}</span></div>` : `<div class="cb"><div class="cbs" title="${l.y}">
+      <div><div class="cbars">${det.map(l => l.historique ? `<div class="cb"><div class="cbs" title="${l.y} (${t.avantCarnet ? "avant le Carnet" : "Excel"}) : ${eur0(l.dotations)} de dotations"><i style="height:${(l.dotations/max*100).toFixed(1)}%;background:var(--seg-2)"></i></div><span>${l.y}</span></div>` : `<div class="cb"><div class="cbs" title="${l.y}">
           <i style="height:${(l.deduites/max*100).toFixed(1)}%;background:var(--accent)" title="Déduits : ${eur0(l.deduites)}"></i>
           <i style="height:${(l.reserveUtilisee/max*100).toFixed(1)}%;background:var(--accent-2)" title="Réserve utilisée : ${eur0(l.reserveUtilisee)}"></i>
           <i style="height:${(Math.max(0,l.dotations-l.deduites)/max*100).toFixed(1)}%;background:var(--warn)" title="Mis en réserve : ${eur0(l.dotations-l.deduites)}"></i></div><span>${l.y}</span></div>`).join("")}</div>
-        <div class="leg" style="margin-top:8px"><span><i style="background:var(--accent)"></i>Déduits</span><span><i style="background:var(--accent-2)"></i>Réserve utilisée</span><span><i style="background:var(--warn)"></i>Mis en réserve</span>${det.some(l=>l.historique)?'<span><i style="background:var(--seg-2)"></i>Années Excel</span>':""}</div></div>
+        <div class="leg" style="margin-top:8px"><span><i style="background:var(--accent)"></i>Déduits</span><span><i style="background:var(--accent-2)"></i>Réserve utilisée</span><span><i style="background:var(--warn)"></i>Mis en réserve</span>${det.some(l=>l.historique)?'<span><i style="background:var(--seg-2)"></i>${t.avantCarnet ? "Avant le Carnet" : "Années Excel"}</span>':""}</div></div>
     </div>
     <p class="sub" style="margin:14px 0 0"><b>Consommés</b> : déduits du résultat, ils réduiront le prix d'achat retenu à la revente. <b>En réserve</b> : reportés sans limite, sans effet sur la plus-value.</p>
     <details><summary>Détail par année</summary><div class="tablewrap"><table>
     <tr><th>Année</th><th class="n">Dotations</th><th class="n">Déduites</th><th class="n">Réserve utilisée</th><th class="n">Consommés</th><th class="n">Cumul</th><th class="n">Réserve fin</th></tr>
     ${t.lignes.map(l => l.historique
-      ? `<tr class="muted"><td>${l.y} <span class="pill">Excel</span></td><td class="n">${eur(l.dotations)}</td><td class="n" colspan="5"></td></tr>`
+      ? `<tr class="muted"><td>${l.y} <span class="pill">${t.avantCarnet ? "liasse" : "Excel"}</span></td><td class="n">${eur(l.dotations)}</td><td class="n" colspan="5"></td></tr>`
       : `<tr class="${l.y===y?"tot":""}"><td>${l.y}</td><td class="n">${eur(l.dotations)}</td><td class="n">${eur(l.deduites)}</td><td class="n">${eur(l.reserveUtilisee)}</td><td class="n">${eur(l.consommes)}</td><td class="n">${eur(l.cumul)}</td><td class="n">${eur(l.reserveFin)}</td></tr>`).join("")}
-    </table></div>${t.lignes.some(l=>l.historique) ? `<p class="sub" style="margin:8px 0 0">Années Excel : ${eur(t.consommesHist)} consommés (${eur(t.dotHist)} de dotations moins ${eur(t.reserveOuverture)} en réserve à l'ouverture).</p>` : ""}</details>${replie ? "</details>" : "</div>"}`;
+    </table></div>${t.lignes.some(l=>l.historique) ? `<p class="sub" style="margin:8px 0 0">${t.avantCarnet ? "Avant le Carnet" : "Années Excel"} : ${eur(t.consommesHist)} consommés (${eur(t.dotHist)} ${t.avantCarnet ? "d'amortissements pratiqués" : "de dotations"} moins ${eur(t.reserveOuverture)} en réserve à l'ouverture).</p>` : ""}</details>${replie ? "</details>" : "</div>"}`;
 }
 function saveImmo(){
   const cour = S.editImmo !== "new" && S.data.immobilisations.find(i=>i.id===S.editImmo);
   if(immoFigee(cour)){ if(!$("#iLib").value.trim()) return avertir("Le libellé est obligatoire."); cour.libelle = $("#iLib").value.trim(); S.editImmo = null; setDirty(); renderAll(); return; }
   const v = {libelle:$("#iLib").value.trim(), categorie:$("#iCat").value, valeurOrigine:r2(parseMontant($("#iVal").value)),
     quotePartTerrain: $("#iCat").value === "construction" ? r2(parseMontant($("#iTer").value)/100 || 0) : 0, dureeAns: parseInt($("#iDur").value,10), miseEnService:$("#iDate").value};
+  const R = repriseAn(), tAnt = $("#iAnt")?.value.trim() ?? "";
+  v.amortAnterieurs = undefined;
+  if(R != null && tAnt !== "" && v.miseEnService && yearOf(v.miseEnService) <= R){
+    const n = parseMontant(tAnt);
+    if(isNaN(n) || n < 0) return avertir(`« ${tAnt} » n'est pas un montant lisible (déjà amorti au 31/12/${R}).`);
+    if(n > baseAmort(v) + 0.005) return avertir(`Le cumul des amortissements (${eur(n)}) dépasse la base amortissable (${eur(baseAmort(v))}) : vérifiez le prix, la part terrain ou le cumul.`);
+    v.amortAnterieurs = r2(n);
+  }
   if(v.miseEnService && anneeEntreeBilan(v) <= derniereCloture()) return avertir(`${derniereCloture()} est clôturé : une immobilisation mise en service avant ou pendant cet exercice ne peut être ajoutée qu'après réouverture.`);
   if(!v.libelle || !(v.valeurOrigine>0) || !(v.dureeAns>0) || !v.miseEnService) return avertir("Libellé, valeur, durée et date sont obligatoires.");
   if(S.editImmo === "new"){ const id = uid(); S.data.immobilisations.push({id, ...v}); S.immoOuv = id; }
@@ -2781,7 +2906,7 @@ function vueDeclaration(){
   const y = S.year, vue = S.vueDecl || "declarer";
   const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Déclaration ${y}</h1></div>
     <div class="row noprint">${segments("vueDecl", [["declarer","Déclarer"],["etats","États financiers"]], vue)}</div></div>`;
-  if(isHistorique(y)) return tete + `<div class="card vide">${y} a été déclarée avec l'ancien fichier Excel.</div>`;
+  if(isHistorique(y)) return tete + `<div class="card vide">${y} a été déclarée ${histLiasse(y) ? "avant le Carnet" : "avec l'ancien fichier Excel"}.</div>`;
   const f = fiscalJusqua(y);
   if(!f?.c.lmnpActif) return tete + `<div class="card vide">Pas de location meublée en ${y}.</div>`;
   if(vue === "etats") return tete + etatsFinanciers(y);
@@ -3016,6 +3141,8 @@ function controles(y){
   }
   const prec = exercice(y-1);
   if(y > yearOf(debutLMNP())) chk("n1", "capitaux", !!prec && (!isHistorique(y-1) || prec.chiffres?.immobilisationsNettes != null), `Colonne N-1 (${y-1}) disponible pour la 2033-A.`, "warn", `Chiffres ${y-1} incomplets : la colonne « année précédente » du bilan (2033-A) sera à remplir à la main lors de la déclaration.`);
+  if(repriseAn() != null && y === repriseAn() + 1) (controleReprise() || []).forEach(l => chk(`reprise-${l.k}`, l.k === "crd" ? "emprunt" : "immos", l.ok,
+    `${l.lib} : conforme à la liasse ${repriseAn()} (${eur(l.att)}).`, "warn", `${l.lib} : ${eur(l.v)} d'après le Carnet, ${eur(l.att)} sur la liasse ${repriseAn()}. Vérifiez ${l.k === "crd" ? "le prêt (ou déposez l'échéancier de la banque)" : "les immobilisations et leur cumul déjà amorti"}.`, l.k === "crd" ? "emprunt" : "immos"));
   const xl = ex.reprise?.chiffres?.resultat;
   if(xl != null) chk("excel", "fiscal", Math.abs(c.resultatComptable - xl) < 1, `Résultat comptable identique à l'Excel repris (${eur(xl)}).`, "warn", `Résultat comptable de ${eur(c.resultatComptable)} contre ${eur(xl)} dans l'Excel repris : vérifiez les écritures et les immobilisations.`, "ecritures");
   const f = fiscalJusqua(y);
@@ -3264,9 +3391,9 @@ function vueDossier(){
   </div>
   <div class="dosgrid">${Object.values(CHAMPS_DOSSIER).map(([titre, ic, champs]) => `<div class="card"><h3 class="ich"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="${ic}"/></svg>${titre}</h3><div class="form f2">${champs.map(champDossier).join("")}</div></div>`).join("")}</div>
   <div class="card"><h3>Années</h3><div class="annees">
-    ${anneeReprenable() ? `<button class="an plus" onclick="ouvrirReprise(${anneeReprenable()})"><b>+</b><span>Reprendre ${anneeReprenable()}</span></button>` : ""}
-    ${ys.map(y=>{ const st = S.data.exercices[y].statut||"en-cours", [lib,col] = STAT[st]||[st,"var(--line)"];
-      return `<div class="an" style="--c:${col}"><b>${y}</b><span>${lib}</span>${isHistorique(y)?`<button class="btn small sec" onclick="ouvrirReprise(${y})">Détailler…</button>`:st==="cloture"
+    ${anneeReprenable() && !repriseAn() ? `<button class="an plus" onclick="ouvrirReprise(${anneeReprenable()})"><b>+</b><span>Reprendre ${anneeReprenable()}</span></button>` : ""}
+    ${ys.map(y=>{ const st = S.data.exercices[y].statut||"en-cours", [lib0,col] = STAT[st]||[st,"var(--line)"], lib = histLiasse(y) ? "Avant le Carnet" : lib0;
+      return `<div class="an" style="--c:${col}"><b>${y}</b><span>${lib}</span>${isHistorique(y)?(histLiasse(y) ? "" : `<button class="btn small sec" onclick="ouvrirReprise(${y})">Détailler…</button>`):st==="cloture"
         ?(y === derniereCloture() ? `<button class="btn small sec" onclick="rouvrirExercice(${y})">Rouvrir…</button>` : `<button class="btn small sec" disabled title="Rouvrez d'abord ${derniereCloture()}">Rouvrir…</button>`)
         :(motifNonCloturable(y) ? `<button class="btn small sec" disabled title="${esc(motifNonCloturable(y))}">Clôturer…</button>` : `<button class="btn small sec" onclick="S.cloture=${y};renderAll();haut()">Clôturer…</button>`)}</div>`; }).join("")}
     <button class="an plus" onclick="nouvelExercice()"><b>+</b><span>Ouvrir ${Math.max(...ys)+1}</span></button>
@@ -3681,7 +3808,7 @@ async function deposerSurEcriture(ev, id){
 }
 function vuePieces(){
   const y = S.year;
-  if(isHistorique(y)) return entete(`Pièces ${y}`) + `<div class="alert info">Année reprise de l'Excel : pas d'écritures détaillées.</div>`;
+  if(isHistorique(y)) return entete(`Pièces ${y}`) + `<div class="alert info">${histTexte(y)}</div>`;
   const ex = exercice(y), all = (ex.ecritures||[]).filter(pieceRequise);
   const manq = piecesManquantes(y).sort((a,b)=>a.date.localeCompare(b.date));
   const ok = all.filter(e=>e.piece).sort((a,b)=>a.date.localeCompare(b.date));
