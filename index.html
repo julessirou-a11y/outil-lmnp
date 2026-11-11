@@ -1448,7 +1448,7 @@ function renderAll(){
 const MOUV = !matchMedia("(prefers-reduced-motion: reduce)").matches;
 const posRel = el => ({x:el.offsetLeft, y:el.offsetTop, w:el.offsetWidth, h:el.offsetHeight}); // par rapport au conteneur (position:relative)
 function memoAnim(){
-  const segs = {}; document.querySelectorAll("#main .seg[data-cle]").forEach(g => { const on = g.querySelector("button.on"); if(on) segs[g.dataset.cle] = posRel(on); });
+  const segs = {}; document.querySelectorAll("#main .seg[data-cle]").forEach(g => { const bs = [...g.querySelectorAll("button")], on = g.querySelector("button.on"); if(on) segs[g.dataset.cle] = {pos:posRel(on), i:bs.indexOf(on)}; });
   return {segs, voile:!!$("#main .rv-voile"), nav:S.navPos};
 }
 const cadre = r => ({transform:`translate(${r.x}px,${r.y}px)`, width:r.w+"px", height:r.h+"px"});
@@ -1462,12 +1462,19 @@ function glisser(ind, de, a){
   ind.animate([cadre(de), {...cadre({x, y, w, h}), offset:.45}, cadre(a)], {duration:460, easing:"cubic-bezier(.45,.05,.2,1)"});
 }
 function animer(avant, cle){
-  const m = $("#main"), nouvelle = cle !== S.animCle; S.animCle = cle;
-  m.classList.toggle("entree", MOUV && nouvelle);
-  if(MOUV && nouvelle) compter(m);
+  const m = $("#main"), nouvelle = cle !== S.animCle, memeOnglet = S.animTab === S.tab; S.animCle = cle; S.animTab = S.tab;
+  // Sélecteur de la page (Écritures / Balance / Grand livre…) : le curseur glisse, et le contenu arrive du côté choisi
+  let sens = 0, segChange = null;
+  m.querySelectorAll(".seg[data-cle]").forEach(g => { const bs = [...g.querySelectorAll("button")], on = g.querySelector("button.on"), ind = g.querySelector(".seg-ind"); if(!on || !ind) return;
+    const av = memeOnglet && avant.segs[g.dataset.cle], a = posRel(on);
+    glisser(ind, (MOUV && av && av.pos) || a, a);
+    if(av && av.i !== bs.indexOf(on)){ sens = Math.sign(bs.indexOf(on) - av.i); segChange = g; } });
+  const bascule = MOUV && sens && memeOnglet;
+  m.classList.toggle("entree", MOUV && nouvelle && !bascule);
+  if(MOUV && nouvelle && !bascule) compter(m);
+  if(bascule) [...m.children].filter(el => !el.contains(segChange)).forEach((el, i) =>
+    el.animate([{opacity:0, transform:`translateX(${sens * 28}px)`, filter:"blur(6px)"}, {opacity:1, transform:"none", filter:"blur(0)"}], {duration:440, delay:i * 35, easing:"cubic-bezier(.2,.8,.2,1)", fill:"backwards"}));
   const v = m.querySelector(".rv-voile"); if(v && !avant.voile && MOUV) v.classList.add("ouvre");
-  m.querySelectorAll(".seg[data-cle]").forEach(g => { const on = g.querySelector("button.on"), ind = g.querySelector(".seg-ind"); if(!on || !ind) return;
-    const a = posRel(on); glisser(ind, (MOUV && !nouvelle && avant.segs[g.dataset.cle]) || a, a); });
   // Menu de gauche : le fond de l'onglet actif glisse d'un onglet à l'autre
   const nav = $("#tabs"), b = nav.querySelector("button.on");
   if(b){ const ind = document.createElement("i"); ind.className = "menu-ind"; ind.setAttribute("aria-hidden", "true"); nav.prepend(ind);
