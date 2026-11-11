@@ -1599,7 +1599,8 @@ $("#themeBtn").addEventListener("click", ev => {
   // Le nouveau thème s'étend en cercle depuis le bouton
   const r = ev.currentTarget.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, R = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
   $("#themeBtn").setAttribute("aria-pressed", t === "dark"); $("#themeBtn").setAttribute("aria-checked", t === "dark");
-  setTimeout(() => document.startViewTransition(bascule).ready.then(() => document.documentElement.animate({clipPath:[`circle(0px at ${x}px ${y}px)`, `circle(${R}px at ${x}px ${y}px)`]}, {duration:600, easing:"cubic-bezier(.4,0,.2,1)", pseudoElement:"::view-transition-new(root)"})).catch(() => {}), 180);
+  // Dès le clic : le cercle part du bouton, dont l'interrupteur glisse en même temps (la nouvelle vue est vivante)
+  document.startViewTransition(bascule).ready.then(() => document.documentElement.animate({clipPath:[`circle(0px at ${x}px ${y}px)`, `circle(${R}px at ${x}px ${y}px)`]}, {duration:600, easing:"cubic-bezier(.4,0,.2,1)", pseudoElement:"::view-transition-new(root)"})).catch(() => {});
 });
 function entete(titre, sous){ return `<div class="pagehead"><h1>${titre}</h1>${sous?`<p>${sous}</p>`:""}</div>`; }
 
