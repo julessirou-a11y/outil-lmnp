@@ -1627,7 +1627,7 @@ function entete(titre, sous){ return `<div class="pagehead"><h1>${titre}</h1>${s
 /* En-tête de page avec ses actions, toujours dans le même ordre à droite : vues, Imprimer, Ajouter */
 function tetePage(titre, ...actions){ return `<div class="row tetep"><div class="pagehead" style="margin:0"><h1>${titre}</h1></div><div class="row tetep-act">${actions.filter(Boolean).join("")}</div></div>`; }
 /* Un seul bouton Exporter par page : il ouvre une petite fenêtre qui propose ce que la page sait produire (PDF, CSV, FEC) */
-const btnExporter = () => `<button class="btn sec btn-ic noprint" onclick="ouvrirExport()" title="PDF, tableur ou FEC">${svgI('<path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/>')}Exporter</button>`;
+const btnExporter = () => `<button class="btn sec btn-ic noprint" onclick="ouvrirExport()" title="PDF, tableur ou FEC">${svgI('<path d="M4 14v4a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-4"/><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/>')}Exporter</button>`;
 const btnAjouter = (lib, go) => `<button class="btn btn-ic noprint" onclick="${go}">${svgI('<path d="M12 5v14M5 12h14"/>')}${lib}</button>`;
 
 function vueBienvenue(){
