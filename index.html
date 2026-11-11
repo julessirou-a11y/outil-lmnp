@@ -849,8 +849,31 @@ dialog.exp{width:min(440px,calc(100vw - 32px))}
 .exp-x{flex:none;width:46px;height:46px;border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:700;letter-spacing:.03em;background:var(--accent-soft);color:var(--accent)}
 .exp-o:hover .exp-x,.exp-o:focus-visible .exp-x{background:var(--accent);color:var(--surface)}
 .exp-t{display:flex;flex-direction:column;gap:2px;min-width:0}.exp-t b{font-weight:600;font-size:14.5px}.exp-t small{color:var(--muted);font-size:12.5px;line-height:1.4}
+.exp-m{cursor:default}.exp-m:hover{border-color:var(--line);background:var(--surface)}.exp-m .exp-t{flex:1}
+.exp-b{display:flex;gap:6px;flex:none}.exp-b .exp-x{width:46px;height:38px;border:0;font:inherit;font-size:12px;font-weight:700;cursor:pointer;transition:background-color .15s,color .15s}
+.exp-b .exp-x:hover,.exp-b .exp-x:focus-visible{background:var(--accent);color:var(--surface);outline:0}
 dialog.boite .row{display:flex;flex-direction:row-reverse;gap:8px;justify-content:flex-start;flex-wrap:wrap} /* OK en premier dans le code : Entrée valide */
 @media print{dialog.boite{display:none}}
+/* Éditions : un document à part, imprimé à la place de la page */
+#edition{display:none} @page paysage{size:A4 landscape} .edx-pay{page:paysage}
+@media print{ body.edition .app,body.edition .topbar{display:none!important} body.edition #edition{display:block} }
+.edx{color:#000;font-size:10.5px;line-height:1.35;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.edx-t{display:flex;justify-content:space-between;align-items:flex-end;gap:16px;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:12px}
+.edx-t h1{font-size:17px;margin:0;font-weight:700} .edx-t div{font-size:10px;color:#444;text-align:right}
+.edx h2{font-size:12.5px;margin:16px 0 6px;font-weight:700}
+.edx table{width:100%;border-collapse:collapse;margin:0 0 10px;table-layout:auto}
+.edx th,.edx td{font-size:10px;padding:3px 5px;border-bottom:1px solid #d4d4d4;text-align:left;vertical-align:top;color:#000;background:none}
+.edx th{font-weight:600;font-size:9px;border-bottom:1px solid #000;text-transform:none;letter-spacing:0}
+.edx th.n,.edx td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.edx tr.ec td{background:#eee;font-weight:600} .edx tr.et td{font-weight:600;border-top:1px solid #000} .edx tr.eg td{font-weight:700;border-top:2px solid #000;border-bottom:0}
+.edx tr.ecur td{font-weight:700} .edx tr.eprev td{color:#555;font-style:italic} .edx tr.erep td{color:#555}
+.edx .es{display:block;color:#555;font-size:9px}
+.edx .ef{break-inside:avoid;margin-bottom:16px}
+.edx .ef-id{display:grid;grid-template-columns:repeat(4,1fr);gap:4px 12px;margin:4px 0 8px}
+.edx .ef-id span{display:block;font-size:9px;color:#555} .edx .ef-id b{font-weight:600}
+.edx .enote{color:#444;font-size:9.5px;margin:6px 0 0}
+.edx .egrp{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:4px 0 12px}
+.edx .egrp div{border:1px solid #bbb;padding:6px 8px} .edx .egrp span{display:block;font-size:9px;color:#555} .edx .egrp b{font-size:13px}
 /* ---------- Version iPhone : deux onglets, gros boutons, sans menu latéral ---------- */
 html.mobile .topbar,html.mobile .side,html.mobile .scrim{display:none!important}
 html.mobile .app{display:block;background:var(--bg)}
@@ -3116,7 +3139,7 @@ function optionsExport(){
     pdf(ve === "balance" ? "La balance telle qu'affichée" : ve === "grandlivre" ? "Le grand livre tel qu'affiché" : "Le journal tel qu'affiché"),
     csv(ve === "balance" ? `Les comptes et leurs soldes${filtre}` : ve === "grandlivre" ? `Les lignes du grand livre${filtre}` : `Les écritures${filtre}`, () => csvEcritures(y, ve)),
     {ext:"FEC", t:"Fichier des écritures comptables", d:"Toute l'année, au format demandé en cas de contrôle fiscal", go:() => exporterFEC(y)}];
-  if(pg === "immos") return [pdf(S.vueImmo === "plan" ? "Le plan d'amortissement" : `Le tableau des amortissements ${y}`), csv(`Les immobilisations et leurs amortissements ${y}`, () => csvImmos(y))];
+  if(pg === "immos") return editionsImmos(y);
   if(pg === "emprunt") return [pdf("Le prêt et son échéancier"), csv("L'échéancier de chaque prêt", () => csvEmprunt())];
   if(pg === "declaration") return [pdf(vd === "etats" ? `Les comptes annuels ${y}` : `La déclaration ${y} et la feuille de révision`)];
   return [pdf("La page affichée")];
@@ -3125,11 +3148,13 @@ function ouvrirExport(){
   const opts = optionsExport(), d = document.createElement("dialog");
   d.className = "boite exp"; d.setAttribute("aria-labelledby", "expTitre");
   d.innerHTML = `<form method="dialog"><h3 id="expTitre">Exporter</h3>
-    <div class="exp-l">${opts.map((o, i) => `<button class="exp-o" value="${i}" type="submit"><span class="exp-x">${o.ext}</span><span class="exp-t"><b>${esc(o.t)}</b><small>${esc(o.d)}</small></span></button>`).join("")}</div>
+    <div class="exp-l">${opts.map((o, i) => o.f
+      ? `<div class="exp-o exp-m"><span class="exp-t"><b>${esc(o.t)}</b><small>${esc(o.d)}</small></span><span class="exp-b">${o.f.map(([ext], k) => `<button class="exp-x" value="${i}:${k}" type="submit" aria-label="${esc(o.t)} en ${ext}">${ext}</button>`).join("")}</span></div>`
+      : `<button class="exp-o" value="${i}" type="submit"><span class="exp-x">${o.ext}</span><span class="exp-t"><b>${esc(o.t)}</b><small>${esc(o.d)}</small></span></button>`).join("")}</div>
     <div class="row"><button class="btn ghost" value="" type="submit">Annuler</button></div></form>`;
   document.body.appendChild(d);
-  d.addEventListener("close", () => { const o = opts[d.returnValue]; d.remove(); if(o) setTimeout(o.go, 60); });
-  d.showModal(); d.querySelector(".exp-o").focus();
+  d.addEventListener("close", () => { const [i, k] = d.returnValue.split(":"), o = opts[i], go = o && (o.f ? o.f[k]?.[1] : o.go); d.remove(); if(go) setTimeout(go, 60); });
+  d.showModal(); d.querySelector("button.exp-o,.exp-x").focus();
 }
 /* CSV pour un tableur français : point-virgule, virgule décimale, UTF-8 avec BOM (accents lus par Excel) */
 function telechargerCSV(nom, lignes){
@@ -3167,6 +3192,115 @@ function csvImmos(y){
   const L = S.data.immobilisations.filter(i => anneeEntreeBilan(i) <= y).sort((a, b) => a.miseEnService.localeCompare(b.miseEnService));
   telechargerCSV(`immobilisations-${y}.csv`, [["Immobilisation", "Catégorie", "Mise en service", "Durée (ans)", "Valeur brute", "Terrain non amorti", `Cumul au 01/01/${y}`, `Dotation ${y}`, `Cumul au 31/12/${y}`, `Valeur nette au 31/12/${y}`],
     ...L.map(i => { const a = amortAnnee(i, y); return [i.libelle, CATEGORIES[i.categorie] || i.categorie, fmtDate(i.miseEnService), i.dureeAns, i.valeurOrigine, r2(i.valeurOrigine - a.base), a.cumulDebut, a.dotation, a.cumulFin, r2(i.valeurOrigine - a.cumulFin)]; })]);
+}
+/* ---- Éditions des immobilisations ---- */
+function editionsImmos(y){
+  const hist = isHistorique(y), L = [];
+  const ed = (t, d, pdfFn, csvFn) => L.push({t, d, f:[["PDF", () => imprimerEdition(pdfFn())], ["CSV", csvFn]]});
+  if(!hist) ed(`Tableau des immobilisations ${y}`, "Comme la 2033-C : valeurs brutes, amortissements et valeur nette, avec le détail par bien", () => editionTableau(y), () => csvImmos(y));
+  ed("Plan d'amortissement par bien", "Une fiche par immobilisation : base, durée, taux, puis chaque année jusqu'à la fin", () => editionPlans(y), () => csvPlans());
+  ed("Plan pluriannuel global", "Les dotations de toutes les immobilisations, année par année", () => editionPlanGlobal(y), () => csvPlanGlobal(y));
+  if(!hist && suiviAmortissements(y).lignes.length) ed("Amortissements déduits et en réserve", "Le suivi à garder pour calculer la plus-value à la revente", () => editionSuivi(y), () => csvSuivi(y));
+  return L;
+}
+function imprimerEdition(html){
+  let el = document.getElementById("edition");
+  if(!el){ el = document.createElement("div"); el.id = "edition"; document.body.appendChild(el); }
+  el.innerHTML = html; document.body.classList.add("edition");
+  const fin = () => { document.body.classList.remove("edition"); el.innerHTML = ""; };
+  addEventListener("afterprint", fin, {once:true});
+  print();
+}
+function enteteEdition(titre, sousTitre){
+  const d = S.data.dossier, nom = d.nomExploitant || d.nom || "";
+  return `<div class="edx-t"><div style="text-align:left;color:#000"><h1>${esc(titre)}</h1>${sousTitre ? `<span style="font-size:10.5px">${esc(sousTitre)}</span>` : ""}</div>
+    <div>${esc(nom)}${d.siret ? `<br>SIRET ${esc(d.siret)}` : ""}${d.adresseBien ? `<br>${esc(d.adresseBien)}` : ""}<br>Édité le ${fmtDate(aujourdhui())} · montants en euros</div></div>`;
+}
+const tauxAmort = i => (100 / i.dureeAns).toLocaleString("fr-FR", {maximumFractionDigits:2}) + " %";
+const tiret = v => Math.abs(v) < 0.005 ? "–" : num0(v);
+const immosTriees = () => [...S.data.immobilisations].sort((a, b) => a.miseEnService.localeCompare(b.miseEnService));
+/* 1. Tableau de l'exercice : récapitulatif aux lignes de la 2033-C (mêmes totaux que la liasse), puis le détail par bien */
+function editionTableau(y){
+  const B = bilan(y), Li = B.lignes, cats = [["terrain","Terrains"],["construction","Constructions"],["travaux","Installations générales, agencements"],["mobilier","Autres immobilisations corporelles"]];
+  const T = {brutDebut:0, aug:0, brutFin:0, amDebut:0, dot:0, amFin:0}; cats.forEach(([k]) => Object.keys(T).forEach(c => T[c] += Li[k][c]));
+  const recap = cats.map(([k, l]) => { const x = Li[k], am = k !== "terrain";
+    return `<tr><td>${l}</td><td class="n">${tiret(x.brutDebut)}</td><td class="n">${tiret(x.aug)}</td><td class="n">–</td><td class="n">${tiret(x.brutFin)}</td><td class="n">${am ? tiret(x.amDebut) : ""}</td><td class="n">${am ? tiret(x.dot) : ""}</td><td class="n">${am ? "–" : ""}</td><td class="n">${am ? tiret(x.amFin) : ""}</td><td class="n">${tiret(x.brutFin - x.amFin)}</td></tr>`; }).join("");
+  const det = Object.keys(CATEGORIES).map(k => {
+    const xs = immosTriees().filter(i => i.categorie === k && anneeEntreeBilan(i) <= y); if(!xs.length) return "";
+    const t = {v:0, ter:0, b:0, cd:0, dot:0, cf:0};
+    const rows = xs.map(i => { const a = amortAnnee(i, y), nouv = anneeEntreeBilan(i) === y, cd = nouv ? 0 : a.cumulDebut, dot = a.dotation + (nouv ? a.cumulDebut : 0), ter = r2(i.valeurOrigine - a.base);
+      t.v += i.valeurOrigine; t.ter += ter; t.b += a.base; t.cd += cd; t.dot += dot; t.cf += a.cumulFin;
+      return `<tr><td>${esc(i.libelle)}${nouv ? `<span class="es">acquis en ${y}</span>` : ""}</td><td>${fmtDate(i.miseEnService)}</td><td>Linéaire</td><td class="n">${i.dureeAns} ans</td><td class="n">${tauxAmort(i)}</td><td class="n">${num0(i.valeurOrigine)}</td><td class="n">${tiret(ter)}</td><td class="n">${num0(a.base)}</td><td class="n">${tiret(cd)}</td><td class="n">${tiret(dot)}</td><td class="n">${tiret(a.cumulFin)}</td><td class="n">${num0(i.valeurOrigine - a.cumulFin)}</td></tr>`; }).join("");
+    const cpt = CPT_IMMO[k] || CPT_IMMO.travaux;
+    return `<tr class="ec"><td colspan="12">${CATEGORIES[k]} · comptes ${cpt.brut.slice(0,4)} et ${cpt.am.slice(0,5)}</td></tr>${rows}
+      <tr class="et"><td colspan="5">Total ${CATEGORIES[k].toLowerCase()}</td><td class="n">${num0(t.v)}</td><td class="n">${tiret(t.ter)}</td><td class="n">${num0(t.b)}</td><td class="n">${tiret(t.cd)}</td><td class="n">${tiret(t.dot)}</td><td class="n">${tiret(t.cf)}</td><td class="n">${num0(t.v - t.cf)}</td></tr>`; }).join("");
+  return `<div class="edx edx-pay">${enteteEdition(`Tableau des immobilisations et des amortissements`, `Exercice du 01/01/${y} au 31/12/${y}`)}
+    <h2>Récapitulatif (tableau 2033-C)</h2>
+    <table><thead><tr><th rowspan="2">Rubrique</th><th class="n" colspan="4" style="text-align:center">Valeurs brutes</th><th class="n" colspan="4" style="text-align:center">Amortissements</th><th class="n" rowspan="2">Valeur nette<br>au 31/12</th></tr>
+      <tr><th class="n">Début</th><th class="n">Augmentations</th><th class="n">Diminutions</th><th class="n">Fin</th><th class="n">Début</th><th class="n">Dotations</th><th class="n">Diminutions</th><th class="n">Fin</th></tr></thead>
+      <tbody>${recap}<tr class="eg"><td>Total</td><td class="n">${num0(T.brutDebut)}</td><td class="n">${tiret(T.aug)}</td><td class="n">–</td><td class="n">${num0(T.brutFin)}</td><td class="n">${tiret(T.amDebut)}</td><td class="n">${tiret(T.dot)}</td><td class="n">–</td><td class="n">${tiret(T.amFin)}</td><td class="n">${num0(T.brutFin - T.amFin)}</td></tr></tbody></table>
+    <h2>Détail par immobilisation</h2>
+    <table><thead><tr><th>Immobilisation</th><th>Mise en service</th><th>Mode</th><th class="n">Durée</th><th class="n">Taux</th><th class="n">Valeur brute</th><th class="n">dont terrain</th><th class="n">Base amortissable</th><th class="n">Amortis au 01/01</th><th class="n">Dotation ${y}</th><th class="n">Amortis au 31/12</th><th class="n">Valeur nette</th></tr></thead>
+      <tbody>${det}<tr class="eg"><td colspan="5">Total général</td><td class="n">${num0(T.brutFin)}</td><td class="n">${tiret(Li.terrain.brutFin)}</td><td class="n">${num0(T.brutFin - Li.terrain.brutFin)}</td><td class="n">${tiret(T.amDebut)}</td><td class="n">${tiret(T.dot)}</td><td class="n">${tiret(T.amFin)}</td><td class="n">${num0(T.brutFin - T.amFin)}</td></tr></tbody></table>
+    <p class="enote">Amortissement linéaire par composants, au prorata du mois de mise en service ; le terrain n'est pas amorti. Le total des dotations correspond à la case 254 de la 2033-B.</p></div>`;
+}
+/* 2. Plan d'amortissement de chaque bien */
+function editionPlans(y){
+  const fiches = immosTriees().map(i => {
+    const plan = planAmort(i), base = baseAmort(i), ter = r2(i.valeurOrigine - base);
+    const rows = plan.map(p => `<tr class="${p.annee === y ? "ecur" : p.annee > y ? "eprev" : p.repris || p.avantLMNP ? "erep" : ""}"><td>${p.annee}${p.repris ? " · repris" : p.avantLMNP ? " · avant la location meublée" : ""}${p.annee === y ? " · exercice" : ""}</td><td class="n">${num0(p.dotation)}</td><td class="n">${num0(p.cumul)}</td><td class="n">${num0(i.valeurOrigine - p.cumul)}</td></tr>`).join("");
+    return `<div class="ef"><h2>${esc(i.libelle)} <span style="font-weight:400;color:#555">· ${CATEGORIES[i.categorie] || i.categorie}</span></h2>
+      <div class="ef-id"><div><span>Mise en service</span><b>${fmtDate(i.miseEnService)}</b></div><div><span>Valeur d'origine</span><b>${eur(i.valeurOrigine)}</b></div><div><span>dont terrain non amorti</span><b>${ter > 0.005 ? eur(ter) : "–"}</b></div><div><span>Base amortissable</span><b>${eur(base)}</b></div>
+        <div><span>Mode</span><b>Linéaire</b></div><div><span>Durée</span><b>${i.dureeAns} ans</b></div><div><span>Taux</span><b>${tauxAmort(i)}</b></div><div><span>Annuité pleine</span><b>${eur(base / i.dureeAns)}</b></div></div>
+      <table><thead><tr><th>Année</th><th class="n">Dotation</th><th class="n">Amortissements cumulés</th><th class="n">Valeur nette comptable</th></tr></thead><tbody>${rows}</tbody></table></div>`; }).join("");
+  return `<div class="edx">${enteteEdition("Plans d'amortissement par immobilisation", `Situation à l'exercice ${y}`)}${fiches}
+    <p class="enote">Après ${y}, en italique : prévision selon le plan actuel.${repriseAn() != null ? ` Jusqu'en ${repriseAn()}, « repris » : amortissements déjà pratiqués avant la tenue du dossier dans le Carnet.` : ""}</p></div>`;
+}
+/* 3. Plan global, une ligne par année */
+function planGlobalLignes(y){
+  const immos = S.data.immobilisations.map(i => { const plan = planAmort(i); return {i, entree:anneeEntreeBilan(i), fin: plan.length ? plan[plan.length-1].annee : yearOf(i.miseEnService)}; });
+  const y0 = yearOf(debutLMNP()), y1 = Math.max(y, ...immos.map(x => x.fin)), cats = Object.keys(CATEGORIES).filter(k => immos.some(x => x.i.categorie === k)), L = [];
+  for(let a = y0; a <= y1; a++){
+    const bil = immos.filter(x => x.entree <= a), dc = cats.map(k => bil.filter(x => x.i.categorie === k).reduce((s, x) => s + amortAnnee(x.i, a).dotation, 0));
+    const cum = bil.reduce((s, x) => s + amortAnnee(x.i, a).cumulFin, 0), brut = bil.reduce((s, x) => s + x.i.valeurOrigine, 0);
+    L.push({a, dc, dot:dc.reduce((s, v) => s + v, 0), cum, brut, fin:immos.filter(x => x.fin === a).map(x => x.i.libelle)});
+  }
+  return {cats, L};
+}
+function editionPlanGlobal(y){
+  const {cats, L} = planGlobalLignes(y), court = {construction:"Logement", travaux:"Travaux", mobilier:"Mobilier"};
+  return `<div class="edx">${enteteEdition("Plan d'amortissement global", `${L[0].a} à ${L[L.length-1].a}`)}
+    <table><thead><tr><th>Année</th>${cats.map(k => `<th class="n">${court[k]}</th>`).join("")}<th class="n">Dotation totale</th><th class="n">Amortissements cumulés</th><th class="n">Valeur brute</th><th class="n">Valeur nette</th></tr></thead>
+    <tbody>${L.map(l => `<tr class="${l.a === y ? "ecur" : l.a > y ? "eprev" : ""}"><td>${l.a}${l.a === y ? " · exercice" : ""}${l.fin.length ? `<span class="es">fin d'amortissement : ${esc(l.fin.join(", "))}</span>` : ""}</td>${l.dc.map(v => `<td class="n">${tiret(v)}</td>`).join("")}<td class="n">${tiret(l.dot)}</td><td class="n">${num0(l.cum)}</td><td class="n">${num0(l.brut)}</td><td class="n">${num0(l.brut - l.cum)}</td></tr>`).join("")}
+    <tr class="eg"><td>Total</td>${cats.map((k, n) => `<td class="n">${num0(L.reduce((s, l) => s + l.dc[n], 0))}</td>`).join("")}<td class="n">${num0(L.reduce((s, l) => s + l.dot, 0))}</td><td></td><td></td><td></td></tr></tbody></table>
+    <p class="enote">Après ${y}, en italique : prévision avec les immobilisations actuelles, sans nouvelle acquisition.</p></div>`;
+}
+/* 4. Amortissements déduits et en réserve (art. 39 C et 150 VB III du CGI) */
+function editionSuivi(y){
+  const t = suiviAmortissements(y), nom = t.avantCarnet ? "avant le Carnet" : "Excel";
+  return `<div class="edx">${enteteEdition("Suivi des amortissements déduits et en réserve", `Situation au 31/12/${y}`)}
+    <div class="egrp"><div><span>Amortissements déduits (consommés)</span><b>${eur(t.cumul)}</b></div><div><span>Amortissements en réserve (art. 39 C)</span><b>${eur(t.reserveFin)}</b></div><div><span>Total pratiqué</span><b>${eur(t.cumul + t.reserveFin)}</b></div></div>
+    <table><thead><tr><th>Année</th><th class="n">Dotations</th><th class="n">Déduites du résultat</th><th class="n">Mises en réserve</th><th class="n">Réserve utilisée</th><th class="n">Consommés de l'année</th><th class="n">Consommés cumulés</th><th class="n">Réserve en fin d'année</th></tr></thead>
+    <tbody>${t.lignes.map(l => l.historique
+      ? `<tr class="erep"><td>${l.y} · ${nom}</td><td class="n">${num0(l.dotations)}</td><td colspan="6"></td></tr>`
+      : `<tr class="${l.y === y ? "ecur" : ""}"><td>${l.y}</td><td class="n">${num0(l.dotations)}</td><td class="n">${tiret(l.deduites)}</td><td class="n">${tiret(l.dotations - l.deduites)}</td><td class="n">${tiret(l.reserveUtilisee)}</td><td class="n">${tiret(l.consommes)}</td><td class="n">${num0(l.cumul)}</td><td class="n">${num0(l.reserveFin)}</td></tr>`).join("")}</tbody></table>
+    ${t.lignes.some(l => l.historique) ? `<p class="enote">Années ${nom} : ${eur(t.consommesHist)} consommés (${eur(t.dotHist)} ${t.avantCarnet ? "d'amortissements pratiqués" : "de dotations"} moins ${eur(t.reserveOuverture)} en réserve à l'ouverture).</p>` : ""}
+    <p class="enote"><b>Déduits</b> : imputés sur le résultat. Pour une cession depuis le 15/02/2025, ils viennent en diminution du prix d'acquisition retenu pour la plus-value (art. 150 VB III du CGI). <b>En réserve</b> : amortissements non déductibles l'année où ils sont pratiqués (art. 39 C), reportables sans limite de durée ; ils ne minorent pas le prix d'acquisition tant qu'ils n'ont pas été déduits.</p></div>`;
+}
+function csvPlans(){
+  const out = [["Immobilisation", "Catégorie", "Mise en service", "Valeur d'origine", "Base amortissable", "Durée (ans)", "Année", "Dotation", "Amortissements cumulés", "Valeur nette comptable", "Remarque"]];
+  immosTriees().forEach(i => planAmort(i).forEach(p => out.push([i.libelle, CATEGORIES[i.categorie] || i.categorie, fmtDate(i.miseEnService), i.valeurOrigine, baseAmort(i), i.dureeAns, p.annee, p.dotation, p.cumul, r2(i.valeurOrigine - p.cumul), p.repris ? "repris" : p.avantLMNP ? "avant la location meublée" : ""])));
+  telechargerCSV("plans-amortissement.csv", out);
+}
+function csvPlanGlobal(y){
+  const {cats, L} = planGlobalLignes(y);
+  telechargerCSV("plan-amortissement-global.csv", [["Année", ...cats.map(k => CATEGORIES[k]), "Dotation totale", "Amortissements cumulés", "Valeur brute", "Valeur nette", "Prévision"],
+    ...L.map(l => [l.a, ...l.dc, l.dot, l.cum, l.brut, r2(l.brut - l.cum), l.a > y ? "oui" : ""])]);
+}
+function csvSuivi(y){
+  const t = suiviAmortissements(y);
+  telechargerCSV(`amortissements-deduits-reserve-${y}.csv`, [["Année", "Dotations", "Déduites du résultat", "Mises en réserve", "Réserve utilisée", "Consommés de l'année", "Consommés cumulés", "Réserve en fin d'année"],
+    ...t.lignes.map(l => l.historique ? [l.y, l.dotations, "", "", "", "", "", ""] : [l.y, l.dotations, l.deduites, r2(l.dotations - l.deduites), l.reserveUtilisee, l.consommes, l.cumul, l.reserveFin])]);
 }
 function csvEmprunt(){
   const out = [["Prêt", "Échéance", "Année", "Mois", "Intérêts", "Capital", "Assurance", "Restant dû"]];
