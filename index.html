@@ -61,9 +61,9 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .brand small{display:block;color:var(--muted);font-size:12.5px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
 .yearbox{padding:0 6px}
 .ylab{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);position:relative}
-#yearBtn{width:100%;display:flex;align-items:center;justify-content:space-between;font:inherit;font-size:14.5px;font-weight:600;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:8px 10px;cursor:pointer;transition:border-color .18s,box-shadow .18s}
-#yearBtn:hover,#yearBtn[aria-expanded="true"]{border-color:var(--accent)}#yearBtn[aria-expanded="true"]{box-shadow:0 0 0 3px var(--accent-soft)}
-#yearBtn svg{width:15px;height:15px;color:var(--muted)}
+#yearBtn{width:100%;display:flex;align-items:center;justify-content:space-between;font:inherit;font-size:14.5px;font-weight:600;color:var(--text);background:var(--surface-2);border:1px solid transparent;border-radius:12px;padding:8px 12px;cursor:pointer;transition:background-color .2s,border-color .2s}
+#yearBtn:hover{border-color:var(--line)}#yearBtn[aria-expanded="true"]{background:var(--line)}
+#yearBtn span{display:inline-block}#yearBtn svg{width:15px;height:15px;color:var(--muted);transition:transform .3s cubic-bezier(.34,1.4,.64,1)}#yearBtn[aria-expanded="true"] svg{transform:rotate(180deg)}
 .menu{display:flex;flex-direction:column;gap:2px}
 /* Le menu se tasse de lui-même quand la colonne manque de hauteur : les boutons rétrécissent (jusqu'à 28 px) au lieu de faire dépasser la colonne */
 .side>*{flex-shrink:0}
@@ -339,17 +339,19 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 @media (prefers-reduced-motion:reduce){.entree>*,.entree .tuiles>.tuile,.entree .arc,.entree .part,.entree .barres rect,.entree .jauge span,.menu3[open]>.m3,dialog.boite[open],.rv-voile.ouvre,.rv-voile.ouvre>.rv-fen,.toast,.card>details[open]>:not(summary){animation:none}.th-rond,.th-rond svg,.th-rail,.pe .pn{transition:none}}
 @media print{.entree>*,.entree *{animation:none!important}}
 /* Roue des exercices */
-.roue{position:absolute;left:-6px;right:-6px;top:calc(100% + 4px);z-index:40;height:190px;background:color-mix(in srgb,var(--surface) 84%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border-radius:18px;box-shadow:0 18px 40px rgba(30,10,30,.14);overflow:hidden;outline:none;animation:roue-in .32s cubic-bezier(.2,.9,.3,1.1);transform-origin:top center}
+.roue{position:absolute;left:-8px;right:-8px;top:calc(100% + 12px);z-index:40;height:190px;background:var(--surface);border:1.5px solid var(--line);border-radius:20px;box-shadow:0 8px 24px rgba(30,10,30,.07);outline:none;animation:roue-in .24s cubic-bezier(.2,.8,.2,1);transform-origin:50% -12px}
+.roue-cou{position:absolute;left:50%;top:-13.5px;width:30px;height:15px;margin-left:-15px;z-index:1;overflow:visible}
+.roue-cou .f{fill:var(--surface)}.roue-cou .t{fill:none;stroke:var(--line);stroke-width:1.5}
 .roue.ferme{animation:roue-out .2s ease-in forwards}
-@keyframes roue-in{from{opacity:0;transform:translateY(-8px) scale(.96);filter:blur(4px)}}
-@keyframes roue-out{to{opacity:0;transform:translateY(-4px) scale(.97);filter:blur(3px)}}
-.roue-bande{position:absolute;left:12px;right:12px;top:calc(50% - 19px);height:38px;border-radius:11px;background:color-mix(in srgb,var(--accent-soft) 80%,transparent);pointer-events:none}
-.roue-liste{position:relative;height:100%;overflow-y:auto;scroll-snap-type:y mandatory;padding:76px 0;box-sizing:border-box;scrollbar-width:none;overscroll-behavior:contain;-webkit-mask-image:linear-gradient(transparent,#000 38%,#000 62%,transparent);mask-image:linear-gradient(transparent,#000 38%,#000 62%,transparent)}
+@keyframes roue-in{from{opacity:0;transform:translateY(-6px) scale(.95);filter:blur(8px)}}
+@keyframes roue-out{to{opacity:0;transform:translateY(-4px) scale(.97);filter:blur(8px)}}
+.roue-bande{position:absolute;left:8px;right:8px;top:calc(50% - 19px);height:38px;border-radius:13px;background:var(--surface-2);pointer-events:none}
+.roue-liste{position:relative;height:100%;border-radius:20px;overflow-y:auto;scroll-snap-type:y mandatory;padding:76px 0;box-sizing:border-box;scrollbar-width:none;overscroll-behavior:contain;-webkit-mask-image:linear-gradient(transparent,#000 38%,#000 62%,transparent);mask-image:linear-gradient(transparent,#000 38%,#000 62%,transparent)}
 .roue-liste::-webkit-scrollbar{display:none}
 .roue-an{height:38px;scroll-snap-align:center;display:flex;align-items:baseline;justify-content:center;gap:8px;cursor:pointer;color:var(--text);will-change:transform,opacity}
 .roue-an b{font-size:18px;font-weight:600;line-height:38px;font-variant-numeric:tabular-nums}.roue-an small{font-size:11.5px;color:var(--muted);max-width:0;opacity:0;overflow:hidden;white-space:nowrap;transition:max-width .3s,opacity .3s}
 .roue-an.au-centre small{max-width:110px;opacity:1}
-.roue-an[aria-selected="true"] b{color:var(--accent)}
+.roue-an b{color:var(--muted);transition:color .2s}.roue-an.au-centre b{color:var(--text)}
 @media (prefers-reduced-motion:reduce){.roue,.roue.ferme{animation:none}}
 /* Accueil sans dossier, création d'un dossier, « Pour bien démarrer » */
 .bv{max-width:560px;margin:8vh auto 0;text-align:center}
@@ -1419,7 +1421,9 @@ function renderAll(){
   if(S.data){
     const ys = new Set(Object.keys(S.data.exercices).map(Number));
     sel.innerHTML = [...ys].sort((a,b)=>b-a).map(y => `<option value="${y}" ${y===S.year?"selected":""}>${y}${isHistorique(y)?" (historique)":""}</option>`).join("");
-    $("#yearBtn").innerHTML = `<span>${S.year}</span>${svgI('<path d="m8 9 4-4 4 4M8 15l4 4 4-4"/>')}`;
+    const yb = $("#yearBtn"), avantAn = yb.dataset.an; yb.dataset.an = S.year;
+    yb.innerHTML = `<span>${S.year}</span>${svgI('<path d="m6 9 6 6 6-6"/>')}`;
+    if(avantAn && avantAn !== String(S.year) && MOUV) yb.firstChild.animate([{opacity:0, filter:"blur(5px)", transform:"translateY(3px)"}, {opacity:1, filter:"blur(0)", transform:"none"}], {duration:240, easing:"cubic-bezier(.2,.8,.2,1)"});
   } else sel.innerHTML = "";
   $("#tabs").innerHTML = S.data && !DEPOT ? TABS.map(([k,l]) => {
     if(k==="sep") return '<div class="sep"></div>';
@@ -1517,14 +1521,14 @@ function ouvrirRoue(){
   if($(".roue")) return fermerRoue();
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b), btn = $("#yearBtn");
   const r = document.createElement("div"); r.className = "roue"; r.setAttribute("role", "listbox"); r.setAttribute("aria-label", "Exercice"); r.tabIndex = -1;
-  r.innerHTML = `<div class="roue-bande" aria-hidden="true"></div><div class="roue-liste">${ys.map(y => `<div class="roue-an" role="option" data-y="${y}" aria-selected="${y===S.year}"><b>${y}</b><small>${etatAnnee(y)}</small></div>`).join("")}</div>`;
+  r.innerHTML = `<svg class="roue-cou" viewBox="0 0 30 15" aria-hidden="true"><path class="f" d="M0 15C7 15 10 12 10 6V0H20V6C20 12 23 15 30 15Z"/><path class="t" d="M0 13.75C7 13.75 10 11 10 6V0M20 0V6C20 11 23 13.75 30 13.75"/></svg><div class="roue-bande" aria-hidden="true"></div><div class="roue-liste">${ys.map(y => `<div class="roue-an" role="option" data-y="${y}" aria-selected="${y===S.year}"><b>${y}</b><small>${etatAnnee(y)}</small></div>`).join("")}</div>`;
   btn.parentNode.appendChild(r); btn.setAttribute("aria-expanded", "true");
   const L = r.querySelector(".roue-liste"), items = [...L.children];
   let choisi = S.year, fin;
   const dessiner = () => { const c = L.scrollTop + L.clientHeight / 2;
     items.forEach(it => { const d = (it.offsetTop + ROUE_H / 2 - c) / ROUE_H, a = Math.max(-1, Math.min(1, d / 2.6));
       const ad = Math.abs(d);
-      it.style.transform = `perspective(400px) rotateX(${-a * 62}deg) scale(${1 - Math.abs(a) * .16})`; it.style.opacity = Math.max(0, 1 - ad * .58); it.style.filter = ad > .15 ? `blur(${Math.min(2.2, ad * .9).toFixed(2)}px)` : "";
+      it.style.transform = `perspective(400px) rotateX(${-a * 40}deg) scale(${1 - Math.abs(a) * .14})`; it.style.opacity = Math.max(0, 1 - ad * .62); it.style.filter = ad > .15 ? `blur(${Math.min(2.5, ad * 1.1).toFixed(2)}px)` : "";
       it.classList.toggle("au-centre", ad < .5); }); };
   const centre = () => items[Math.max(0, Math.min(items.length - 1, Math.round(L.scrollTop / ROUE_H)))];
   const appliquer = () => { const y = Number(centre().dataset.y); items.forEach(it => it.setAttribute("aria-selected", it === centre()));
