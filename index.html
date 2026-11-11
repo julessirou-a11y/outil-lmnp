@@ -361,7 +361,6 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 .bv-carte:hover{border-color:var(--accent);transform:translateY(-2px)}
 .bv-carte svg{width:26px;height:26px;color:var(--accent);margin-bottom:4px}
 .bv-carte b{font-size:16px;font-weight:600}.bv-carte span{font-size:13.5px;color:var(--muted)}
-.bv-json{margin-top:22px;color:var(--muted)}
 .as{max-width:540px;margin:6vh auto 0}
 .as-retour{margin-left:-10px;color:var(--muted)}
 .as-pas{display:flex;gap:6px;margin:18px 0 14px}.as-pas i{width:28px;height:4px;border-radius:2px;background:var(--line)}.as-pas i.on{background:var(--accent)}
@@ -1612,8 +1611,7 @@ function vueBienvenue(){
       <button class="bv-carte" onclick="S.assistant={etape:1};renderAll()">${svgI('<path d="M12 5v14M5 12h14"/>')}<b>Créer mon dossier</b><span>Je commence ma location</span></button>
       <button class="bv-carte" onclick="S.assistant={etape:1,mode:'reprise'};renderAll()">${svgI('<path d="M4 4v6h6"/><path d="M20 12a8 8 0 0 0-14.9-4L4 10M4 14a8 8 0 0 0 14.9 4"/><path d="M20 20v-6h-6"/>')}<b>Reprendre ma compta</b><span>J'ai déjà déclaré ailleurs</span></button>
       <button class="bv-carte" onclick="ouvrirDossier()">${svgI('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>')}<b>Ouvrir mon dossier</b><span>J'ai déjà un dossier du Carnet</span></button>
-    </div>
-    <button class="btn ghost small bv-json" onclick="ouvrirFichier()">Ouvrir un fichier .json…</button></div>`;
+    </div></div>`;
   return `<div style="max-width:620px;margin:6vh auto 0">
     ${entete("Bienvenue dans votre carnet", "La comptabilité de la location meublée. Les données restent dans votre dossier iCloud : rien n'est envoyé sur internet.")}
     <div class="card">
