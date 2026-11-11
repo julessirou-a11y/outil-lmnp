@@ -362,6 +362,8 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 .bv-carte svg{width:26px;height:26px;color:var(--accent);margin-bottom:4px}
 .bv-carte b{font-size:16px;font-weight:600}.bv-carte span{font-size:13.5px;color:var(--muted)}
 .as{max-width:540px;margin:6vh auto 0}
+.tetep{justify-content:space-between;margin-bottom:16px;gap:12px}.tetep-act{gap:10px;margin-left:auto}
+.btn-ic{display:inline-flex;align-items:center;gap:7px}.btn-ic svg{width:16px;height:16px;flex:none}
 .as-retour{margin-left:-10px;color:var(--muted)}
 .as-pas{display:flex;gap:6px;margin:18px 0 14px}.as-pas i{width:28px;height:4px;border-radius:2px;background:var(--line)}.as-pas i.on{background:var(--accent)}
 .as h1{font-size:26px;margin:0 0 10px}
@@ -609,6 +611,11 @@ details.imx-conso>summary h3{margin:0} details.imx-conso>summary .imx-ouvrir{mar
 .imx-act{grid-column:1/-1;padding-top:4px} .imx-act .danger{margin-left:auto}
 .imx-fiche{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px 16px;margin-top:6px}
 .imx-fiche span{display:block;font-size:12px;color:var(--muted)} .imx-fiche b{font-weight:600;font-size:15px}
+/* Impression : les tableaux à colonnes fixes (pensés pour l'écran) prennent la largeur de la page, plus petits */
+@media print{ table.glx,table.blx,table.ejx{table-layout:auto;font-size:10.5px} table.glx th,table.blx th,table.ejx th{width:auto!important}
+  table.glx td,table.blx td,table.ejx td{padding:5px 6px} table.glx td:first-child,table.glx th:first-child{padding-left:8px} table.glx td:last-child,table.glx th:last-child{padding-right:8px}
+  table.imx:not(.imx-plan) tr>:nth-child(9){display:none} .imx-sous{white-space:normal}
+  details.imx-conso .conso>div:last-child{display:none} }
 @media (max-width:700px){ table.imx{table-layout:auto} table.imx .m-x{display:none} table.imx th.mt,table.imx th.an,.imx-fen table.imx th.an{width:auto} .imx-fen .rv-fh h2{font-size:17px} .imx-fen .rv-fc{padding:12px 12px 16px} .imx-fen .rv-fh{padding:14px 12px} .pl-long{display:none} .imx-sous{white-space:normal;overflow:visible} table.imx td:last-child,table.imx th:last-child{padding-right:14px} }
 @media (min-width:701px){ .pl-court{display:none} }
 /* ---------- Immobilisations ---------- */
@@ -1603,6 +1610,10 @@ $("#themeBtn").addEventListener("click", ev => {
   document.startViewTransition(bascule).ready.then(() => document.documentElement.animate({clipPath:[`circle(0px at ${x}px ${y}px)`, `circle(${R}px at ${x}px ${y}px)`]}, {duration:600, easing:"cubic-bezier(.4,0,.2,1)", pseudoElement:"::view-transition-new(root)"})).catch(() => {});
 });
 function entete(titre, sous){ return `<div class="pagehead"><h1>${titre}</h1>${sous?`<p>${sous}</p>`:""}</div>`; }
+/* En-tête de page avec ses actions, toujours dans le même ordre à droite : vues, Imprimer, Ajouter */
+function tetePage(titre, ...actions){ return `<div class="row tetep"><div class="pagehead" style="margin:0"><h1>${titre}</h1></div><div class="row tetep-act">${actions.filter(Boolean).join("")}</div></div>`; }
+const btnImprimer = (titre = "Imprimer ou enregistrer en PDF") => `<button class="btn sec btn-ic noprint" onclick="print()" title="${titre}">${svgI('<path d="M6 9V3h12v6"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v7H6z"/>')}Imprimer</button>`;
+const btnAjouter = (lib, go) => `<button class="btn btn-ic noprint" onclick="${go}">${svgI('<path d="M12 5v14M5 12h14"/>')}${lib}</button>`;
 
 function vueBienvenue(){
   setTimeout(async () => { const d = await idb.get("dir"); if(d && FS){ const b = $("#resume"); if(b){ b.classList.remove("hide"); b.innerHTML = `Reprendre « ${esc(d.name)} »`; b.onclick = () => reprendreDossier(d); } } }, 0);
@@ -1919,8 +1930,8 @@ function vueEcritures(){
   const ed = S.editId ? ex.ecritures.find(e=>e.id===S.editId) : null;
   const ouvert = !lock && (S.composer || ed);
   const t = totauxEcritures(y);
-  const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Écritures ${y}</h1></div>
-    ${segments("vueEcr", [["journal","Écritures"],["balance","Balance"],["grandlivre","Grand livre"]], vue)}</div>`;
+  const tete = tetePage(`Écritures ${y}`, segments("vueEcr", [["journal","Écritures"],["balance","Balance"],["grandlivre","Grand livre"]], vue), btnImprimer(),
+    lock ? "" : btnAjouter("Ajouter une écriture", "S.composer=true;S.editId=null;S.vueEcr='journal';renderAll();haut()"));
   if(vue === "balance") return tete + vueBalanceVisuelle(y);
   if(vue === "grandlivre") return tete + `<div class="row noprint" style="margin-bottom:14px"><button class="btn sec" onclick="exporterFEC(${y})" title="Fichier des écritures comptables, à remettre en cas de contrôle">Exporter le FEC</button>${zoneFiltres("gl")}</div>` + vueGrandLivre(y);
   const J = S.fEcr || [], lignes = S.lignesEcr || "", nbF = J.length + (lignes ? 1 : 0);
@@ -1930,7 +1941,6 @@ function vueEcritures(){
   ${lock ? `<div class="alert warn" style="align-items:center">Année clôturée : écritures verrouillées. Pour les modifier, rouvrez l'année dans les paramètres du dossier.</div>` : ""}
   <div class="tuiles ejx-tu">${tuile("Encaissé", eur0(t.recettes), {col:"var(--pos)"})}${tuile("Payé", eur0(t.c242+t.c244+t.c294+t.remb))}${tuile("Écritures", ex.ecritures.length)}${tuile("Sans justificatif", piecesManquantes(y).length, {page:"pieces", col:piecesManquantes(y).length?"var(--warn)":""})}</div>
   <div class="row noprint" style="margin-bottom:14px">
-    ${lock?"":`<button class="btn" onclick="S.composer=!S.composer;S.editId=null;renderAll()">${ouvert&&!ed?"Fermer":"+ Écriture"}</button>`}
     ${zoneFiltres("journal")}
   </div>
   ${ouvert ? `<div class="card composer noprint"><div class="form">
@@ -2362,8 +2372,7 @@ function vueImmos(){
     .sort((p,q) => p.i.miseEnService.localeCompare(q.i.miseEnService));
   const auBilan = immos.filter(x => x.entree <= y);
   const T = auBilan.reduce((s,x)=>({val:s.val+x.i.valeurOrigine, cum:s.cum+x.a.cumulFin, dot:s.dot+x.a.dotation}), {val:0,cum:0,dot:0});
-  const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Immobilisations</h1></div>
-    <div class="row">${segments("vueImmo", [["exercice",`Exercice ${y}`],["plan","Plan pluriannuel"]], vue)}<button class="btn noprint" onclick="ouvrirImmo('new')">+ Ajouter</button></div></div>`;
+  const tete = tetePage("Immobilisations", immos.length ? segments("vueImmo", [["exercice",`Exercice ${y}`],["plan","Plan pluriannuel"]], vue) : "", immos.length ? btnImprimer() : "", btnAjouter("Ajouter une immobilisation", "ouvrirImmo('new')"));
   const tuiles = `<div class="tuiles">${tuile("Valeur brute", eur0(T.val))}${tuile(`Dotation ${y}`, eur0(T.dot), {col:"var(--accent)"})}${tuile(`Amortissements fin ${y}`, eur0(T.cum))}${tuile(`Valeur nette fin ${y}`, eur0(T.val - T.cum))}</div>`;
   if(!immos.length) return tete + `<div class="card"><p class="sub" style="margin:0">Aucune immobilisation. Ajoutez le logement, les travaux et le mobilier de plus de 500 € HT.</p></div>` + fenetreImmo(y);
   return tete + tuiles + (vue === "plan" ? tableauPlanGlobal(y, immos) : tableauAmortExercice(y, auBilan, immos.filter(x => x.entree > y))) + vueConsommes(y, true) + fenetreImmo(y);
@@ -2385,8 +2394,7 @@ function tableauAmortExercice(y, liste, futures){
         <td class="imx-p m-x">${jauge([[a.cumulFin, "var(--accent)"]], a.base, 6)}</td></tr>`; }).join("");
     return `<tbody class="glx-c"><tr class="glx-h"><td colspan="9"><div class="glx-hd" style="cursor:default"><span class="glx-pill">${cpt.brut.slice(0,4)} · ${cpt.am.slice(0,5)}</span><span class="glx-lib">${CATEGORIES[k]}</span><span class="glx-nb">${xs.length} élément${pl(xs.length)}</span><span class="glx-rule"></span><span class="glx-solde">Dotation <b>${num0(t.dot)}</b></span></div></td></tr>
       ${rows}${xs.length > 1 ? `<tr class="glx-tot"><td class="lb">Total</td><td class="m-x"></td><td class="m-x"></td><td class="n m-x">${num0(t.val)}</td><td class="n m-x">${num0(t.cd)}</td><td class="n">${num0(t.dot)}</td><td class="n m-x">${num0(t.cf)}</td><td class="n">${num0(t.val - t.cf)}</td><td class="m-x"></td></tr>` : ""}</tbody>`; }).join("");
-  return `<div class="glx-bar"><span>Tableau des amortissements <b>${y}</b> · <b>${liste.length}</b> immobilisation${pl(liste.length)}</span><span class="stat">Touchez une ligne pour voir son plan d'amortissement</span>
-    <span class="lien noprint"><button onclick="window.print()">Imprimer</button></span></div>
+  return `<div class="glx-bar"><span>Tableau des amortissements <b>${y}</b> · <b>${liste.length}</b> immobilisation${pl(liste.length)}</span><span class="stat noprint">Touchez une ligne pour voir son plan d'amortissement</span></div>
   <div class="card glxw"><div class="tablewrap"><table class="glx imx">
     <thead><tr><th>Immobilisation</th><th class="m-x ms">Mise en service</th><th class="n m-x du">Durée</th><th class="n m-x mt">Valeur brute</th><th class="n m-x mt">Cumul au 01/01</th><th class="n mt">Dotation ${y}</th><th class="n m-x mt">Cumul au 31/12</th><th class="n mt">Valeur nette</th><th class="m-x pg"></th></tr></thead>
     ${blocs}
@@ -2408,7 +2416,7 @@ function tableauPlanGlobal(y, immos){
       ${dc.map(v => `<td class="n m-x">${v > 0.005 ? num0(v) : "–"}</td>`).join("")}<td class="n imx-dot">${num0(dot)}</td><td class="n m-x">${num0(cum)}</td><td class="n">${num0(brut - cum)}</td></tr>`;
   }
   return `<div class="glx-bar"><span>Plan d'amortissement global <b>${y0}–${y1}</b></span><span class="stat">À partir de ${y+1}, en italique : prévision avec les immobilisations actuelles</span>
-    <span class="lien noprint"><button onclick="window.print()">Imprimer</button></span></div>
+</div>
   <div class="card glxw"><div class="tablewrap"><table class="glx imx imx-plan">
     <thead><tr><th class="an">Année</th>${cats.map(k => `<th class="n m-x">${court[k]}</th>`).join("")}<th class="n">Dotation</th><th class="n m-x">Cumul</th><th class="n">Valeur nette</th></tr></thead>
     <tbody>${rows}</tbody>
@@ -2501,7 +2509,7 @@ function vueConsommes(y, replie){
           <i style="height:${(l.deduites/max*100).toFixed(1)}%;background:var(--accent)" title="Déduits : ${eur0(l.deduites)}"></i>
           <i style="height:${(l.reserveUtilisee/max*100).toFixed(1)}%;background:var(--accent-2)" title="Réserve utilisée : ${eur0(l.reserveUtilisee)}"></i>
           <i style="height:${(Math.max(0,l.dotations-l.deduites)/max*100).toFixed(1)}%;background:var(--warn)" title="Mis en réserve : ${eur0(l.dotations-l.deduites)}"></i></div><span>${l.y}</span></div>`).join("")}</div>
-        <div class="leg" style="margin-top:8px"><span><i style="background:var(--accent)"></i>Déduits</span><span><i style="background:var(--accent-2)"></i>Réserve utilisée</span><span><i style="background:var(--warn)"></i>Mis en réserve</span>${det.some(l=>l.historique)?'<span><i style="background:var(--seg-2)"></i>${t.avantCarnet ? "Avant le Carnet" : "Années Excel"}</span>':""}</div></div>
+        <div class="leg" style="margin-top:8px"><span><i style="background:var(--accent)"></i>Déduits</span><span><i style="background:var(--accent-2)"></i>Réserve utilisée</span><span><i style="background:var(--warn)"></i>Mis en réserve</span>${det.some(l=>l.historique)?`<span><i style="background:var(--seg-2)"></i>${t.avantCarnet ? "Avant le Carnet" : "Années Excel"}</span>`:""}</div></div>
     </div>
     <p class="sub" style="margin:14px 0 0"><b>Consommés</b> : déduits du résultat, ils réduiront le prix d'achat retenu à la revente. <b>En réserve</b> : reportés sans limite, sans effet sur la plus-value.</p>
     <details><summary>Détail par année</summary><div class="tablewrap"><table>
@@ -2536,18 +2544,18 @@ async function delImmo(){ if(immoFigee(S.data.immobilisations.find(i=>i.id===S.e
 /* Courbe du capital restant dû, avec l'année affichée mise en évidence */
 function vueEmprunt(){
   const y = S.year;
-  if(!S.data.emprunts.length) return `<div class="pagehead"><h1>Emprunt</h1></div><div class="card"><button class="btn" onclick="ajouterEmprunt()">+ Ajouter un emprunt</button></div>`;
+  if(!S.data.emprunts.length) return tetePage("Emprunt", btnAjouter("Ajouter un emprunt", "ajouterEmprunt()")) + `<div class="card"><p class="sub" style="margin:0">Aucun emprunt. Ajoutez le prêt qui a financé le logement, avec le tableau d'amortissement de la banque.</p></div>`;
   const L = S.data.emprunts, plusieurs = L.length > 1, c = !isHistorique(y) ? calculAnnee(y) : null;
-  const ajout = `<button class="btn sec noprint" onclick="ajouterEmprunt()">+ Ajouter un emprunt</button>`;
+  const ajout = btnImprimer() + btnAjouter("Ajouter un emprunt", "ajouterEmprunt()");
   // Le restant dû affiché est celui des comptes (bilan) ; s'il s'écarte de l'échéancier de la banque, on le dit tout de suite, avec un lien vers la régularisation
   const ec = c ? ecartCRD(y) : 0, selonComptes = base => c ? `${base}${Math.abs(ec) >= 0.005 ? `<br><a href="#regulCRD" class="noprint" style="color:var(--warn)" onclick="event.preventDefault();document.getElementById('regulCRD')?.scrollIntoView({behavior:'smooth'})">écart de ${eur0(Math.abs(ec))} avec l'échéancier&nbsp;↓</a>` : ""}` : base;
   // Plusieurs prêts : le total (celui du bilan) en tête, puis chaque prêt d'après son échéancier et ses écritures
-  const tete = plusieurs ? `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Emprunts</h1></div>${ajout}</div>
+  const tete = plusieurs ? `${tetePage("Emprunts", ajout)}
     <div class="tuiles">${tuile("Capital emprunté", eur0(L.reduce((t,l) => t + l.capital, 0)))}${tuile(`Restant dû fin ${y}`, eur0(c ? c.crd : crdEcheancier(y)), {col:"var(--accent)", sous:selonComptes("au bilan, tous prêts")})}${tuile(`Intérêts ${y} comptabilisés`, eur0(c ? c.interets : L.reduce((t,l) => t + empruntAnnee(l,y).interets, 0)), {sous:"tous prêts"})}${tuile("Prêts", L.length)}</div>` : "";
   return tete + L.map((l,idx) => {
     const rows = echeancier(l), der = rows[rows.length-1], a = empruntAnnee(l, y);
     const crd = plusieurs ? a.crdFin : c ? c.crd : a.crdFin, int = plusieurs ? (c ? interetsPret(l, y) : a.interets) : c ? c.interets : a.interets;
-    return `<div class="row" style="justify-content:space-between;margin:${idx||plusieurs?"28px":"0"} 0 16px"><div class="pagehead" style="margin:0"><h1>${plusieurs ? `<span class="sub" style="font-size:.6em;display:block">Prêt ${idx+1}</span>` : ""}Emprunt ${esc(l.banque)}</h1></div>${plusieurs ? menu3([["Supprimer ce prêt", `supprimerEmprunt(${idx})`, "danger"]], "Actions du prêt") : ajout}</div>
+    return `<div class="row" style="justify-content:space-between;margin:${idx||plusieurs?"28px":"0"} 0 16px"><div class="pagehead" style="margin:0"><h1>${plusieurs ? `<span class="sub" style="font-size:.6em;display:block">Prêt ${idx+1}</span>` : ""}Emprunt ${esc(l.banque)}</h1></div><div class="row tetep-act">${plusieurs ? menu3([["Supprimer ce prêt", `supprimerEmprunt(${idx})`, "danger"]], "Actions du prêt") : ajout}</div></div>
     <div class="tuiles">${tuile("Capital emprunté", eur0(l.capital))}${tuile(`Restant dû fin ${y}`, eur0(crd), {col:"var(--accent)", sous: plusieurs ? "selon l'échéancier" : selonComptes("selon les comptes")})}${tuile(`Intérêts ${y} comptabilisés`, eur0(int), {sous: c && !int ? "aucune écriture bancaire" : "déductibles"})}${tuile("Fin du prêt", der?`${MOIS_LONG[der.mois-1]} ${der.annee}`:"–")}</div>
     ${carteContrat(l, idx)}
     ${carteEcheancier(l, y)}`;
@@ -2906,8 +2914,8 @@ function form2042(y, L){
 }
 function vueDeclaration(){
   const y = S.year, vue = S.vueDecl || "declarer";
-  const tete = `<div class="row" style="justify-content:space-between;margin-bottom:16px"><div class="pagehead" style="margin:0"><h1>Déclaration ${y}</h1></div>
-    <div class="row noprint">${segments("vueDecl", [["declarer","Déclarer"],["etats","États financiers"]], vue)}</div></div>`;
+  const tete = tetePage(`Déclaration ${y}`, segments("vueDecl", [["declarer","Déclarer"],["etats","États financiers"]], vue),
+    isHistorique(y) ? "" : btnImprimer(vue === "etats" ? "Imprimer ou enregistrer en PDF les comptes annuels" : "Imprimer la feuille de révision"));
   if(isHistorique(y)) return tete + `<div class="card vide">${y} a été déclarée ${histLiasse(y) ? "avant le Carnet" : "avec l'ancien fichier Excel"}.</div>`;
   const f = fiscalJusqua(y);
   if(!f?.c.lmnpActif) return tete + `<div class="card vide">Pas de location meublée en ${y}.</div>`;
@@ -3015,8 +3023,7 @@ function etatsFinanciers(y){
       <tr><td>Amortissements en réserve (art. 39 C)</td><td class="n">${eur0(L.f.ardDebut)}</td><td class="n">${eur0(L.f.ardFin)}</td></tr></table>
     ${pied(4)}
   </section>
-  </div>
-  <div class="row noprint" style="justify-content:center;margin-top:8px"><button class="btn" onclick="print()">Imprimer ou enregistrer en PDF</button></div>`;
+  </div>`;
 }
 
 /* ============ Comptabilité : écritures en partie double, balance, FEC ============ */
@@ -3326,7 +3333,7 @@ function vueRevision(y){
   const imprimer = postes.map(c => `<div class="printonly rv-imp"><h3>${c.l} · ${NIV[niveauPoste(c.p)][0]}</h3>${c.p.map(x => `<div>${NIV[x.etat][1]} ${x.lib || x.texte}${x.type === "calc" && x.attendu != null ? ` : ${eur(x.compta)} / ${eur(x.attendu)}` : ""}${rev[x.id]?.commentaire ? ` · <i>${esc(rev[x.id].commentaire)}</i>` : ""}</div>`).join("")}</div>`).join("");
   return `<div class="card noprint"><h3 style="margin:0 0 4px;color:${clos ? "var(--text)" : bloq ? "var(--neg)" : nb ? "var(--warn)" : "var(--pos)"}">${tete}</h3>
     <p class="sub" style="margin:0">Chaque poste rapproche la comptabilité d'une source indépendante (échéancier, bail, relevé, tableau d'amortissement, clôture ${y-1}). Touchez un poste pour voir le détail.</p>
-    <div class="row" style="margin-top:10px;gap:14px;flex-wrap:wrap"><span class="sub" style="margin:0"><b style="color:var(--neg)">✕</b> bloquant · <b style="color:var(--warn)">!</b> à vérifier, non bloquant · <b style="color:var(--pos)">✓</b> validé</span><button class="btn small sec" style="margin-left:auto" onclick="window.print()">Imprimer la feuille de révision</button></div></div>
+    <div class="row" style="margin-top:10px;gap:14px;flex-wrap:wrap"><span class="sub" style="margin:0"><b style="color:var(--neg)">✕</b> bloquant · <b style="color:var(--warn)">!</b> à vérifier, non bloquant · <b style="color:var(--pos)">✓</b> validé</span></div></div>
   <div class="rv-grille noprint">${tuiles}</div>
   <h2 class="printonly">Feuille de révision ${y} · ${esc(S.data.dossier.nom||"")}</h2>${imprimer}${fenetre}`;
 }
