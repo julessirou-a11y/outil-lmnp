@@ -122,16 +122,16 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .cy-l{display:flex;align-items:center;gap:14px;width:100%;padding:14px 6px;border:0;border-top:1px solid var(--line);background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;border-radius:0}
 .cy-l:first-of-type{border-top:0}.cy-l:hover .cy-t b{color:var(--accent)}
 .cy-d{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);color:var(--muted);font-weight:700}.cy-d svg,.ti svg,.rv-sym svg{width:15px;height:15px}
-.cy-l.vise .cy-d,.cy-l.valide .cy-d{background:var(--pos);border-color:var(--pos);color:#fff}.cy-l.devise .cy-d{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
+.cy-l.vise .cy-d,.cy-l.valide .cy-d{background:var(--pos);border-color:var(--pos);color:#fff}.cy-l.devise .cy-d{border-color:var(--mid);color:#3D2B00;background:var(--mid)}
 .cy-l.cur{background:var(--accent-soft);border-radius:12px;padding-left:10px;padding-right:10px;border-top-color:transparent}.cy-l.cur+.cy-l{border-top-color:transparent}.cy-l.cur .cy-d{border-color:var(--accent)}
 .cy-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.cy-t b{font-weight:600;font-size:15px}.cy-t span{font-size:13px;color:var(--muted)}
 .cy-st{flex:none;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
-.vise .cy-st,.valide .cy-st{background:var(--pos-soft);color:var(--pos)}.devise .cy-st{background:var(--warn-soft);color:var(--warn)}.cur .cy-st{background:var(--surface);color:var(--accent)}
+.vise .cy-st,.valide .cy-st{background:var(--pos-soft);color:var(--pos)}.cur .cy-st{background:var(--surface);color:var(--accent)}.cy-l .cy-st.dv,.cy-l.cur .cy-st.dv{background:var(--mid);color:#3D2B00}
 .cy-pied{border-style:dashed;text-align:center;color:var(--muted)}.cy-pied.ok{border-style:solid;color:var(--pos);font-weight:600;display:flex;gap:8px;justify-content:center;align-items:center}.cy-pied svg{width:16px;height:16px}
 .bt{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
 .bt th{font-size:11.5px;font-weight:500;color:var(--faint);text-align:right;padding:4px 8px 6px}.bt th:first-child{text-align:left;padding-left:12px}
 .bt td{padding:5px 8px;border-top:1px solid var(--line);white-space:nowrap}.bt td:first-child{padding-left:12px;white-space:normal}.bt td a.lgl{color:inherit;text-decoration:none}
-.bt tr>td:first-child{box-shadow:inset 3px 0 var(--line)}.bt tr.vise>td:first-child,.bt tr.valide>td:first-child{box-shadow:inset 3px 0 var(--pos)}.bt tr.devise>td:first-child{box-shadow:inset 3px 0 var(--warn)}
+.bt tr>td:first-child{box-shadow:inset 3px 0 var(--line)}.bt tr.vise>td:first-child,.bt tr.valide>td:first-child{box-shadow:inset 3px 0 var(--pos)}.bt tr.devise>td:first-child{box-shadow:inset 3px 0 var(--mid)}
 .bt tr.g{cursor:pointer}.bt tr.g td{background:var(--surface-2);padding-top:6px;padding-bottom:6px}.bt tr.g b{font-size:12.5px;font-weight:600}.bt tr.g:hover b{color:var(--accent)}
 .bp{float:right;font-size:11.5px;font-weight:600;color:var(--muted)}.vise .bp,.valide .bp{color:var(--pos)}.devise .bp{color:var(--warn)}
 .bn{display:inline-block;width:34px;font-size:11.5px;color:var(--faint)}
@@ -145,9 +145,9 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .ck{display:grid;grid-template-columns:30px minmax(0,1fr) 110px 110px 100px;gap:6px 14px;align-items:center;padding:11px 10px;border-top:1px solid var(--line);font-size:14px}
 .ck.hd{border-top:0;padding-bottom:2px;font-size:12px;color:var(--muted)}.ck .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ck .m{color:var(--faint)}.ck .e{color:var(--neg);font-weight:700}
 .ck.auto .ct{grid-column:2/-1}.ct b{display:block;font-weight:600}.ck.auto .ct b{font-weight:500}.ct small{font-size:12px;color:var(--muted)}.ck.ok .ct b{font-weight:500}
-.ck.ko{background:var(--neg-soft);border-radius:12px;border-top-color:transparent;margin:2px 0}.ck.ko+.ck{border-top-color:transparent}
+.ck.ko{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--mid);border-radius:12px;margin:6px 0}.ck.ko.bl{border-left-color:var(--neg)}.ck.ko+.ck{border-top-color:transparent}
 .ti{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);font-weight:700}
-.ck.ok .ti,.qc.ok .ti{background:var(--pos-soft);color:var(--pos)}.ck.ko .ti{background:var(--warn);color:#fff}.ck.bl .ti{background:var(--neg)}.ck.ko .e{color:var(--warn)}.ck.bl .e{color:var(--neg)}
+.ck.ok .ti,.qc.ok .ti{background:var(--pos-soft);color:var(--pos)}.ck.ko .ti{background:var(--warn-soft);color:var(--warn)}.ck.bl .ti{background:var(--neg-soft);color:var(--neg)}.ck.ko .e{color:var(--warn)}.ck.bl .e{color:var(--neg)}
 .act{grid-column:2/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}.act-e{flex:1;min-width:220px}.act .rv-txt{margin:0;background:var(--surface)}.act .rv-rel{margin:0}
 .ck.perso .ti{background:var(--accent-soft);color:var(--accent)}.ck.perso.ok .ti{background:var(--pos-soft);color:var(--pos)}.ck.perso .n{display:flex;gap:4px;justify-content:flex-end;grid-column:3/-1}
 .tag{font-style:normal;font-size:11px;font-weight:600;color:var(--accent);background:var(--accent-soft);border-radius:99px;padding:2px 8px;margin-left:6px;vertical-align:1px}
@@ -3888,7 +3888,7 @@ function vueRevision(y){
     : aVoir(c) || c.d;
   const pastille = c => c.statut === "vise" ? `Visé le ${fmtDate(c.visa.date).slice(0, 5)}` : ST_CYCLE[c.statut];
   const ligneCycle = c => `<button class="cy-l ${c.statut} ${c === cur ? "cur" : ""}" onclick="ouvrirPoste('${c.k}')"><span class="cy-d">${c.statut === "vise" || c.statut === "valide" ? I_OK : c.statut === "devise" ? "!" : ""}</span>
-    <span class="cy-t"><b>${c.l}</b><span>${resumeC(c)}</span></span><span class="cy-st">${pastille(c)}</span></button>`;
+    <span class="cy-t"><b>${c.l}</b><span>${resumeC(c)}</span></span><span class="cy-st ${c.statut === "devise" ? "dv" : ""}">${pastille(c)}</span></button>`;
   const pct = (v, v1) => { if(v1 == null) return ["–", ""]; if(Math.abs(v1) < 0.005) return [Math.abs(v) < 0.005 ? "0 %" : "nouveau", Math.abs(v) >= 0.005 ? "fort" : ""];
     const p = (v - v1) / v1; return [`${p > 0 ? "+" : p < 0 ? "−" : ""}${Math.abs(p * 100).toLocaleString("fr-FR", {maximumFractionDigits:1})} %`, Math.abs(p) > REVUE_PCT ? "fort" : ""]; };
   const n0 = v => moins(Math.round(v).toLocaleString("fr-FR"));
@@ -3956,13 +3956,13 @@ function fenetreCycle(y, c){
   const nko = c.p.filter(ko).length;
   const sous = c.statut === "valide" ? "Validé : l'exercice est clôturé" : c.statut === "vise" ? `Visé le ${fmtDate(c.visa.date)}` : c.statut === "devise" ? `Dévisé · visa du ${fmtDate(c.visa.date)}`
     : nko ? `Non visé · encore ${nko} point${pl(nko)} à régler` : "Non visé";
-  const coul = {vise:"var(--pos)", valide:"var(--pos)", devise:"var(--warn)", nonvise:"var(--muted)"}[c.statut];
+  const coul = {vise:"var(--pos)", valide:"var(--pos)", devise:"var(--mid)", nonvise:"var(--muted)"}[c.statut];
   const devise = c.statut === "devise" ? `<div class="alert warn cy-dv"><div style="flex:1"><b>${c.change.length ? "Des montants ont changé depuis le visa" : "Un point est à revoir depuis le visa"}</b>
       ${c.change.length ? `<div class="cy-chg"><span></span><small>Au visa</small><small>Aujourd'hui</small>${c.change.map(k => `<span>${LIB_SIG[k] || `${k.slice(0, 3)} ${esc(COMPTES[k] || "")}`}</span><span class="n">${eur(LIB_SIG[k] ? c.visa.sig[k] || 0 : soldeLu(k, c.visa.sig[k] || 0))}</span><span class="n">${eur(LIB_SIG[k] ? c.sig[k] || 0 : soldeLu(k, c.sig[k] || 0))}</span>`).join("")}</div>` : ""}</div>
       ${c.vert ? `<button class="btn small" onclick="revaliderCycle(${y},'${c.k}')">Revalider le cycle</button>` : `<span class="sub" style="margin:0">Réglez d'abord les points ci-dessous.</span>`}</div>` : "";
   return `<div class="rv-voile noprint" onclick="if(event.target===this)fermerPoste()"><div class="rv-fen cy-fen" role="dialog" aria-modal="true" aria-label="${esc(c.l)}">
     <div class="rv-fh"><span class="rv-sym" style="background:${coul}">${c.statut === "vise" || c.statut === "valide" ? I_OK : c.statut === "devise" ? "!" : nko || ""}</span>
-      <div style="flex:1;min-width:0"><h2>${c.l}</h2><small style="color:${coul}">${sous}</small></div>
+      <div style="flex:1;min-width:0"><h2>${c.l}</h2><small style="color:${c.statut === "devise" ? "var(--warn)" : coul}">${sous}</small></div>
       ${c.pg && c.pg !== "declaration" ? `<button class="btn small sec" onclick="S.revPoste=null;allerA('${c.pg}')">${NOM_PAGE[c.pg]} →</button>` : ""}<button class="btn small" onclick="fermerPoste()">Fermer</button></div>
     <div class="rv-fc">${devise}
       ${comptes ? `<div class="acs">${comptes}</div>` : ""}
