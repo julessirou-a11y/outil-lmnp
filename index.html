@@ -82,7 +82,11 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .prefs{display:flex;gap:6px}
 .prefs button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);font:inherit;font-size:12.5px;padding:5px 6px;border-radius:var(--r-md);cursor:pointer}
 .prefs button:hover{color:var(--text)}
-.prefs button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);border-color:transparent}
+#themeBtn{position:relative;padding:3px;gap:0}#themeBtn span{flex:1;position:relative;z-index:1;padding:3px 0;transition:color .3s}
+#themeBtn[aria-pressed="false"] span:nth-of-type(1),#themeBtn[aria-pressed="true"] span:nth-of-type(2){color:var(--accent);font-weight:600}
+.th-ind{position:absolute;top:3px;bottom:3px;left:3px;width:calc(50% - 3px);border-radius:calc(var(--r-md) - 2px);background:var(--accent-soft);box-shadow:0 1px 3px rgba(0,0,0,.12);transition:transform .45s cubic-bezier(.34,1.45,.64,1)}
+#themeBtn[aria-pressed="true"] .th-ind{transform:translateX(100%)}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
 .rv summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap}.rv summary::-webkit-details-marker{display:none}.rv summary h3{margin:0}
 .rv-grille{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:12px}
 .rv-tuile{display:flex;align-items:center;gap:12px;padding:16px;border:1px solid var(--line);border-radius:14px;background:var(--surface);color:var(--text);font:inherit;text-align:left;cursor:pointer;transition:border-color .15s,transform .15s}
@@ -297,9 +301,10 @@ html:not(.mobile) .btn:active:not(:disabled){transform:scale(.97)}
 .barres rect{transition:opacity .15s}.barres:hover rect{opacity:.55}.barres rect:hover{opacity:1}
 .donut-part,.part{transition:stroke-width .2s}svg .part:hover{stroke-width:26}
 .seg{position:relative}.seg button{position:relative;z-index:1}.seg button.on{background:none;box-shadow:none}
-.seg-ind{position:absolute;top:0;left:0;border-radius:7px;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.1);transition:transform .3s cubic-bezier(.25,.8,.25,1),width .3s cubic-bezier(.25,.8,.25,1)}
+.seg-ind{position:absolute;top:0;left:0;border-radius:7px;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.1),0 2px 8px rgba(40,20,40,.06)}
+.seg button{transition:color .25s,transform .2s cubic-bezier(.34,1.56,.64,1)}.seg button:active{transform:scale(.95)}
 .menu{position:relative}.menu button{position:relative;z-index:1}.menu button.on,.menu button.on:hover{background:none}
-.menu-ind{position:absolute;top:0;left:0;border-radius:var(--r-md);background:var(--accent-soft);transition:transform .32s cubic-bezier(.25,.8,.25,1),height .32s}
+.menu-ind{position:absolute;top:0;left:0;border-radius:var(--r-md);background:var(--accent-soft)}
 .menu3[open]>.m3{animation:deroule .16s cubic-bezier(.2,.8,.2,1);transform-origin:top right}
 @keyframes deroule{from{opacity:0;transform:translateY(-4px) scale(.97)}}
 .card>details[open]>:not(summary){animation:monte .25s ease-out}
@@ -323,7 +328,7 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 @keyframes barre{from{transform:scaleY(0)}}
 .entree .jauge span{transform-origin:left;animation:jauge .7s cubic-bezier(.2,.8,.2,1) .15s both}
 @keyframes jauge{from{transform:scaleX(0)}}
-@media (prefers-reduced-motion:reduce){.entree>*,.entree .tuiles>.tuile,.entree .arc,.entree .part,.entree .barres rect,.entree .jauge span,.menu3[open]>.m3,dialog.boite[open],.rv-voile.ouvre,.rv-voile.ouvre>.rv-fen,.toast,.card>details[open]>:not(summary){animation:none}.seg-ind,.menu-ind{transition:none}}
+@media (prefers-reduced-motion:reduce){.entree>*,.entree .tuiles>.tuile,.entree .arc,.entree .part,.entree .barres rect,.entree .jauge span,.menu3[open]>.m3,dialog.boite[open],.rv-voile.ouvre,.rv-voile.ouvre>.rv-fen,.toast,.card>details[open]>:not(summary){animation:none}.th-ind,.pe .pn{transition:none}}
 @media print{.entree>*,.entree *{animation:none!important}}
 /* Accueil sans dossier, création d'un dossier, « Pour bien démarrer » */
 .bv{max-width:560px;margin:8vh auto 0;text-align:center}
@@ -639,7 +644,9 @@ details.imx-conso>summary h3{margin:0} details.imx-conso>summary .imx-ouvrir{mar
 .pe.on .pn{background:var(--accent);border-color:var(--accent);color:#fff}
 .pe.ok .pn{border-color:var(--pos);color:var(--pos)} .pe.on.ok .pn{background:var(--pos);color:#fff}
 .pe.bad .pn{border-color:var(--neg);color:var(--neg)} .pe.bad small{color:var(--neg)}
-.pe.warn small{color:var(--warn)}
+.pe.warn small{color:var(--warn)} .pe.warn .pn{border-color:var(--warn);color:var(--warn)}
+.pe.on .pn,.pe.on.ok .pn,.pe.on.bad .pn,.pe.on.warn .pn{color:var(--surface)} .pe.on.bad .pn{background:var(--neg);border-color:var(--neg)} .pe.on.warn .pn{background:var(--warn);border-color:var(--warn)}
+.pe .pn{transition:background-color .25s,border-color .25s,color .25s,transform .35s cubic-bezier(.34,1.56,.64,1)} .pe.on .pn{transform:scale(1.08)} .pe:active .pn{transform:scale(.94)}
 .pl{flex:1;height:2px;background:var(--line);margin-bottom:34px;min-width:12px}
 .resume{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px}
 .resume .tuile{padding:12px 14px} .resume .tv{font-size:20px}
@@ -1400,7 +1407,7 @@ function renderAll(){
     return `<button data-tab="${k}" class="${S.tab===k?"on":""}" ${S.tab===k?'aria-current="page"':""}>${icon(k)}<span>${l}</span>${n?`<span class="badge" title="${bt}">${n}</span>`:""}</button>`; }).join("") : "";
   $("#saveBtn").disabled = !S.data || !!S.consultation || DEPOT;
   const sombre = themeActuel() === "dark";
-  $("#themeBtn").setAttribute("aria-pressed", sombre); $("#themeBtn").innerHTML = sombre ? "☀︎ Clair" : "☾ Sombre";
+  $("#themeBtn").setAttribute("aria-pressed", sombre); if(!$("#themeBtn .th-ind")) $("#themeBtn").innerHTML = `<i class="th-ind" aria-hidden="true"></i><span>☀︎ Clair</span><span>☾ Sombre</span>`;
   $("#tabs").style.setProperty("--n", $("#tabs").querySelectorAll("button").length);
   ajusterMenu();
   const m = $("#main");
@@ -1420,10 +1427,15 @@ function memoAnim(){
   const segs = {}; document.querySelectorAll("#main .seg[data-cle]").forEach(g => { const on = g.querySelector("button.on"); if(on) segs[g.dataset.cle] = posRel(on); });
   return {segs, voile:!!$("#main .rv-voile"), nav:S.navPos};
 }
+const cadre = r => ({transform:`translate(${r.x}px,${r.y}px)`, width:r.w+"px", height:r.h+"px"});
 function glisser(ind, de, a){
-  ind.style.transition = "none"; Object.assign(ind.style, {transform:`translate(${de.x}px,${de.y}px)`, width:de.w+"px", height:de.h+"px"});
-  ind.offsetWidth;
-  ind.style.transition = ""; Object.assign(ind.style, {transform:`translate(${a.x}px,${a.y}px)`, width:a.w+"px", height:a.h+"px"});
+  Object.assign(ind.style, cadre(a));
+  if(!MOUV || (de.x === a.x && de.y === a.y && de.w === a.w)) return;
+  // À mi-course, le bord avant a presque rejoint la cible et le bord arrière vient de partir : le curseur s'étire puis se resserre
+  const axe = (s0, l0, s1, l1) => { const e0 = s0 + l0, e1 = s1 + l1, av = s1 >= s0;
+    const s = s0 + (av ? .2 : .8) * (s1 - s0), e = e0 + (av ? .8 : .2) * (e1 - e0); return [s, e - s]; };
+  const [x, w] = axe(de.x, de.w, a.x, a.w), [y, h] = axe(de.y, de.h, a.y, a.h);
+  ind.animate([cadre(de), {...cadre({x, y, w, h}), offset:.45}, cadre(a)], {duration:460, easing:"cubic-bezier(.45,.05,.2,1)"});
 }
 function animer(avant, cle){
   const m = $("#main"), nouvelle = cle !== S.animCle; S.animCle = cle;
@@ -1482,7 +1494,14 @@ function setPref(k, v){ try{ localStorage.setItem(k, v); }catch(_){} }
 function themeActuel(){ return pref("theme","light") === "dark" ? "dark" : "light"; }
 function appliquerTheme(t){ if(t === "dark") document.documentElement.dataset.theme = "dark"; else document.documentElement.removeAttribute("data-theme"); }
 appliquerTheme(themeActuel());
-$("#themeBtn").addEventListener("click", () => { const t = themeActuel() === "dark" ? "light" : "dark"; setPref("theme", t); appliquerTheme(t); renderAll(); });
+$("#themeBtn").addEventListener("click", ev => {
+  const t = themeActuel() === "dark" ? "light" : "dark", bascule = () => { setPref("theme", t); appliquerTheme(t); renderAll(); };
+  if(!MOUV || !document.startViewTransition) return bascule();
+  // Le nouveau thème s'étend en cercle depuis le bouton
+  const r = ev.currentTarget.getBoundingClientRect(), x = r.left + r.width / 2, y = r.top + r.height / 2, R = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+  $("#themeBtn").setAttribute("aria-pressed", t === "dark");
+  setTimeout(() => document.startViewTransition(bascule).ready.then(() => document.documentElement.animate({clipPath:[`circle(0px at ${x}px ${y}px)`, `circle(${R}px at ${x}px ${y}px)`]}, {duration:600, easing:"cubic-bezier(.4,0,.2,1)", pseudoElement:"::view-transition-new(root)"})).catch(() => {}), 180);
+});
 function entete(titre, sous){ return `<div class="pagehead"><h1>${titre}</h1>${sous?`<p>${sous}</p>`:""}</div>`; }
 
 function vueBienvenue(){
