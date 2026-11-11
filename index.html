@@ -2000,8 +2000,8 @@ function etapesAnnee(y){
   if(S.data.emprunts.length){
     const sansEch = S.data.emprunts.filter(l => !lignesBanque(l)).length, E = S.data.emprunts.flatMap(l => etatsRapprochement(l, y)), rp = E.filter(e => e.c !== "ok").length;
     const justif = rp > 0 && echeancesJustifiees(y);
-    t("pret", "Déposer le tableau du prêt", "Une seule fois : le Carnet en lit chaque échéance. Si le prêt change, déposez le nouveau.", sansEch ? "afaire" : "fait", sansEch ? "À déposer" : "Déposé", "allerA('emprunt')", "Déposer");
-    t("pret-rp", "Retrouver chaque échéance", "Le Carnet rapproche seul les mensualités des opérations ; à la main s'il en manque.", !E.length ? "plustard" : !rp || justif ? "fait" : "afaire",
+    t("pret", "Déposer le tableau du prêt", "", sansEch ? "afaire" : "fait", sansEch ? "À déposer" : "Déposé", "allerA('emprunt')", "Déposer");
+    t("pret-rp", "Rapprocher les échéances", "", !E.length ? "plustard" : !rp || justif ? "fait" : "afaire",
       !E.length ? "" : !rp ? `${E.length} sur ${E.length}` : justif ? "Écart justifié" : `${rp} à rapprocher`, "allerA('emprunt')", "Rapprocher");
   }
   const acq = S.data.immobilisations.filter(i => anneeEntreeBilan(i) === y).length;
@@ -2034,7 +2034,7 @@ function etapesAnnee(y){
   const rail = ETAPES.map((e, n) => `<li class="ea-s ${e.etat}${e === cur ? " cur" : ""}${e === vue ? " vue" : ""}"><button onclick="S.eaVue='${e.k}';renderAll()" aria-pressed="${e === vue}">
       <span class="ea-ic">${e.etat === "fait" ? ok : svgI(IC[e.k])}</span><b>${e.titre}</b><small>${e.etat === "fait" ? "fait" : e.etat === "attention" ? "à corriger" : e === cur ? "maintenant" : e.quand}</small></button></li>`).join("");
   const tache = x => `<div class="ea-t ${x.etat}"><span class="ea-d">${x.etat === "fait" ? ok : x.etat === "attention" ? "!" : ""}</span>
-      <div class="ea-tx"><b>${x.titre}</b><span>${x.txt}</span></div>
+      <div class="ea-tx"><b>${x.titre}</b>${x.txt ? `<span>${x.txt}</span>` : ""}</div>
       ${x.etat === "fait" ? `<span class="ea-st">${x.detail || "Fait"}</span>` : x.etat === "sansobjet" ? `<span class="ea-st">${x.detail || "Pas concerné"}</span>` : x.detail || x.quand ? `<span class="ea-st">${[x.detail, x.quand].filter(Boolean).join(" · ")}</span>` : ""}
       <div class="ea-a">${x.etat === "fait" ? (x.manuel && coche[x.id] && !clos ? `<button class="btn ghost small" onclick="cocherEtape(${y},'${x.id}',false)">Annuler</button>` : "")
         : x.etat === "sansobjet" || x.etat === "plustard" ? "" : `${x.manuel && !clos ? `<button class="btn ghost small btn-ic" onclick="cocherEtape(${y},'${x.id}',true)">${ok}${x.cocher}</button>` : ""}${x.go ? `<button class="btn small" onclick="${x.go}">${x.lib}</button>` : ""}`}</div></div>`;
@@ -2748,35 +2748,33 @@ function carteSuiviPret(l, idx, y){
       <textarea id="echColle${idx}" rows="4" style="width:100%;margin-top:8px" placeholder="05/11/2016   729,86   122,00   607,86   119 392,14 …"></textarea>
       <button class="btn small" style="margin-top:6px" onclick="collerEcheancier(${idx})">Lire le tableau</button></details>`;
   const z = B?.[B.length-1], ouvrir = doc ? `ouvrirChemin(${jsq(doc.fichier)},${jsq(doc.libelle)})` : "";
-  const e1 = B ? etape("fait", "Dépôt", "Le tableau d'amortissement de la banque",
-      `${eb.majDepuis ? `Mis à jour le ${fmtDate(eb.majLe)}, à partir de l'échéance de ${libEch(eb.majDepuis.slice(0,7))}. ` : `${B.length} échéances, jusqu'à ${MOIS_LONG[z.mois-1]} ${z.annee}. `}Prêt renégocié ou remboursé en partie ? Déposez le nouveau tableau : il remplace les échéances à partir de sa première date.`,
-      "Déposé", `${doc ? `<button class="btn small sec" onclick="${ouvrir}">Voir</button>` : ""}<button class="btn small sec" onclick="ajouterEcheancierPret(${idx})">Nouveau tableau…</button>${menu3([doc && ["Télécharger le PDF", `telechargerChemin(${jsq(doc.fichier)})`], ["Coller un nouveau tableau", `S.colleEch='${l.id}';renderAll()`], ["Supprimer le tableau", `supprimerEcheancierBanque(${idx})`, "danger"]])}`,
+  const e1 = B ? etape("fait", "Dépôt", "Tableau de la banque", eb.majDepuis ? `Mis à jour à partir de ${libEch(eb.majDepuis.slice(0,7))}` : "",
+      `${B.length} échéances`, `${doc ? `<button class="btn small sec" onclick="${ouvrir}">Voir</button>` : ""}<button class="btn small sec" title="Prêt renégocié ou remboursé en partie : le nouveau tableau remplace les échéances à partir de sa première date" onclick="ajouterEcheancierPret(${idx})">Nouveau tableau…</button>${menu3([doc && ["Télécharger le PDF", `telechargerChemin(${jsq(doc.fichier)})`], ["Coller un nouveau tableau", `S.colleEch='${l.id}';renderAll()`], ["Supprimer le tableau", `supprimerEcheancierBanque(${idx})`, "danger"]])}`,
       S.colleEch === l.id ? coller(true) : "")
-    : doc ? etape("afaire", "Dépôt", "Le tableau d'amortissement de la banque", "Le fichier est déposé, mais son tableau n'a pas encore été lu.", "À lire", `<button class="btn small" onclick="lireEcheancierDoc(${idx})">Lire le tableau</button>`, coller(false))
-    : etape("afaire", "Dépôt", "Déposer le tableau d'amortissement de la banque", "Une seule fois : le Carnet lit le PDF et reprend chaque échéance (intérêts, capital, assurance).", "À déposer", "",
+    : doc ? etape("afaire", "Dépôt", "Tableau de la banque", "", "Non lu", `<button class="btn small" onclick="lireEcheancierDoc(${idx})">Lire le tableau</button>`, coller(false))
+    : etape("afaire", "Dépôt", "Déposer le tableau de la banque", "", "À déposer", "",
       zoneDepot("Déposer le tableau de la banque", "le PDF reçu avec l'offre de prêt", `ajouterEcheancierPret(${idx})`, `ajouterEcheancierPret(${idx},event)`).replace('class="depot noprint"','class="depot noprint compact"') + coller(false));
   if(!tenu) return `<div class="card ea ep"><div class="ea-h"><h3>Suivi du prêt</h3></div>${e1}</div>`;
   // 2. Rapprochement automatique, à la main pour ce qu'il n'a pas trouvé
   const E = etatsRapprochement(l, y), pb = E.filter(e => e.c !== "ok"), pts = pointsRevision(y), pt = id => pts.find(x => x.id === id);
   const justifie = pb.length > 0 && pt("echeances")?.etat === "fait";  // = echeancesJustifiees(y)
-  const liste = pb.map(e => `<div class="ep-pb"><span class="rpi">${IC_RP[e.c]}</span><b>${libEch(cleEch(e.r))}</b><span>${e.t}</span>${verrouille(e.r.annee) ? "" : `<button class="btn small sec" onclick="ouvrirRpMain('${l.id}','${cleEch(e.r)}')">Rapprocher</button>`}</div>`).join("");
+  const liste = pb.map(e => `<div class="ep-pb"><span class="rpi">${IC_RP[e.c]}</span><b>${libEch(cleEch(e.r))}</b><span title="${e.t}">${e.s}</span>${verrouille(e.r.annee) ? "" : `<button class="btn small sec" onclick="ouvrirRpMain('${l.id}','${cleEch(e.r)}')">Rapprocher</button>`}</div>`).join("");
   const panneau = panneauRpMain(l);
-  const e2 = !E.length ? etape("plustard", "Rapprochement automatique", "Retrouver chaque échéance dans vos opérations", `Aucune échéance passée en ${y} pour l'instant.`, "", "", panneau)
-    : !pb.length ? etape("fait", "Rapprochement automatique", "Chaque échéance retrouvée dans vos opérations", "", `${E.length} sur ${E.length}`, "", panneau)
-    : etape(justifie ? "fait" : "afaire", "Rapprochement automatique", "Retrouver chaque échéance dans vos opérations",
-      "Le Carnet cherche chaque mensualité dans les opérations de la banque. Celles qu'il n'a pas retrouvées se rapprochent à la main : choisissez les opérations qui la composent.",
+  const e2 = !E.length ? etape("plustard", "Rapprochement", "Échéances retrouvées", "", "aucune encore", "", panneau)
+    : !pb.length ? etape("fait", "Rapprochement", "Échéances retrouvées", "", `${E.length} sur ${E.length}`, "", panneau)
+    : etape(justifie ? "fait" : "afaire", "Rapprochement", justifie ? "Échéances retrouvées" : "Échéances à rapprocher", "",
       justifie ? `écart${pl(pb.length)} justifié${pl(pb.length)}` : `${pb.length} à rapprocher`, "", liste + panneau);
   // 3. L'écart qui reste se justifie dans la révision (commentaire, justificatif), ou se régularise pour le restant dû
   const P = [`capital-${l.id}`, `interets-${l.id}`, `assurance-${l.id}`, "echeances", ...(S.data.emprunts.length === 1 ? ["crd"] : [])].map(pt).filter(Boolean);
   const reste = P.filter(x => x.etat === "afaire" || x.etat === "bloque"), just = P.filter(x => x.etat === "fait");
   const allerRev = `S.declEtape='1';S.revPoste='emprunt';allerA('declaration')`;
-  const e3 = pb.length && !justifie && reste.length ? etape("plustard", "Révision", "Justifier l'écart qui resterait", "Après le rapprochement, s'il reste un écart (échéance reportée, opération absente du relevé…), vous l'expliquerez dans la révision.", "ensuite")
-    : reste.length ? etape(reste.some(x => x.etat === "bloque") ? "attention" : "afaire", "Révision", "Justifier l'écart qui reste",
-      "Les opérations ne collent pas à l'échéancier. Expliquez pourquoi dans la révision, par un commentaire ou un justificatif (courrier de la banque, avenant…).", `${reste.length} écart${pl(reste.length)} à justifier`, `<button class="btn small" onclick="${allerRev}">Justifier</button>`)
-    : just.length ? etape("fait", "Révision", "Écart justifié dans la révision", "", `${just.length} justifié${pl(just.length)}`, `<button class="btn ghost small" onclick="${allerRev}">Voir</button>`)
-    : etape("fait", "Révision", "Aucun écart avec l'échéancier", "", "Rien à justifier");
+  const e3 = pb.length && !justifie && reste.length ? etape("plustard", "Révision", "Écart restant à justifier", "", "ensuite")
+    : reste.length ? etape(reste.some(x => x.etat === "bloque") ? "attention" : "afaire", "Révision", "Écart à justifier",
+      "Un commentaire ou un justificatif suffit.", `${reste.length} écart${pl(reste.length)}`, `<button class="btn small" onclick="${allerRev}">Justifier</button>`)
+    : just.length ? etape("fait", "Révision", "Écart justifié", "", `${just.length} justifié${pl(just.length)}`, `<button class="btn ghost small" onclick="${allerRev}">Voir</button>`)
+    : etape("fait", "Révision", "Aucun écart", "", "");
   const nb = [B ? 0 : 1, pb.length && !justifie ? 1 : 0, reste.length && (!pb.length || justifie) ? 1 : 0].reduce((s, x) => s + x, 0);
-  return `<div class="card ea ep"><div class="ea-h"><h3>Suivi du prêt en ${y}</h3><span class="ep-et ${nb ? "afaire" : "fait"}">${nb ? `${nb} étape${pl(nb)} à faire` : "Tout est en ordre"}</span></div>${e1}${e2}${e3}</div>`;
+  return `<div class="card ea ep"><div class="ea-h"><h3>Suivi ${y}</h3><span class="ep-et ${nb ? "afaire" : "fait"}">${nb ? `${nb} à faire` : "Tout est en ordre"}</span></div>${e1}${e2}${e3}</div>`;
 }
 /* Rapprochement à la main d'une échéance : les opérations qui la composent, cochées parmi celles des mois voisins */
 function ouvrirRpMain(pret, k){
@@ -2803,16 +2801,16 @@ function panneauRpMain(l){
   sel.forEach(({e}) => { const k = NAT_PRET[e.nature]; if(k) som[k] = r2(som[k] + e.montant); });
   const autres = sel.filter(c => !NAT_PRET[c.e.nature]), conforme = !autres.length && K.every(k => Math.abs(som[k] - r[k]) < 0.01);
   const repartir = sel.length === 1 && !sel[0].lock && Math.abs(sel[0].e.montant - tot) < 0.005 && !conforme;
-  const msg = conforme ? `<div class="alert ok">Les opérations cochées correspondent à l'échéance.</div>`
-    : repartir ? `<div class="alert info" style="align-items:center">L'opération cochée a le montant de la mensualité, mais elle n'est pas répartie entre ${ass ? "intérêts, capital et assurance" : "intérêts et capital"}.<button class="btn small" style="margin-left:auto" onclick="repartirRpMain()">Répartir selon l'échéancier</button></div>`
-    : !sel.length ? `<div class="alert warn">Cochez les opérations de la banque qui paient cette échéance. Si elle n'apparaît pas, le relevé n'est peut-être pas encore importé (page Banque), ou l'échéance a été reportée : l'écart se justifiera alors dans la révision.</div>`
-    : `<div class="alert warn">${autres.length ? `${autres.length} opération${pl(autres.length)} cochée${pl(autres.length)} n'${autres.length > 1 ? "ont" : "a"} pas une nature d'emprunt : elle${pl(autres.length)} ne compte${autres.length > 1 ? "nt" : ""} pas. ` : ""}Écart avec l'échéancier : ${K.filter(k => Math.abs(som[k] - r[k]) >= 0.01).map(k => `${LIB[k].toLowerCase()} ${eur(som[k])} au lieu de ${eur(r[k])}`).join(", ") || "aucun"}. S'il persiste, il se justifiera dans la révision.</div>`;
-  return `<div class="jx-ratt rpm" id="rpMain"><div class="row" style="justify-content:space-between;gap:8px"><div><h3 style="margin:0">Rapprocher l'échéance de ${libEch(m.k)}</h3><span class="sub" style="margin:0">Opérations de la banque des mois autour de l'échéance.</span></div>
+  const msg = conforme ? `<div class="alert ok">Ça correspond.</div>`
+    : repartir ? `<div class="alert info" style="align-items:center">Une seule ligne pour toute la mensualité.<button class="btn small" style="margin-left:auto" onclick="repartirRpMain()">Répartir selon l'échéancier</button></div>`
+    : !sel.length ? `<div class="alert warn">Cochez les opérations qui paient cette échéance.</div>`
+    : `<div class="alert warn">${autres.length ? "Une opération cochée n'est pas classée en emprunt. " : ""}Ça ne correspond pas encore.</div>`;
+  return `<div class="jx-ratt rpm" id="rpMain"><div class="row" style="justify-content:space-between;gap:8px"><div><h3 style="margin:0">Échéance de ${libEch(m.k)}</h3></div>
       <div class="row" style="gap:6px"><button class="btn small" onclick="enregistrerRpMain()">Enregistrer</button><button class="btn small ghost" onclick="S.rpMain=null;renderAll()">Annuler</button></div></div>
     <div class="fiche rpm-cmp">${K.map(k => `<div><span>${LIB[k]}</span><b>${eur(r[k])}</b><small class="${Math.abs(som[k] - r[k]) < 0.01 ? "ok" : "ko"}">${eur(som[k])} coché</small></div>`).join("")}<div><span>Mensualité</span><b>${eur(tot)}</b><small>${eur(sel.reduce((s, c) => s + c.e.montant, 0))} coché</small></div></div>
     ${msg}
     ${C.length ? `<div class="ratt">${C.map(({e, lock}) => `<label><input type="checkbox" ${S.rpSel.has(e.id) ? "checked" : ""} ${lock ? `disabled title="Exercice clôturé"` : ""} onchange="basculerRp('${e.id}',this.checked)"><span>${fmtDate(e.date).slice(0, 5)}</span><span>${esc(e.tiers) || "–"}${e.ech && e.ech !== "-" && e.ech !== m.k ? ` <small class="muted-s">(échéance de ${libEch(e.ech)})</small>` : ""}</span>${chipNature(e.nature)}<span class="m">${eur(e.montant)}</span></label>`).join("")}</div>`
-      : `<p class="sub" style="margin:10px 0 0">Aucune opération de la banque, dans les mois autour de l'échéance, ne lui ressemble.</p>`}</div>`;
+      : `<p class="sub" style="margin:10px 0 0">Aucune opération proche ne ressemble à cette échéance.</p>`}</div>`;
 }
 function enregistrerRpMain(){
   const m = S.rpMain, l = m && S.data.emprunts.find(x => x.id === m.pret); if(!l) return;
@@ -3008,10 +3006,10 @@ function etatEcheance(l, r, cache = {}){
   const auj = new Date();
   if(r.annee * 100 + r.mois > auj.getFullYear() * 100 + auj.getMonth() + 1 || !exercice(r.annee) || isHistorique(r.annee)) return null;
   const s = saisiesPret(l, cache)[cleEch(r)];
-  if(!s?.n) return {c:"ko", t:"Aucune opération bancaire retrouvée pour cette échéance"};
+  if(!s?.n) return {c:"ko", s:"Introuvable", t:"Aucune opération bancaire retrouvée pour cette échéance"};
   const faux = K.filter(k => Math.abs(s[k]) > 0.004 && Math.abs(s[k] - r[k]) >= 0.01), manq = K.filter(k => Math.abs(s[k]) <= 0.004 && r[k] > 0.004);
-  if(faux.length) return {c:"ko", t:"Écart : " + faux.map(k => `${LIB[k]} ${eur(s[k])} au lieu de ${eur(r[k])}`).join(", ")};
-  if(manq.length) return {c:"part", t:"Manque : " + manq.map(k => LIB[k]).join(", ")};
+  if(faux.length) return {c:"ko", s:"Montant différent", t:"Écart : " + faux.map(k => `${LIB[k]} ${eur(s[k])} au lieu de ${eur(r[k])}`).join(", ")};
+  if(manq.length) return {c:"part", s:"Manque : " + manq.map(k => LIB[k]).join(", "), t:"Manque : " + manq.map(k => LIB[k]).join(", ")};
   return {c:"ok", t:"Rapprochée : opérations conformes à l'échéancier"};
 }
 /* Échéances passées d'une année avec leur état */
@@ -3698,10 +3696,10 @@ const echeancesJustifiees = y => pointsRevision(y).find(x => x.id === "echeances
 /* Ce qui se fait avant la révision (déposer, trier, rapprocher) : rappelé en tête de la révision, sans en faire partie */
 function preparatifs(y){
   const out = controles(y).filter(x => ["banque-tri","echeancier-banque","pret-rattache"].includes(x[3]) && x[0] !== "ok")
-    .map(([, texte, page, id]) => ({id, texte, page, lib: id === "banque-tri" ? "Trier" : id === "echeancier-banque" ? "Déposer" : "Choisir le prêt"}));
+    .map(([, texte, page, id]) => ({id, page, texte: id === "banque-tri" ? texte.replace(/ bancaire(s?) de \d{4} encore/, "").replace(/\.$/, "") : id === "echeancier-banque" ? "Tableau du prêt à déposer" : texte.split(" (")[0], lib: id === "banque-tri" ? "Trier" : id === "echeancier-banque" ? "Déposer" : "Choisir le prêt"}));
   if(S.data.emprunts.length && !echeancesJustifiees(y)){
     const n = S.data.emprunts.reduce((t, l) => t + etatsRapprochement(l, y).filter(e => e.c !== "ok").length, 0);
-    if(n) out.push({id:"rp-main", texte:`${n} échéance${pl(n)} de prêt que le Carnet n'a pas retrouvée${pl(n)} dans les opérations : rapprochez-l${n > 1 ? "es" : "a"} à la main.`, page:"emprunt", lib:"Rapprocher"});
+    if(n) out.push({id:"rp-main", texte:`${n} échéance${pl(n)} de prêt à rapprocher`, page:"emprunt", lib:"Rapprocher"});
   }
   return out;
 }
@@ -3787,7 +3785,7 @@ function vueRevision(y){
     : bloq ? `${bloq} erreur${pl(bloq)} bloquante${pl(bloq)} : la clôture attend qu'elles soient corrigées ou expliquées` : nb ? `Plus d'erreur bloquante : la clôture est possible (${nb} point${pl(nb)} à vérifier)` : "Révision validée : prêt à clôturer";
   const imprimer = postes.map(c => `<div class="printonly rv-imp"><h3>${c.l} · ${NIV[niveauPoste(c.p)][0]}</h3>${c.p.map(x => `<div>${NIV[x.etat][1]} ${x.lib || x.texte}${x.type === "calc" && x.attendu != null ? ` : ${eur(x.compta)} / ${eur(x.attendu)}` : ""}${rev[x.id]?.commentaire ? ` · <i>${esc(rev[x.id].commentaire)}</i>` : ""}</div>`).join("")}</div>`).join("");
   const prep = clos ? [] : preparatifs(y);
-  const avant = prep.length ? `<div class="card prep noprint"><h3 style="margin:0 0 2px">Avant de réviser : déposer et trier</h3><p class="sub" style="margin:0 0 6px">La révision contrôle des comptes complets. Terminez d'abord ce qui reste à déposer ou à trier.</p>
+  const avant = prep.length ? `<div class="card prep noprint"><h3 style="margin:0 0 6px">Avant de réviser</h3>
     ${prep.map(x => `<div class="prep-l"><span class="ea-d"></span><span>${x.texte}</span>${x.page ? `<button class="btn small" onclick="S.revPoste=null;allerA('${x.page}')">${x.lib}</button>` : ""}</div>`).join("")}</div>` : "";
   return avant + `<div class="card noprint"><h3 style="margin:0 0 4px;color:${clos ? "var(--text)" : bloq ? "var(--neg)" : nb ? "var(--warn)" : "var(--pos)"}">${tete}</h3>
     <p class="sub" style="margin:0">Chaque poste rapproche la comptabilité d'une source indépendante (échéancier, bail, relevé, tableau d'amortissement, clôture ${y-1}). Touchez un poste pour voir le détail.</p>
