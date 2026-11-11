@@ -60,7 +60,10 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .brand b{display:block;font-size:16px;font-weight:600;letter-spacing:-.01em}
 .brand small{display:block;color:var(--muted);font-size:12.5px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
 .yearbox{padding:0 6px}
-.yearbox select{width:100%;font-weight:600}
+.ylab{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);position:relative}
+#yearBtn{width:100%;display:flex;align-items:center;justify-content:space-between;font:inherit;font-size:14.5px;font-weight:600;color:var(--text);background:var(--surface);border:1px solid var(--line);border-radius:var(--r-md);padding:8px 10px;cursor:pointer;transition:border-color .18s,box-shadow .18s}
+#yearBtn:hover,#yearBtn[aria-expanded="true"]{border-color:var(--accent)}#yearBtn[aria-expanded="true"]{box-shadow:0 0 0 3px var(--accent-soft)}
+#yearBtn svg{width:15px;height:15px;color:var(--muted)}
 .menu{display:flex;flex-direction:column;gap:2px}
 /* Le menu se tasse de lui-même quand la colonne manque de hauteur : les boutons rétrécissent (jusqu'à 28 px) au lieu de faire dépasser la colonne */
 .side>*{flex-shrink:0}
@@ -141,8 +144,8 @@ main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
 @media (prefers-reduced-motion: reduce){ .side{transition:none} }
 /* Menu toujours visible en entier : ajusterMenu() le resserre par paliers (c1, c2, c3) tant qu'il dépasse de la fenêtre */
 .side.c1{gap:12px;padding:14px 14px}
-.side.c1 .yearbox label{flex-direction:row;align-items:center;gap:10px}
-.side.c1 .yearbox select{flex:1;padding:5px 8px}
+.side.c1 .ylab{flex-direction:row;align-items:center;gap:10px}
+.side.c1 #yearBtn{flex:1;padding:5px 8px}
 .side.c1 .menu button{padding:6px 10px}
 .side.c1 .menu .sep{margin:5px 10px}
 .side.c1 .sidefoot{gap:8px}
@@ -157,7 +160,7 @@ main{padding:36px 44px 80px;max-width:1080px;width:100%;min-width:0}
 .side.c3{gap:6px;padding:8px 12px}
 .side.c3 .menu button{padding:2px 10px;font-size:13.5px;line-height:1.4}
 .side.c3 .menu .sep{margin:2px 10px}
-.side.c3 .yearbox select,.side.c3 .sidefoot .btn{padding:3px 8px}
+.side.c3 #yearBtn,.side.c3 .sidefoot .btn{padding:3px 8px}
 .side.c3 .prefs button{padding:3px 6px}
 /* Ordinateur : la page ne défile plus, seule la zone de droite défile. Le menu reste immobile. */
 @media screen and (min-width: 861px){
@@ -335,6 +338,20 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 @keyframes jauge{from{transform:scaleX(0)}}
 @media (prefers-reduced-motion:reduce){.entree>*,.entree .tuiles>.tuile,.entree .arc,.entree .part,.entree .barres rect,.entree .jauge span,.menu3[open]>.m3,dialog.boite[open],.rv-voile.ouvre,.rv-voile.ouvre>.rv-fen,.toast,.card>details[open]>:not(summary){animation:none}.th-rond,.th-rond svg,.th-rail,.pe .pn{transition:none}}
 @media print{.entree>*,.entree *{animation:none!important}}
+/* Roue des exercices */
+.roue{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:40;height:190px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 34px rgba(30,10,30,.18);overflow:hidden;outline:none;animation:roue-in .28s cubic-bezier(.2,.9,.3,1.15);transform-origin:top center}
+.roue.ferme{animation:roue-out .18s ease-in forwards}
+@keyframes roue-in{from{opacity:0;transform:translateY(-6px) scale(.94)}}
+@keyframes roue-out{to{opacity:0;transform:translateY(-4px) scale(.96)}}
+.roue::before,.roue::after{content:"";position:absolute;left:0;right:0;height:62px;z-index:2;pointer-events:none}
+.roue::before{top:0;background:linear-gradient(var(--surface),transparent)}.roue::after{bottom:0;background:linear-gradient(transparent,var(--surface))}
+.roue-bande{position:absolute;left:6px;right:6px;top:calc(50% - 19px);height:38px;border-radius:9px;background:var(--accent-soft);pointer-events:none}
+.roue-liste{position:relative;height:100%;overflow-y:auto;scroll-snap-type:y mandatory;padding:76px 0;box-sizing:border-box;scrollbar-width:none;overscroll-behavior:contain}
+.roue-liste::-webkit-scrollbar{display:none}
+.roue-an{height:38px;scroll-snap-align:center;display:flex;align-items:baseline;justify-content:center;gap:8px;cursor:pointer;color:var(--text);will-change:transform,opacity}
+.roue-an b{font-size:18px;font-weight:600;line-height:38px;font-variant-numeric:tabular-nums}.roue-an small{font-size:11.5px;color:var(--muted)}
+.roue-an[aria-selected="true"] b{color:var(--accent)}
+@media (prefers-reduced-motion:reduce){.roue,.roue.ferme{animation:none}}
 /* Accueil sans dossier, création d'un dossier, « Pour bien démarrer » */
 .bv{max-width:560px;margin:8vh auto 0;text-align:center}
 .bv-logo .logo{width:min(320px,80%);height:auto}
@@ -904,7 +921,7 @@ html.mobile,html.mobile *{touch-action:manipulation}
     <div class="brand">
       <div><a href="#" class="logolink" title="Retour au tableau de bord"><svg class="logo" viewBox="0 0 211 56" role="img" aria-label="Le Carnet"><g transform="scale(.875)"><path d="M5 24 L29 38 L29 41.5 L5 27.5 Z" fill="var(--accent-2)" stroke="var(--accent-2)" stroke-width="2" stroke-linejoin="round"/><path d="M5 32.5 L29 46.5 L29 57 L5 43 Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/><path d="M33.5 38 L59 12 L59 15.5 L33.5 41.5 Z" fill="var(--accent-2)" stroke="var(--accent-2)" stroke-width="2" stroke-linejoin="round"/><path d="M33.5 46.5 L59 20.5 L59 31 L33.5 57 Z" fill="var(--accent)" stroke="var(--accent)" stroke-width="2.5" stroke-linejoin="round"/></g><path d="M70.75390625 13.353515625H66.078125V41.0H70.75390625ZM82.856640625 41.4453125C87.4396484375 41.4453125 91.0763671875 38.7919921875 91.8185546875 34.951171875H87.4396484375C86.9015625 36.62109375 85.3244140625 37.7529296875 82.96796875 37.7529296875C79.813671875 37.7529296875 77.9953125 35.619140625 77.883984375 32.427734375H92.059765625V31.1474609375C92.059765625 25.1357421875 88.31171875 20.9609375 82.67109375 20.9609375C77.17890625 20.9609375 73.3009765625 25.265625 73.3009765625 31.2216796875C73.3009765625 37.1591796875 76.9748046875 41.4453125 82.856640625 41.4453125ZM77.92109375 29.19921875C78.2365234375 26.3974609375 80.036328125 24.671875 82.7453125 24.671875C85.454296875 24.671875 87.27265625 26.3974609375 87.56953125 29.19921875ZM111.08847656249999 41.4453125C116.04257812499999 41.4453125 119.64218749999999 38.25390625 119.97617187499999 33.9677734375H115.35605468749999C114.91074218749999 36.138671875 113.59335937499999 37.548828125 111.14414062499999 37.548828125C108.06406249999999 37.548828125 106.24570312499999 35.0810546875 106.24570312499999 31.2216796875C106.24570312499999 27.34375 108.08261718749999 24.857421875 111.14414062499999 24.857421875C113.57480468749999 24.857421875 115.04062499999999 26.3232421875 115.39316406249999 28.419921875H119.97617187499999C119.56796874999999 24.0595703125 116.00546874999999 20.9609375 111.08847656249999 20.9609375C105.35507812499999 20.9609375 101.51425781249999 25.1728515625 101.51425781249999 31.2216796875C101.51425781249999 37.2705078125 105.35507812499999 41.4453125 111.08847656249999 41.4453125ZM128.6462890625 41.3154296875C131.8376953125 41.3154296875 133.4890625 39.9794921875 134.416796875 38.2353515625H134.491015625V41.0H139.092578125V27.640625C139.092578125 23.55859375 136.0681640625 21.0166015625 130.965625 21.0166015625C125.84453124999999 21.0166015625 122.65312499999999 23.595703125 122.43046874999999 27.4921875H126.93925781249999C127.06914062499999 25.8408203125 128.590625 24.6533203125 130.8728515625 24.6533203125C133.11796875 24.6533203125 134.45390625 25.8408203125 134.45390625 27.5107421875V27.6591796875C134.45390625 28.9951171875 133.2107421875 29.05078125 129.5740234375 29.458984375C125.52910156249999 29.8857421875 121.87382812499999 30.98046875 121.87382812499999 35.43359375C121.87382812499999 39.3486328125 124.74980468749999 41.3154296875 128.6462890625 41.3154296875ZM129.7966796875 37.845703125C127.75566406249999 37.845703125 126.43828124999999 36.9365234375 126.43828124999999 35.396484375C126.43828124999999 33.615234375 128.1453125 32.8916015625 130.14921875 32.5947265625C132.07890625 32.2978515625 133.897265625 32.0009765625 134.4724609375 31.6298828125V33.7451171875C134.4724609375 36.02734375 132.858203125 37.845703125 129.7966796875 37.845703125ZM142.5302734375 41.0H147.2060546875V29.904296875C147.2060546875 26.8427734375 148.931640625 25.302734375 151.158203125 25.302734375C152.0859375 25.302734375 153.013671875 25.3955078125 153.3662109375 25.451171875V21.294921875C152.9951171875 21.2578125 152.4755859375 21.220703125 151.8447265625 21.220703125C149.3212890625 21.220703125 147.818359375 22.408203125 147.0947265625 24.6533203125H147.0390625V21.40625H142.5302734375ZM160.2365234375 29.9228515625C160.2365234375 26.5830078125 162.0734375 25.1171875 164.52265625 25.1171875C167.0275390625 25.1171875 168.4748046875 26.6201171875 168.4748046875 29.49609375V41.0H173.169140625V28.75390625C173.169140625 23.7255859375 170.274609375 21.0166015625 166.1740234375 21.0166015625C163.48359375 21.0166015625 161.4982421875 22.2041015625 160.1623046875 24.412109375V21.40625H155.5607421875V41.0H160.2365234375ZM185.27187500000002 41.4453125C189.85488281250002 41.4453125 193.49160156250002 38.7919921875 194.23378906250002 34.951171875H189.85488281250002C189.31679687500002 36.62109375 187.73964843750002 37.7529296875 185.38320312500002 37.7529296875C182.22890625000002 37.7529296875 180.41054687500002 35.619140625 180.29921875000002 32.427734375H194.47500000000002V31.1474609375C194.47500000000002 25.1357421875 190.72695312500002 20.9609375 185.08632812500002 20.9609375C179.59414062500002 20.9609375 175.71621093750002 25.265625 175.71621093750002 31.2216796875C175.71621093750002 37.1591796875 179.39003906250002 41.4453125 185.27187500000002 41.4453125ZM180.33632812500002 29.19921875C180.65175781250002 26.3974609375 182.45156250000002 24.671875 185.16054687500002 24.671875C187.86953125000002 24.671875 189.68789062500002 26.3974609375 189.98476562500002 29.19921875ZM207.28281250000003 21.40625H203.29355468750003V16.0625H198.59921875000003V21.40625H195.18515625000003V25.1728515625H198.59921875000003V36.064453125C198.59921875000003 39.4228515625 200.47324218750003 41.0 204.46250000000003 41.0H207.28281250000003V37.2333984375H205.27890625000003C203.75742187500003 37.2333984375 203.29355468750003 36.76953125 203.29355468750003 35.3779296875V25.1728515625H207.28281250000003Z" fill="currentColor"/></svg></a><small id="fileinfo">Aucun dossier ouvert</small></div>
     </div>
-    <div class="yearbox" id="yearbox"><label>Exercice<select id="yearSel"></select></label></div>
+    <div class="yearbox" id="yearbox"><div class="ylab"><span id="yearLib">Exercice</span><select id="yearSel" hidden aria-hidden="true" tabindex="-1"></select><button type="button" id="yearBtn" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="yearLib yearBtn"></button></div></div>
     <nav class="menu" id="tabs" aria-label="Sections"></nav>
     <div class="sidefoot">
       <div class="status" id="dirty"></div>
@@ -1403,6 +1420,7 @@ function renderAll(){
   if(S.data){
     const ys = new Set(Object.keys(S.data.exercices).map(Number));
     sel.innerHTML = [...ys].sort((a,b)=>b-a).map(y => `<option value="${y}" ${y===S.year?"selected":""}>${y}${isHistorique(y)?" (historique)":""}</option>`).join("");
+    $("#yearBtn").innerHTML = `<span>${S.year}</span>${svgI('<path d="m8 9 4-4 4 4M8 15l4 4 4-4"/>')}`;
   } else sel.innerHTML = "";
   $("#tabs").innerHTML = S.data && !DEPOT ? TABS.map(([k,l]) => {
     if(k==="sep") return '<div class="sep"></div>';
@@ -1493,6 +1511,39 @@ if(/[?&]diag\b/.test(location.search)){
 }
 $("#tabs").addEventListener("click", e => { const b = e.target.closest("button[data-tab]"); if(b) allerA(b.dataset.tab); });
 $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value); S.editId=null; renderAll(); });
+/* ---- Roue des exercices : les années défilent comme une roue (glisser à deux doigts, molette, flèches, clic) ---- */
+const ROUE_H = 38; // hauteur d'une ligne
+function etatAnnee(y){ const ex = exercice(y); return isHistorique(y) ? "reprise Excel" : ex?.statut === "cloture" ? "clôturé" : "en cours"; }
+function ouvrirRoue(){
+  if($(".roue")) return fermerRoue();
+  const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b), btn = $("#yearBtn");
+  const r = document.createElement("div"); r.className = "roue"; r.setAttribute("role", "listbox"); r.setAttribute("aria-label", "Exercice"); r.tabIndex = -1;
+  r.innerHTML = `<div class="roue-bande" aria-hidden="true"></div><div class="roue-liste">${ys.map(y => `<div class="roue-an" role="option" data-y="${y}" aria-selected="${y===S.year}"><b>${y}</b><small>${etatAnnee(y)}</small></div>`).join("")}</div>`;
+  btn.parentNode.appendChild(r); btn.setAttribute("aria-expanded", "true");
+  const L = r.querySelector(".roue-liste"), items = [...L.children];
+  let choisi = S.year, fin;
+  const dessiner = () => { const c = L.scrollTop + L.clientHeight / 2;
+    items.forEach(it => { const d = (it.offsetTop + ROUE_H / 2 - c) / ROUE_H, a = Math.max(-1, Math.min(1, d / 2.6));
+      it.style.transform = `perspective(400px) rotateX(${-a * 62}deg) scale(${1 - Math.abs(a) * .12})`; it.style.opacity = Math.max(.15, 1 - Math.abs(d) * .32); }); };
+  const centre = () => items[Math.max(0, Math.min(items.length - 1, Math.round(L.scrollTop / ROUE_H)))];
+  const appliquer = () => { const y = Number(centre().dataset.y); items.forEach(it => it.setAttribute("aria-selected", it === centre()));
+    if(y !== choisi){ choisi = y; S.year = y; S.editId = null; renderAll(); } };
+  L.scrollTop = ys.indexOf(S.year) * ROUE_H; dessiner();
+  L.addEventListener("scroll", () => { requestAnimationFrame(dessiner); clearTimeout(fin); fin = setTimeout(appliquer, 160); }, {passive:true});
+  L.addEventListener("click", e => { const it = e.target.closest(".roue-an"); if(!it) return;
+    if(it === centre()) return fermerRoue(); L.scrollTo({top:it.offsetTop - (L.clientHeight - ROUE_H) / 2, behavior:MOUV ? "smooth" : "auto"}); });
+  r.addEventListener("keydown", e => { const i = items.indexOf(centre());
+    if(e.key === "ArrowUp" || e.key === "ArrowDown"){ e.preventDefault(); const j = Math.max(0, Math.min(items.length - 1, i + (e.key === "ArrowUp" ? -1 : 1))); L.scrollTo({top:j * ROUE_H, behavior:MOUV ? "smooth" : "auto"}); }
+    else if(e.key === "Enter" || e.key === "Escape"){ e.preventDefault(); fermerRoue(); btn.focus(); } });
+  r.focus();
+  setTimeout(() => document.addEventListener("pointerdown", S.roueDehors = e => { if(!r.contains(e.target) && e.target !== btn && !btn.contains(e.target)) fermerRoue(); }), 0);
+}
+function fermerRoue(){
+  const r = $(".roue"); if(!r) return; $("#yearBtn").setAttribute("aria-expanded", "false"); document.removeEventListener("pointerdown", S.roueDehors);
+  if(!MOUV) return r.remove();
+  r.classList.add("ferme"); r.addEventListener("animationend", () => r.remove(), {once:true}); setTimeout(() => r.remove(), 300);
+}
+$("#yearBtn").addEventListener("click", ouvrirRoue);
 /* Thème clair par défaut, sombre sur demande (mémorisé sur cet appareil) */
 function pref(k, d){ try{ return localStorage.getItem(k) ?? d; }catch(_){ return d; } }
 function setPref(k, v){ try{ localStorage.setItem(k, v); }catch(_){} }
