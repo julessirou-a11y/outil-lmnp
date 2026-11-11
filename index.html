@@ -1955,13 +1955,10 @@ function vueAccueil(){
         ${donut([["Charges",c.c242,"var(--seg-1)"],["Taxes",c.c244,"var(--seg-2)"],["Intérêts",c.interets,"var(--seg-3)"],["Amortissements",amortDeduits,"var(--accent)"],["Imposable",Math.max(rf,0),"var(--pos)"]], eur0(c.produits), "de loyers")}
         <div class="leg col"><span><i style="background:var(--seg-1)"></i>Charges</span><span><i style="background:var(--seg-2)"></i>Taxes</span><span><i style="background:var(--seg-3)"></i>Intérêts</span><span><i style="background:var(--accent)"></i>Amortissements</span><span><i style="background:var(--pos)"></i>Imposable</span></div></div>
     </div>
-    <div class="card"><h3>Suivi</h3><div class="suivis">
-      ${suivi(moisAttendus.length?loyersOk/moisAttendus.length:1, `${loyersOk}/${moisAttendus.length}`, "Loyers saisis", "ecritures", loyersOk===moisAttendus.length?"var(--pos)":"var(--warn)")}
-      ${suivi(aJust.length?justOk/aJust.length:1, aJust.length?pctTxt(justOk/aJust.length):"✓", "Justificatifs", "pieces", justOk===aJust.length?"var(--pos)":"var(--warn)")}
-      ${suivi(aTrier?0:1, aTrier||"✓", aTrier?"Opérations à trier":"Relevé trié", "banque", aTrier?"var(--warn)":"var(--pos)")}
+    ${baseTot || (pret && capPret) ? `<div class="card"><h3>Le bien dans la durée</h3><div class="suivis">
       ${baseTot?suivi(amortiTot/baseTot, pctTxt(amortiTot/baseTot), "Logement amorti", "immos"):""}
       ${pret&&capPret?suivi(1-crd/capPret, pctTxt(1-crd/capPret), "Prêt remboursé", "emprunt"):""}
-    </div></div>`;
+    </div></div>` : ""}`;
 }
 /* L'année LMNP en six grandes étapes, une seule détaillée à la fois.
    Chaque tâche a un état calculé à partir du dossier ; celles que le Carnet ne peut pas vérifier se cochent à la main
