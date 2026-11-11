@@ -122,16 +122,16 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .cy-l{display:flex;align-items:center;gap:14px;width:100%;padding:14px 6px;border:0;border-top:1px solid var(--line);background:none;color:var(--text);font:inherit;text-align:left;cursor:pointer;border-radius:0}
 .cy-l:first-of-type{border-top:0}.cy-l:hover .cy-t b{color:var(--accent)}
 .cy-d{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;border:2px solid var(--line);color:var(--muted);font-weight:700}.cy-d svg,.ti svg,.rv-sym svg{width:15px;height:15px}
-.cy-l.vise .cy-d,.cy-l.valide .cy-d{background:var(--pos);border-color:var(--pos);color:#fff}.cy-l.devise .cy-d{border-color:var(--mid);color:#3D2B00;background:var(--mid)}
+.cy-l.vise .cy-d,.cy-l.valide .cy-d{background:var(--pos);border-color:var(--pos);color:#fff}.cy-l.devise .cy-d{border-color:var(--warn);color:var(--warn);background:var(--warn-soft)}
 .cy-l.cur{background:var(--accent-soft);border-radius:12px;padding-left:10px;padding-right:10px;border-top-color:transparent}.cy-l.cur+.cy-l{border-top-color:transparent}.cy-l.cur .cy-d{border-color:var(--accent)}
 .cy-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.cy-t b{font-weight:600;font-size:15px}.cy-t span{font-size:13px;color:var(--muted)}
 .cy-st{flex:none;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
-.vise .cy-st,.valide .cy-st{background:var(--pos-soft);color:var(--pos)}.cur .cy-st{background:var(--surface);color:var(--accent)}.cy-l .cy-st.dv,.cy-l.cur .cy-st.dv{background:var(--mid);color:#3D2B00}
+.vise .cy-st,.valide .cy-st{background:var(--pos-soft);color:var(--pos)}.cur .cy-st{background:var(--surface);color:var(--accent)}.cy-l .cy-st.dv,.cy-l.cur .cy-st.dv{background:var(--warn-soft);color:var(--warn)}
 .cy-pied{border-style:dashed;text-align:center;color:var(--muted)}.cy-pied.ok{border-style:solid;color:var(--pos);font-weight:600;display:flex;gap:8px;justify-content:center;align-items:center}.cy-pied svg{width:16px;height:16px}
 .bt{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
 .bt th{font-size:11.5px;font-weight:500;color:var(--faint);text-align:right;padding:4px 8px 6px}.bt th:first-child{text-align:left;padding-left:12px}
 .bt td{padding:5px 8px;border-top:1px solid var(--line);white-space:nowrap}.bt td:first-child{padding-left:12px;white-space:normal}.bt td a.lgl{color:inherit;text-decoration:none}
-.bt tr>td:first-child{box-shadow:inset 3px 0 var(--line)}.bt tr.vise>td:first-child,.bt tr.valide>td:first-child{box-shadow:inset 3px 0 var(--pos)}.bt tr.devise>td:first-child{box-shadow:inset 3px 0 var(--mid)}
+.bt tr>td:first-child{box-shadow:inset 3px 0 var(--line)}.bt tr.vise>td:first-child,.bt tr.valide>td:first-child{box-shadow:inset 3px 0 var(--pos)}.bt tr.devise>td:first-child{box-shadow:inset 3px 0 var(--warn)}
 .bt tr.g{cursor:pointer}.bt tr.g td{background:var(--surface-2);padding-top:6px;padding-bottom:6px}.bt tr.g b{font-size:12.5px;font-weight:600}.bt tr.g:hover b{color:var(--accent)}
 .bp{float:right;font-size:11.5px;font-weight:600;color:var(--muted)}.vise .bp,.valide .bp{color:var(--pos)}.devise .bp{color:var(--warn)}
 .bn{display:inline-block;width:34px;font-size:11.5px;color:var(--faint)}
@@ -145,7 +145,7 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .ck{display:grid;grid-template-columns:30px minmax(0,1fr) 110px 110px 100px;gap:6px 14px;align-items:center;padding:11px 10px;border-top:1px solid var(--line);font-size:14px}
 .ck.hd{border-top:0;padding-bottom:2px;font-size:12px;color:var(--muted)}.ck .n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}.ck .m{color:var(--faint)}.ck .e{color:var(--neg);font-weight:700}
 .ck.auto .ct{grid-column:2/-1}.ct b{display:block;font-weight:600}.ck.auto .ct b{font-weight:500}.ct small{font-size:12px;color:var(--muted)}.ck.ok .ct b{font-weight:500}
-.ck.ko{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--mid);border-radius:12px;margin:6px 0}.ck.ko.bl{border-left-color:var(--neg)}.ck.ko+.ck{border-top-color:transparent}
+.ck.ko{background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--warn);border-radius:12px;margin:6px 0}.ck.ko.bl{border-left-color:var(--neg)}.ck.ko+.ck{border-top-color:transparent}
 .ti{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface-2);color:var(--muted);font-weight:700}
 .ck.ok .ti,.qc.ok .ti{background:var(--pos-soft);color:var(--pos)}.ck.ko .ti{background:var(--warn-soft);color:var(--warn)}.ck.bl .ti{background:var(--neg-soft);color:var(--neg)}.ck.ko .e{color:var(--warn)}.ck.bl .e{color:var(--neg)}
 .act{grid-column:2/-1;display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:13px}.act-e{flex:1;min-width:220px}.act .rv-txt{margin:0;background:var(--surface)}.act .rv-rel{margin:0}
@@ -3936,7 +3936,7 @@ function fenetreCycle(y, c){
       <span class="n">${clos ? "" : `<button class="btn small ${x.fait ? "sec" : ""}" onclick="cocherControle(${y},'${x.pid}')">${x.fait ? "Rouvrir" : "Fait"}</button><button class="btn small ghost" aria-label="Retirer le contrôle" onclick="retirerControle(${y},'${x.pid}')">×</button>`}</span></div>`;
     let num = x.type === "auto" ? "" : `<span></span><span></span><span></span>`;
     if(x.type === "calc" || x.type === "revue"){ const e = x.attendu == null ? null : r2(x.compta - x.attendu);
-      num = `<span class="n">${lienGL({t:"compte", v:x.gl || ""}, eur(x.compta))}</span><span class="n">${x.attendu == null ? "–" : eur(x.attendu)}</span><span class="n ${k && e != null && Math.abs(e) >= 0.005 ? "e" : "m"}">${e == null || Math.abs(e) < 0.005 ? "–" : x.type === "revue" && x.attendu ? `${e > 0 ? "+" : "−"}${Math.round(Math.abs(e) / Math.abs(x.attendu) * 100)} %` : signe(e)}</span>`;
+      num = `<span class="n">${lienGL({t:"compte", v:x.gl || ""}, eur(x.compta))}</span><span class="n">${x.attendu == null ? "–" : eur(x.attendu)}</span><span class="n ${k && e != null && Math.abs(e) >= 0.005 ? "e" : "m"}">${e == null || Math.abs(e) < 0.005 ? "–" : x.type === "revue" ? (x.attendu ? `${e > 0 ? "+" : "−"}${Math.round(Math.abs(e) / Math.abs(x.attendu) * 100)} %` : "nouveau") : signe(e)}</span>`;
       if(!x.gl) num = num.replace(/<a [^>]*>(.*?)<\/a>/, "$1"); }
     const titre = x.type === "auto" ? `<b>${x.texte}</b>` : `<b>${(x.lib || "").replace(/\s*\(\d{3}\)$/, "")}</b><small>${x.type === "revue" ? `comparé à ${y-1}` : esc(x.source || "")}${x.extra && x.extra !== "releve" ? ` · ${esc(x.extra)}` : ""}</small>`;
     const ancien = !clos && r.commentaire && x.etat !== "ok" && x.etat !== "fait";
@@ -3952,11 +3952,11 @@ function fenetreCycle(y, c){
       ${non ? `<div class="qn"><span>${x.siNon}</span>${expl(x, r, "Ou expliquez votre situation…")}</div>` : ""}</div>`; };
   const comptes = Object.entries(c.sig).map(([k, v]) => { const lu = LIB_SIG[k] ? v : soldeLu(k, v), v1 = LIB_SIG[k] || !b1 ? null : soldeLu(k, b1[k] || 0);
     const p = v1 == null || Math.abs(v1) < 0.005 ? "" : (lu - v1) / v1;
-    return `<div class="ac"><small>${LIB_SIG[k] ? "" : k.slice(0, 3)}</small><span>${esc(LIB_SIG[k] || COMPTES[k] || k)}</span><b>${eur0(lu)}</b><em class="${p !== "" && Math.abs(p) > REVUE_PCT ? "up" : ""}">${p === "" ? "&nbsp;" : Math.abs(p) < 0.0005 ? "= " + (y-1) : `${p > 0 ? "+" : "−"}${Math.abs(p * 100).toLocaleString("fr-FR", {maximumFractionDigits:0})} % sur un an`}</em></div>`; }).join("");
+    return `<div class="ac"><small>${LIB_SIG[k] ? "" : k.slice(0, 3)}</small><span>${esc(LIB_SIG[k] || COMPTES[k] || k)}</span><b>${eur0(lu)}</b><em class="${p !== "" && Math.abs(p) > REVUE_PCT || (v1 != null && Math.abs(v1) < 0.005 && Math.abs(lu) >= 0.005) ? "up" : ""}">${p === "" ? (v1 != null && Math.abs(lu) >= 0.005 ? "nouveau" : "&nbsp;") : Math.abs(p) < 0.0005 ? "= " + (y-1) : `${p > 0 ? "+" : "−"}${Math.abs(p * 100).toLocaleString("fr-FR", {maximumFractionDigits:0})} % sur un an`}</em></div>`; }).join("");
   const nko = c.p.filter(ko).length;
   const sous = c.statut === "valide" ? "Validé : l'exercice est clôturé" : c.statut === "vise" ? `Visé le ${fmtDate(c.visa.date)}` : c.statut === "devise" ? `Dévisé · visa du ${fmtDate(c.visa.date)}`
     : nko ? `Non visé · encore ${nko} point${pl(nko)} à régler` : "Non visé";
-  const coul = {vise:"var(--pos)", valide:"var(--pos)", devise:"var(--mid)", nonvise:"var(--muted)"}[c.statut];
+  const coul = {vise:"var(--pos)", valide:"var(--pos)", devise:"var(--warn)", nonvise:"var(--muted)"}[c.statut];
   const devise = c.statut === "devise" ? `<div class="alert warn cy-dv"><div style="flex:1"><b>${c.change.length ? "Des montants ont changé depuis le visa" : "Un point est à revoir depuis le visa"}</b>
       ${c.change.length ? `<div class="cy-chg"><span></span><small>Au visa</small><small>Aujourd'hui</small>${c.change.map(k => `<span>${LIB_SIG[k] || `${k.slice(0, 3)} ${esc(COMPTES[k] || "")}`}</span><span class="n">${eur(LIB_SIG[k] ? c.visa.sig[k] || 0 : soldeLu(k, c.visa.sig[k] || 0))}</span><span class="n">${eur(LIB_SIG[k] ? c.sig[k] || 0 : soldeLu(k, c.sig[k] || 0))}</span>`).join("")}</div>` : ""}</div>
       ${c.vert ? `<button class="btn small" onclick="revaliderCycle(${y},'${c.k}')">Revalider le cycle</button>` : `<span class="sub" style="margin:0">Réglez d'abord les points ci-dessous.</span>`}</div>` : "";
