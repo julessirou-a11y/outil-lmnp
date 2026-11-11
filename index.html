@@ -2150,7 +2150,7 @@ function devine(q){
 }
 /* Contenu de la liste déroulante : [{titre, items:[{jetons|type|filtre, ic, lib, aide}]}] */
 function suggestions(vue){
-  const q = S.qEcr || "", n = sansAccents(q).trim(), groupes = [], sv = S.data.filtresEcritures || [];
+  const q = S.qEcr || "", n = sansAccents(q).trim(), groupes = [];
   const deja = new Set((S.fEcr || []).map(cleJeton)), ty = FILTRES.find(f => f.k === S.qType);
   const itJ = j => ({jetons:[j], ic:(FILTRES.find(f => f.k === j.t) || {ic:j.t==="montant"?"euro":"texte"}).ic, lib:esc(libJeton(j)), aide:TYPES_J[j.t]});
   const push = (titre, items) => { items = items.filter(x => !x.jetons || x.jetons.some(j => !deja.has(cleJeton(j)))); if(items.length) groupes.push({titre, items}); };
@@ -2159,7 +2159,6 @@ function suggestions(vue){
     else { const j = ty.saisie(q); push(ty.lib, j ? [{...itJ(j), lib:`Ajouter <b>${esc(libJeton(j))}</b>`, aide:"Entrée"}] : []); }
     return groupes;
   }
-  push("Filtres enregistrés", sv.filter(f => !n || sansAccents(f.nom).includes(n)).map(f => ({filtre:f.id, ic:"etoile", lib:`<b>${esc(f.nom)}</b>`, aide:esc(f.jetons.map(libJeton).join(", "))})));
   if(n) push("Suggestions", devine(q).filter(j => vue !== "balance" || BAL_J.includes(j.t)).map(itJ));
   push("Filtrez par", FILTRES.filter(f => (!f.vue || f.vue === vue) && (vue !== "balance" || BAL_J.includes(f.k)) && (!n || sansAccents(f.lib).includes(n))).map(f => ({type:f.k, ic:f.ic, lib:f.lib})));
   return groupes;
@@ -2185,7 +2184,6 @@ function finBarre(vue){
   if(!J.length && !lg) return "";
   const nb = S.nbFiltre ?? 0, quoi = vue === "gl" ? "ligne" : vue === "balance" ? "compte" : "écriture";
   return `<span class="qfin"><span class="qnb">${nb} ${quoi}${nb > 1 ? "s" : ""}</span>
-    ${J.length ? `<button class="qact" title="Enregistrer ces filtres sous un nom" aria-label="Enregistrer ces filtres" onclick="event.stopPropagation();enregistrerFiltre()">☆</button>` : ""}
     <button class="qact" title="Retirer tous les filtres" aria-label="Retirer tous les filtres" onclick="event.stopPropagation();viderFiltres()">×</button></span>`;
 }
 function ouvrirMenu(){ S.qOuvert = true; S.qSel ??= 0; majMenu(); }
@@ -2198,7 +2196,7 @@ function majMenu(){
   const ty = FILTRES.find(f => f.k === S.qType);
   let k = 0;
   menu.innerHTML = gs.map(g => `<div class="h">${g.titre}</div>` + g.items.map(x => { const i = k++;
-    return `<div class="it ${i===S.qSel?"on":""}" role="option" aria-selected="${i===S.qSel}" onmousedown="event.preventDefault();choisirSugg(${i})" onmousemove="if(S.qSel!==${i}){S.qSel=${i};majMenu()}">${icF(x.ic)}<span>${x.lib}</span>${x.aide?`<i>${x.aide}</i>`:""}${x.filtre?`<button class="x" title="Supprimer ce filtre enregistré" onmousedown="event.preventDefault();event.stopPropagation();supprimerFiltre('${x.filtre}')">×</button>`:""}</div>`; }).join("")).join("")
+    return `<div class="it ${i===S.qSel?"on":""}" role="option" aria-selected="${i===S.qSel}" onmousedown="event.preventDefault();choisirSugg(${i})" onmousemove="if(S.qSel!==${i}){S.qSel=${i};majMenu()}">${icF(x.ic)}<span>${x.lib}</span>${x.aide?`<i>${x.aide}</i>`:""}</div>`; }).join("")).join("")
     || `<div class="qvide">${ty ? (ty.liste ? "Aucune valeur ne correspond." : `Tapez la valeur${ty.aide ? ` (${esc(ty.aide)})` : ""}, puis Entrée.`) : "Aucune suggestion."}</div>`;
   if(ty) menu.innerHTML += `<div class="qvide">⌫ sur la barre vide ou Échap pour changer de type de filtre.</div>`;
   menu.classList.remove("hide");
@@ -2220,7 +2218,6 @@ function toucheRecherche(ev){
 function choisirSugg(i){
   const x = (S.qItems || [])[i]; if(!x) return;
   if(x.type){ S.qType = x.type; S.qEcr = ""; S.qSel = 0; renderAll(); refocusBarre(); return; }
-  if(x.filtre){ const f = S.data.filtresEcritures.find(f => f.id === x.filtre); if(f) ajouterJetons(f.jetons); return; }
   ajouterJetons(x.jetons);
 }
 /* Après un rendu complet, on remet le curseur dans la barre, liste ouverte */
@@ -2235,20 +2232,6 @@ function ajouterJetons(js){
 }
 function retirerJeton(i){ S.fEcr = (S.fEcr || []).filter((_, k) => k !== i); renderAll(); }
 function viderFiltres(){ S.fEcr = []; S.qEcr = ""; S.qType = null; S.lignesEcr = ""; S.lignesGL = ""; renderAll(); }
-async function enregistrerFiltre(){
-  const J = S.fEcr || []; if(!J.length) return;
-  const sugg = J.map(libJeton).join(", ").replace(/[«»]/g,"").replace(/\s+/g," ").trim();
-  const nom = ((await demander("Nom de ce filtre :", sugg.charAt(0).toUpperCase() + sugg.slice(1), {ok:"Enregistrer"})) || "").trim(); if(!nom) return;
-  const sv = S.data.filtresEcritures ??= [], deja = sv.find(f => f.nom.toLowerCase() === nom.toLowerCase());
-  if(deja){ if(!await confirmer(`Un filtre « ${nom} » existe déjà. Le remplacer ?`, {ok:"Remplacer"})) return; deja.jetons = J.map(j => ({...j})); }
-  else sv.push({id:uid(), nom, jetons:J.map(j => ({...j}))});
-  setDirty(); renderAll(); toast(`Filtre « ${nom} » enregistré : il apparaît en tête de la liste « Filtrez par… ».`);
-}
-async function supprimerFiltre(id){
-  const f = (S.data.filtresEcritures||[]).find(x => x.id === id); if(!f || !await confirmer(`Supprimer le filtre enregistré « ${f.nom} » ?`, {ok:"Supprimer", danger:true})) return;
-  S.data.filtresEcritures = S.data.filtresEcritures.filter(x => x.id !== id);
-  setDirty(); renderAll(); refocusBarre();
-}
 /* « / » place le curseur dans la barre de filtres */
 document.addEventListener("keydown", ev => {
   if(ev.key !== "/" || ev.metaKey || ev.ctrlKey || /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName)) return;
