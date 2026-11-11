@@ -288,6 +288,43 @@ details summary{cursor:pointer;color:var(--accent);font-size:13.5px}
 .suivis{display:flex;gap:10px 26px;flex-wrap:wrap}
 .suivi{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;font-size:13px;color:var(--muted);text-align:center;width:104px}
 .suivi:hover span{color:var(--accent)}
+/* ============ Animations (version Mac) ============ */
+.btn,.seg button,.menu button,.tuile,.card[role=button],.suivi,.pastille,.menu3>summary,.bv-carte,td,.dm-c{transition:background-color .18s,border-color .18s,color .18s,box-shadow .2s,transform .18s,filter .18s,opacity .18s}
+html:not(.mobile) .btn:active:not(:disabled){transform:scale(.97)}
+.tuile[role=button]:hover{transform:translateY(-2px);box-shadow:0 6px 18px rgba(40,20,40,.08)}
+.suivi svg{transition:transform .25s cubic-bezier(.2,.8,.2,1)}.suivi:hover svg{transform:scale(1.06)}
+.pastille:hover{transform:translateY(-1px)}
+.barres rect{transition:opacity .15s}.barres:hover rect{opacity:.55}.barres rect:hover{opacity:1}
+.donut-part,.part{transition:stroke-width .2s}svg .part:hover{stroke-width:26}
+.seg{position:relative}.seg button{position:relative;z-index:1}.seg button.on{background:none;box-shadow:none}
+.seg-ind{position:absolute;top:0;left:0;border-radius:7px;background:var(--surface);box-shadow:0 1px 3px rgba(0,0,0,.1);transition:transform .3s cubic-bezier(.25,.8,.25,1),width .3s cubic-bezier(.25,.8,.25,1)}
+.menu{position:relative}.menu button{position:relative;z-index:1}.menu button.on,.menu button.on:hover{background:none}
+.menu-ind{position:absolute;top:0;left:0;border-radius:var(--r-md);background:var(--accent-soft);transition:transform .32s cubic-bezier(.25,.8,.25,1),height .32s}
+.menu3[open]>.m3{animation:deroule .16s cubic-bezier(.2,.8,.2,1);transform-origin:top right}
+@keyframes deroule{from{opacity:0;transform:translateY(-4px) scale(.97)}}
+.card>details[open]>:not(summary){animation:monte .25s ease-out}
+dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]::backdrop{animation:voile .2s ease-out}
+.rv-voile.ouvre{animation:voile .2s ease-out}.rv-voile.ouvre>.rv-fen{animation:pop .24s cubic-bezier(.2,.8,.2,1)}
+@keyframes pop{from{opacity:0;transform:translateY(8px) scale(.97)}}
+@keyframes voile{from{opacity:0}}
+.toast{animation:toast .3s cubic-bezier(.2,.8,.2,1)}
+@keyframes toast{from{opacity:0;transform:translate(-50%,12px)}}
+/* Arrivée sur une page : les blocs montent l'un après l'autre, les graphiques se dessinent */
+.entree>*{animation:monte .38s cubic-bezier(.2,.8,.2,1) both}
+.entree>*:nth-child(2){animation-delay:.04s}.entree>*:nth-child(3){animation-delay:.08s}.entree>*:nth-child(4){animation-delay:.12s}.entree>*:nth-child(5){animation-delay:.16s}.entree>*:nth-child(n+6){animation-delay:.2s}
+.entree .tuiles>.tuile{animation:monte .38s cubic-bezier(.2,.8,.2,1) both}
+.entree .tuiles>.tuile:nth-child(2){animation-delay:.05s}.entree .tuiles>.tuile:nth-child(3){animation-delay:.1s}.entree .tuiles>.tuile:nth-child(4){animation-delay:.15s}
+@keyframes monte{from{opacity:0;transform:translateY(10px)}}
+.entree .arc{animation:arc .9s cubic-bezier(.3,.7,.3,1) .15s both}
+@keyframes arc{from{stroke-dashoffset:var(--d)}}
+.entree .part{animation:part calc(var(--l) * .9s) linear calc(var(--t) * .9s + .15s) both}
+@keyframes part{from{stroke-dashoffset:var(--o0)}to{stroke-dashoffset:var(--o1)}}
+.entree .barres rect{transform-box:fill-box;transform-origin:50% 100%;animation:barre .55s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i) * 30ms + .15s)}
+@keyframes barre{from{transform:scaleY(0)}}
+.entree .jauge span{transform-origin:left;animation:jauge .7s cubic-bezier(.2,.8,.2,1) .15s both}
+@keyframes jauge{from{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.entree>*,.entree .tuiles>.tuile,.entree .arc,.entree .part,.entree .barres rect,.entree .jauge span,.menu3[open]>.m3,dialog.boite[open],.rv-voile.ouvre,.rv-voile.ouvre>.rv-fen,.toast,.card>details[open]>:not(summary){animation:none}.seg-ind,.menu-ind{transition:none}}
+@media print{.entree>*,.entree *{animation:none!important}}
 /* Accueil sans dossier, création d'un dossier, « Pour bien démarrer » */
 .bv{max-width:560px;margin:8vh auto 0;text-align:center}
 .bv-logo .logo{width:min(320px,80%);height:auto}
@@ -1368,10 +1405,49 @@ function renderAll(){
   ajusterMenu();
   const m = $("#main");
   document.documentElement.classList.toggle("mobile", DEPOT);
-  if(!S.data){ if(DEPOT) tabsM(null); m.innerHTML = DEPOT ? vueBienvenueM() : vueBienvenue(); return; }
+  if(!S.data){ if(DEPOT) tabsM(null); m.innerHTML = DEPOT ? vueBienvenueM() : vueBienvenue(); if(!DEPOT){ const c = "bv|" + (S.assistant?.etape || 0); m.classList.toggle("entree", MOUV && c !== S.animCle); S.animCle = c; } return; }
   if(DEPOT){ m.innerHTML = vueMobile(); tabsM(S.pieceIPhone ? null : S.tab === "ops" ? "ops" : "depot"); return; }
+  const avant = memoAnim();
   m.innerHTML = (({accueil:vueAccueil, ecritures:vueEcritures, banque:vueBanque, immos:vueImmos, emprunt:vueEmprunt, declaration:vueDeclaration, dossier:vueDossier, pieces:vuePieces})[S.tab] || vueAccueil)();
+  animer(avant, [S.tab, S.year, S.cloture, S.reprise?.y, S.vueEcr].join("|"));
   if(S.tab === "pieces") scanPieces(S.year);
+}
+/* ============ Animations ============ */
+/* renderAll reconstruit la page à chaque clic : on n'anime que ce qui change vraiment (nouvelle page, fenêtre qui s'ouvre, curseur qui se déplace) */
+const MOUV = !matchMedia("(prefers-reduced-motion: reduce)").matches;
+const posRel = el => ({x:el.offsetLeft, y:el.offsetTop, w:el.offsetWidth, h:el.offsetHeight}); // par rapport au conteneur (position:relative)
+function memoAnim(){
+  const segs = {}; document.querySelectorAll("#main .seg[data-cle]").forEach(g => { const on = g.querySelector("button.on"); if(on) segs[g.dataset.cle] = posRel(on); });
+  return {segs, voile:!!$("#main .rv-voile"), nav:S.navPos};
+}
+function glisser(ind, de, a){
+  ind.style.transition = "none"; Object.assign(ind.style, {transform:`translate(${de.x}px,${de.y}px)`, width:de.w+"px", height:de.h+"px"});
+  ind.offsetWidth;
+  ind.style.transition = ""; Object.assign(ind.style, {transform:`translate(${a.x}px,${a.y}px)`, width:a.w+"px", height:a.h+"px"});
+}
+function animer(avant, cle){
+  const m = $("#main"), nouvelle = cle !== S.animCle; S.animCle = cle;
+  m.classList.toggle("entree", MOUV && nouvelle);
+  if(MOUV && nouvelle) compter(m);
+  const v = m.querySelector(".rv-voile"); if(v && !avant.voile && MOUV) v.classList.add("ouvre");
+  m.querySelectorAll(".seg[data-cle]").forEach(g => { const on = g.querySelector("button.on"), ind = g.querySelector(".seg-ind"); if(!on || !ind) return;
+    const a = posRel(on); glisser(ind, (MOUV && !nouvelle && avant.segs[g.dataset.cle]) || a, a); });
+  // Menu de gauche : le fond de l'onglet actif glisse d'un onglet à l'autre
+  const nav = $("#tabs"), b = nav.querySelector("button.on");
+  if(b){ const ind = document.createElement("i"); ind.className = "menu-ind"; ind.setAttribute("aria-hidden", "true"); nav.prepend(ind);
+    const a = posRel(b); glisser(ind, (MOUV && avant.nav) || a, a); S.navPos = a; }
+}
+/* Les montants des tuiles défilent jusqu'à leur valeur à l'arrivée sur la page */
+function compter(m){
+  m.querySelectorAll(".tuile .tv").forEach(el => {
+    const t = el.textContent, mt = t.match(/^([−-]?)(\d(?:[\d\u202f\u00a0 ]*\d)?)(,\d+)?(\s*€.*)$/); if(!mt) return;
+    const fin = parseInt(mt[2].replace(/\D/g, ""), 10); if(!fin || fin < 10) return;
+    const sep = (mt[2].match(/[\u202f\u00a0 ]/) || ["\u202f"])[0], fmt = n => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, sep);
+    const t0 = performance.now(), D = 700;
+    const pas = now => { const k = Math.min(1, (now - t0) / D), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = k < 1 ? mt[1] + fmt(Math.round(fin * e)) + (mt[3] || "") + mt[4] : t; if(k < 1) requestAnimationFrame(pas); };
+    requestAnimationFrame(pas);
+  });
 }
 document.querySelectorAll(".logolink").forEach(a => a.addEventListener("click", e => { e.preventDefault(); allerA("accueil"); }));
 function ajusterMenu(){
@@ -1506,24 +1582,24 @@ const pctTxt = p => Math.round(p*100) + " %";
 function anneau(p, centre, couleur="var(--accent)", taille=92){
   const r = 38, L = 2*Math.PI*r, v = Math.max(0, Math.min(1, p||0));
   return `<svg viewBox="0 0 92 92" width="${taille}" height="${taille}" role="img" aria-label="${pctTxt(v)}"><circle cx="46" cy="46" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="9"/>
-    <circle cx="46" cy="46" r="${r}" fill="none" stroke="${couleur}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(v*L).toFixed(1)} ${L.toFixed(1)}" transform="rotate(-90 46 46)"/>
+    <circle class="arc" style="--d:${(v*L).toFixed(1)}" cx="46" cy="46" r="${r}" fill="none" stroke="${couleur}" stroke-width="9" stroke-linecap="round" stroke-dasharray="${(v*L).toFixed(1)} ${L.toFixed(1)}" transform="rotate(-90 46 46)"/>
     <text x="46" y="51" text-anchor="middle" font-size="17" font-weight="600" fill="var(--text)">${centre}</text></svg>`;
 }
 /* Anneau découpé en parts : [[libellé, valeur, couleur]] */
 function donut(parts, centre, sous){
   const tot = parts.reduce((s,p)=>s+Math.max(0,p[1]),0) || 1, r = 60, L = 2*Math.PI*r; let off = 0;
   return `<svg viewBox="0 0 160 160" width="170" height="170" role="img" aria-label="${esc(`${centre} ${sous} : ${parts.filter(p=>p[1]>0.5).map(([l,v])=>`${l} ${eur(v)}`).join(", ")}`)}"><circle cx="80" cy="80" r="${r}" fill="none" stroke="var(--surface-2)" stroke-width="22"/>
-    ${parts.filter(p=>p[1]>0.5).map(([l,v,col]) => { const d = v/tot*L, s = `<circle cx="80" cy="80" r="${r}" fill="none" stroke="${col}" stroke-width="22" stroke-dasharray="${Math.max(0,d-1.5).toFixed(1)} ${L.toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 80 80)"><title>${l} : ${eur0(v)}</title></circle>`; off += d; return s; }).join("")}
+    ${parts.filter(p=>p[1]>0.5).map(([l,v,col]) => { const d = v/tot*L, s = `<circle class="part" style="--o0:${(d-off).toFixed(1)};--o1:${(-off).toFixed(1)};--t:${(off/L).toFixed(3)};--l:${(d/L).toFixed(3)}" cx="80" cy="80" r="${r}" fill="none" stroke="${col}" stroke-width="22" stroke-dasharray="${Math.max(0,d-1.5).toFixed(1)} ${L.toFixed(1)}" stroke-dashoffset="${(-off).toFixed(1)}" transform="rotate(-90 80 80)"><title>${l} : ${eur0(v)}</title></circle>`; off += d; return s; }).join("")}
     <text x="80" y="78" text-anchor="middle" font-size="20" font-weight="600" fill="var(--text)">${centre}</text><text x="80" y="98" text-anchor="middle" font-size="11.5" fill="var(--muted)">${sous}</text></svg>`;
 }
 /* Barres groupées par mois : séries [[libellé, couleur, valeurs[12]]] */
 function barresMois(series, hauteur=170){
   const W = 640, H = hauteur, pad = 22, max = Math.max(1, ...series.flatMap(s=>s[2])), bw = (W - 10) / 12, n = series.length, b = Math.min(16, (bw - 10) / n);
   const ech = v => (H - pad - 6) * v / max;
-  return `<svg viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="height:${H}px" role="img" aria-label="${esc(`Par mois : ${series.map(s=>s[0]).join(", ")}`)}">
+  return `<svg class="barres" viewBox="0 0 ${W} ${H}" width="100%" preserveAspectRatio="none" style="height:${H}px" role="img" aria-label="${esc(`Par mois : ${series.map(s=>s[0]).join(", ")}`)}">
     <line x1="0" x2="${W}" y1="${H-pad}" y2="${H-pad}" stroke="var(--line)"/>
     ${[...Array(12).keys()].map(m => series.map(([l,col,vals],k) => { const h = ech(vals[m]||0), x = 5 + m*bw + (bw - n*b - (n-1)*3)/2 + k*(b+3);
-      return h>0 ? `<rect x="${x.toFixed(1)}" y="${(H-pad-h).toFixed(1)}" width="${b.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${col}"><title>${MOIS_LONG[m]} · ${l} : ${eur(vals[m])}</title></rect>` : ""; }).join("") +
+      return h>0 ? `<rect style="--i:${m}" x="${x.toFixed(1)}" y="${(H-pad-h).toFixed(1)}" width="${b.toFixed(1)}" height="${h.toFixed(1)}" rx="3" fill="${col}"><title>${MOIS_LONG[m]} · ${l} : ${eur(vals[m])}</title></rect>` : ""; }).join("") +
       `<text x="${(5 + m*bw + bw/2).toFixed(1)}" y="${H-6}" text-anchor="middle" font-size="11" fill="var(--faint)">${MOIS[m].replace(".","")}</text>`).join("")}
   </svg>`;
 }
@@ -1625,7 +1701,7 @@ const COUL_GROUPE = {recette:"var(--pos)", charge:"var(--seg-3)", bilan:"var(--f
 const grpNature = e => NATURES[e.nature]?.g || (e.sens==="recette"?"recette":"charge");
 const chipNature = n => `<span class="chip" style="--c:${COUL_GROUPE[NATURES[n]?.g||"charge"]}">${libNature(n)}</span>`;
 /* Sélecteur de vue (onglets segmentés) */
-const segments = (cle, opts, val) => `<div class="seg noprint" role="tablist">${opts.map(([k,l])=>`<button role="tab" aria-selected="${k===val}" class="${k===val?"on":""}" onclick="S['${cle}']='${k}';renderAll()">${l}</button>`).join("")}</div>`;
+const segments = (cle, opts, val) => `<div class="seg noprint" role="tablist" data-cle="${cle}"><i class="seg-ind" aria-hidden="true"></i>${opts.map(([k,l])=>`<button role="tab" aria-selected="${k===val}" class="${k===val?"on":""}" onclick="S['${cle}']='${k}';renderAll()">${l}</button>`).join("")}</div>`;
 function vueEcritures(){
   const y = S.year;
   if(isHistorique(y)) return entete(`Écritures ${y}`) + `<div class="alert info">Année reprise de l'Excel : pas d'écritures détaillées.</div>`;
