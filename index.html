@@ -61,9 +61,9 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .brand small{display:block;color:var(--muted);font-size:12.5px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:160px}
 .yearbox{padding:0 6px}
 .ylab{display:flex;flex-direction:column;gap:5px;font-size:13px;color:var(--muted);position:relative}
-#yearBtn{width:100%;display:flex;align-items:center;justify-content:space-between;font:inherit;font-size:14.5px;font-weight:600;color:var(--text);background:var(--surface-2);border:1px solid transparent;border-radius:12px;padding:8px 12px;cursor:pointer;transition:background-color .2s,border-color .2s}
+#yearBtn{position:relative;width:100%;display:flex;align-items:center;justify-content:center;font:inherit;font-size:14.5px;font-weight:600;color:var(--text);background:var(--surface-2);border:1px solid transparent;border-radius:12px;padding:8px 12px;cursor:pointer;transition:background-color .2s,border-color .2s}
 #yearBtn:hover{border-color:var(--line)}#yearBtn[aria-expanded="true"]{background:var(--line)}
-#yearBtn span{display:inline-block}#yearBtn svg{width:15px;height:15px;color:var(--muted);transition:transform .3s cubic-bezier(.34,1.4,.64,1)}#yearBtn[aria-expanded="true"] svg{transform:rotate(180deg)}#yearBtn span{transition:opacity .2s,filter .2s}#yearBtn[aria-expanded="true"] span{opacity:0;filter:blur(4px)}
+#yearBtn span{display:inline-block}#yearBtn svg{position:absolute;right:10px;width:15px;height:15px;color:var(--muted);transition:transform .3s cubic-bezier(.34,1.4,.64,1)}#yearBtn[aria-expanded="true"] svg{transform:rotate(180deg)}#yearBtn span{transition:opacity .2s,filter .2s}#yearBtn[aria-expanded="true"] span{opacity:0;filter:blur(4px)}
 .menu{display:flex;flex-direction:column;gap:2px}
 /* Le menu se tasse de lui-même quand la colonne manque de hauteur : les boutons rétrécissent (jusqu'à 28 px) au lieu de faire dépasser la colonne */
 .side>*{flex-shrink:0}
@@ -339,23 +339,18 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 @media (prefers-reduced-motion:reduce){.entree>*,.entree .tuiles>.tuile,.entree .arc,.entree .part,.entree .barres rect,.entree .jauge span,.menu3[open]>.m3,dialog.boite[open],.rv-voile.ouvre,.rv-voile.ouvre>.rv-fen,.toast,.card>details[open]>:not(summary){animation:none}.th-rond,.th-rond svg,.th-rail,.pe .pn{transition:none}}
 @media print{.entree>*,.entree *{animation:none!important}}
 /* Roue des exercices */
-.roue{position:absolute;left:50%;width:150px;margin-left:-75px;top:var(--roue-top,0);z-index:40;height:114px;border-radius:24px;outline:none;
-  background:linear-gradient(180deg,rgba(255,255,255,.42),rgba(255,255,255,.16));-webkit-backdrop-filter:blur(22px) saturate(1.8);backdrop-filter:blur(22px) saturate(1.8);
-  border:1px solid rgba(255,255,255,.55);box-shadow:inset 0 1px 1px rgba(255,255,255,.75),inset 0 -1px 1px rgba(0,0,0,.04),0 10px 30px rgba(40,20,40,.12);
-  animation:roue-in .32s cubic-bezier(.2,.9,.25,1.15);transform-origin:center}
-:root[data-theme="dark"] .roue{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.03));border-color:rgba(255,255,255,.14);box-shadow:inset 0 1px 1px rgba(255,255,255,.12),0 12px 32px rgba(0,0,0,.4)}
-.roue.ferme{animation:roue-out .22s ease-in forwards}
-@keyframes roue-in{from{opacity:0;transform:scale(.7,.4);filter:blur(10px)}}
-@keyframes roue-out{to{opacity:0;transform:scale(.8,.5);filter:blur(10px)}}
-.roue-bande{position:absolute;left:7px;right:7px;top:calc(50% - 17px);height:34px;border-radius:17px;background:rgba(255,255,255,.5);box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 1px 4px rgba(40,20,40,.08);pointer-events:none}
+.roue{position:absolute;z-index:40;overflow:hidden;outline:none;
+  background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,.06));-webkit-backdrop-filter:blur(16px) saturate(2);backdrop-filter:blur(16px) saturate(2);
+  border:1px solid rgba(255,255,255,.5);box-shadow:inset 0 1px 1px rgba(255,255,255,.7),inset 0 -1px 1px rgba(0,0,0,.03),0 8px 26px rgba(40,20,40,.10)}
+:root[data-theme="dark"] .roue{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.015));border-color:rgba(255,255,255,.12);box-shadow:inset 0 1px 1px rgba(255,255,255,.10),0 12px 32px rgba(0,0,0,.35)}
+.roue-bande{position:absolute;left:7px;right:7px;top:calc(50% - 17px);height:34px;border-radius:17px;background:rgba(255,255,255,.32);box-shadow:inset 0 1px 1px rgba(255,255,255,.8),0 1px 4px rgba(40,20,40,.08);pointer-events:none}
 :root[data-theme="dark"] .roue-bande{background:rgba(255,255,255,.08);box-shadow:inset 0 1px 1px rgba(255,255,255,.1)}
-.roue-liste{position:relative;height:100%;border-radius:24px;overflow-y:auto;scroll-snap-type:y mandatory;padding:38px 0;box-sizing:border-box;scrollbar-width:none;overscroll-behavior:contain;-webkit-mask-image:linear-gradient(transparent,#000 40%,#000 60%,transparent);mask-image:linear-gradient(transparent,#000 40%,#000 60%,transparent)}
+.roue-liste{position:absolute;left:0;right:0;top:50%;height:114px;margin-top:-57px;overflow-y:auto;scroll-snap-type:y mandatory;padding:38px 0;box-sizing:border-box;scrollbar-width:none;overscroll-behavior:contain;-webkit-mask-image:linear-gradient(transparent,#000 40%,#000 60%,transparent);mask-image:linear-gradient(transparent,#000 40%,#000 60%,transparent)}
 .roue-liste::-webkit-scrollbar{display:none}
 .roue-an{height:38px;scroll-snap-align:center;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text);will-change:transform,opacity}
 .roue-an b{font-size:18px;font-weight:600;line-height:38px;font-variant-numeric:tabular-nums}.roue-an small{font-size:11.5px;color:var(--muted);max-width:0;opacity:0;overflow:hidden;white-space:nowrap;transition:max-width .3s,opacity .3s}
 .roue-an.au-centre small{max-width:110px;opacity:1}
 .roue-an b{color:var(--muted);transition:color .2s}.roue-an.au-centre b{color:var(--text)}
-@media (prefers-reduced-motion:reduce){.roue,.roue.ferme{animation:none}}
 /* Accueil sans dossier, création d'un dossier, « Pour bien démarrer » */
 .bv{max-width:560px;margin:8vh auto 0;text-align:center}
 .bv-logo .logo{width:min(320px,80%);height:auto}
@@ -1521,11 +1516,13 @@ $("#yearSel").addEventListener("change", e => { S.year = Number(e.target.value);
 const ROUE_H = 38; // hauteur d'une ligne
 function etatAnnee(y){ const ex = exercice(y); return isHistorique(y) ? "reprise Excel" : ex?.statut === "cloture" ? "clôturé" : "en cours"; }
 function ouvrirRoue(){
-  if($(".roue")) return fermerRoue();
+  const deja = $(".roue"); if(deja){ if(!deja.dataset.ferme) return fermerRoue(); deja.remove(); }
   const ys = Object.keys(S.data.exercices).map(Number).sort((a,b)=>a-b), btn = $("#yearBtn");
   const r = document.createElement("div"); r.className = "roue"; r.setAttribute("role", "listbox"); r.setAttribute("aria-label", "Exercice"); r.tabIndex = -1;
-  r.style.setProperty("--roue-top", `${btn.offsetTop + btn.offsetHeight / 2 - 57}px`); r.innerHTML = `<div class="roue-bande" aria-hidden="true"></div><div class="roue-liste">${ys.map(y => `<div class="roue-an" role="option" data-y="${y}" title="${y} · ${etatAnnee(y)}" aria-selected="${y===S.year}"><b>${y}</b></div>`).join("")}</div>`;
+  r.innerHTML = `<div class="roue-bande" aria-hidden="true"></div><div class="roue-liste">${ys.map(y => `<div class="roue-an" role="option" data-y="${y}" title="${y} · ${etatAnnee(y)}" aria-selected="${y===S.year}"><b>${y}</b></div>`).join("")}</div>`;
   btn.parentNode.appendChild(r); btn.setAttribute("aria-expanded", "true");
+  const [de, a] = cadresRoue(btn); Object.assign(r.style, a);
+  if(MOUV) r.animate([{...de, opacity:.6}, {...a, opacity:1}], {duration:460, easing:"cubic-bezier(.3,1.25,.45,1)"});
   const L = r.querySelector(".roue-liste"), items = [...L.children];
   let choisi = S.year, fin;
   const dessiner = () => { const c = L.scrollTop + L.clientHeight / 2;
@@ -1546,10 +1543,18 @@ function ouvrirRoue(){
   r.focus();
   setTimeout(() => document.addEventListener("pointerdown", S.roueDehors = e => { if(!r.contains(e.target) && e.target !== btn && !btn.contains(e.target)) fermerRoue(); }), 0);
 }
+/* La bulle naît du bouton (même place, même taille, mêmes coins) et s'y résorbe */
+function cadresRoue(btn){
+  const cx = btn.offsetLeft + btn.offsetWidth / 2, cy = btn.offsetTop + btn.offsetHeight / 2, W = 150, H = 114;
+  const px = n => n + "px", rb = getComputedStyle(btn).borderTopLeftRadius;
+  return [{left:px(btn.offsetLeft), top:px(btn.offsetTop), width:px(btn.offsetWidth), height:px(btn.offsetHeight), borderRadius:rb},
+          {left:px(cx - W / 2), top:px(cy - H / 2), width:px(W), height:px(H), borderRadius:"24px"}];
+}
 function fermerRoue(){
-  const r = $(".roue"); if(!r) return; $("#yearBtn").setAttribute("aria-expanded", "false"); document.removeEventListener("pointerdown", S.roueDehors);
+  const r = $(".roue"), btn = $("#yearBtn"); if(!r || r.dataset.ferme) return; r.dataset.ferme = 1; btn.setAttribute("aria-expanded", "false"); document.removeEventListener("pointerdown", S.roueDehors);
   if(!MOUV) return r.remove();
-  r.classList.add("ferme"); r.addEventListener("animationend", () => r.remove(), {once:true}); setTimeout(() => r.remove(), 300);
+  const [de, a] = cadresRoue(btn);
+  r.animate([{...a, opacity:1}, {...de, opacity:0}], {duration:300, easing:"cubic-bezier(.5,0,.6,1)"}).finished.then(() => r.remove(), () => r.remove());
 }
 $("#yearBtn").addEventListener("click", ouvrirRoue);
 /* Thème clair par défaut, sombre sur demande (mémorisé sur cet appareil) */
