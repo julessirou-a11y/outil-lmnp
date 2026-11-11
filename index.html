@@ -812,6 +812,9 @@ dialog#viewer::backdrop{background:rgba(10,15,25,.5)}
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:50;box-shadow:0 8px 24px rgba(10,15,25,.18);max-width:90vw}
 .fiche .card h3{padding-bottom:8px;border-bottom:1px solid var(--line)}
 
+/* Impression : pas d'en-têtes ni de pieds de page du navigateur (date, titre, adresse, numéro de page).
+   Déclarer les cases de marge de la page suffit à Chrome pour ne plus y mettre les siens. */
+@page{margin:10mm;@top-left{content:""}@top-center{content:""}@top-right{content:""}@bottom-left{content:""}@bottom-center{content:""}@bottom-right{content:""}}
 @media print{
   .side,.topbar,.scrim,.noprint{display:none!important}
   .app{display:block}
