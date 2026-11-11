@@ -465,7 +465,8 @@ td.mt b{font-weight:600} td.mt.in b{color:var(--pos)}
 .ejx-pj{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;border-radius:99px;padding:3px 10px;border:0;cursor:pointer;font-family:inherit}
 .ejx-pj.ok{background:none;color:var(--muted);font-weight:500;padding-left:0}
 .ejx-pj.ok:hover{color:var(--accent)}
-.ejx-pj.ko{background:var(--warn-soft);color:var(--warn)}
+.ejx-pj.add{background:none;color:var(--faint);font-weight:500;padding-left:0;opacity:0;transition:opacity .15s} tr:hover .ejx-pj.add,.ejx-pj.add:focus-visible{opacity:1} .ejx-pj.add:hover{color:var(--accent)}
+@media (hover:none){ .ejx-pj.add{opacity:1} }
 .ejx-pjm{display:none}
 td.ac{white-space:nowrap} td.ac .btn{opacity:.35} tr:hover td.ac .btn,td.ac .btn:focus-visible{opacity:1}
 tbody.ejx-tot td{background:var(--accent-soft);font-weight:600}
@@ -610,6 +611,13 @@ select.poste{padding:5px 8px;width:auto;max-width:150px}
 
 /* ---------- Pièces ---------- */
 .pieces-top{display:grid;grid-template-columns:220px 1fr;gap:20px;margin-bottom:20px;align-items:stretch}
+.jx-intro{max-width:760px;margin:-4px 0 16px;line-height:1.5}
+.jx{display:flex;align-items:center;gap:12px;padding:12px 0;border-top:1px solid var(--line)} .jx:first-of-type{border-top:0}
+.jx-ic{flex:none;width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
+.jx-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.jx-t b{font-weight:600;overflow-wrap:anywhere}.jx-t span{font-size:13px;color:var(--muted)}
+.jx-a{flex:none;display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:flex-end}
+.jx-ratt{border-color:var(--accent)} .jx-cherche{flex:1;min-width:200px;font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);color:var(--text)}
+@media (max-width:700px){ .jx{flex-wrap:wrap} .jx-a{width:100%;justify-content:flex-start;padding-left:48px} }
 .pc{display:grid;grid-template-columns:48px minmax(0,1fr) 110px auto;gap:10px;align-items:center;padding:10px 6px;border-top:1px solid var(--line);border-radius:8px}
 .pc.survol{background:var(--accent-soft);outline:2px dashed var(--accent)}
 .pc .d{color:var(--faint);font-size:13px} .pc .t{display:flex;gap:10px;align-items:center;flex-wrap:wrap} .pc .t b{font-weight:500}
@@ -1510,7 +1518,7 @@ const IC = {
   dossier:'<circle cx="12" cy="12" r="3"/><path d="M12 3v2.5M12 18.5V21M3 12h2.5M18.5 12H21M5.6 5.6l1.8 1.8M16.6 16.6l1.8 1.8M5.6 18.4l1.8-1.8M16.6 7.4l1.8-1.8"/><circle cx="12" cy="12" r="6.5"/>'
 };
 const icon = k => `<svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">${IC[k]}</svg>`;
-const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["banque","Banque"],["pieces","Pièces"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["sep"],["dossier","Paramètres du dossier"]];
+const TABS = [["accueil","Tableau de bord"],["ecritures","Écritures"],["banque","Banque"],["pieces","Justificatifs"],["immos","Immobilisations"],["emprunt","Emprunt"],["declaration","Déclaration"],["sep"],["dossier","Paramètres du dossier"]];
 function renderAll(){
   if(S.data && rattacherEcheanciers()) setDirty();
   $("#fileinfo").textContent = S.data ? S.data.dossier.nom : "Aucun dossier ouvert";
@@ -1527,8 +1535,8 @@ function renderAll(){
   $("#tabs").innerHTML = S.data && !DEPOT ? TABS.map(([k,l]) => {
     if(k==="sep") return '<div class="sep"></div>';
     if(k==="h") return `<div class="grp">${l}</div>`;
-    const n = k==="pieces" ? piecesManquantes(S.year).length : k==="banque" ? S.data.banque.aTrier.filter(o => yearOf(o.date) === S.year).length : 0;
-    const bt = k==="banque" ? `Opérations bancaires ${S.year} à trier` : "Justificatifs manquants";
+    const n = k==="banque" ? S.data.banque.aTrier.filter(o => yearOf(o.date) === S.year).length : 0;
+    const bt = `Opérations bancaires ${S.year} à trier`;
     return `<button data-tab="${k}" class="${S.tab===k?"on":""}" ${S.tab===k?'aria-current="page"':""}>${icon(k)}<span>${l}</span>${n?`<span class="badge" title="${bt}">${n}</span>`:""}</button>`; }).join("") : "";
   $("#saveBtn").disabled = !S.data || !!S.consultation || DEPOT;
   const sombre = themeActuel() === "dark";
@@ -1925,7 +1933,6 @@ function vueAccueil(){
   const moisAttendus = [...Array(13-debut).keys()].map(i=>i+debut).filter(m => y < new Date().getFullYear() || m <= new Date().getMonth()+1);
   const moisLoyer = new Set(es.filter(e=>e.nature==="Loyer").map(e=>monthOf(e.date)));
   const loyersOk = moisAttendus.filter(m=>moisLoyer.has(m)).length;
-  const aJust = es.filter(pieceRequise), justOk = aJust.filter(e=>e.piece).length;
   const aTrier = (S.data.banque?.aTrier||[]).filter(o=>yearOf(o.date)===y).length;
   const immos = S.data.immobilisations, baseTot = immos.reduce((s,i)=>s+baseAmort(i),0), amortiTot = immos.reduce((s,i)=>s+amortAnnee(i,y).cumulFin,0);
   const pret = S.data.emprunts[0], crd = c.crd, capPret = S.data.emprunts.reduce((s,l)=>s+l.capital,0);
@@ -1972,8 +1979,6 @@ function etapesAnnee(y){
   t("trier", "Dire ce qu'est chaque opération", "Loyer, charge, mensualité du prêt… un clic par ligne.", aTrier ? "afaire" : es.length ? "fait" : "plustard", aTrier ? `${aTrier} à trier` : "", "allerA('banque')", "Trier");
   const nm = moisLoues(y), ml = new Set(es.filter(e => e.nature === "Loyer").map(e => monthOf(e.date))).size;
   t("loyers", "Un loyer pour chaque mois", "Un mois vide, c'est souvent une opération pas encore triée.", nm === 0 ? "plustard" : ml >= nm ? "fait" : "afaire", nm ? `${Math.min(ml, nm)} mois sur ${nm}` : "", "allerA('ecritures')", "Voir");
-  const pm = piecesManquantes(y).length, fa = facturesEnAttente().length;
-  t("pieces", "Une facture pour chaque dépense", "Elle prouve la dépense en cas de contrôle.", pm || fa ? "afaire" : es.length ? "fait" : "plustard", pm ? `${pm} manquante${pl(pm)}` : fa ? `${fa} à rattacher` : "", "allerA('pieces')", "Ajouter");
   if(S.data.emprunts.length){
     const sansEch = S.data.emprunts.some(l => !lignesBanque(l)), rp = S.data.emprunts.reduce((n, l) => n + etatsRapprochement(l, y).filter(e => e.c !== "ok").length, 0), crd = Math.abs(ecartCRD(y)) >= 1;
     t("pret", "Le tableau du prêt", "Déposez celui de la banque : le Carnet sépare intérêts et capital.", sansEch || rp || crd ? "afaire" : "fait", sansEch ? "À déposer" : rp ? `${rp} échéance${pl(rp)} à vérifier` : crd ? "Restant dû à corriger" : "", "allerA('emprunt')", sansEch ? "Déposer" : "Vérifier");
@@ -1995,7 +2000,7 @@ function etapesAnnee(y){
     loupe:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2M8.5 11l2 2 3.5-3.5"/>', envoi:'<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/>', cadenas:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'};
   const ETAPES = [
     ["banque", "La banque", "Tout part de votre compte bancaire.", ["siret", "banque", "trier"], `toute l'année`],
-    ["papiers", "Loyers et factures", "On vérifie que rien ne manque.", ["loyers", "pieces"], "toute l'année"],
+    ["papiers", "Les loyers", "On vérifie qu'aucun mois ne manque.", ["loyers"], "toute l'année"],
     ["maison", "Prêt et achats", "Ce qui se rembourse ou s'use sur plusieurs années.", ["pret", "achats", "cfe"], "toute l'année"],
     ["loupe", "Vérifier", "Le Carnet relit vos comptes avant de déclarer.", ["revision"], `janvier ${y+1}`],
     ["envoi", "Déclarer", "Deux déclarations en ligne, le Carnet vous donne les chiffres.", ["liasse", "revenus"], `mai ${y+1}`],
@@ -2022,27 +2027,6 @@ function cocherEtape(y, id, oui){
   if(oui) m[id] = aujourdhui(); else delete m[id];
   if(!Object.keys(m).length) delete ex.etapes;
   setDirty(); renderAll();
-}
-/* « À faire » : pastilles courtes, chacune ouvre la bonne page */
-function aFaire(y){
-  const ex = exercice(y), c = calculAnnee(y), es = ex.ecritures || [], out = [];
-  if(!c.lmnpActif) return "";
-  const bad = controles(y).filter(x=>x[0]==="bad").length;
-  const aTrier = (S.data.banque?.aTrier||[]).filter(o=>yearOf(o.date)===y).length;
-  const pm = piecesManquantes(y).length;
-  if(bad) out.push(["bad", `${bad} erreur${bad>1?"s":""} à corriger`, "declaration"]);
-  if(aTrier) out.push(["warn", `${aTrier} opération${aTrier>1?"s":""} à trier`, "banque"]);
-  if(pm) out.push(["warn", `${pm} justificatif${pm>1?"s":""} manquant${pm>1?"s":""}`, "pieces"]);
-  const fa = facturesEnAttente().length;
-  if(fa) out.push(["warn", `${fa} facture${fa>1?"s":""} reçue${fa>1?"s":""} à rattacher`, "pieces"]);
-  if(c.produits > 5000 && !c.t.parNature["CFE"]) out.push(["warn", "CFE à saisir", "ecritures"]);
-  if(S.data.emprunts.some(l => !lignesBanque(l))) out.push(["warn", "Échéancier de la banque à déposer", "emprunt"]);
-  const rp = S.data.emprunts.reduce((n,l) => n + etatsRapprochement(l, y).filter(e => e.c !== "ok").length, 0);
-  if(rp) out.push(["warn", `${rp} échéance${rp>1?"s":""} de prêt à rapprocher`, "emprunt"]);
-  else if(Math.abs(ecartCRD(y)) >= 1) out.push(["warn", "Restant dû à régulariser", "emprunt"]);
-  if(y < new Date().getFullYear() && ex.statut !== "cloture") out.push(["go", `Déclarer ${y}`, "declaration"]);
-  if(!out.length) return "";
-  return `<div class="pastilles">${out.map(([k,t,pg])=>`<button class="pastille ${k}" onclick="allerA('${pg}')">${t} →</button>`).join("")}</div>`;
 }
 function kpi(l,v,signe){ return `<div class="card kpi"><div class="l">${l}</div><div class="v" style="${signe&&v<0?'color:var(--neg)':''}">${eur(v)}</div></div>`; }
 
@@ -2078,7 +2062,7 @@ function vueEcritures(){
   const natOpts = sel => Object.keys(NATURES).map(n=>optNature(n, sel)).join("");
   return tete + barre("journal") + `
   ${lock ? `<div class="alert warn" style="align-items:center">Année clôturée : écritures verrouillées. Pour les modifier, rouvrez l'année dans les paramètres du dossier.</div>` : ""}
-  <div class="tuiles ejx-tu">${tuile("Encaissé", eur0(t.recettes), {col:"var(--pos)"})}${tuile("Payé", eur0(t.c242+t.c244+t.c294+t.remb))}${tuile("Écritures", ex.ecritures.length)}${tuile("Sans justificatif", piecesManquantes(y).length, {page:"pieces", col:piecesManquantes(y).length?"var(--warn)":""})}</div>
+  <div class="tuiles ejx-tu">${tuile("Encaissé", eur0(t.recettes), {col:"var(--pos)"})}${tuile("Payé", eur0(t.c242+t.c244+t.c294+t.remb))}${tuile("Écritures", ex.ecritures.length)}${tuile("Avec justificatif", ex.ecritures.filter(e => e.piece).length, {page:"pieces"})}</div>
   ${ouvert ? `<div class="card composer noprint"><div class="form">
     <label>Date<input type="date" id="eDate" value="${ed?ed.date:(list.length?list[list.length-1].date:y+"-01-01")}"></label>
     <label>Tiers<input id="eTiers" list="tiersList" value="${esc(ed?ed.tiers:"")}" placeholder="Syndic, banque…"></label>
@@ -2104,13 +2088,13 @@ function tableEcritures(list, lock, filtre){
   const som = l => { const r = recu(l), p = paye(l);
     return `<span class="ejx-som">${r ? `<span class="in">Reçu <b>+${num(r)}</b></span>` : ""}${p ? `<span>Payé <b>−${num(p)}</b></span>` : ""}${r && p ? `<span class="net">Solde <b>${r-p>=0?"+":"−"}${num(Math.abs(r-p))}</b></span>` : ""}</span>`; };
   const pj = e => e.piece ? `<button class="ejx-pj ok" title="${esc(e.piece)}" onclick="ouvrirPiece('${e.id}')">${I_CLIP}Voir</button>`
-    : pieceRequise(e) ? `<button class="ejx-pj ko" onclick="attacherPiece('${e.id}')">${I_CLIP}À ajouter</button>` : "";
+    : lock ? "" : `<button class="ejx-pj add" title="Joindre un justificatif (facultatif)" onclick="attacherPiece('${e.id}')">${I_CLIP}Joindre</button>`;
   const parMois = {}; list.forEach(e => (parMois[monthOf(e.date)] ??= []).push(e));
   const ligne = e => { const inn = grpNature(e) === "recette";
     return `<tr class="${S.editId===e.id?"editing":""}"><td class="d"><span class="jr">${e.date.slice(8,10)}</span><span class="mo">${MOIS[monthOf(e.date)-1]}</span></td>
       <td><div class="ejx-op"><span class="ejx-ic ${inn?"in":""}" title="${inn?"Argent reçu":"Argent payé"}">${inn?IC_EJ.in:IC_EJ.out}</span><span class="ejx-t" ${e.libelleBanque?`title="Relevé : ${esc(e.libelleBanque)}"`:""}><b>${esc(e.tiers)||"–"}</b>${e.commentaire?`<small>${esc(e.commentaire)}</small>`:""}<span class="ejx-cm">${chipNature(e.nature)}</span></span></div></td>
       <td class="ca">${chipNature(e.nature)}</td><td class="pj noprint">${pj(e)}</td>
-      <td class="n mt ${inn?"in":""}">${lienGL({t:"montant", op:"=", v:e.montant}, `<b>${inn?"+":"−"}${num(e.montant)}</b> €`)}${!e.piece && pieceRequise(e) ? `<span class="ejx-pjm noprint">${pj(e)}</span>` : ""}</td>
+      <td class="n mt ${inn?"in":""}">${lienGL({t:"montant", op:"=", v:e.montant}, `<b>${inn?"+":"−"}${num(e.montant)}</b> €`)}</td>
       <td class="n ac noprint">${lock?"":`<button class="btn ghost small" aria-label="Modifier" title="Modifier" onclick="S.editId='${e.id}';renderAll();haut()">${I_EDIT}</button><button class="btn ghost small" aria-label="Supprimer" title="Supprimer" onclick="delEcriture('${e.id}')">${I_DEL}</button>`}</td></tr>`; };
   const corps = Object.keys(parMois).map(Number).sort((a,b)=>a-b).map(m => { const ls = parMois[m], ferme = !!(S.ecrFerme||{})[m];
     return `<tbody class="ejx-m ${ferme?"ferme":""}"><tr class="ejx-h"><td colspan="6"><div class="blx-hd">
@@ -2142,7 +2126,7 @@ const IC_F = {
   nature:'<path d="M4 12l8-8h7v7l-8 8z"/><circle cx="15.5" cy="8.5" r="1"/>'
 };
 const icF = k => `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC_F[k]}</svg>`;
-const LIB_BANQUE = {oui:"pointées sur le relevé", non:"non pointées"}, LIB_PIECE = {avec:"joint", manquant:"manquant", inutile:"non requis"};
+const LIB_BANQUE = {oui:"pointées sur le relevé", non:"non pointées"}, LIB_PIECE = {avec:"joint", manquant:"aucun", inutile:"aucun"};
 const JOURNAUX = {AN:"À-nouveaux", BQ:"Banque", OD:"Opérations diverses"};
 const comptesUtilises = () => [...new Set([...Object.keys(NATURES).map(compteNature), ...(S.vueEcr === "grandlivre" ? Object.keys(COMPTES) : [])])].filter(Boolean).sort();
 const tiersSaisis = () => [...new Map(Object.values(S.data.exercices).flatMap(ex => ex.ecritures || []).filter(e => e.tiers).map(e => [sansAccents(e.tiers), e.tiers])).values()].sort((a,b)=>a.localeCompare(b));
@@ -2170,7 +2154,7 @@ const FILTRES = [
   {k:"montantMax", lib:"Montant maximum…", ic:"max", aide:"0,00", saisie:q => parseMontantQ(q) != null ? {t:"montant", op:"<=", v:parseMontantQ(q)} : null},
   {k:"nature", lib:"Nature", ic:"nature", liste:() => Object.keys(NATURES).map(v => ({t:"nature", v}))},
   {k:"tiers", lib:"Tiers", ic:"tiers", liste:() => tiersSaisis().map(v => ({t:"tiers", v}))},
-  {k:"piece", lib:"Justificatif", ic:"clip", liste:() => ["manquant","avec","inutile"].map(v => ({t:"piece", v}))}
+  {k:"piece", lib:"Justificatif", ic:"clip", liste:() => ["avec","manquant"].map(v => ({t:"piece", v}))}
 ];
 const TYPES_J = {compte:"Compte", comptePref:"Compte commençant par", du:"À partir du", au:"Jusqu'au", periode:"Période", journal:"Journal", banque:"Relevé",
   libPref:"Libellé commençant par", texte:"Libellé contient", montant:"Montant", nature:"Nature", tiers:"Tiers", piece:"Justificatif"};
@@ -2215,7 +2199,7 @@ function testJeton(x, j, vue){
     case "nature": return j.v.startsWith("g:") ? grpNature(e) === j.v.slice(2) : e.nature === j.v;
     case "tiers": return sansAccents(e.tiers) === sansAccents(j.v);
     case "banque": return j.v === "oui" ? !!e.banque : !e.banque;
-    case "piece": return j.v === "avec" ? !!e.piece : j.v === "manquant" ? !e.piece && pieceRequise(e) : !e.piece && !pieceRequise(e);
+    case "piece": return j.v === "avec" ? !!e.piece : !e.piece;
   }
   return true;
 }
@@ -2224,7 +2208,7 @@ function passeFiltre(x, J, vue){
   return Object.entries(parType).every(([t, js]) => OU_J.includes(t) ? js.some(j => testJeton(x, j, vue)) : js.every(j => testJeton(x, j, vue)));
 }
 /* Liste « Toutes les lignes » : tri rapide, à côté de la barre */
-const LIGNES = {journal:[["","Toutes les lignes"],["recette","Recettes"],["depense","Dépenses"],["nonpointees","Non pointées"],["sanspiece","Justificatif manquant"]],
+const LIGNES = {journal:[["","Toutes les lignes"],["recette","Recettes"],["depense","Dépenses"],["nonpointees","Non pointées"],["sanspiece","Sans justificatif"]],
   gl:[["","Tous les comptes"],["bilan","Comptes de bilan (1 à 5)"],["charges","Charges (6)"],["produits","Produits (7)"]]};
 LIGNES.balance = LIGNES.gl;
 /* Balance : seuls les filtres qui portent sur un compte s'appliquent (numéro, début du numéro, intitulé) */
@@ -2240,7 +2224,7 @@ function passeLignes(e, v){
   if(v === "recette") return grpNature(e) === "recette";
   if(v === "depense") return grpNature(e) !== "recette";
   if(v === "nonpointees") return !e.banque;
-  if(v === "sanspiece") return !e.piece && pieceRequise(e);
+  if(v === "sanspiece") return !e.piece;
   return true;
 }
 const passeLignesGL = (l, v) => !v || (v === "bilan" ? "12345".includes(l.c[0]) : v === "charges" ? l.c[0] === "6" : l.c[0] === "7");
@@ -2273,7 +2257,7 @@ function devine(q){
     tiersSaisis().filter(t => sansAccents(t).includes(n)).slice(0, 4).forEach(v => out.push({t:"tiers", v}));
   }
   if(n.length >= 3 && "pointees pointage releve".split(" ").some(k => k.startsWith(n) || n.startsWith(k.slice(0,5)))) out.push({t:"banque", v:"oui"}, {t:"banque", v:"non"});
-  if(n.length >= 3 && "justificatif piece manquant".split(" ").some(k => k.startsWith(n))) out.push({t:"piece", v:"manquant"}, {t:"piece", v:"avec"});
+  if(n.length >= 3 && "justificatif piece sans".split(" ").some(k => k.startsWith(n))) out.push({t:"piece", v:"manquant"}, {t:"piece", v:"avec"});
   if(!mt) out.push({t:"texte", v:q.trim()});
   return out;
 }
@@ -3283,7 +3267,7 @@ function csvEcritures(y, vue){
   }
   const lg = S.lignesEcr || "", list = [...(exercice(y)?.ecritures || [])].filter(e => passeLignes(e, lg) && passeFiltre(e, J, "journal")).sort((a, b) => a.date.localeCompare(b.date));
   telechargerCSV(`ecritures-${y}.csv`, [["Date", "Tiers", "Nature", "Compte", "Montant", "Recette ou dépense", "Pointée sur le relevé", "Justificatif", "Commentaire"],
-    ...list.map(e => [fmtDate(e.date), e.tiers || "", e.nature, NATURES[e.nature]?.c || "", e.montant, grpNature(e) === "recette" ? "Recette" : "Dépense", e.banque ? "oui" : "non", e.piece ? "oui" : (pieceRequise(e) ? "manquant" : ""), e.commentaire || ""])]);
+    ...list.map(e => [fmtDate(e.date), e.tiers || "", e.nature, NATURES[e.nature]?.c || "", e.montant, grpNature(e) === "recette" ? "Recette" : "Dépense", e.banque ? "oui" : "non", e.piece ? "oui" : "non", e.commentaire || ""])]);
 }
 function csvImmos(y){
   const L = S.data.immobilisations.filter(i => anneeEntreeBilan(i) <= y).sort((a, b) => a.miseEnService.localeCompare(b.miseEnService));
@@ -3462,8 +3446,6 @@ function controles(y){
   const manq = attendus.filter(m => !moisLoyer.has(m));
   chk("loyers-mois", "recettes", !manq.length, `Un loyer saisi pour chacun des ${attendus.length} mois.`, "warn", `Loyer${pl(manq.length)} manquant${pl(manq.length)} : ${manq.map(m=>MOIS[m-1]).join(", ").replace(/\.$/, "")}.`, "ecritures");
   if(c.produits > 5000) chk("cfe", "impots", !!c.t.parNature["CFE"], "CFE saisie.", "warn", "Aucune CFE saisie alors que les recettes dépassent 5 000 € : vérifiez l'avis dans l'espace professionnel impots.gouv, puis saisissez-la comme dépense.", "ecritures");
-  const pm = piecesManquantes(y).length;
-  chk("justificatifs", "pieces", !pm, "Toutes les pièces justificatives sont rattachées.", "warn", `${pm} justificatif${pl(pm)} manquant${pl(pm)}.`, "pieces");
   const aTrier = (S.data.banque?.aTrier || []).filter(o => yearOf(o.date) === y).length;
   chk("banque-tri", "tresorerie", !aTrier, "Aucune opération bancaire de l'année en attente de tri.", "warn", `${aTrier} opération${pl(aTrier)} bancaire${pl(aTrier)} de ${y} encore à trier.`, "banque");
   const vus = {}, dbl = [];
@@ -3770,11 +3752,6 @@ function vueDossier(){
 function pieceRequise(e){ return !e.sansPiece && (NATURES[e.nature]?.piece !== false); }
 function piecesManquantes(y){ const ex = S.data && exercice(y); return (ex && ex.ecritures ? ex.ecritures : []).filter(e => pieceRequise(e) && !e.piece); }
 function findEcr(id){ for(const ex of Object.values(S.data.exercices)) { const e = (ex.ecritures||[]).find(x=>x.id===id); if(e) return e; } }
-function cellPiece(e){
-  if(e.piece) return `<button class="btn small sec pj" title="${esc(e.piece)}" style="color:var(--accent)" onclick="ouvrirPiece('${e.id}')">${I_CLIP} Voir</button>`;
-  if(!pieceRequise(e)) return `<span class="pill" title="${e.sansPiece?"Marquée sans justificatif":"Pas de justificatif nécessaire pour cette nature"}">non requis</span>`;
-  return `<button class="btn small sec pj" onclick="attacherPiece('${e.id}')">Ajouter</button>`;
-}
 const slug = s => String(s||"").normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/[^A-Za-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,30) || "piece";
 async function dossierRequis(){
   if(!S.dir){ avertir(PARTAGE ? "Sur iPhone, l'outil ne peut pas lire le dossier LMNP : ouvrez la pièce depuis l'app Fichiers (dossier Justificatifs), ou sur ordinateur dans Chrome." : "Les justificatifs sont rangés dans le dossier LMNP : ouvrez l'outil dans Chrome via « Ouvrir le dossier LMNP… »."); return false; }
@@ -3862,7 +3839,7 @@ function etatM(o){
   const e = o.e;
   if(e.piece) return {t:"facture jointe", ok:true};
   if(deposees()[e.id]) return {t:"photo déposée"};
-  if(pieceRequise(e)) return {t:"facture à ajouter", manque:true};
+
   return {t:""};
 }
 /* Dépenses des exercices ouverts dont la facture manque encore (et n'a pas été déposée depuis cet iPhone) */
@@ -4134,7 +4111,7 @@ function enregistrerRattachement(id){
   Object.values(S.data.exercices).forEach(ex => (ex.ecritures||[]).forEach(e => {
     if(coches.has(e.id)){ e.piece = d.fichier; delete e.sansPiece; } else if(e.piece === d.fichier && yearOf(e.date) === S.year) delete e.piece;
   }));
-  S.rattDoc = null; setDirty(); renderAll(); toast(`« ${d.libelle} » rattaché à ${coches.size} écriture${pl(coches.size)}.`);
+  S.rattDoc = null; S.rattNouveau = null; setDirty(); renderAll(); toast(`« ${d.libelle} » rattaché à ${coches.size} écriture${pl(coches.size)}.`);
 }
 async function supprimerDocument(id){
   const d = docs().find(x=>x.id===id); if(!await confirmer(`Retirer « ${d.libelle} » de l'outil ? Les écritures rattachées n'auront plus de justificatif (le fichier reste dans le dossier).`)) return;
@@ -4149,38 +4126,62 @@ async function deposerSurEcriture(ev, id){
   e.piece = await copierDansDossier(f, ["Justificatifs", String(yearOf(e.date))], `${e.date}_${slug(e.tiers)}_${slug(e.nature)}`); delete e.sansPiece;
   setDirty(); renderAll(); toast("Justificatif rattaché.");
 }
+/* Justificatifs : facultatifs. Un fichier (facture, avis, échéancier, contrat…) justifie une ou plusieurs opérations ;
+   le lien est porté par l'opération (e.piece = chemin du fichier), un document partagé est aussi décrit dans S.data.documents. */
+function justificatifsAnnee(y){
+  const es = exercice(y)?.ecritures || [], par = {};
+  es.filter(e => e.piece).forEach(e => (par[e.piece] ??= []).push(e));
+  docs().filter(d => !ecrituresDuDoc(d).length).forEach(d => par[d.fichier] ??= []);
+  return Object.entries(par).map(([chemin, ops]) => {
+    const d = docs().find(x => x.fichier === chemin), f = factures().find(x => x.fichier === chemin);
+    return {chemin, ops:ops.sort((a, b) => a.date.localeCompare(b.date)), d, f, nom: d?.libelle || (f ? `${f.fournisseur} · facture ${f.numero}` : chemin.split("/").pop().replace(/\.[^.]+$/, "")),
+      type: d ? (TYPES_DOC[d.type] || "Document") : f ? "Facture électronique" : "Justificatif"};
+  }).sort((a, b) => (a.ops[0]?.date || "9").localeCompare(b.ops[0]?.date || "9") || a.nom.localeCompare(b.nom));
+}
 function vuePieces(){
   const y = S.year;
-  if(isHistorique(y)) return entete(`Pièces ${y}`) + `<div class="alert info">${histTexte(y)}</div>`;
-  const ex = exercice(y), all = (ex.ecritures||[]).filter(pieceRequise);
-  const manq = piecesManquantes(y).sort((a,b)=>a.date.localeCompare(b.date));
-  const ok = all.filter(e=>e.piece).sort((a,b)=>a.date.localeCompare(b.date));
-  const dd = docs(), rd = S.rattDoc && dd.find(d=>d.id===S.rattDoc);
-  const nomDoc = chemin => dd.find(d=>d.fichier===chemin)?.libelle;
-  const ligne = (e, act) => `<div class="pc" ondragover="event.preventDefault();this.classList.add('survol')" ondragleave="this.classList.remove('survol')" ondrop="deposerSurEcriture(event,'${e.id}')">
-    <span class="d">${fmtDate(e.date).slice(0,5)}</span><span class="t"><b>${esc(e.tiers)||"–"}</b>${chipNature(e.nature)}</span><span class="m">${eur(e.montant)}</span><span class="a noprint">${act}</span></div>`;
-  // Rattachement d'un document à plusieurs écritures
-  const ratt = rd ? `<div class="card" id="ratt" style="border-color:var(--accent)"><div class="row" style="justify-content:space-between;margin-bottom:10px"><h3 style="margin:0">Rattacher « ${esc(rd.libelle)} »</h3>
-      <div class="row"><button class="btn small sec" onclick="document.querySelectorAll('#ratt .sugg input').forEach(i=>i.checked=true)">Cocher les lignes du prêt</button><button class="btn small" onclick="enregistrerRattachement('${rd.id}')">Enregistrer</button><button class="btn small ghost" onclick="S.rattDoc=null;renderAll()">Fermer</button></div></div>
-      <div class="ratt">${(ex.ecritures||[]).slice().sort((a,b)=>a.date.localeCompare(b.date)).map(e=>`<label class="${["Intérêts emprunt","Remboursement emprunt","Assurance emprunt"].includes(e.nature)?"sugg":""}"><input type="checkbox" value="${e.id}" ${e.piece===rd.fichier?"checked":""}><span>${fmtDate(e.date).slice(0,5)}</span><span>${esc(e.tiers)||"–"}</span>${chipNature(e.nature)}<span class="m">${eur(e.montant)}</span></label>`).join("")}</div></div>` : "";
-  return `<div class="pagehead"><h1>Pièces ${y}</h1></div>
-  ${!S.dir ? (PARTAGE ? `<div class="alert info">Sur iPhone, les pièces se déposent depuis « Pièces à déposer » ; celles déjà rangées se consultent sur ordinateur, dans Chrome.</div>` : `<div class="alert warn">Ouvrez le dossier LMNP dans Chrome pour déposer ou consulter les pièces.</div>`) : ""}
-  <div class="pieces-top">
-    <div class="card centre" style="margin:0">${anneau(all.length?ok.length/all.length:1, all.length?`${ok.length}/${all.length}`:"✓", ok.length===all.length?"var(--pos)":"var(--warn)", 120)}<span class="sub" style="margin:6px 0 0">écritures justifiées</span></div>
-    ${zoneDepot("Déposer des pièces", "Factures (PDF, Factur-X, UBL), échéanciers, photos… · un ou plusieurs fichiers, ou le ZIP de la plateforme", "$('#pieceInput').click()", "deposerPiecesDrop(event)").replace('class="depot noprint"','class="depot noprint" style="margin:0"')}
-  </div>
-  ${carteARattacher(y)}
+  if(isHistorique(y)) return entete(`Justificatifs ${y}`) + `<div class="alert info">${histTexte(y)}</div>`;
+  const ex = exercice(y), es = ex.ecritures || [], clos = verrouille(y), J = justificatifsAnnee(y), rd = S.rattDoc && docs().find(d => d.id === S.rattDoc);
+  const opTxt = e => `${fmtDate(e.date).slice(0, 5)} · ${esc(e.tiers || e.nature)} · ${eur(e.montant)}`;
+  const IC_DOC = '<path d="M14 3H6v18h12V7zM14 3v4h4"/><path d="M9 12h6M9 16h6"/>';
+  const ligneJ = j => `<div class="jx"><span class="jx-ic">${svgI(IC_DOC)}</span>
+      <div class="jx-t"><b>${esc(j.nom)}</b><span>${j.type} · ${j.ops.length ? (j.ops.length === 1 ? opTxt(j.ops[0]) : `${j.ops.length} opérations, du ${fmtDate(j.ops[0].date).slice(0, 5)} au ${fmtDate(j.ops[j.ops.length - 1].date).slice(0, 5)}`) : "rattaché à aucune opération"}</span></div>
+      <div class="jx-a noprint"><button class="btn small sec" onclick="ouvrirChemin(${jsq(j.chemin)},${jsq(j.nom)})">Voir</button>${clos ? "" : `<button class="btn small sec" onclick="rattacherJustificatif(${jsq(j.chemin)})">${j.ops.length > 1 ? "Opérations…" : "Rattacher à plusieurs…"}</button><button class="btn small ghost" aria-label="Retirer" title="Retirer (le fichier reste dans le dossier)" onclick="retirerJustificatif(${jsq(j.chemin)})">${I_DEL}</button>`}</div></div>`;
+  const pret = es.some(e => NAT_PRET[e.nature]);
+  const ratt = rd && !clos ? `<div class="card jx-ratt" id="ratt"><div class="row" style="justify-content:space-between;gap:8px;margin-bottom:4px"><div><h3 style="margin:0">Quelles opérations justifie « ${esc(rd.libelle)} » ?</h3><span class="sub" style="margin:0">Cochez-en une ou plusieurs.</span></div>
+      <div class="row" style="gap:6px"><button class="btn small" onclick="enregistrerRattachement('${rd.id}')">Enregistrer</button><button class="btn small ghost" onclick="annulerRatt()">Annuler</button></div></div>
+      <div class="row" style="gap:8px;margin:10px 0 4px"><input class="jx-cherche" type="search" placeholder="Rechercher un tiers, une nature, un montant…" oninput="filtrerRatt(this.value)">${pret ? `<button class="btn small sec" onclick="document.querySelectorAll('#ratt .sugg input').forEach(i=>i.checked=true)">Cocher les lignes du prêt</button>` : ""}</div>
+      <div class="ratt">${es.slice().sort((a, b) => a.date.localeCompare(b.date)).map(e => `<label class="${NAT_PRET[e.nature] ? "sugg" : ""}" data-q="${esc(sansAccents(`${e.tiers || ""} ${e.nature} ${fmtDate(e.date)} ${e.montant} ${eur(e.montant)}`))}"><input type="checkbox" value="${e.id}" ${e.piece === rd.fichier ? "checked" : ""}><span>${fmtDate(e.date).slice(0, 5)}</span><span>${esc(e.tiers) || "–"}${e.piece && e.piece !== rd.fichier ? ` <small class="muted-s">(a déjà un justificatif)</small>` : ""}</span>${chipNature(e.nature)}<span class="m">${eur(e.montant)}</span></label>`).join("")}</div></div>` : "";
+  const sans = es.filter(e => !e.piece).sort((a, b) => a.date.localeCompare(b.date));
+  return `<div class="pagehead"><h1>Justificatifs ${y}</h1></div>
+  ${!S.dir ? (PARTAGE ? `<div class="alert info">Sur iPhone, les justificatifs se déposent depuis « Pièces à déposer » ; ceux déjà rangés se consultent sur ordinateur, dans Chrome.</div>` : `<div class="alert warn">Ouvrez le dossier LMNP dans Chrome pour déposer ou consulter les justificatifs.</div>`) : ""}
+  <p class="sub jx-intro">Facultatif. Gardez ici les factures, avis ou contrats que vous voulez conserver. Un document peut justifier une seule opération, ou plusieurs : l'échéancier du prêt, le contrat d'assurance, l'avis de taxe foncière payé en plusieurs fois…</p>
+  ${clos ? "" : zoneDepot("Ajouter des justificatifs", "PDF, photos, factures électroniques ou ZIP de la plateforme · un ou plusieurs fichiers", "$('#pieceInput').click()", "deposerPiecesDrop(event)")}
+  ${clos ? "" : carteARattacher(y)}
   ${ratt}
-  ${dd.length ? `<div class="card"><h3>Échéanciers et documents</h3><div class="docs">${dd.map(d => { const n = ecrituresDuDoc(d).length; return `<div class="doc">
-      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.6" stroke-linejoin="round"><path d="M14 3H6v18h12V7zM14 3v4h4"/><path d="M9 12h6M9 16h6"/></svg>
-      <div><b>${esc(d.libelle)}</b><small>${TYPES_DOC[d.type]||d.type} · ${n} écriture${n>1?"s":""}</small></div>
-      <div class="row noprint" style="margin-left:auto;gap:4px"><button class="btn small sec" onclick="ouvrirChemin(${jsq(d.fichier)},${jsq(d.libelle)})">Voir</button><button class="btn small" onclick="S.rattDoc='${d.id}';renderAll()">Rattacher…</button><button class="btn small ghost" aria-label="Retirer" onclick="supprimerDocument('${d.id}')">${I_DEL}</button></div></div>`; }).join("")}</div></div>` : ""}
-  <div class="card"><div class="row" style="justify-content:space-between;margin-bottom:6px"><h3 style="margin:0">À fournir · ${manq.length}</h3>
-    ${manq.length>3?`<button class="btn small ghost noprint" onclick="confirmer('Marquer les ${manq.length} écritures comme ne demandant pas de justificatif ?', {ok:'Marquer'}).then(ok=>{if(ok){piecesManquantes(${y}).forEach(e=>e.sansPiece=true);setDirty();renderAll()}})">Tout marquer « non requis »</button>`:""}</div>
-    ${manq.length ? manq.map(e=>ligne(e, `<button class="btn small" onclick="attacherPiece('${e.id}')">Ajouter</button>${dd.length?`<select class="btn small sec" style="padding:4px 6px" onchange="if(this.value){const d=docs().find(x=>x.id===this.value);findEcr('${e.id}').piece=d.fichier;setDirty();renderAll()}"><option value="">Document…</option>${dd.map(d=>`<option value="${d.id}">${esc(d.libelle)}</option>`).join("")}</select>`:""}<button class="btn small ghost" title="Pas besoin de justificatif" onclick="marquerSansPiece('${e.id}',true)">Non requis</button>`)).join("")
-      : `<div class="blx-0" style="margin:6px 0 0">✓ Tout est justifié</div>`}</div>
-  ${ok.length?`<div class="card"><details><summary>Pièces rangées · ${ok.length}</summary><div style="margin-top:8px">
-    ${ok.map(e=>ligne(e, `${nomDoc(e.piece)?`<span class="pill">${esc(nomDoc(e.piece))}</span>`:""}<button class="btn small sec" onclick="ouvrirPiece('${e.id}')">${I_CLIP} Voir</button><button class="btn small ghost" title="Détacher" onclick="detacherPiece('${e.id}')">×</button>`)).join("")}</div></details></div>`:""}`;
+  <div class="card"><h3 style="margin:0 0 4px">Vos justificatifs · ${J.length}</h3>
+    ${J.length ? J.map(ligneJ).join("") : `<p class="sub" style="margin:8px 0 2px">Aucun pour l'instant. Vous pouvez en ajouter quand vous voulez, ce n'est pas obligatoire.</p>`}</div>
+  ${!clos && sans.length ? `<div class="card"><details><summary>Joindre un justificatif à une opération précise <span class="muted-s">· ${sans.length} opération${pl(sans.length)} sans justificatif</span></summary><div style="margin-top:8px">
+    ${sans.map(e => `<div class="pc" ondragover="event.preventDefault();this.classList.add('survol')" ondragleave="this.classList.remove('survol')" ondrop="deposerSurEcriture(event,'${e.id}')"><span class="d">${fmtDate(e.date).slice(0, 5)}</span><span class="t"><b>${esc(e.tiers) || "–"}</b>${chipNature(e.nature)}</span><span class="m">${eur(e.montant)}</span>
+      <span class="a noprint"><button class="btn small sec" onclick="attacherPiece('${e.id}')">${I_CLIP} Joindre</button>${J.length ? `<select class="btn small sec" style="padding:4px 6px;max-width:200px" onchange="if(this.value){findEcr('${e.id}').piece=this.value;setDirty();renderAll()}"><option value="">Un justificatif déjà là…</option>${J.map(j => `<option value="${esc(j.chemin)}">${esc(j.nom)}</option>`).join("")}</select>` : ""}</span></div>`).join("")}</div></details></div>` : ""}`;
+}
+/* Ouvre le choix des opérations pour un fichier : il devient un document partagé s'il ne l'était pas */
+function rattacherJustificatif(chemin){
+  let d = docs().find(x => x.fichier === chemin);
+  if(!d){ const f = factures().find(x => x.fichier === chemin);
+    d = {id:uid(), type:/ech[eé]ancier|amortissement/i.test(chemin) ? "echeancier" : "autre", libelle: f ? `${f.fournisseur} · facture ${f.numero}` : chemin.split("/").pop().replace(/\.[^.]+$/, ""), fichier:chemin, date:aujourdhui()};
+    docs().push(d); S.rattNouveau = d.id; }
+  else S.rattNouveau = null;
+  S.rattDoc = d.id; renderAll(); $("#ratt")?.scrollIntoView({behavior:"smooth", block:"start"});
+}
+function annulerRatt(){ if(S.rattNouveau) S.data.documents = docs().filter(d => d.id !== S.rattNouveau); S.rattNouveau = null; S.rattDoc = null; renderAll(); }
+function filtrerRatt(q){ const n = sansAccents(q.trim()); document.querySelectorAll("#ratt label").forEach(l => l.style.display = !n || l.dataset.q.includes(n) ? "" : "none"); }
+async function retirerJustificatif(chemin){
+  const n = Object.entries(S.data.exercices).filter(([an]) => !verrouille(+an)).flatMap(([, ex]) => ex.ecritures || []).filter(e => e.piece === chemin);
+  if(!await confirmer(`Retirer ce justificatif${n.length ? ` de ${n.length} opération${pl(n.length)}` : ""} ? Le fichier reste dans le dossier.`, {ok:"Retirer"})) return;
+  n.forEach(e => delete e.piece);
+  S.data.documents = docs().filter(d => d.fichier !== chemin || Object.values(S.data.exercices).some(ex => (ex.ecritures || []).some(e => e.piece === chemin)));
+  setDirty(); renderAll();
 }
 /* Fichiers de Justificatifs/<année>/ liés à rien : une facture électronique y est reconnue et rattachée seule, le reste est proposé au rattachement */
 async function scanPieces(y){
@@ -4255,8 +4256,8 @@ async function rattacherLibre(i, v){
   if(!v) return;
   const chemin = cheminLibre(i), nom = S.libres.noms[i];
   if(v === "__doc"){
-    const libelle = await demander("Nom de l'échéancier ou du document :", nom.replace(/\.[^.]+$/, ""), {ok:"Enregistrer"}); if(libelle == null) return;
-    const d = {id:uid(), type:"echeancier", libelle:libelle.trim() || nom, fichier:chemin, date:aujourdhui()};
+    const libelle = await demander("Nom du document :", nom.replace(/\.[^.]+$/, ""), {ok:"Enregistrer"}); if(libelle == null) return;
+    const d = {id:uid(), type:/ech[eé]ancier|amortissement/i.test(nom + libelle) ? "echeancier" : "autre", libelle:libelle.trim() || nom, fichier:chemin, date:aujourdhui()};
     docs().push(d); S.rattDoc = d.id; setDirty(); renderAll(); return;
   }
   const e = findEcr(v); e.piece = chemin; delete e.sansPiece; setDirty(); renderAll(); toast("Pièce rattachée.");
@@ -4440,7 +4441,7 @@ function carteARattacher(y){
   const pris = cheminsLies(), libres = (S.libres?.y === y ? S.libres.noms : []).map((nom, i) => [nom, i]).filter(([nom]) => !pris.has(`Justificatifs/${y}/${nom}`));
   const att = facturesEnAttente().sort((a,b) => a.date.localeCompare(b.date));
   if(!att.length && !libres.length) return "";
-  const sansPiece = Object.values(S.data.exercices).flatMap(ex => ex.ecritures || []).filter(e => !e.piece && pieceRequise(e));
+  const sansPiece = Object.entries(S.data.exercices).filter(([an]) => !verrouille(+an) && !isHistorique(+an)).flatMap(([, ex]) => ex.ecritures || []).filter(e => !e.piece);
   const optE = list => list.map(e=>`<option value="${e.id}">${fmtDate(e.date)} · ${esc(e.tiers||e.nature)} · ${eur(e.montant)}</option>`).join("");
   const sel = (onch, opts) => `<select class="btn small sec" style="padding:4px 6px;max-width:260px" onchange="${onch}"><option value="">Rattacher à…</option>${opts}</select>`;
   const lf = f => {
@@ -4452,8 +4453,8 @@ function carteARattacher(y){
       <button class="btn small ghost" aria-label="Ne plus proposer" title="Ne plus proposer" onclick="ignorerFacture('${f.id}')">×</button></span></div>`; };
   const ll = (nom, i) => `<div class="pc"><span class="d">${I_CLIP}</span><span class="t"><b style="overflow-wrap:anywhere">${esc(nom)}</b></span><span class="m"></span>
       <span class="a noprint"><button class="btn small sec" onclick="ouvrirChemin(cheminLibre(${i}), S.libres.noms[${i}])">Voir</button>
-      ${sel(`rattacherLibre(${i},this.value)`, `<option value="__doc">Échéancier : plusieurs écritures…</option>${sansPiece.filter(e => yearOf(e.date) === y).length?`<optgroup label="Écriture">${optE(sansPiece.filter(e => yearOf(e.date) === y).sort((a,b)=>a.date.localeCompare(b.date)))}</optgroup>`:""}`)}</span></div>`;
-  return `<div class="card"><h3 style="margin:0 0 6px">À rattacher · ${att.length + libres.length}</h3>${att.map(lf).join("")}${libres.map(([nom, i]) => ll(nom, i)).join("")}</div>`;
+      ${sel(`rattacherLibre(${i},this.value)`, `<option value="__doc">Plusieurs opérations (échéancier, contrat…)</option>${sansPiece.filter(e => yearOf(e.date) === y).length?`<optgroup label="Écriture">${optE(sansPiece.filter(e => yearOf(e.date) === y).sort((a,b)=>a.date.localeCompare(b.date)))}</optgroup>`:""}`)}</span></div>`;
+  return `<div class="card"><h3 style="margin:0 0 2px">Déposés, à rattacher · ${att.length + libres.length}</h3><p class="sub" style="margin:0 0 6px">Choisissez l'opération qu'ils justifient, ou « plusieurs opérations ».</p>${att.map(lf).join("")}${libres.map(([nom, i]) => ll(nom, i)).join("")}</div>`;
 }
 
 /* ============ Banque : import du relevé CSV et tri ============ */
