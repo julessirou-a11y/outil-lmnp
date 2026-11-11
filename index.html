@@ -384,6 +384,36 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 .dm-l.ok .dm-t b{color:var(--muted);font-weight:500}
 @media (max-width:640px){.bv-choix,.as-form{grid-template-columns:1fr}}
 .pastilles{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+/* L'année en six étapes (tableau de bord) */
+.ea{margin-bottom:18px}
+.ea-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.ea-h h3{margin:0}.ea-h span{font-size:13.5px;color:var(--muted)}
+.ea-rail{list-style:none;margin:18px 0 6px;padding:0;display:grid;grid-template-columns:repeat(6,1fr);position:relative}
+.ea-rail::before,.ea-rail::after{content:"";position:absolute;top:28.5px;left:calc(100%/12);right:calc(100%/12);height:3px;border-radius:2px;background:var(--line)}
+.ea-rail::after{right:auto;width:calc((100% - 100%/6) * var(--p));background:var(--pos)}
+.ea-s{position:relative;z-index:1;display:flex;justify-content:center}
+.ea-s button{display:flex;flex-direction:column;align-items:center;gap:5px;border:0;background:none;padding:0 4px 10px;font:inherit;color:var(--text);cursor:pointer;text-align:center;border-radius:var(--r-md)}
+.ea-s .ea-ic{width:48px;height:48px;border-radius:50%;display:grid;place-items:center;background:var(--surface);border:2px solid var(--line);color:var(--muted);transition:transform .18s,box-shadow .18s}
+.ea-s .ea-ic svg{width:22px;height:22px}
+.ea-s b{font-size:13.5px;font-weight:600;line-height:1.2}.ea-s small{font-size:12px;color:var(--faint)}
+.ea-s.fait .ea-ic{background:var(--pos);border-color:var(--pos);color:#fff}
+.ea-s.afaire .ea-ic{border-color:var(--accent);color:var(--accent)}
+.ea-s.attention .ea-ic{border-color:var(--neg);color:var(--neg);background:var(--neg-soft)} .ea-s.attention small{color:var(--neg);font-weight:500}
+.ea-s.cur .ea-ic{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);box-shadow:0 0 0 5px var(--accent-soft)} .ea-s.cur small{color:var(--accent);font-weight:600}
+.ea-s.plustard b{color:var(--muted)}
+.ea-s.vue b{color:var(--accent)} .ea-s button{padding:6px 6px 8px}
+.ea-s button:hover .ea-ic{transform:translateY(-2px)}
+.ea-f{margin-top:10px;padding-top:6px;border-top:1px solid var(--line)}
+.ea-pas{margin:0 0 6px;color:var(--muted);font-size:14px}
+.ea-t{display:flex;align-items:center;gap:14px;padding:14px 0}.ea-t+.ea-t{border-top:1px solid var(--line)}
+.ea-d{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;border:2px solid var(--accent);color:var(--accent)}.ea-d svg{width:15px;height:15px;stroke-width:2.6}
+.ea-t.fait .ea-d{background:var(--pos);border-color:var(--pos);color:#fff} .ea-t.attention .ea-d{background:var(--neg);border-color:var(--neg);color:#fff} .ea-t.plustard .ea-d,.ea-t.sansobjet .ea-d{border:2px dashed var(--line)}
+.ea-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ea-tx b{font-weight:600;font-size:15.5px}.ea-tx span{font-size:13.5px;color:var(--muted)}
+.ea-t.fait .ea-tx b,.ea-t.sansobjet .ea-tx b,.ea-t.plustard .ea-tx b{color:var(--muted);font-weight:500} .ea-t.fait .ea-tx span,.ea-t.sansobjet .ea-tx span{display:none}
+.ea-st{flex:none;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--warn-soft);color:var(--warn);white-space:nowrap}
+.ea-t.fait .ea-st{background:var(--pos-soft,var(--surface-2));color:var(--pos)} .ea-t.attention .ea-st{background:var(--neg-soft);color:var(--neg)} .ea-t.plustard .ea-st,.ea-t.sansobjet .ea-st{background:var(--surface-2);color:var(--muted);font-weight:500}
+.ea-a{flex:none;display:flex;gap:8px;align-items:center}
+@media (max-width:700px){ .ea-rail{grid-template-columns:repeat(6,minmax(0,1fr))} .ea-s .ea-ic{width:38px;height:38px} .ea-s .ea-ic svg{width:18px;height:18px} .ea-rail::before,.ea-rail::after{top:23.5px}
+  .ea-s b{font-size:11px} .ea-s small{display:none} .ea-t{flex-wrap:wrap} .ea-a{width:100%;padding-left:44px} .ea-st{margin-left:44px} }
 .pastille{border:0;border-radius:99px;padding:7px 14px;font:inherit;font-size:13.5px;font-weight:500;cursor:pointer}
 .pastille.warn{background:var(--warn-soft);color:var(--warn)} .pastille.bad{background:var(--neg-soft);color:var(--neg)} .pastille.go{background:var(--accent);color:var(--accent-ink)}
 .jauge{display:flex;border-radius:99px;overflow:hidden;background:var(--surface-2)}
@@ -847,7 +877,7 @@ dialog.exp{width:min(440px,calc(100vw - 32px))}
 .exp-o:hover,.exp-o:focus-visible{border-color:var(--accent);background:var(--accent-soft);outline:0}
 .exp-o:active{transform:scale(.99)}
 .exp-x{flex:none;width:46px;height:46px;border-radius:10px;display:grid;place-items:center;font-size:12px;font-weight:700;letter-spacing:.03em;background:var(--accent-soft);color:var(--accent)}
-.exp-o:hover .exp-x,.exp-o:focus-visible .exp-x{background:var(--accent);color:var(--surface)}
+button.exp-o:hover .exp-x,button.exp-o:focus-visible .exp-x{background:var(--accent);color:var(--surface)}
 .exp-t{display:flex;flex-direction:column;gap:2px;min-width:0}.exp-t b{font-weight:600;font-size:14.5px}.exp-t small{color:var(--muted);font-size:12.5px;line-height:1.4}
 .exp-m{cursor:default}.exp-m:hover{border-color:var(--line);background:var(--surface)}.exp-m .exp-t{flex:1}
 .exp-h{display:inline-flex;gap:2px;margin-top:6px;padding:2px;border-radius:8px;background:var(--bg);align-self:flex-start}
@@ -1907,7 +1937,7 @@ function vueAccueil(){
     ${demarrage()}
     ${change?`<div class="alert bad">Résultat modifié depuis la clôture : ${eur0(snap.resultatFiscal)} déclarés, ${eur0(rf)} maintenant.</div>`:""}
     ${!c.lmnpActif?`<div class="alert info">Location meublée à partir du ${fmtDate(debutLMNP())}.</div>`:""}
-    ${aFaire(y)}
+    ${etapesAnnee(y)}
     <div class="tuiles">
       ${tuile("Loyers encaissés", eur0(c.produits), {col:"var(--pos)", page:"ecritures"})}
       ${tuile("Charges", eur0(charges), {page:"ecritures", sous:`dont intérêts ${eur0(c.interets)}`})}
@@ -1922,13 +1952,76 @@ function vueAccueil(){
         ${donut([["Charges",c.c242,"var(--seg-1)"],["Taxes",c.c244,"var(--seg-2)"],["Intérêts",c.interets,"var(--seg-3)"],["Amortissements",amortDeduits,"var(--accent)"],["Imposable",Math.max(rf,0),"var(--pos)"]], eur0(c.produits), "de loyers")}
         <div class="leg col"><span><i style="background:var(--seg-1)"></i>Charges</span><span><i style="background:var(--seg-2)"></i>Taxes</span><span><i style="background:var(--seg-3)"></i>Intérêts</span><span><i style="background:var(--accent)"></i>Amortissements</span><span><i style="background:var(--pos)"></i>Imposable</span></div></div>
     </div>
-    <div class="card"><h3>Suivi</h3><div class="suivis">
-      ${suivi(moisAttendus.length?loyersOk/moisAttendus.length:1, `${loyersOk}/${moisAttendus.length}`, "Loyers saisis", "ecritures", loyersOk===moisAttendus.length?"var(--pos)":"var(--warn)")}
-      ${suivi(aJust.length?justOk/aJust.length:1, aJust.length?pctTxt(justOk/aJust.length):"✓", "Justificatifs", "pieces", justOk===aJust.length?"var(--pos)":"var(--warn)")}
-      ${suivi(aTrier?0:1, aTrier||"✓", aTrier?"Opérations à trier":"Relevé trié", "banque", aTrier?"var(--warn)":"var(--pos)")}
+    ${baseTot || (pret && capPret) ? `<div class="card"><h3>Le bien dans la durée</h3><div class="suivis">
       ${baseTot?suivi(amortiTot/baseTot, pctTxt(amortiTot/baseTot), "Logement amorti", "immos"):""}
       ${pret&&capPret?suivi(1-crd/capPret, pctTxt(1-crd/capPret), "Prêt remboursé", "emprunt"):""}
-    </div></div>`;
+    </div></div>` : ""}`;
+}
+/* L'année LMNP en six grandes étapes, une seule détaillée à la fois.
+   Chaque tâche a un état calculé à partir du dossier ; celles que le Carnet ne peut pas vérifier se cochent à la main
+   (exercice.etapes[id] = date). États : fait, afaire, attention, plustard (pas encore le moment), sansobjet. */
+function etapesAnnee(y){
+  const ex = exercice(y), c = calculAnnee(y), d = S.data.dossier, es = ex.ecritures || [];
+  if(!c.lmnpActif || S.consultation) return "";
+  const clos = verrouille(y), auj = aujourdhui(), anneeFinie = auj >= `${y+1}-01-01`, coche = ex.etapes || {}, premiere = y === yearOf(debutLMNP());
+  const T = {}, t = (id, titre, txt, etat, detail, go, lib, o = {}) => T[id] = {id, titre, txt, etat, detail, go, lib, ...o};
+  const man = id => coche[id] ? "fait" : "afaire";
+  const aTrier = (S.data.banque?.aTrier || []).filter(o => yearOf(o.date) === y).length;
+  if(premiere) t("siret", "Déclarer le début de l'activité", "Sur formalites.entreprises.gouv.fr, dans les 15 jours. Vous recevez un SIRET.", d.siret ? "fait" : "afaire", "", "allerA('dossier')", "Saisir le SIRET");
+  t("banque", "Importer le relevé de banque", "Téléchargez-le sur le site de votre banque, puis importez-le ici.", !es.length ? "afaire" : "fait", es.length ? `${es.length} opérations` : "", "allerA('banque')", "Importer");
+  t("trier", "Dire ce qu'est chaque opération", "Loyer, charge, mensualité du prêt… un clic par ligne.", aTrier ? "afaire" : es.length ? "fait" : "plustard", aTrier ? `${aTrier} à trier` : "", "allerA('banque')", "Trier");
+  const nm = moisLoues(y), ml = new Set(es.filter(e => e.nature === "Loyer").map(e => monthOf(e.date))).size;
+  t("loyers", "Un loyer pour chaque mois", "Un mois vide, c'est souvent une opération pas encore triée.", nm === 0 ? "plustard" : ml >= nm ? "fait" : "afaire", nm ? `${Math.min(ml, nm)} mois sur ${nm}` : "", "allerA('ecritures')", "Voir");
+  const pm = piecesManquantes(y).length, fa = facturesEnAttente().length;
+  t("pieces", "Une facture pour chaque dépense", "Elle prouve la dépense en cas de contrôle.", pm || fa ? "afaire" : es.length ? "fait" : "plustard", pm ? `${pm} manquante${pl(pm)}` : fa ? `${fa} à rattacher` : "", "allerA('pieces')", "Ajouter");
+  if(S.data.emprunts.length){
+    const sansEch = S.data.emprunts.some(l => !lignesBanque(l)), rp = S.data.emprunts.reduce((n, l) => n + etatsRapprochement(l, y).filter(e => e.c !== "ok").length, 0), crd = Math.abs(ecartCRD(y)) >= 1;
+    t("pret", "Le tableau du prêt", "Déposez celui de la banque : le Carnet sépare intérêts et capital.", sansEch || rp || crd ? "afaire" : "fait", sansEch ? "À déposer" : rp ? `${rp} échéance${pl(rp)} à vérifier` : crd ? "Restant dû à corriger" : "", "allerA('emprunt')", sansEch ? "Déposer" : "Vérifier");
+  }
+  const acq = S.data.immobilisations.filter(i => anneeEntreeBilan(i) === y).length;
+  t("achats", "Les achats de plus de 500 €", "Meubles, électroménager, travaux : ils s'ajoutent dans Immobilisations.", man("achats"), acq ? `${acq} ajouté${pl(acq)} en ${y}` : "", "allerA('immos')", "Ajouter", {manuel:true, cocher:"Aucun autre"});
+  const cfe = c.t.parNature["CFE"];
+  if(premiere) t("cfe", "Formulaire de CFE (1447-C-SD)", "Seulement la première année, avant le 31 décembre. Pas de CFE à payer.", man("cfe"), "", "", "", {manuel:true, cocher:"Envoyé", quand:`avant le 31/12`});
+  else t("cfe", "Payer la CFE", "Impôt local : l'avis arrive en novembre dans l'espace professionnel.", cfe ? "fait" : c.produits <= 5000 ? "sansobjet" : !anneeFinie && auj < `${y}-11-15` ? "plustard" : "afaire",
+    cfe ? `${eur0(cfe)} payés` : c.produits <= 5000 ? "Pas due : recettes sous 5 000 €" : "", "allerA('ecritures')", "Saisir", {quand:"avant le 15/12"});
+  const rst = restantRevision(y), bad = rst.filter(x => x.etat === "bloque").length;
+  t("revision", "Laisser le Carnet vérifier", "Il signale ce qui cloche : corrigez ou expliquez chaque point.", clos ? "fait" : !anneeFinie ? "plustard" : bad ? "attention" : rst.length ? "afaire" : "fait",
+    clos ? "" : bad ? `${bad} point${pl(bad)} bloquant${pl(bad)}` : rst.length ? `${rst.length} point${pl(rst.length)} à voir` : "", "S.declEtape='1';allerA('declaration')", "Vérifier");
+  const dec = (id, et, titre, txt, lib, quand) => t(id, titre, txt, clos || coche[id] ? "fait" : !anneeFinie ? "plustard" : "afaire", "", `S.declEtape='${et}';allerA('declaration')`, lib, {manuel:anneeFinie && !clos, cocher:"Envoyé", quand});
+  dec("liasse", "2", "Déclarer le résultat", "Espace professionnel impots.gouv : recopiez les cases que donne le Carnet.", "Voir les cases", "vers la mi-mai");
+  dec("revenus", "3", "Le reporter sur vos revenus", "Espace particulier, déclaration de revenus : un seul montant à reporter.", "Voir le montant", "fin mai");
+  t("cloture", `Clôturer ${y}`, `Les chiffres de ${y} sont figés et ${y+1} s'ouvre.`, clos ? "fait" : !anneeFinie ? "plustard" : "afaire", clos && ex.cloture ? `le ${fmtDate(ex.cloture.date)}` : "", "S.declEtape='4';allerA('declaration')", "Clôturer");
+  const IC = {banque:'<path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>', papiers:'<path d="M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6"/>', maison:'<path d="M4 11l8-6 8 6v9H4zM10 20v-5h4v5"/>',
+    loupe:'<circle cx="11" cy="11" r="6.5"/><path d="m20 20-4.2-4.2M8.5 11l2 2 3.5-3.5"/>', envoi:'<path d="M21 3 10 14M21 3l-7 18-4-7-7-4z"/>', cadenas:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'};
+  const ETAPES = [
+    ["banque", "La banque", "Tout part de votre compte bancaire.", ["siret", "banque", "trier"], `toute l'année`],
+    ["papiers", "Loyers et factures", "On vérifie que rien ne manque.", ["loyers", "pieces"], "toute l'année"],
+    ["maison", "Prêt et achats", "Ce qui se rembourse ou s'use sur plusieurs années.", ["pret", "achats", "cfe"], "toute l'année"],
+    ["loupe", "Vérifier", "Le Carnet relit vos comptes avant de déclarer.", ["revision"], `janvier ${y+1}`],
+    ["envoi", "Déclarer", "Deux déclarations en ligne, le Carnet vous donne les chiffres.", ["liasse", "revenus"], `mai ${y+1}`],
+    ["cadenas", "Clôturer", "L'année est terminée.", ["cloture"], `après l'envoi`]
+  ].map(([k, titre, phrase, ids, quand]) => { const ts = ids.map(i => T[i]).filter(Boolean), u = ts.filter(x => x.etat !== "sansobjet");
+    const etat = !u.length || u.every(x => x.etat === "fait") ? "fait" : u.some(x => x.etat === "attention") ? "attention" : u.every(x => x.etat === "plustard" || x.etat === "fait") ? "plustard" : "afaire";
+    return {k, titre, phrase, ts, quand, etat, faits:u.filter(x => x.etat === "fait").length, n:u.length}; });
+  const cur = ETAPES.find(e => e.etat === "afaire" || e.etat === "attention"), vue = ETAPES.find(e => e.k === S.eaVue) || cur || ETAPES.find(e => e.etat === "plustard") || ETAPES[ETAPES.length - 1];
+  const nf = ETAPES.filter(e => e.etat === "fait").length, ok = svgI('<path d="M20 6 9 17l-5-5"/>');
+  const rail = ETAPES.map((e, n) => `<li class="ea-s ${e.etat}${e === cur ? " cur" : ""}${e === vue ? " vue" : ""}"><button onclick="S.eaVue='${e.k}';renderAll()" aria-pressed="${e === vue}">
+      <span class="ea-ic">${e.etat === "fait" ? ok : svgI(IC[e.k])}</span><b>${e.titre}</b><small>${e.etat === "fait" ? "fait" : e.etat === "attention" ? "à corriger" : e === cur ? "maintenant" : e.quand}</small></button></li>`).join("");
+  const tache = x => `<div class="ea-t ${x.etat}"><span class="ea-d">${x.etat === "fait" ? ok : x.etat === "attention" ? "!" : ""}</span>
+      <div class="ea-tx"><b>${x.titre}</b><span>${x.txt}</span></div>
+      ${x.etat === "fait" ? `<span class="ea-st">${x.detail || "Fait"}</span>` : x.etat === "sansobjet" ? `<span class="ea-st">${x.detail || "Pas concerné"}</span>` : x.detail || x.quand ? `<span class="ea-st">${[x.detail, x.quand].filter(Boolean).join(" · ")}</span>` : ""}
+      <div class="ea-a">${x.etat === "fait" ? (x.manuel && coche[x.id] && !clos ? `<button class="btn ghost small" onclick="cocherEtape(${y},'${x.id}',false)">Annuler</button>` : "")
+        : x.etat === "sansobjet" || x.etat === "plustard" ? "" : `${x.manuel && !clos ? `<button class="btn ghost small btn-ic" onclick="cocherEtape(${y},'${x.id}',true)">${ok}${x.cocher}</button>` : ""}${x.go ? `<button class="btn small" onclick="${x.go}">${x.lib}</button>` : ""}`}</div></div>`;
+  return `<div class="card ea noprint"><div class="ea-h"><h3>Votre année ${y}</h3><span>${nf === ETAPES.length ? "Tout est fait" : `${nf} sur ${ETAPES.length} terminée${pl(nf)}`}</span></div>
+    <ol class="ea-rail" style="--p:${Math.min(1, nf / (ETAPES.length - 1)).toFixed(3)}">${rail}</ol>
+    <div class="ea-f ${vue.etat}">${vue.etat === "plustard" ? `<p class="ea-pas">Pas encore le moment : cette étape commence ${vue.quand.startsWith("après") ? vue.quand : `en ${vue.quand}`}.</p>` : ""}${vue.ts.map(tache).join("")}</div></div>`;
+}
+function cocherEtape(y, id, oui){
+  if(verrouille(y)) return;
+  const ex = exercice(y), m = (ex.etapes ??= {});
+  if(oui) m[id] = aujourdhui(); else delete m[id];
+  if(!Object.keys(m).length) delete ex.etapes;
+  setDirty(); renderAll();
 }
 /* « À faire » : pastilles courtes, chacune ouvre la bonne page */
 function aFaire(y){
