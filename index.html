@@ -388,7 +388,7 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 .ea{margin-bottom:18px}
 .ea-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}.ea-h h3{margin:0}.ea-h span{font-size:13.5px;color:var(--muted)}
 .ea-rail{list-style:none;margin:18px 0 6px;padding:0;display:grid;grid-template-columns:repeat(6,1fr);position:relative}
-.ea-rail::before,.ea-rail::after{content:"";position:absolute;top:23px;left:calc(100%/12);right:calc(100%/12);height:3px;border-radius:2px;background:var(--line)}
+.ea-rail::before,.ea-rail::after{content:"";position:absolute;top:28.5px;left:calc(100%/12);right:calc(100%/12);height:3px;border-radius:2px;background:var(--line)}
 .ea-rail::after{right:auto;width:calc((100% - 100%/6) * var(--p));background:var(--pos)}
 .ea-s{position:relative;z-index:1;display:flex;justify-content:center}
 .ea-s button{display:flex;flex-direction:column;align-items:center;gap:5px;border:0;background:none;padding:0 4px 10px;font:inherit;color:var(--text);cursor:pointer;text-align:center;border-radius:var(--r-md)}
@@ -402,20 +402,18 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 .ea-s.plustard b{color:var(--muted)}
 .ea-s.vue b{color:var(--accent)} .ea-s button{padding:6px 6px 8px}
 .ea-s button:hover .ea-ic{transform:translateY(-2px)}
-.ea-f{margin-top:10px;padding-top:18px;border-top:1px solid var(--line)}
-.ea-fh{display:flex;align-items:center;gap:14px;margin-bottom:4px}.ea-fh>div{flex:1}
-.ea-fh .ea-ic{flex:none;width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent)}
-.ea-f.fait .ea-fh .ea-ic{background:var(--pos);color:#fff}.ea-f.attention .ea-fh .ea-ic{background:var(--neg-soft);color:var(--neg)}
-.ea-fh h4{margin:0;font-size:17px}.ea-fh p{margin:2px 0 0;color:var(--muted);font-size:14px}.ea-n{font-weight:600;color:var(--muted);font-variant-numeric:tabular-nums}
-.ea-t{display:flex;align-items:center;gap:12px;padding:12px 0 12px 54px}.ea-t+.ea-t{border-top:1px solid var(--line)}
-.ea-d{flex:none;width:22px;height:22px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:#fff;font-weight:700;font-size:13px}.ea-d svg{width:13px;height:13px;stroke-width:2.6}
-.ea-t.fait .ea-d{background:var(--pos);border-color:var(--pos)} .ea-t.attention .ea-d{background:var(--neg);border-color:var(--neg)} .ea-t.afaire .ea-d{border-color:var(--accent)}
-.ea-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ea-tx b{font-weight:600}.ea-tx span{font-size:13px;color:var(--muted)}
-.ea-tx em{font-style:normal;font-size:13px;font-weight:600;color:var(--warn)} .ea-t.attention .ea-tx em{color:var(--neg)} .ea-t.plustard .ea-tx em{color:var(--faint);font-weight:400}
-.ea-t.fait .ea-tx b,.ea-t.sansobjet .ea-tx b{color:var(--muted);font-weight:500}
+.ea-f{margin-top:10px;padding-top:6px;border-top:1px solid var(--line)}
+.ea-pas{margin:0 0 6px;color:var(--muted);font-size:14px}
+.ea-t{display:flex;align-items:center;gap:14px;padding:14px 0}.ea-t+.ea-t{border-top:1px solid var(--line)}
+.ea-d{flex:none;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:14px;background:var(--accent-soft);color:var(--accent)}.ea-d svg{width:15px;height:15px;stroke-width:2.6}
+.ea-t.fait .ea-d{background:var(--pos);color:#fff} .ea-t.attention .ea-d{background:var(--neg);color:#fff} .ea-t.plustard .ea-d,.ea-t.sansobjet .ea-d{background:var(--surface-2);color:var(--faint)}
+.ea-tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.ea-tx b{font-weight:600;font-size:15.5px}.ea-tx span{font-size:13.5px;color:var(--muted)}
+.ea-t.fait .ea-tx b,.ea-t.sansobjet .ea-tx b,.ea-t.plustard .ea-tx b{color:var(--muted);font-weight:500} .ea-t.fait .ea-tx span,.ea-t.sansobjet .ea-tx span{display:none}
+.ea-st{flex:none;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--warn-soft);color:var(--warn);white-space:nowrap}
+.ea-t.fait .ea-st{background:var(--pos-soft,var(--surface-2));color:var(--pos)} .ea-t.attention .ea-st{background:var(--neg-soft);color:var(--neg)} .ea-t.plustard .ea-st,.ea-t.sansobjet .ea-st{background:var(--surface-2);color:var(--muted);font-weight:500}
 .ea-a{flex:none;display:flex;gap:8px;align-items:center}
-@media (max-width:700px){ .ea-rail{grid-template-columns:repeat(6,minmax(0,1fr))} .ea-s .ea-ic{width:38px;height:38px} .ea-s .ea-ic svg{width:18px;height:18px} .ea-rail::before,.ea-rail::after{top:18px}
-  .ea-s b{font-size:11px} .ea-s small{display:none} .ea-t{flex-wrap:wrap} .ea-a{width:100%;padding-left:34px} .ea-t{padding-left:0} }
+@media (max-width:700px){ .ea-rail{grid-template-columns:repeat(6,minmax(0,1fr))} .ea-s .ea-ic{width:38px;height:38px} .ea-s .ea-ic svg{width:18px;height:18px} .ea-rail::before,.ea-rail::after{top:23.5px}
+  .ea-s b{font-size:11px} .ea-s small{display:none} .ea-t{flex-wrap:wrap} .ea-a{width:100%;padding-left:44px} .ea-st{margin-left:44px} }
 .pastille{border:0;border-radius:99px;padding:7px 14px;font:inherit;font-size:13.5px;font-weight:500;cursor:pointer}
 .pastille.warn{background:var(--warn-soft);color:var(--warn)} .pastille.bad{background:var(--neg-soft);color:var(--neg)} .pastille.go{background:var(--accent);color:var(--accent-ink)}
 .jauge{display:flex;border-radius:99px;overflow:hidden;background:var(--surface-2)}
@@ -1990,7 +1988,7 @@ function etapesAnnee(y){
   t("revision", "Laisser le Carnet vérifier", "Il signale ce qui cloche : corrigez ou expliquez chaque point.", clos ? "fait" : !anneeFinie ? "plustard" : bad ? "attention" : rst.length ? "afaire" : "fait",
     clos ? "" : bad ? `${bad} point${pl(bad)} bloquant${pl(bad)}` : rst.length ? `${rst.length} point${pl(rst.length)} à voir` : "", "S.declEtape='1';allerA('declaration')", "Vérifier");
   const dec = (id, et, titre, txt, lib, quand) => t(id, titre, txt, clos || coche[id] ? "fait" : !anneeFinie ? "plustard" : "afaire", "", `S.declEtape='${et}';allerA('declaration')`, lib, {manuel:anneeFinie && !clos, cocher:"Envoyé", quand});
-  dec("liasse", "2", "Déclarer le résultat", "Espace professionnel impots.gouv : recopiez les cases que donne le Carnet.", "Voir les cases", "mi-mai");
+  dec("liasse", "2", "Déclarer le résultat", "Espace professionnel impots.gouv : recopiez les cases que donne le Carnet.", "Voir les cases", "vers la mi-mai");
   dec("revenus", "3", "Le reporter sur vos revenus", "Espace particulier, déclaration de revenus : un seul montant à reporter.", "Voir le montant", "fin mai");
   t("cloture", `Clôturer ${y}`, `Les chiffres de ${y} sont figés et ${y+1} s'ouvre.`, clos ? "fait" : !anneeFinie ? "plustard" : "afaire", clos && ex.cloture ? `le ${fmtDate(ex.cloture.date)}` : "", "S.declEtape='4';allerA('declaration')", "Clôturer");
   const IC = {banque:'<path d="M3 10 12 4l9 6M5 10v8M9.5 10v8M14.5 10v8M19 10v8M3 20h18"/>', papiers:'<path d="M7 3h7l5 5v13H7zM14 3v5h5M10 13h6M10 17h6"/>', maison:'<path d="M4 11l8-6 8 6v9H4zM10 20v-5h4v5"/>',
@@ -2009,14 +2007,14 @@ function etapesAnnee(y){
   const nf = ETAPES.filter(e => e.etat === "fait").length, ok = svgI('<path d="M20 6 9 17l-5-5"/>');
   const rail = ETAPES.map((e, n) => `<li class="ea-s ${e.etat}${e === cur ? " cur" : ""}${e === vue ? " vue" : ""}"><button onclick="S.eaVue='${e.k}';renderAll()" aria-pressed="${e === vue}">
       <span class="ea-ic">${e.etat === "fait" ? ok : svgI(IC[e.k])}</span><b>${e.titre}</b><small>${e.etat === "fait" ? "fait" : e.etat === "attention" ? "à corriger" : e === cur ? "maintenant" : e.quand}</small></button></li>`).join("");
-  const tache = x => `<div class="ea-t ${x.etat}"><span class="ea-d">${x.etat === "fait" ? ok : x.etat === "attention" ? "!" : ""}</span>
-      <div class="ea-tx"><b>${x.titre}</b><span>${x.etat === "fait" || x.etat === "sansobjet" ? (x.detail || "") : x.txt}</span>${x.etat !== "fait" && x.etat !== "sansobjet" && (x.detail || x.quand) ? `<em>${[x.detail, x.quand].filter(Boolean).join(" · ")}</em>` : ""}</div>
+  const tache = (x, n) => `<div class="ea-t ${x.etat}"><span class="ea-d">${x.etat === "fait" ? ok : x.etat === "attention" ? "!" : n + 1}</span>
+      <div class="ea-tx"><b>${x.titre}</b><span>${x.txt}</span></div>
+      ${x.etat === "fait" ? `<span class="ea-st">${x.detail || "Fait"}</span>` : x.etat === "sansobjet" ? `<span class="ea-st">${x.detail || "Pas concerné"}</span>` : x.detail || x.quand ? `<span class="ea-st">${[x.detail, x.quand].filter(Boolean).join(" · ")}</span>` : ""}
       <div class="ea-a">${x.etat === "fait" ? (x.manuel && coche[x.id] && !clos ? `<button class="btn ghost small" onclick="cocherEtape(${y},'${x.id}',false)">Annuler</button>` : "")
         : x.etat === "sansobjet" || x.etat === "plustard" ? "" : `${x.manuel && !clos ? `<button class="btn ghost small btn-ic" onclick="cocherEtape(${y},'${x.id}',true)">${ok}${x.cocher}</button>` : ""}${x.go ? `<button class="btn small" onclick="${x.go}">${x.lib}</button>` : ""}`}</div></div>`;
   return `<div class="card ea noprint"><div class="ea-h"><h3>Votre année ${y}</h3><span>${nf === ETAPES.length ? "Tout est fait" : `${nf} sur ${ETAPES.length} terminée${pl(nf)}`}</span></div>
     <ol class="ea-rail" style="--p:${Math.min(1, nf / (ETAPES.length - 1)).toFixed(3)}">${rail}</ol>
-    <div class="ea-f ${vue.etat}"><div class="ea-fh"><span class="ea-ic">${svgI(IC[vue.k])}</span><div><h4>${vue.titre}</h4><p>${vue.etat === "plustard" ? `Pas encore : ${vue.quand}.` : vue.phrase}</p></div>
-      ${vue.n ? `<span class="ea-n">${vue.faits}/${vue.n}</span>` : ""}</div>${vue.ts.map(tache).join("")}</div></div>`;
+    <div class="ea-f ${vue.etat}">${vue.etat === "plustard" ? `<p class="ea-pas">Pas encore le moment : cette étape commence ${vue.quand.startsWith("après") ? vue.quand : `en ${vue.quand}`}.</p>` : ""}${vue.ts.map(tache).join("")}</div></div>`;
 }
 function cocherEtape(y, id, oui){
   if(verrouille(y)) return;
