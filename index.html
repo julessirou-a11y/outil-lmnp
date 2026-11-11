@@ -339,17 +339,16 @@ dialog.boite[open]{animation:pop .2s cubic-bezier(.2,.8,.2,1)}dialog.boite[open]
 @media (prefers-reduced-motion:reduce){.entree>*,.entree .tuiles>.tuile,.entree .arc,.entree .part,.entree .barres rect,.entree .jauge span,.menu3[open]>.m3,dialog.boite[open],.rv-voile.ouvre,.rv-voile.ouvre>.rv-fen,.toast,.card>details[open]>:not(summary){animation:none}.th-rond,.th-rond svg,.th-rail,.pe .pn{transition:none}}
 @media print{.entree>*,.entree *{animation:none!important}}
 /* Roue des exercices */
-.roue{position:absolute;left:0;right:0;top:calc(100% + 6px);z-index:40;height:190px;background:var(--surface);border:1px solid var(--line);border-radius:14px;box-shadow:0 14px 34px rgba(30,10,30,.18);overflow:hidden;outline:none;animation:roue-in .28s cubic-bezier(.2,.9,.3,1.15);transform-origin:top center}
-.roue.ferme{animation:roue-out .18s ease-in forwards}
-@keyframes roue-in{from{opacity:0;transform:translateY(-6px) scale(.94)}}
-@keyframes roue-out{to{opacity:0;transform:translateY(-4px) scale(.96)}}
-.roue::before,.roue::after{content:"";position:absolute;left:0;right:0;height:62px;z-index:2;pointer-events:none}
-.roue::before{top:0;background:linear-gradient(var(--surface),transparent)}.roue::after{bottom:0;background:linear-gradient(transparent,var(--surface))}
-.roue-bande{position:absolute;left:6px;right:6px;top:calc(50% - 19px);height:38px;border-radius:9px;background:var(--accent-soft);pointer-events:none}
-.roue-liste{position:relative;height:100%;overflow-y:auto;scroll-snap-type:y mandatory;padding:76px 0;box-sizing:border-box;scrollbar-width:none;overscroll-behavior:contain}
+.roue{position:absolute;left:-6px;right:-6px;top:calc(100% + 4px);z-index:40;height:190px;background:color-mix(in srgb,var(--surface) 84%,transparent);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);border-radius:18px;box-shadow:0 18px 40px rgba(30,10,30,.14);overflow:hidden;outline:none;animation:roue-in .32s cubic-bezier(.2,.9,.3,1.1);transform-origin:top center}
+.roue.ferme{animation:roue-out .2s ease-in forwards}
+@keyframes roue-in{from{opacity:0;transform:translateY(-8px) scale(.96);filter:blur(4px)}}
+@keyframes roue-out{to{opacity:0;transform:translateY(-4px) scale(.97);filter:blur(3px)}}
+.roue-bande{position:absolute;left:12px;right:12px;top:calc(50% - 19px);height:38px;border-radius:11px;background:color-mix(in srgb,var(--accent-soft) 80%,transparent);pointer-events:none}
+.roue-liste{position:relative;height:100%;overflow-y:auto;scroll-snap-type:y mandatory;padding:76px 0;box-sizing:border-box;scrollbar-width:none;overscroll-behavior:contain;-webkit-mask-image:linear-gradient(transparent,#000 38%,#000 62%,transparent);mask-image:linear-gradient(transparent,#000 38%,#000 62%,transparent)}
 .roue-liste::-webkit-scrollbar{display:none}
 .roue-an{height:38px;scroll-snap-align:center;display:flex;align-items:baseline;justify-content:center;gap:8px;cursor:pointer;color:var(--text);will-change:transform,opacity}
-.roue-an b{font-size:18px;font-weight:600;line-height:38px;font-variant-numeric:tabular-nums}.roue-an small{font-size:11.5px;color:var(--muted)}
+.roue-an b{font-size:18px;font-weight:600;line-height:38px;font-variant-numeric:tabular-nums}.roue-an small{font-size:11.5px;color:var(--muted);max-width:0;opacity:0;overflow:hidden;white-space:nowrap;transition:max-width .3s,opacity .3s}
+.roue-an.au-centre small{max-width:110px;opacity:1}
 .roue-an[aria-selected="true"] b{color:var(--accent)}
 @media (prefers-reduced-motion:reduce){.roue,.roue.ferme{animation:none}}
 /* Accueil sans dossier, création d'un dossier, « Pour bien démarrer » */
@@ -1524,7 +1523,9 @@ function ouvrirRoue(){
   let choisi = S.year, fin;
   const dessiner = () => { const c = L.scrollTop + L.clientHeight / 2;
     items.forEach(it => { const d = (it.offsetTop + ROUE_H / 2 - c) / ROUE_H, a = Math.max(-1, Math.min(1, d / 2.6));
-      it.style.transform = `perspective(400px) rotateX(${-a * 62}deg) scale(${1 - Math.abs(a) * .12})`; it.style.opacity = Math.max(.15, 1 - Math.abs(d) * .32); }); };
+      const ad = Math.abs(d);
+      it.style.transform = `perspective(400px) rotateX(${-a * 62}deg) scale(${1 - Math.abs(a) * .16})`; it.style.opacity = Math.max(0, 1 - ad * .58); it.style.filter = ad > .15 ? `blur(${Math.min(2.2, ad * .9).toFixed(2)}px)` : "";
+      it.classList.toggle("au-centre", ad < .5); }); };
   const centre = () => items[Math.max(0, Math.min(items.length - 1, Math.round(L.scrollTop / ROUE_H)))];
   const appliquer = () => { const y = Number(centre().dataset.y); items.forEach(it => it.setAttribute("aria-selected", it === centre()));
     if(y !== choisi){ choisi = y; S.year = y; S.editId = null; renderAll(); } };
