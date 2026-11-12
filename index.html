@@ -831,7 +831,7 @@ details.imx-conso>summary h3{margin:0} details.imx-conso>summary .imx-ouvrir{mar
 .ef-barre{margin-top:28px} .ef-barre div{display:flex;height:16px;border-radius:5px;overflow:hidden;gap:2px;margin-bottom:8px}
 .ef-cascade{margin-top:30px;display:flex;flex-direction:column;gap:8px}
 .ef-cascade div{display:grid;grid-template-columns:130px 1fr 100px;align-items:center;gap:12px;font-size:13px}
-.ef-cascade i{height:14px;border-radius:4px;display:block;min-width:2px} .ef-cascade b{text-align:right;font-weight:600}
+.ef-cascade i{height:14px;border-radius:4px;display:block;min-width:2px;max-width:100%} .ef-cascade b{text-align:right;font-weight:600}
 .ef-cascade .res{border-top:1px solid var(--line);padding-top:8px;font-weight:600}
 .ef-ul{margin:0;padding-left:20px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 .garde{padding:0;overflow:hidden;flex-direction:row;flex-wrap:wrap}
@@ -3329,9 +3329,12 @@ function etatsFinanciers(y){
       ${ln("Dotations aux amortissements", L.c254, P?.c254)}
       ${ln("Intérêts d'emprunt", L.c294, P?.c294)}
       ${ln("Total des charges", L.c264 + L.c294, P && !P.hist ? P.c264 + P.c294 : null, {tot:1})}</table>
-    <table style="margin-top:16px">${ln(`<b>${L.r310>=0?"Bénéfice":"Perte"} de l'exercice</b>`, L.r310, P?.r310, {tot:1})}</table>
-    <div class="ef-cascade">${[["Loyers",L.p218,"var(--pos)"],["Charges",-(L.c242+L.c244),"var(--neg)"],["Intérêts",-L.c294,"var(--warn)"],["Amortissements",-L.c254,"var(--accent)"]].map(([l,m,col])=>`<div><span>${l}</span><i style="width:${(Math.abs(m)/Math.max(1,L.p218)*100).toFixed(1)}%;background:${col}"></i><b>${m<0?"−":""}${eur0(Math.abs(m))}</b></div>`).join("")}
-      <div class="res"><span>Résultat</span><i style="width:${(Math.abs(L.r310)/Math.max(1,L.p218)*100).toFixed(1)}%;background:var(--text)"></i><b>${eur0(L.r310)}</b></div></div>
+    <table style="margin-top:16px">${ln(`<b>${P && !P.hist && P.r310 != null && (P.r310 >= 0) !== (L.r310 >= 0) ? "Résultat" : L.r310>=0?"Bénéfice":"Perte"} de l'exercice</b>`, L.r310, P?.r310, {tot:1})}</table>
+    ${(() => { // barres à l'échelle du plus grand montant (et non des loyers, qui peuvent être nuls)
+      const B = [["Loyers",L.p218,"var(--pos)"],["Charges",-(L.c242+L.c244),"var(--neg)"],["Intérêts",-L.c294,"var(--warn)"],["Amortissements",-L.c254,"var(--accent)"]];
+      const max = Math.max(1, ...B.map(b => Math.abs(b[1])), Math.abs(L.r310)), w = m => (Math.abs(m) / max * 100).toFixed(1);
+      return `<div class="ef-cascade">${B.map(([l,m,col])=>`<div><span>${l}</span><i style="width:${w(m)}%;background:${col}"></i><b>${m<0?"−":""}${eur0(Math.abs(m))}</b></div>`).join("")}
+      <div class="res"><span>Résultat</span><i style="width:${w(L.r310)}%;background:var(--text)"></i><b>${eur0(L.r310)}</b></div></div>`; })()}
     ${pied(3)}
   </section>
   <section class="feuille">
