@@ -841,7 +841,12 @@ details.imx-conso>summary h3{margin:0} details.imx-conso>summary .imx-ouvrir{mar
 .dr-t td{padding:7px 6px;border-top:1px solid var(--line);vertical-align:top} .dr-t td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
 .dr-t td small{display:block;font-size:11.5px;color:var(--faint)} .dr-cy td:first-child{white-space:nowrap} .dr-c{color:var(--faint);font-size:11.5px;margin-right:8px;font-variant-numeric:tabular-nums}
 .dr-ctl td.n{width:96px} .dr-sy{width:22px} .dr-s{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;font-size:10px;font-weight:700;color:#fff;background:var(--warn)}
-.dr-s.ok{background:var(--pos)} .dr-s.bl{background:var(--neg)}
+.dr-s.c-ok{background:var(--pos)} .dr-s.c-an{background:var(--accent)} .dr-s.c-so{background:var(--faint)} .dr-s.c-bl{background:var(--neg)}
+.dr-cl{width:128px;font-size:12px;font-weight:600;white-space:nowrap} .dr-cl.c-ok{color:var(--pos)} .dr-cl.c-an{color:var(--accent)} .dr-cl.c-so{color:var(--muted)} .dr-cl.c-ko{color:var(--warn)} .dr-cl.c-bl{color:var(--neg)}
+.dr-rest{color:var(--warn);font-weight:600}
+.dr-brou{display:inline-block;vertical-align:middle;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);border:2px solid var(--warn);border-radius:6px;padding:2px 10px;margin-left:10px}
+.dr-brou-t{margin:40px 0 0;padding:12px 16px;border-radius:var(--r-md);background:var(--warn-soft);color:var(--warn);font-size:14px}
+.dr.brouillon .feuille:not(.garde)::before{content:"Brouillon";position:absolute;top:22px;right:58px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--warn)}
 .dr-t tr.dr-ex td{border-top:0;padding-top:0;font-size:12.5px} .dr-ex span{display:block;font-style:italic;color:var(--text);border-left:2px solid var(--line);padding-left:8px} .dr-ex span.dr-pj{font-style:normal;color:var(--muted)}
 .dr-ex small{padding-left:10px} .dr-manque{color:var(--warn)!important;font-style:normal!important}
 .dr-rep{font-weight:600} .dr-rep.non{color:var(--warn)} .dr-rep.oui{color:var(--pos)}
@@ -3307,32 +3312,33 @@ function dossierRevision(y){
   const fait = x => x.etat === "ok" || x.etat === "fait";
   const etatLib = c => c.statut === "valide" ? `Validé${ex.cloture ? ` le ${fmtDate(ex.cloture.date)}` : ""}` : c.statut === "vise" ? `Visé le ${fmtDate(c.visa.date)}` : c.statut === "devise" ? `Dévisé (visa du ${fmtDate(c.visa.date)})` : "Non visé";
   const badge = c => `<span class="dr-b ${c.statut}">${etatLib(c)}</span>`;
-  const sym = x => `<span class="dr-s ${fait(x) ? "ok" : x.etat === "bloque" ? "bl" : "ko"}">${fait(x) ? "✓" : x.etat === "bloque" ? "✕" : "!"}</span>`;
+  const cc = x => conclusion(y, x), sym = x => { const k = cc(x); return `<span class="dr-s ${CONCL[k][1]}">${({conforme:"✓", anomalie:"✓", sansobjet:"–", afaire:"!", bloque:"✕"})[k]}</span>`; };
+  const concl = x => `<td class="dr-cl ${CONCL[cc(x)][1]}">${CONCL[cc(x)][0]}</td>`;
+  const termine = revisionVisee(y), reste = cy.filter(c => c.statut !== "vise" && c.statut !== "valide").length;
   const var_ = (v, v1) => v1 == null ? "–" : Math.abs(v1) < 0.005 ? (Math.abs(v) < 0.005 ? "–" : "nouveau") : (p => `${p > 0 ? "+" : p < 0 ? "−" : ""}${Math.abs(p * 100).toLocaleString("fr-FR", {maximumFractionDigits:1})} %`)((v - v1) / v1);
   const explic = (r, x) => { if(!r?.commentaire && !r?.piece) return "";
     const perime = !fait(x) && r.commentaire;
-    return `<tr class="dr-ex"><td></td><td colspan="4">${r.commentaire ? `<span>${esc(r.commentaire)}</span>` : ""}${r.piece ? `<span class="dr-pj">Pièce : ${esc(r.piece.split("/").pop())}</span>` : ""}<small>${perime ? "Explication à revoir : les montants ont changé depuis le " : "Expliqué le "}${fmtDate(r.date)}</small></td></tr>`; };
+    return `<tr class="dr-ex"><td></td><td colspan="5">${r.commentaire ? `<span>${esc(r.commentaire)}</span>` : ""}${r.piece ? `<span class="dr-pj">Pièce : ${esc(r.piece.split("/").pop())}</span>` : ""}<small>${perime ? "Explication à revoir : les montants ont changé depuis le " : "Expliqué le "}${fmtDate(r.date)}</small></td></tr>`; };
   // Garde
-  const nbExpl = cy.reduce((t, c) => t + c.p.filter(x => x.etat === "fait" && x.type !== "q" && x.type !== "perso").length, 0);
-  const nbQ = cy.reduce((t, c) => t + c.p.filter(x => x.type === "q").length, 0), nbQnon = cy.reduce((t, c) => t + c.p.filter(x => x.type === "q" && rev[x.id]?.statut === "non").length, 0);
+  const tous = cy.flatMap(c => c.p);
   const garde = `<section class="feuille garde"><div class="g-bande"></div><div class="g-corps">
-      <small>Location meublée non professionnelle</small><h1>Dossier de révision</h1>
+      <small>Location meublée non professionnelle</small><h1>Dossier de révision${termine ? "" : ` <span class="dr-brou">Brouillon</span>`}</h1>
       <p class="g-ex">Exercice du 1er janvier au 31 décembre ${y}</p>
       <div class="g-id"><b>${esc(nom || "Nom de l'exploitant")}</b>${d.adresseBien ? `<span>${esc(d.adresseBien)}</span>` : ""}${d.siret ? `<span>SIRET ${esc(d.siret.replace(/(\d{3})(\d{3})(\d{3})(\d{5})/, "$1 $2 $3 $4"))}</span>` : ""}<span>Régime réel simplifié · BIC</span></div>
-      <div class="g-chiffres"><div><span>Cycles visés</span><b>${nv} sur ${cy.length}</b></div><div><span>Écarts expliqués</span><b>${nbExpl}</b></div><div><span>Questions</span><b>${nbQ}${nbQnon ? ` <em class="g-dont">dont ${nbQnon} « non »</em>` : ""}</b></div><div><span>Résultat fiscal</span><b>${eur0(L.rf)}</b></div></div>
-      <p class="g-som">${clos ? `Exercice clôturé${ex.cloture ? ` le ${fmtDate(ex.cloture.date)}` : ""}` : nv === cy.length ? "Révision terminée, exercice non clôturé" : "Révision en cours"} · édité le ${fmtDate(aujourdhui())}<br>Sommaire : synthèse · ${cy.map(c => c.l.toLowerCase()).join(" · ")}</p>
+      <div class="g-chiffres"><div><span>Cycles visés</span><b>${nv} sur ${cy.length}</b></div><div><span>Conformes</span><b>${tous.filter(x => cc(x) === "conforme").length}</b></div><div><span>Anomalies justifiées</span><b>${tous.filter(x => cc(x) === "anomalie").length}</b></div><div><span>Sans objet</span><b>${tous.filter(x => cc(x) === "sansobjet").length}</b></div></div>
+      ${termine ? "" : `<p class="dr-brou-t">Révision en cours : ${reste} cycle${pl(reste)} encore non visé${pl(reste)}. Le dossier sera terminé quand les six cycles seront visés.</p>`}
+      <p class="g-som">${clos ? `Exercice clôturé${ex.cloture ? ` le ${fmtDate(ex.cloture.date)}` : ""}` : termine ? "Révision terminée, exercice non clôturé" : "Brouillon"} · édité le ${fmtDate(aujourdhui())}<br>Sommaire : synthèse · ${cy.map(c => c.l.toLowerCase()).join(" · ")}</p>
     </div>${pied(1)}</section>`;
   // Synthèse
   const prep = clos ? [] : preparatifs(y);
   const synth = `<section class="feuille"><h2>Synthèse</h2>
-    <table class="dr-t dr-cy"><tr><th>Cycle</th><th class="n">Contrôles</th><th class="n">Expliqués</th><th class="n">Questions</th><th class="n">Ajoutés</th><th>État</th></tr>
-    ${cy.map(c => { const ct = c.p.filter(x => x.type === "calc" || x.type === "revue" || x.type === "auto"), q = c.p.filter(x => x.type === "q"), pe = c.p.filter(x => x.type === "perso");
-      const n = a => a.length ? `${a.filter(fait).length}/${a.length}` : "–";
-      return `<tr><td><b>${c.l}</b></td><td class="n">${n(ct)}</td><td class="n">${ct.filter(x => x.etat === "fait").length || "–"}</td><td class="n">${n(q)}</td><td class="n">${n(pe)}</td><td>${badge(c)}</td></tr>`; }).join("")}</table>
+    <table class="dr-t dr-cy"><tr><th>Cycle</th><th class="n">Conformes</th><th class="n">Anomalies<br>justifiées</th><th class="n">Sans objet</th><th class="n">À traiter</th><th>État</th></tr>
+    ${cy.map(c => { const n = (...k) => c.p.filter(x => k.includes(cc(x))).length || "–";
+      return `<tr><td><b>${c.l}</b></td><td class="n">${n("conforme")}</td><td class="n">${n("anomalie")}</td><td class="n">${n("sansobjet")}</td><td class="n ${c.p.some(x => cc(x) === "afaire" || cc(x) === "bloque") ? "dr-rest" : ""}">${n("afaire", "bloque")}</td><td>${badge(c)}</td></tr>`; }).join("")}</table>
     <h3>Balance</h3><p class="dr-p">Total des débits ${eur(dt)} · total des crédits ${eur(ct)} · ${Math.abs(dt - ct) < 0.005 ? "la balance est équilibrée." : "<b>la balance n'est pas équilibrée.</b>"}</p>
     ${prep.length ? `<h3>Restant à faire avant la révision</h3><ul class="ef-ul">${prep.map(x => `<li>${x.texte}</li>`).join("")}</ul>` : ""}
     <h3>Comment lire ce dossier</h3><ul class="ef-ul"><li>Chaque compte de la balance appartient à un cycle. Un cycle est visé quand tous ses contrôles sont validés ; le visa mémorise ses soldes.</li>
-      <li>✓ contrôle validé (montants conformes, ou écart expliqué) · ! à vérifier · ✕ bloquant.</li><li>Les explications et pièces jointes figurent sous le contrôle concerné, avec leur date.</li></ul>
+      <li>Chaque contrôle se conclut par : <b>Conforme</b> (les montants concordent, ou la réponse est oui), <b>Anomalie justifiée</b> (un écart ou un « non », expliqué), ou <b>Sans objet</b> (le contrôle ne s'applique pas).</li><li>Les explications et pièces jointes figurent sous le contrôle concerné, avec leur date.</li>${termine ? "" : "<li>Tant qu'un cycle n'est pas visé, ce dossier est un brouillon : les contrôles encore à traiter y figurent « À traiter » ou « Bloquant ».</li>"}</ul>
     ${pied(2)}</section>`;
   // Une page par cycle
   const pages = cy.map((c, i) => {
@@ -3340,22 +3346,22 @@ function dossierRevision(y){
       return `<tr><td>${LIB_SIG[k] ? "" : `<span class="dr-c">${k}</span>`}${esc(LIB_SIG[k] || COMPTES[k] || k)}</td><td class="n">${eur(lu)}</td><td class="n n1">${v1 == null ? "–" : eur(v1)}</td><td class="n">${var_(lu, v1)}</td></tr>`; }).join("");
     const ctrl = c.p.filter(x => x.type === "calc" || x.type === "revue" || x.type === "auto");
     const lc = x => { const r = rev[x.id];
-      if(x.type === "auto") return `<tr>${`<td class="dr-sy">${sym(x)}</td>`}<td colspan="4">${x.texte}</td></tr>${explic(r, x)}`;
+      if(x.type === "auto") return `<tr><td class="dr-sy">${sym(x)}</td><td colspan="4">${x.texte}</td>${concl(x)}</tr>${explic(r, x)}`;
       const e = x.attendu == null ? null : r2(x.compta - x.attendu);
       const ec = e == null || Math.abs(e) < 0.005 ? "–" : x.type === "revue" ? (x.attendu ? `${e > 0 ? "+" : "−"}${Math.round(Math.abs(e) / Math.abs(x.attendu) * 100)} %` : "nouveau") : `${e > 0 ? "+" : "−"}${eur(Math.abs(e))}`;
-      return `<tr><td class="dr-sy">${sym(x)}</td><td>${(x.lib || "").replace(/\s*\(\d{3}\)$/, "")}<small>${x.type === "revue" ? `comparé à ${y-1}` : esc(x.source || "")}</small></td><td class="n">${eur(x.compta)}</td><td class="n">${x.attendu == null ? "–" : eur(x.attendu)}</td><td class="n">${ec}</td></tr>${explic(r, x)}`; };
+      return `<tr><td class="dr-sy">${sym(x)}</td><td>${(x.lib || "").replace(/\s*\(\d{3}\)$/, "")}<small>${x.type === "revue" ? `comparé à ${y-1}` : esc(x.source || "")}</small></td><td class="n">${eur(x.compta)}</td><td class="n">${x.attendu == null ? "–" : eur(x.attendu)}</td><td class="n">${ec}</td>${concl(x)}</tr>${explic(r, x)}`; };
     const qs = c.p.filter(x => x.type === "q"), pe = c.p.filter(x => x.type === "perso"), note = ex.notesRevision?.[c.k];
-    const rep_ = x => { const st = rev[x.id]?.statut; return st === "vu" || st === "na" ? "Oui" : st === "non" ? "Non" : "Sans réponse"; };
+    const rep_ = x => { const st = rev[x.id]?.statut; return st === "vu" ? "Oui" : st === "na" ? "Sans objet" : st === "non" ? "Non" : "–"; };
     return `<section class="feuille"><div class="dr-h"><h2>${c.l}</h2>${badge(c)}</div><p class="dr-p">${c.d}</p>
       ${comptes ? `<h3>Comptes</h3><table class="dr-t"><tr><th>Compte</th><th class="n">${y}</th><th class="n n1">${y-1}</th><th class="n">Variation</th></tr>${comptes}</table>` : ""}
-      ${ctrl.length ? `<h3>Contrôles</h3><table class="dr-t dr-ctl"><tr><th></th><th>Contrôle</th><th class="n">Comptes</th><th class="n">Attendu</th><th class="n">Écart</th></tr>${ctrl.map(lc).join("")}</table>` : ""}
-      ${qs.length ? `<h3>Questions</h3><table class="dr-t dr-ctl">${qs.map(x => { const r = rev[x.id], st = rep_(x);
-        return `<tr><td class="dr-sy">${sym(x)}</td><td>${x.texte}</td><td class="n dr-rep ${st === "Non" ? "non" : st === "Oui" ? "oui" : ""}">${st}</td></tr>${st === "Non" ? `<tr class="dr-ex"><td></td><td colspan="2">${r.commentaire ? `<span>${esc(r.commentaire)}</span>` : `<span class="dr-manque">Explication attendue : ${x.siNon}</span>`}${r.date ? `<small>Répondu le ${fmtDate(r.date)}</small>` : ""}</td></tr>` : ""}`; }).join("")}</table>` : ""}
-      ${pe.length ? `<h3>Contrôles ajoutés</h3><table class="dr-t dr-ctl">${pe.map(x => `<tr><td class="dr-sy">${sym(x)}</td><td>${esc(x.texte)}</td><td class="n">${x.fait ? "Fait" : "À faire"}</td></tr>`).join("")}</table>` : ""}
+      ${ctrl.length ? `<h3>Contrôles</h3><table class="dr-t dr-ctl"><tr><th></th><th>Contrôle</th><th class="n">Comptes</th><th class="n">Attendu</th><th class="n">Écart</th><th>Conclusion</th></tr>${ctrl.map(lc).join("")}</table>` : ""}
+      ${qs.length ? `<h3>Questions</h3><table class="dr-t dr-ctl"><tr><th></th><th></th><th class="n">Réponse</th><th>Conclusion</th></tr>${qs.map(x => { const r = rev[x.id], st = rep_(x);
+        return `<tr><td class="dr-sy">${sym(x)}</td><td>${x.texte}</td><td class="n dr-rep">${st}</td>${concl(x)}</tr>${st === "Non" ? `<tr class="dr-ex"><td></td><td colspan="3">${r.commentaire ? `<span>${esc(r.commentaire)}</span>` : `<span class="dr-manque">Explication attendue : ${x.siNon}</span>`}${r.date ? `<small>Répondu le ${fmtDate(r.date)}</small>` : ""}</td></tr>` : ""}`; }).join("")}</table>` : ""}
+      ${pe.length ? `<h3>Contrôles ajoutés</h3><table class="dr-t dr-ctl">${pe.map(x => `<tr><td class="dr-sy">${sym(x)}</td><td>${esc(x.texte)}</td>${concl(x)}</tr>`).join("")}</table>` : ""}
       ${note?.texte || note?.pieces?.length ? `<h3>Notes et pièces</h3>${note.texte ? `<p class="dr-note">${esc(note.texte)}</p>` : ""}${note.pieces?.length ? `<ul class="ef-ul">${note.pieces.map(p => `<li>${esc(p.split("/").pop())}</li>`).join("")}</ul>` : ""}` : ""}
       ${c.statut === "devise" && c.change.length ? `<h3>Changé depuis le visa</h3><table class="dr-t"><tr><th></th><th class="n">Au visa</th><th class="n">Aujourd'hui</th></tr>${c.change.map(k => `<tr><td>${LIB_SIG[k] || `${k} ${esc(COMPTES[k] || "")}`}</td><td class="n">${eur(LIB_SIG[k] ? c.visa.sig[k] || 0 : soldeLu(k, c.visa.sig[k] || 0))}</td><td class="n">${eur(LIB_SIG[k] ? c.sig[k] || 0 : soldeLu(k, c.sig[k] || 0))}</td></tr>`).join("")}</table>` : ""}
       ${pied(i + 3)}</section>`; }).join("");
-  return `<div class="ef dr">${garde}${synth}${pages}</div>`;
+  return `<div class="ef dr ${termine ? "" : "brouillon"}">${garde}${synth}${pages}</div>`;
 }
 /* ---- États financiers : comptes annuels présentables (page de garde, bilan, compte de résultat, annexe) ---- */
 function etatsFinanciers(y){
@@ -3873,6 +3879,8 @@ function etatPoint(y, x){
   const r = revision(y)[x.id];
   if(x.type === "perso") return x.fait ? "fait" : "afaire";
   if(x.type === "q") return r?.statut === "vu" || r?.statut === "na" || (r?.statut === "non" && r.commentaire) ? "fait" : "afaire";
+  // « Sans objet » : le contrôle ne s'applique pas ; vaut tant que les montants n'ont pas changé (jamais pour un point bloquant)
+  if(r?.statut === "na" && x.extra !== "releve" && r.texte === sigPoint(x)) return "fait";
   if(x.type === "calc" || x.type === "revue"){
     if(x.attendu == null) return x.extra === "releve" && r?.statut === "na" ? "fait" : x.id === "acquisitions" ? (r?.statut === "vu" ? "fait" : "afaire") : r?.commentaire && r.texte === sigCalc(x) ? "fait" : "afaire";
     const ok = x.type === "revue" ? !x.significatif : Math.abs(x.compta - x.attendu) < 0.005;
@@ -3915,6 +3923,20 @@ function majRevision(y, id, champs){
   setDirty(); renderAll();
 }
 const sigPoint = x => x.type === "auto" ? x.texte : sigCalc(x);
+/* Conclusion d'un contrôle : conforme, anomalie justifiée (écart expliqué, ou « non » expliqué), sans objet ; sinon à traiter ou bloquant */
+const CONCL = {conforme:["Conforme","c-ok"], anomalie:["Anomalie justifiée","c-an"], sansobjet:["Sans objet","c-so"], afaire:["À traiter","c-ko"], bloque:["Bloquant","c-bl"]};
+function conclusion(y, x){
+  const r = revision(y)[x.id] || {};
+  if(x.etat === "ok") return "conforme";
+  if(x.etat === "bloque") return "bloque";
+  if(x.etat !== "fait") return "afaire";
+  if(x.type === "perso") return "conforme";
+  if(x.type === "q") return r.statut === "vu" ? "conforme" : r.statut === "na" ? "sansobjet" : "anomalie";
+  if(r.statut === "na") return "sansobjet";
+  if(x.id === "acquisitions" && r.statut === "vu") return "conforme";
+  return "anomalie";
+}
+const sansObjet = (y, id) => { const x = pointsRevision(y).find(p => p.id === id); if(x) majRevision(y, id, {statut:"na", texte:sigPoint(x)}); };
 function garderExplication(y, id){ const x = pointsRevision(y).find(p => p.id === id); if(x) majRevision(y, id, {texte:sigPoint(x)}); }
 function expliquerPoint(y, id, el){ const x = pointsRevision(y).find(p => p.id === id); majRevision(y, id, {commentaire:el.value.trim(), texte:sigPoint(x)}); }
 /* Pièce justifiant un point de révision : copiée dans Justificatifs/<année>/Révision */
@@ -4045,6 +4067,7 @@ function fenetreCycle(y, c){
     if(x.id === "crd") return `<button class="btn small" onclick="S.revPoste=null;allerA('emprunt')">Rapprocher les échéances</button><button class="btn small sec" onclick="S.year=${y};regulariserCRD()">Régulariser l'écart…</button>`;
     if(x.attendu == null && x.page === "dossier") return `<button class="btn small" onclick="S.revPoste=null;allerA('dossier')">Renseigner le bail</button>`;
     return x.page ? `<button class="btn small" onclick="S.revPoste=null;allerA('${x.page}')">${x.id === "echeances" ? "Rapprocher à la main" : "Corriger"}</button>` : ""; };
+  const peutSO = x => !clos && x.etat === "afaire" && x.extra !== "releve" && x.id !== "acquisitions" && (x.type !== "auto" || x.niveau === "warn");
   const sym = x => `<span class="ti">${x.etat === "ok" || x.etat === "fait" ? I_OK : x.etat === "bloque" ? I_KO : "!"}</span>`;
   const signe = v => `${v > 0 ? "+" : v < 0 ? "−" : ""}${eur(Math.abs(v))}`;
   const ligne = x => { const r = rev[x.id] || {}, k = ko(x);
@@ -4056,7 +4079,8 @@ function fenetreCycle(y, c){
       if(!x.gl) num = num.replace(/<a [^>]*>(.*?)<\/a>/, "$1"); }
     const titre = x.type === "auto" ? `<b>${x.texte}</b>` : `<b>${(x.lib || "").replace(/\s*\(\d{3}\)$/, "")}</b><small>${x.type === "revue" ? `comparé à ${y-1}` : esc(x.source || "")}${x.extra && x.extra !== "releve" ? ` · ${esc(x.extra)}` : ""}</small>`;
     const ancien = !clos && r.commentaire && x.etat !== "ok" && x.etat !== "fait";
-    const act = k ? `<div class="act">${ancien ? `<span class="sub" style="color:var(--warn);flex-basis:100%">Les montants ont changé depuis l'explication du ${fmtDate(r.date)} : relisez-la, puis <button class="lien-b" onclick="garderExplication(${y},'${x.id}')">gardez-la</button> ou modifiez-la.</span>` : ""}${corriger(x)}${(x.type === "auto" ? x.niveau === "warn" : x.id !== "acquisitions") ? `<span class="act-e">${expl(x, r, x.etat === "bloque" ? "Ou expliquez l'écart pour le valider…" : "Ou expliquez pourquoi c'est normal…")}</span>${pj(x, r)}` : ""}</div>`
+    const act = k ? `<div class="act">${ancien ? `<span class="sub" style="color:var(--warn);flex-basis:100%">Les montants ont changé depuis l'explication du ${fmtDate(r.date)} : relisez-la, puis <button class="lien-b" onclick="garderExplication(${y},'${x.id}')">gardez-la</button> ou modifiez-la.</span>` : ""}${corriger(x)}${(x.type === "auto" ? x.niveau === "warn" : x.id !== "acquisitions") ? `<span class="act-e">${expl(x, r, x.etat === "bloque" ? "Ou expliquez l'écart pour le valider…" : "Ou expliquez pourquoi c'est normal…")}</span>${pj(x, r)}` : ""}${peutSO(x) ? `<button class="btn small ghost" title="Ce contrôle ne s'applique pas à votre situation" onclick="sansObjet(${y},'${x.id}')">Sans objet</button>` : ""}</div>`
+      : x.etat === "fait" && r.statut === "na" && x.extra !== "releve" ? `<div class="act"><span class="sub" style="margin:0">Marqué sans objet le ${fmtDate(r.date)}.</span>${clos ? "" : `<button class="lien-b" onclick="majRevision(${y},'${x.id}',{statut:null})">Annuler</button>`}</div>`
       : x.etat === "fait" && (r.commentaire || r.piece) ? `<div class="act"><span class="act-e">${expl(x, r, "")}</span>${pj(x, r)}</div>` : "";
     return `<div class="ck ${k ? "ko" : "ok"} ${x.etat === "bloque" ? "bl" : ""} ${x.type === "auto" ? "auto" : ""}">${sym(x)}<div class="ct">${titre}</div>${num}${act}</div>`; };
   const ord = {bloque:0, afaire:1, fait:2, ok:3};
