@@ -127,7 +127,8 @@ body{font:15px/1.55 var(--font);font-variant-numeric:tabular-nums;-webkit-font-s
 .cy-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}.cy-t b{font-weight:600;font-size:15px}.cy-t span{font-size:13px;color:var(--muted)}
 .cy-st{flex:none;font-size:12.5px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--surface-2);color:var(--muted)}
 .vise .cy-st,.valide .cy-st{background:var(--pos-soft);color:var(--pos)}.cur .cy-st{background:var(--surface);color:var(--accent)}.cy-l .cy-st.dv,.cy-l.cur .cy-st.dv{background:var(--warn-soft);color:var(--warn)}
-.cy-pied{border-style:dashed;text-align:center;color:var(--muted)}.cy-pied.ok{border-style:solid;color:var(--pos);font-weight:600;display:flex;gap:8px;justify-content:center;align-items:center}.cy-pied svg{width:16px;height:16px}
+.cy-pied{border-style:dashed;text-align:center;color:var(--muted)}.cy-pied.ok,.cy-pied.valid{border-style:solid;display:flex;gap:12px;justify-content:space-between;align-items:center;flex-wrap:wrap;text-align:left}
+.cy-pied.ok{color:var(--pos);font-weight:600} .cy-pied.valid{color:var(--text);background:var(--pos-soft);border-color:transparent} .cy-pied.valid>span{display:flex;gap:8px;align-items:center} .cy-pied.valid svg{color:var(--pos)}.cy-pied svg{width:16px;height:16px}
 .bt{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}
 .bt th{font-size:11.5px;font-weight:500;color:var(--faint);text-align:right;padding:4px 8px 6px}.bt th:first-child{text-align:left;padding-left:12px}
 .bt td{padding:5px 8px;border-top:1px solid var(--line);white-space:nowrap}.bt td:first-child{padding-left:12px;white-space:normal}.bt td a.lgl{color:inherit;text-decoration:none}
@@ -844,6 +845,10 @@ details.imx-conso>summary h3{margin:0} details.imx-conso>summary .imx-ouvrir{mar
 .dr-s.c-ok{background:var(--pos)} .dr-s.c-an{background:var(--accent)} .dr-s.c-so{background:var(--faint)} .dr-s.c-bl{background:var(--neg)}
 .dr-cl{width:128px;font-size:12px;font-weight:600;white-space:nowrap} .dr-cl.c-ok{color:var(--pos)} .dr-cl.c-an{color:var(--accent)} .dr-cl.c-so{color:var(--muted)} .dr-cl.c-ko{color:var(--warn)} .dr-cl.c-bl{color:var(--neg)}
 .dr-rest{color:var(--warn);font-weight:600}
+.dr-ax-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px;border-bottom:2px solid var(--accent);padding-bottom:8px;margin-bottom:14px}
+.dr-ax-h b{color:var(--accent);font-size:16px} .dr-ax-h span{font-size:13px} .dr-ax-h small{flex-basis:100%;color:var(--faint);font-size:11.5px}
+.dr-ax img{display:block;max-width:100%;max-height:900px;margin:0 auto;object-fit:contain;border:1px solid var(--line)}
+@media print{ .dr-ax img{max-height:240mm} }
 .dr-brou{display:inline-block;vertical-align:middle;font-size:14px;letter-spacing:.08em;text-transform:uppercase;color:var(--warn);border:2px solid var(--warn);border-radius:6px;padding:2px 10px;margin-left:10px}
 .dr-brou-t{margin:40px 0 0;padding:12px 16px;border-radius:var(--r-md);background:var(--warn-soft);color:var(--warn);font-size:14px}
 .dr.brouillon .feuille:not(.garde)::before{content:"Brouillon";position:absolute;top:22px;right:58px;font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--warn)}
@@ -2086,8 +2091,8 @@ function etapesAnnee(y){
     cfe ? `${eur0(cfe)} payés` : c.produits <= 5000 ? "Pas due : recettes sous 5 000 €" : "", "allerA('ecritures')", "Saisir", {quand:"avant le 15/12"});
   if(anneeFinie) poserVisas(y);
   const cyc = clos || !anneeFinie ? null : etatCycles(y), nv = cyc ? cyc.filter(c => c.statut === "vise").length : 0, dv = cyc ? cyc.filter(c => c.statut === "devise").length : 0;
-  t("revision", "Réviser les six cycles", "Le Carnet contrôle chaque cycle et pose son visa quand tout est vert.", clos ? "fait" : !anneeFinie ? "plustard" : dv ? "attention" : nv < CYCLES.length ? "afaire" : "fait",
-    cyc ? `${nv} visé${pl(nv)} sur ${CYCLES.length}${dv ? `, ${dv} dévisé${pl(dv)}` : ""}` : "", "S.declEtape='1';allerA('declaration')", "Réviser");
+  t("revision", "Réviser les six cycles", "Le Carnet contrôle chaque cycle et pose son visa quand tout est vert.", clos ? "fait" : !anneeFinie ? "plustard" : dv ? "attention" : nv < CYCLES.length || !revisionValidee(y) ? "afaire" : "fait",
+    cyc ? (nv === CYCLES.length ? (revisionValidee(y) ? "validée" : "6 cycles visés, à valider") : `${nv} visé${pl(nv)} sur ${CYCLES.length}${dv ? `, ${dv} dévisé${pl(dv)}` : ""}`) : "", "S.declEtape='1';allerA('declaration')", "Réviser");
   const dec = (id, et, titre, txt, lib, quand) => t(id, titre, txt, clos || coche[id] ? "fait" : !anneeFinie ? "plustard" : "afaire", "", `S.declEtape='${et}';allerA('declaration')`, lib, {manuel:anneeFinie && !clos, cocher:"Envoyé", quand});
   dec("liasse", "2", "Déclarer le résultat", "Espace professionnel impots.gouv : recopiez les cases que donne le Carnet.", "Voir les cases", "vers la mi-mai");
   dec("revenus", "3", "Le reporter sur vos revenus", "Espace particulier, déclaration de revenus : un seul montant à reporter.", "Voir le montant", "fin mai");
@@ -3263,19 +3268,18 @@ function form2042(y, L){
 }
 function vueDeclaration(){
   const y = S.year, vue = S.vueDecl || "declarer";
-  const tete = tetePage(`Déclaration ${y}`, segments("vueDecl", [["declarer","Déclarer"],["etats","États financiers"],["dossier","Dossier de révision"]], vue),
+  const tete = tetePage(`Déclaration ${y}`, segments("vueDecl", [["declarer","Déclarer"],["etats","États financiers"]], vue),
     isHistorique(y) ? "" : btnExporter());
   if(isHistorique(y)) return tete + `<div class="card vide">${y} a été déclarée ${histLiasse(y) ? "avant le Carnet" : "avec l'ancien fichier Excel"}.</div>`;
   const f = fiscalJusqua(y);
   if(!f?.c.lmnpActif) return tete + `<div class="card vide">Pas de location meublée en ${y}.</div>`;
   if(vue === "etats") return tete + etatsFinanciers(y);
-  if(vue === "dossier") return tete + dossierRevision(y);
   const L = liasse(y), P = n1(y), ex = exercice(y), clos = ex.statut === "cloture";
   if(!clos && aujourdhui() >= `${y+1}-01-01`) poserVisas(y);
   const cyc = etatCycles(y), nv = cyc.filter(c => c.statut === "vise" || c.statut === "valide").length;
-  const et = S.declEtape || (nv === cyc.length ? "2" : "1");
+  const val = revisionValidee(y), et = S.declEtape || (val ? "2" : "1");
   const ETAPES = [
-    ["1", "Réviser", clos ? "validée" : `${nv} cycle${pl(nv)} visé${pl(nv)} sur ${cyc.length}`, nv === cyc.length ? "ok" : "warn"],
+    ["1", "Réviser", clos ? "validée" : val ? `validée le ${fmtDate(ex.revisionValidee.date).slice(0, 5)}` : `${nv} cycle${pl(nv)} visé${pl(nv)} sur ${cyc.length}`, val ? "ok" : "warn"],
     ["2", "Résultat", "espace professionnel", clos ? "ok" : ""],
     ["3", "Revenus", "espace particulier", clos ? "ok" : ""],
     ["4", "Clôturer", clos ? "fait" : "après l'envoi", clos ? "ok" : ""]];
@@ -3303,7 +3307,8 @@ function vueDeclaration(){
 
 /* ---- Dossier de révision : ce qui a été vérifié, cycle par cycle, avec les réponses, les explications et les visas.
    Une page de garde, une synthèse, puis une page par cycle. Se lit à l'écran et s'imprime en PDF. ---- */
-function dossierRevision(y){
+function dossierRevision(y, annexes = []){
+  const nAx = chemin => { const i = annexes.findIndex(a => a.chemin === chemin); return i < 0 ? "" : ` (annexe ${i + 1})`; };
   const d = S.data.dossier, ex = exercice(y), clos = verrouille(y), rev = revision(y), cy = etatCycles(y), L = liasse(y);
   const nom = d.nomExploitant || d.nom || "", pied = n => `<div class="ef-pied"><span>${esc(nom)} · Dossier de révision ${y}</span><span>${n}</span></div>`;
   const bal = balance(y), b1 = exercice(y-1) && !isHistorique(y-1) ? Object.fromEntries(balance(y-1).map(r => [r.c, r.solde])) : null;
@@ -3318,7 +3323,7 @@ function dossierRevision(y){
   const var_ = (v, v1) => v1 == null ? "–" : Math.abs(v1) < 0.005 ? (Math.abs(v) < 0.005 ? "–" : "nouveau") : (p => `${p > 0 ? "+" : p < 0 ? "−" : ""}${Math.abs(p * 100).toLocaleString("fr-FR", {maximumFractionDigits:1})} %`)((v - v1) / v1);
   const explic = (r, x) => { if(!r?.commentaire && !r?.piece) return "";
     const perime = !fait(x) && r.commentaire;
-    return `<tr class="dr-ex"><td></td><td colspan="5">${r.commentaire ? `<span>${esc(r.commentaire)}</span>` : ""}${r.piece ? `<span class="dr-pj">Pièce : ${esc(r.piece.split("/").pop())}</span>` : ""}<small>${perime ? "Explication à revoir : les montants ont changé depuis le " : "Expliqué le "}${fmtDate(r.date)}</small></td></tr>`; };
+    return `<tr class="dr-ex"><td></td><td colspan="5">${r.commentaire ? `<span>${esc(r.commentaire)}</span>` : ""}${r.piece ? `<span class="dr-pj">Pièce : ${esc(r.piece.split("/").pop())}${nAx(r.piece)}</span>` : ""}<small>${perime ? "Explication à revoir : les montants ont changé depuis le " : "Expliqué le "}${fmtDate(r.date)}</small></td></tr>`; };
   // Garde
   const tous = cy.flatMap(c => c.p);
   const garde = `<section class="feuille garde"><div class="g-bande"></div><div class="g-corps">
@@ -3358,10 +3363,54 @@ function dossierRevision(y){
       ${qs.length ? `<h3>Questions</h3><table class="dr-t dr-ctl"><tr><th></th><th></th><th class="n">Réponse</th><th>Conclusion</th></tr>${qs.map(x => { const r = rev[x.id], st = rep_(x);
         return `<tr><td class="dr-sy">${sym(x)}</td><td>${x.texte}</td><td class="n dr-rep">${st}</td>${concl(x)}</tr>${st === "Non" ? `<tr class="dr-ex"><td></td><td colspan="3">${r.commentaire ? `<span>${esc(r.commentaire)}</span>` : `<span class="dr-manque">Explication attendue : ${x.siNon}</span>`}${r.date ? `<small>Répondu le ${fmtDate(r.date)}</small>` : ""}</td></tr>` : ""}`; }).join("")}</table>` : ""}
       ${pe.length ? `<h3>Contrôles ajoutés</h3><table class="dr-t dr-ctl">${pe.map(x => `<tr><td class="dr-sy">${sym(x)}</td><td>${esc(x.texte)}</td>${concl(x)}</tr>`).join("")}</table>` : ""}
-      ${note?.texte || note?.pieces?.length ? `<h3>Notes et pièces</h3>${note.texte ? `<p class="dr-note">${esc(note.texte)}</p>` : ""}${note.pieces?.length ? `<ul class="ef-ul">${note.pieces.map(p => `<li>${esc(p.split("/").pop())}</li>`).join("")}</ul>` : ""}` : ""}
+      ${note?.texte || note?.pieces?.length ? `<h3>Notes et pièces</h3>${note.texte ? `<p class="dr-note">${esc(note.texte)}</p>` : ""}${note.pieces?.length ? `<ul class="ef-ul">${note.pieces.map(p => `<li>${esc(p.split("/").pop())}${nAx(p)}</li>`).join("")}</ul>` : ""}` : ""}
       ${c.statut === "devise" && c.change.length ? `<h3>Changé depuis le visa</h3><table class="dr-t"><tr><th></th><th class="n">Au visa</th><th class="n">Aujourd'hui</th></tr>${c.change.map(k => `<tr><td>${LIB_SIG[k] || `${k} ${esc(COMPTES[k] || "")}`}</td><td class="n">${eur(LIB_SIG[k] ? c.visa.sig[k] || 0 : soldeLu(k, c.visa.sig[k] || 0))}</td><td class="n">${eur(LIB_SIG[k] ? c.sig[k] || 0 : soldeLu(k, c.sig[k] || 0))}</td></tr>`).join("")}</table>` : ""}
       ${pied(i + 3)}</section>`; }).join("");
   return `<div class="ef dr ${termine ? "" : "brouillon"}">${garde}${synth}${pages}</div>`;
+}
+/* Export du dossier de révision (définitif) : le dossier, puis en annexe les pièces jointes à la révision
+   (et, si demandé, tous les justificatifs des écritures de l'année). Les PDF sont rendus page par page en images
+   par pdf.js (servi par le site), les photos sont reprises telles quelles : tout reste dans le navigateur. */
+function piecesRevision(y){
+  const ex = exercice(y), rev = revision(y), out = [], vu = new Set(), add = (chemin, objet) => { if(chemin && !vu.has(chemin)){ vu.add(chemin); out.push({chemin, objet}); } };
+  etatCycles(y).forEach(c => { c.p.forEach(x => add(rev[x.id]?.piece, `${c.l} · ${(x.lib || x.texte || "").replace(/\s*\(\d{3}\)$/, "").replace(/<[^>]+>/g, "").slice(0, 90)}`));
+    (ex.notesRevision?.[c.k]?.pieces || []).forEach(p => add(p, `${c.l} · notes et pièces`)); });
+  return {out, add};
+}
+async function pagesAnnexe(chemin){
+  const f = await (await handleDepuisChemin(chemin)).getFile();
+  if(/\.pdf$/i.test(chemin)){
+    const pdfjs = await import(PDFJS + "pdf.min.mjs"); pdfjs.GlobalWorkerOptions.workerSrc = PDFJS + "pdf.worker.min.mjs";
+    const doc = await pdfjs.getDocument({data:new Uint8Array(await f.arrayBuffer()), isEvalSupported:false}).promise, imgs = [];
+    for(let n = 1; n <= doc.numPages; n++){
+      const pg = await doc.getPage(n), vp = pg.getViewport({scale:1.6}), cv = document.createElement("canvas");
+      cv.width = vp.width; cv.height = vp.height; await pg.render({canvasContext:cv.getContext("2d"), viewport:vp}).promise;
+      imgs.push(cv.toDataURL("image/jpeg", 0.82));
+    }
+    return imgs;
+  }
+  if(/\.(jpe?g|png|gif|webp)$/i.test(chemin)) return [await new Promise(ok => { const r = new FileReader(); r.onload = () => ok(r.result); r.readAsDataURL(f); })];
+  return null;
+}
+async function exporterDossierRevision(y, tousJustificatifs = false){
+  if(!revisionValidee(y)) return avertir("Le dossier de révision s'exporte une fois la révision validée.");
+  const {out, add} = piecesRevision(y);
+  if(tousJustificatifs) (exercice(y).ecritures || []).filter(e => e.piece).sort((a, b) => a.date.localeCompare(b.date))
+    .forEach(e => add(e.piece, `Justificatif · ${fmtDate(e.date)} · ${e.nature}${e.tiers ? ` · ${e.tiers}` : ""} · ${eur(e.montant)}`));
+  const nom = S.data.dossier.nomExploitant || S.data.dossier.nom || "";
+  let annexes = "";
+  if(out.length){
+    if(!await dossierRequis()) return;
+    toast(`Préparation des ${out.length} annexe${pl(out.length)}…`);
+    for(const [i, a] of out.entries()){
+      let pages = null; try{ pages = await pagesAnnexe(a.chemin); } catch(_){ pages = undefined; }
+      const tete = `<div class="dr-ax-h"><b>Annexe ${i + 1}</b><span>${esc(a.objet)}</span><small>${esc(a.chemin.split("/").pop())}</small></div>`;
+      annexes += pages?.length ? pages.map((src, k) => `<section class="feuille dr-ax">${k ? "" : tete}<img src="${src}" alt=""><div class="ef-pied"><span>${esc(nom)} · Dossier de révision ${y}</span><span>Annexe ${i + 1}${pages.length > 1 ? ` · ${k + 1}/${pages.length}` : ""}</span></div></section>`).join("")
+        : `<section class="feuille dr-ax">${tete}<p class="dr-p">${pages === undefined ? "Fichier introuvable dans le dossier." : "Ce format ne peut pas être intégré : le fichier est à joindre à part."}</p></section>`;
+    }
+  }
+  const sommaire = out.length ? `<section class="feuille"><h2>Annexes</h2><table class="dr-t"><tr><th>N°</th><th>Pièce</th><th>Objet</th></tr>${out.map((a, i) => `<tr><td>${i + 1}</td><td>${esc(a.chemin.split("/").pop())}</td><td>${esc(a.objet)}</td></tr>`).join("")}</table><div class="ef-pied"><span>${esc(nom)} · Dossier de révision ${y}</span><span>Annexes</span></div></section>` : "";
+  imprimerEdition(dossierRevision(y, out).replace(/<\/div>$/, sommaire + annexes + "</div>"));
 }
 /* ---- États financiers : comptes annuels présentables (page de garde, bilan, compte de résultat, annexe) ---- */
 function etatsFinanciers(y){
@@ -3517,7 +3566,9 @@ function optionsExport(){
     {ext:"FEC", t:"Fichier des écritures comptables", d:"Toute l'année, au format demandé en cas de contrôle fiscal", go:() => exporterFEC(y)}];
   if(pg === "immos") return editionsImmos(y);
   if(pg === "emprunt") return [pdf("Le prêt et son échéancier"), csv("L'échéancier de chaque prêt", () => csvEmprunt())];
-  if(pg === "declaration") return [pdf(vd === "etats" ? `Les comptes annuels ${y}` : vd === "dossier" ? `Le dossier de révision ${y}` : `La déclaration ${y} et la feuille de révision`)];
+  if(pg === "declaration") return [pdf(vd === "etats" ? `Les comptes annuels ${y}` : `La déclaration ${y}`),
+    ...(revisionValidee(y) ? [{ext:"PDF", t:"Dossier de révision", d:"Version définitive, avec les pièces jointes à la révision", go:() => exporterDossierRevision(y)},
+      {ext:"PDF", t:"Dossier de révision et justificatifs", d:"Avec aussi tous les justificatifs des écritures de l'année", go:() => exporterDossierRevision(y, true)}] : [])];
   return [pdf("La page affichée")];
 }
 function ouvrirExport(){
@@ -3968,6 +4019,18 @@ function etatCycles(y){
   });
 }
 const revisionVisee = y => verrouille(y) || etatCycles(y).every(c => c.statut === "vise");
+/* Validation de la révision : possible quand les six cycles sont visés et la saisie sans erreur. Elle fige la révision
+   (on ne peut plus que la dévalider ou exporter le dossier) ; elle tombe d'elle-même si un cycle est dévisé ensuite. */
+const revisionValidee = y => verrouille(y) || (!!exercice(y)?.revisionValidee && revisionVisee(y));
+function validerRevision(y){
+  if(verrouille(y)) return;
+  if(!revisionVisee(y) || preparatifs(y).some(x => x.niveau === "bad")) return avertir("La révision se valide quand les six cycles sont visés et les erreurs de saisie corrigées.");
+  exercice(y).revisionValidee = {date:aujourdhui()}; S.revPoste = null; S.declEtape = "2"; setDirty(); renderAll(); toast("Révision validée. Étape suivante : déclarer le résultat.");
+}
+async function devaliderRevision(y){
+  if(verrouille(y) || !await confirmer("Dévalider la révision ? Vous pourrez de nouveau modifier les contrôles, puis la valider à nouveau.", {ok:"Dévalider"})) return;
+  delete exercice(y).revisionValidee; S.declEtape = "1"; setDirty(); renderAll();
+}
 /* Le visa se pose tout seul quand un cycle jamais visé devient vert ; un cycle dévisé se revalide à la main */
 function poserVisas(y){
   if(DEPOT || S.consultation || verrouille(y) || !exercice(y) || isHistorique(y) || aujourdhui() < `${y+1}-01-01`) return;
@@ -4016,7 +4079,8 @@ const ST_CYCLE = {vise:"Visé", devise:"Dévisé", nonvise:"Non visé", valide:"
 const soldeLu = (c, s) => /^(1|7)/.test(c) ? -s : s;
 function vueRevision(y){
   poserVisas(y);
-  const clos = verrouille(y), rev = revision(y), ex = exercice(y), cy = etatCycles(y);
+  const fige = verrouille(y) || revisionValidee(y), clos = fige, rev = revision(y), ex = exercice(y), cy = etatCycles(y);
+  if(ex.revisionValidee && !verrouille(y) && !revisionValidee(y)){ delete ex.revisionValidee; ex.revisionTombee = aujourdhui(); setDirty(); }
   const bal = balance(y), b1 = exercice(y-1) && !isHistorique(y-1) ? Object.fromEntries(balance(y-1).map(r => [r.c, r.solde])) : null;
   const dt = r2(bal.reduce((s, x) => s + x.d, 0)), ct = r2(bal.reduce((s, x) => s + x.cr, 0));
   const nv = cy.filter(c => c.statut === "vise" || c.statut === "valide").length, cur = clos ? null : cy.find(c => c.statut !== "vise");
@@ -4038,20 +4102,24 @@ function vueRevision(y){
   const avant = prep.length ? `<div class="card prep noprint"><h3 style="margin:0 0 6px">Avant de réviser</h3>
     ${prep.map(x => `<div class="prep-l"><span class="ea-d" ${x.niveau === "bad" ? `style="border-color:var(--neg)"` : ""}></span><span>${x.texte}</span>${x.page ? `<button class="btn small" onclick="S.revPoste=null;allerA('${x.page}')">${x.lib}</button>` : ""}</div>`).join("")}</div>` : "";
   const bloquePrep = prep.some(x => x.niveau === "bad");
-  const pied = clos ? `<div class="card cy-pied">${y} est clôturé : la révision est validée. Pour la modifier, rouvrez ${y} (étape Clôturer).</div>`
-    : nv === cy.length && !bloquePrep ? `<div class="card cy-pied ok">${I_OK} Les six cycles sont visés : vous pouvez déclarer, puis clôturer ${y}.</div>`
-    : `<div class="card cy-pied">Clôturer ${y} : possible quand les six cycles sont visés${bloquePrep ? " et les erreurs de saisie corrigées" : ""}.</div>`;
+  const exporter = `<button class="btn small sec" onclick="exporterDossierRevision(${y})">Exporter le dossier de révision</button>`;
+  const pied = verrouille(y) ? `<div class="card cy-pied valid"><span>${I_OK} ${y} est clôturé : la révision est validée. Pour la modifier, rouvrez ${y} (étape Clôturer).</span><div class="row">${exporter}</div></div>`
+    : clos ? `<div class="card cy-pied valid"><span>${I_OK} <b>Révision validée le ${fmtDate(ex.revisionValidee.date)}.</b> Elle ne se modifie plus : dévalidez-la pour la reprendre.</span>
+        <div class="row">${exporter}<button class="btn small ghost" onclick="devaliderRevision(${y})">Dévalider</button></div></div>`
+    : nv === cy.length && !bloquePrep ? `<div class="card cy-pied ok"><span>${I_OK} Les six cycles sont visés : la révision peut être validée.</span><button class="btn" onclick="validerRevision(${y})">Valider la révision</button></div>`
+    : `<div class="card cy-pied">${ex.revisionTombee ? `La validation est tombée le ${fmtDate(ex.revisionTombee)} : un cycle a été dévisé. ` : ""}La révision se valide quand les six cycles sont visés${bloquePrep ? " et les erreurs de saisie corrigées" : ""}.</div>`;
   const imprimer = cy.map(c => `<div class="printonly rv-imp"><h3>${c.l} · ${ST_CYCLE[c.statut]}${c.visa ? ` le ${fmtDate(c.visa.date)}` : ""}</h3>${c.p.map(x => `<div>${NIV[x.etat][1]} ${x.lib || x.texte}${x.type === "calc" && x.attendu != null ? ` : ${eur(x.compta)} / ${eur(x.attendu)}` : ""}${rev[x.id]?.commentaire ? ` · <i>${esc(rev[x.id].commentaire)}</i>` : ""}</div>`).join("")}${ex.notesRevision?.[c.k]?.texte ? `<div><i>Note : ${esc(ex.notesRevision[c.k].texte)}</i></div>` : ""}</div>`).join("");
   const c = cy.find(c => c.k === S.revPoste);
-  return avant + `<div class="cy-g noprint">
+  if(ex.revisionValidee && ex.revisionTombee) delete ex.revisionTombee;
+  return (clos ? pied : avant) + `<div class="cy-g noprint">
     <div class="card"><div class="cy-h"><h3>Cycles</h3><span>${clos ? "Validés" : `${nv} visé${pl(nv)} sur ${cy.length}`}</span></div>${cy.map(ligneCycle).join("")}</div>
     <div class="card"><div class="cy-h"><h3>Balance ${y}</h3><span>${Math.abs(dt - ct) < 0.005 ? "débit = crédit ✓" : `<b style="color:var(--neg)">débit ≠ crédit</b>`}</span></div>
       <table class="bt"><tr><th>Compte</th><th>${y}</th><th>${y-1}</th><th>Var.</th></tr>${tableBal}</table></div></div>
-    ${pied}<h2 class="printonly">Feuille de révision ${y} · ${esc(S.data.dossier.nom||"")}</h2>${imprimer}${c ? fenetreCycle(y, c) : ""}`;
+    ${clos ? "" : pied}<h2 class="printonly">Feuille de révision ${y} · ${esc(S.data.dossier.nom||"")}</h2>${imprimer}${c ? fenetreCycle(y, c) : ""}`;
 }
 /* Fenêtre d'un cycle : comptes, contrôles (les points à régler en tête), questions, contrôles ajoutés, notes et pièces */
 function fenetreCycle(y, c){
-  const clos = verrouille(y), rev = revision(y), ex = exercice(y), note = ex.notesRevision?.[c.k] || {};
+  const clos = verrouille(y) || revisionValidee(y), rev = revision(y), ex = exercice(y), note = ex.notesRevision?.[c.k] || {};
   const b1 = exercice(y-1) && !isHistorique(y-1) ? Object.fromEntries(balance(y-1).map(r => [r.c, r.solde])) : null;
   const ko = x => x.etat === "afaire" || x.etat === "bloque";
   const pj = (x, r) => clos ? (r.piece ? `<button class="btn small sec" onclick="ouvrirChemin(${jsq(r.piece)},'Pièce de révision')">${I_CLIP} ${esc(r.piece.split("/").pop())}</button>` : "")
@@ -5235,12 +5303,12 @@ function changementsAnnee(y){
   return out;
 }
 function vueCloture(y){
-  const ex = exercice(y), cyc = etatCycles(y).filter(c => c.statut !== "vise"), prepBad = preparatifs(y).filter(x => x.niveau === "bad"), bad = [...cyc, ...prepBad];
+  const ex = exercice(y), cyc = etatCycles(y).filter(c => c.statut !== "vise"), prepBad = preparatifs(y).filter(x => x.niveau === "bad"), bad = [...cyc, ...prepBad], nonValidee = !bad.length && !revisionValidee(y);
   const f = fiscalJusqua(y), c = f.c, chg = changementsAnnee(y);
   const step = (n, titre, corps) => `<div class="card"><h3><span class="case" style="margin-right:8px">${n}</span>${titre}</h3>${corps}</div>`;
   return entete(`Clôturer ${y}`, "Vérifier, figer les chiffres déclarés, puis ouvrir l'année suivante. La clôture verrouille les saisies ; vous pourrez rouvrir l'année si besoin.") +
   step(1, "Révision", (bad.length ? `<div class="alert bad">La clôture attend que les six cycles soient visés.</div><ul>${cyc.map(c => `<li>${c.l} : ${ST_CYCLE[c.statut].toLowerCase()}</li>`).join("")}${prepBad.map(x => `<li>${x.texte}${x.page ? lienPage(x.page) : ""}</li>`).join("")}</ul>
-      <button class="btn small" onclick="S.cloture=null;S.declEtape='1';allerA('declaration')">Ouvrir la révision →</button>` : `<div class="alert ok">Les six cycles sont visés. La clôture valide toutes les opérations de ${y}.</div>`)) +
+      <button class="btn small" onclick="S.cloture=null;S.declEtape='1';allerA('declaration')">Ouvrir la révision →</button>` : nonValidee ? `<div class="alert warn">Les six cycles sont visés, mais la révision n'est pas encore validée.</div><button class="btn small" onclick="S.cloture=null;S.declEtape='1';allerA('declaration')">Valider la révision →</button>` : `<div class="alert ok">La révision est validée. La clôture valide toutes les opérations de ${y}.</div>`)) +
   step(2, "Sommes dues et à recevoir au 31/12", `<p class="sub" style="margin:0 0 10px">En comptabilité super-simplifiée, seules les sommes dues ou à recevoir au 31 décembre s'ajoutent à la trésorerie. Par exemple : un loyer de décembre encaissé en janvier, une facture de décembre payée en janvier. Saisissez-les comme écritures datées du 31/12/${y}.</p>
     <label style="flex-direction:row;align-items:center;gap:8px;color:var(--text)"><input type="checkbox" id="clRegul"> J'ai vérifié les sommes dues et à recevoir au 31/12/${y}.</label>`) +
   step(3, "Chiffres figés à la clôture", `<table>
@@ -5275,7 +5343,7 @@ function motifNonCloturable(y){
 }
 function cloturer(y){
   { const m = motifNonCloturable(y); if(m) return avertir(m); }
-  if(!revisionVisee(y) || preparatifs(y).some(x => x.niveau === "bad")) return avertir("La clôture attend que les six cycles de la révision soient visés.");
+  if(!revisionValidee(y)) return avertir("La clôture attend que la révision soit validée (étape Réviser).");
   if(!$("#clRegul").checked) return avertir("Cochez d'abord la vérification des sommes dues et à recevoir au 31/12 (étape 2).");
   const ex = exercice(y), f = fiscalJusqua(y), d = $("#clDecl").value;
   ex.statut = "cloture";
