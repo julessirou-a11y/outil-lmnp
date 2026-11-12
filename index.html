@@ -833,6 +833,21 @@ details.imx-conso>summary h3{margin:0} details.imx-conso>summary .imx-ouvrir{mar
 .ef-cascade div{display:grid;grid-template-columns:130px 1fr 100px;align-items:center;gap:12px;font-size:13px}
 .ef-cascade i{height:14px;border-radius:4px;display:block;min-width:2px;max-width:100%} .ef-cascade b{text-align:right;font-weight:600}
 .ef-cascade .res{border-top:1px solid var(--line);padding-top:8px;font-weight:600}
+.dr-h{display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:2px solid var(--accent);margin-bottom:6px} .dr-h h2{border:0;margin:0;padding-bottom:8px}
+.dr-b{font-size:12px;font-weight:600;padding:4px 10px;border-radius:99px;background:var(--surface-2);color:var(--muted);white-space:nowrap}
+.dr-b.vise,.dr-b.valide{background:var(--pos-soft);color:var(--pos)} .dr-b.devise{background:var(--warn-soft);color:var(--warn)}
+.dr-p{font-size:13.5px;color:var(--muted);margin:0 0 4px}
+.dr-t{border-collapse:collapse;font-size:13px} .dr-t th{font-size:11.5px;font-weight:500;color:var(--faint);text-align:left;padding:4px 6px;border-bottom:1px solid var(--line)} .dr-t th.n{text-align:right}
+.dr-t td{padding:7px 6px;border-top:1px solid var(--line);vertical-align:top} .dr-t td.n{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.dr-t td small{display:block;font-size:11.5px;color:var(--faint)} .dr-cy td:first-child{white-space:nowrap} .dr-c{color:var(--faint);font-size:11.5px;margin-right:8px;font-variant-numeric:tabular-nums}
+.dr-ctl td.n{width:96px} .dr-sy{width:22px} .dr-s{display:inline-grid;place-items:center;width:17px;height:17px;border-radius:50%;font-size:10px;font-weight:700;color:#fff;background:var(--warn)}
+.dr-s.ok{background:var(--pos)} .dr-s.bl{background:var(--neg)}
+.dr-t tr.dr-ex td{border-top:0;padding-top:0;font-size:12.5px} .dr-ex span{display:block;font-style:italic;color:var(--text);border-left:2px solid var(--line);padding-left:8px} .dr-ex span.dr-pj{font-style:normal;color:var(--muted)}
+.dr-ex small{padding-left:10px} .dr-manque{color:var(--warn)!important;font-style:normal!important}
+.dr-rep{font-weight:600} .dr-rep.non{color:var(--warn)} .dr-rep.oui{color:var(--pos)}
+.dr-note{font-size:13.5px;white-space:pre-wrap;background:var(--surface-2);border-radius:var(--r-md);padding:10px 14px;margin:0 0 8px}
+.g-dont{font-size:12.5px;font-weight:400;font-style:normal;color:var(--muted)}
+@media print{ .dr-s,.dr-b{-webkit-print-color-adjust:exact;print-color-adjust:exact} .dr-t tr{break-inside:avoid} }
 .ef-ul{margin:0;padding-left:20px;font-size:13.5px;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 .garde{padding:0;overflow:hidden;flex-direction:row;flex-wrap:wrap}
 .g-bande{width:16px;background:var(--accent)}
@@ -3243,12 +3258,13 @@ function form2042(y, L){
 }
 function vueDeclaration(){
   const y = S.year, vue = S.vueDecl || "declarer";
-  const tete = tetePage(`Déclaration ${y}`, segments("vueDecl", [["declarer","Déclarer"],["etats","États financiers"]], vue),
+  const tete = tetePage(`Déclaration ${y}`, segments("vueDecl", [["declarer","Déclarer"],["etats","États financiers"],["dossier","Dossier de révision"]], vue),
     isHistorique(y) ? "" : btnExporter());
   if(isHistorique(y)) return tete + `<div class="card vide">${y} a été déclarée ${histLiasse(y) ? "avant le Carnet" : "avec l'ancien fichier Excel"}.</div>`;
   const f = fiscalJusqua(y);
   if(!f?.c.lmnpActif) return tete + `<div class="card vide">Pas de location meublée en ${y}.</div>`;
   if(vue === "etats") return tete + etatsFinanciers(y);
+  if(vue === "dossier") return tete + dossierRevision(y);
   const L = liasse(y), P = n1(y), ex = exercice(y), clos = ex.statut === "cloture";
   if(!clos && aujourdhui() >= `${y+1}-01-01`) poserVisas(y);
   const cyc = etatCycles(y), nv = cyc.filter(c => c.statut === "vise" || c.statut === "valide").length;
@@ -3280,6 +3296,67 @@ function vueDeclaration(){
   ${corps}`;
 }
 
+/* ---- Dossier de révision : ce qui a été vérifié, cycle par cycle, avec les réponses, les explications et les visas.
+   Une page de garde, une synthèse, puis une page par cycle. Se lit à l'écran et s'imprime en PDF. ---- */
+function dossierRevision(y){
+  const d = S.data.dossier, ex = exercice(y), clos = verrouille(y), rev = revision(y), cy = etatCycles(y), L = liasse(y);
+  const nom = d.nomExploitant || d.nom || "", pied = n => `<div class="ef-pied"><span>${esc(nom)} · Dossier de révision ${y}</span><span>${n}</span></div>`;
+  const bal = balance(y), b1 = exercice(y-1) && !isHistorique(y-1) ? Object.fromEntries(balance(y-1).map(r => [r.c, r.solde])) : null;
+  const dt = r2(bal.reduce((t, x) => t + x.d, 0)), ct = r2(bal.reduce((t, x) => t + x.cr, 0));
+  const nv = cy.filter(c => c.statut === "vise" || c.statut === "valide").length;
+  const fait = x => x.etat === "ok" || x.etat === "fait";
+  const etatLib = c => c.statut === "valide" ? `Validé${ex.cloture ? ` le ${fmtDate(ex.cloture.date)}` : ""}` : c.statut === "vise" ? `Visé le ${fmtDate(c.visa.date)}` : c.statut === "devise" ? `Dévisé (visa du ${fmtDate(c.visa.date)})` : "Non visé";
+  const badge = c => `<span class="dr-b ${c.statut}">${etatLib(c)}</span>`;
+  const sym = x => `<span class="dr-s ${fait(x) ? "ok" : x.etat === "bloque" ? "bl" : "ko"}">${fait(x) ? "✓" : x.etat === "bloque" ? "✕" : "!"}</span>`;
+  const var_ = (v, v1) => v1 == null ? "–" : Math.abs(v1) < 0.005 ? (Math.abs(v) < 0.005 ? "–" : "nouveau") : (p => `${p > 0 ? "+" : p < 0 ? "−" : ""}${Math.abs(p * 100).toLocaleString("fr-FR", {maximumFractionDigits:1})} %`)((v - v1) / v1);
+  const explic = (r, x) => { if(!r?.commentaire && !r?.piece) return "";
+    const perime = !fait(x) && r.commentaire;
+    return `<tr class="dr-ex"><td></td><td colspan="4">${r.commentaire ? `<span>${esc(r.commentaire)}</span>` : ""}${r.piece ? `<span class="dr-pj">Pièce : ${esc(r.piece.split("/").pop())}</span>` : ""}<small>${perime ? "Explication à revoir : les montants ont changé depuis le " : "Expliqué le "}${fmtDate(r.date)}</small></td></tr>`; };
+  // Garde
+  const nbExpl = cy.reduce((t, c) => t + c.p.filter(x => x.etat === "fait" && x.type !== "q" && x.type !== "perso").length, 0);
+  const nbQ = cy.reduce((t, c) => t + c.p.filter(x => x.type === "q").length, 0), nbQnon = cy.reduce((t, c) => t + c.p.filter(x => x.type === "q" && rev[x.id]?.statut === "non").length, 0);
+  const garde = `<section class="feuille garde"><div class="g-bande"></div><div class="g-corps">
+      <small>Location meublée non professionnelle</small><h1>Dossier de révision</h1>
+      <p class="g-ex">Exercice du 1er janvier au 31 décembre ${y}</p>
+      <div class="g-id"><b>${esc(nom || "Nom de l'exploitant")}</b>${d.adresseBien ? `<span>${esc(d.adresseBien)}</span>` : ""}${d.siret ? `<span>SIRET ${esc(d.siret.replace(/(\d{3})(\d{3})(\d{3})(\d{5})/, "$1 $2 $3 $4"))}</span>` : ""}<span>Régime réel simplifié · BIC</span></div>
+      <div class="g-chiffres"><div><span>Cycles visés</span><b>${nv} sur ${cy.length}</b></div><div><span>Écarts expliqués</span><b>${nbExpl}</b></div><div><span>Questions</span><b>${nbQ}${nbQnon ? ` <em class="g-dont">dont ${nbQnon} « non »</em>` : ""}</b></div><div><span>Résultat fiscal</span><b>${eur0(L.rf)}</b></div></div>
+      <p class="g-som">${clos ? `Exercice clôturé${ex.cloture ? ` le ${fmtDate(ex.cloture.date)}` : ""}` : nv === cy.length ? "Révision terminée, exercice non clôturé" : "Révision en cours"} · édité le ${fmtDate(aujourdhui())}<br>Sommaire : synthèse · ${cy.map(c => c.l.toLowerCase()).join(" · ")}</p>
+    </div>${pied(1)}</section>`;
+  // Synthèse
+  const prep = clos ? [] : preparatifs(y);
+  const synth = `<section class="feuille"><h2>Synthèse</h2>
+    <table class="dr-t dr-cy"><tr><th>Cycle</th><th class="n">Contrôles</th><th class="n">Expliqués</th><th class="n">Questions</th><th class="n">Ajoutés</th><th>État</th></tr>
+    ${cy.map(c => { const ct = c.p.filter(x => x.type === "calc" || x.type === "revue" || x.type === "auto"), q = c.p.filter(x => x.type === "q"), pe = c.p.filter(x => x.type === "perso");
+      const n = a => a.length ? `${a.filter(fait).length}/${a.length}` : "–";
+      return `<tr><td><b>${c.l}</b></td><td class="n">${n(ct)}</td><td class="n">${ct.filter(x => x.etat === "fait").length || "–"}</td><td class="n">${n(q)}</td><td class="n">${n(pe)}</td><td>${badge(c)}</td></tr>`; }).join("")}</table>
+    <h3>Balance</h3><p class="dr-p">Total des débits ${eur(dt)} · total des crédits ${eur(ct)} · ${Math.abs(dt - ct) < 0.005 ? "la balance est équilibrée." : "<b>la balance n'est pas équilibrée.</b>"}</p>
+    ${prep.length ? `<h3>Restant à faire avant la révision</h3><ul class="ef-ul">${prep.map(x => `<li>${x.texte}</li>`).join("")}</ul>` : ""}
+    <h3>Comment lire ce dossier</h3><ul class="ef-ul"><li>Chaque compte de la balance appartient à un cycle. Un cycle est visé quand tous ses contrôles sont validés ; le visa mémorise ses soldes.</li>
+      <li>✓ contrôle validé (montants conformes, ou écart expliqué) · ! à vérifier · ✕ bloquant.</li><li>Les explications et pièces jointes figurent sous le contrôle concerné, avec leur date.</li></ul>
+    ${pied(2)}</section>`;
+  // Une page par cycle
+  const pages = cy.map((c, i) => {
+    const comptes = Object.entries(c.sig).map(([k, v]) => { const lu = LIB_SIG[k] ? v : soldeLu(k, v), v1 = LIB_SIG[k] || !b1 ? null : soldeLu(k, b1[k] || 0);
+      return `<tr><td>${LIB_SIG[k] ? "" : `<span class="dr-c">${k}</span>`}${esc(LIB_SIG[k] || COMPTES[k] || k)}</td><td class="n">${eur(lu)}</td><td class="n n1">${v1 == null ? "–" : eur(v1)}</td><td class="n">${var_(lu, v1)}</td></tr>`; }).join("");
+    const ctrl = c.p.filter(x => x.type === "calc" || x.type === "revue" || x.type === "auto");
+    const lc = x => { const r = rev[x.id];
+      if(x.type === "auto") return `<tr>${`<td class="dr-sy">${sym(x)}</td>`}<td colspan="4">${x.texte}</td></tr>${explic(r, x)}`;
+      const e = x.attendu == null ? null : r2(x.compta - x.attendu);
+      const ec = e == null || Math.abs(e) < 0.005 ? "–" : x.type === "revue" ? (x.attendu ? `${e > 0 ? "+" : "−"}${Math.round(Math.abs(e) / Math.abs(x.attendu) * 100)} %` : "nouveau") : `${e > 0 ? "+" : "−"}${eur(Math.abs(e))}`;
+      return `<tr><td class="dr-sy">${sym(x)}</td><td>${(x.lib || "").replace(/\s*\(\d{3}\)$/, "")}<small>${x.type === "revue" ? `comparé à ${y-1}` : esc(x.source || "")}</small></td><td class="n">${eur(x.compta)}</td><td class="n">${x.attendu == null ? "–" : eur(x.attendu)}</td><td class="n">${ec}</td></tr>${explic(r, x)}`; };
+    const qs = c.p.filter(x => x.type === "q"), pe = c.p.filter(x => x.type === "perso"), note = ex.notesRevision?.[c.k];
+    const rep_ = x => { const st = rev[x.id]?.statut; return st === "vu" || st === "na" ? "Oui" : st === "non" ? "Non" : "Sans réponse"; };
+    return `<section class="feuille"><div class="dr-h"><h2>${c.l}</h2>${badge(c)}</div><p class="dr-p">${c.d}</p>
+      ${comptes ? `<h3>Comptes</h3><table class="dr-t"><tr><th>Compte</th><th class="n">${y}</th><th class="n n1">${y-1}</th><th class="n">Variation</th></tr>${comptes}</table>` : ""}
+      ${ctrl.length ? `<h3>Contrôles</h3><table class="dr-t dr-ctl"><tr><th></th><th>Contrôle</th><th class="n">Comptes</th><th class="n">Attendu</th><th class="n">Écart</th></tr>${ctrl.map(lc).join("")}</table>` : ""}
+      ${qs.length ? `<h3>Questions</h3><table class="dr-t dr-ctl">${qs.map(x => { const r = rev[x.id], st = rep_(x);
+        return `<tr><td class="dr-sy">${sym(x)}</td><td>${x.texte}</td><td class="n dr-rep ${st === "Non" ? "non" : st === "Oui" ? "oui" : ""}">${st}</td></tr>${st === "Non" ? `<tr class="dr-ex"><td></td><td colspan="2">${r.commentaire ? `<span>${esc(r.commentaire)}</span>` : `<span class="dr-manque">Explication attendue : ${x.siNon}</span>`}${r.date ? `<small>Répondu le ${fmtDate(r.date)}</small>` : ""}</td></tr>` : ""}`; }).join("")}</table>` : ""}
+      ${pe.length ? `<h3>Contrôles ajoutés</h3><table class="dr-t dr-ctl">${pe.map(x => `<tr><td class="dr-sy">${sym(x)}</td><td>${esc(x.texte)}</td><td class="n">${x.fait ? "Fait" : "À faire"}</td></tr>`).join("")}</table>` : ""}
+      ${note?.texte || note?.pieces?.length ? `<h3>Notes et pièces</h3>${note.texte ? `<p class="dr-note">${esc(note.texte)}</p>` : ""}${note.pieces?.length ? `<ul class="ef-ul">${note.pieces.map(p => `<li>${esc(p.split("/").pop())}</li>`).join("")}</ul>` : ""}` : ""}
+      ${c.statut === "devise" && c.change.length ? `<h3>Changé depuis le visa</h3><table class="dr-t"><tr><th></th><th class="n">Au visa</th><th class="n">Aujourd'hui</th></tr>${c.change.map(k => `<tr><td>${LIB_SIG[k] || `${k} ${esc(COMPTES[k] || "")}`}</td><td class="n">${eur(LIB_SIG[k] ? c.visa.sig[k] || 0 : soldeLu(k, c.visa.sig[k] || 0))}</td><td class="n">${eur(LIB_SIG[k] ? c.sig[k] || 0 : soldeLu(k, c.sig[k] || 0))}</td></tr>`).join("")}</table>` : ""}
+      ${pied(i + 3)}</section>`; }).join("");
+  return `<div class="ef dr">${garde}${synth}${pages}</div>`;
+}
 /* ---- États financiers : comptes annuels présentables (page de garde, bilan, compte de résultat, annexe) ---- */
 function etatsFinanciers(y){
   const d = S.data.dossier, L = liasse(y), P = n1(y), c = L.c, cp = P && !P.hist ? calculAnnee(y-1) : null;
@@ -3434,7 +3511,7 @@ function optionsExport(){
     {ext:"FEC", t:"Fichier des écritures comptables", d:"Toute l'année, au format demandé en cas de contrôle fiscal", go:() => exporterFEC(y)}];
   if(pg === "immos") return editionsImmos(y);
   if(pg === "emprunt") return [pdf("Le prêt et son échéancier"), csv("L'échéancier de chaque prêt", () => csvEmprunt())];
-  if(pg === "declaration") return [pdf(vd === "etats" ? `Les comptes annuels ${y}` : `La déclaration ${y} et la feuille de révision`)];
+  if(pg === "declaration") return [pdf(vd === "etats" ? `Les comptes annuels ${y}` : vd === "dossier" ? `Le dossier de révision ${y}` : `La déclaration ${y} et la feuille de révision`)];
   return [pdf("La page affichée")];
 }
 function ouvrirExport(){
